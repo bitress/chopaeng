@@ -130,14 +130,13 @@ const Navbar = () => {
                 <div className={`mobile-menu bg-white d-lg-none ${isMobileMenuOpen ? 'active' : ''}`}>
                     <div className="container py-4 d-flex flex-column gap-3">
                         {navLinks.map((link) => (
-                            <a
+                            <Link
                                 key={link.name}
-                                href={link.href}
+                                to={link.path}
                                 className="h5 text-dark text-decoration-none fw-bold"
-                                onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 {link.name}
-                            </a>
+                            </Link>
                         ))}
                         <hr />
                         <a href="https://discord.com" className="btn btn-primary w-100 rounded-pill py-3 fw-bold" style={{ backgroundColor: '#5865F2' }}>
