@@ -1,4 +1,3 @@
-import React from 'react';
 
 const Contact = () => {
     return (
@@ -94,7 +93,7 @@ const Contact = () => {
                                         <div className="mb-3">
                                             <label className="form-label fw-bold small text-uppercase">Subject</label>
                                             <select className="form-select form-select-lg bg-light border-0 px-3">
-                                                <option defaultValue>Island Access Issue</option>
+                                                <option>Island Access Issue</option>
                                                 <option>Membership & Billing</option>
                                                 <option>Technical Support</option>
                                                 <option>Business Inquiry</option>
@@ -102,7 +101,7 @@ const Contact = () => {
                                         </div>
                                         <div className="mb-4">
                                             <label className="form-label fw-bold small text-uppercase">Message</label>
-                                            <textarea className="form-control bg-light border-0 px-3" rows="5" placeholder="How can we help you?"></textarea>
+                                            <textarea className="form-control bg-light border-0 px-3" rows={5} placeholder="How can we help you?"></textarea>
                                         </div>
                                         <button type="submit" className="btn btn-success btn-lg w-100 rounded-pill fw-bold text-white shadow-sm">
                                             Send Message

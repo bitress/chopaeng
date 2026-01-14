@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 
 const TreasureIslands = () => {
     // Categorized data based on the stream screenshot
@@ -154,7 +153,7 @@ const TreasureIslands = () => {
 };
 
 // Simple helper to match category to Bootstrap colors or custom ones
-const getTheme = (cat) => {
+const getTheme = (cat: string) => {
     switch(cat) {
         case 'clothing': return 'clothing';
         case 'v1': return 'v1';

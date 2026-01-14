@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import {useState} from "react";
 
 const FindItems = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -28,7 +28,7 @@ const FindItems = () => {
         return matchesSearch && matchesTab && matchesAccess;
     });
 
-    const copyToClipboard = (itemName) => {
+    const copyToClipboard = (itemName: string) => {
         const command = `!order ${itemName}`;
         navigator.clipboard.writeText(command);
         // Visual feedback could be a toast notification
