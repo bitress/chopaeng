@@ -4,14 +4,6 @@ const About = () => {
 
             <div className="app-container w-100" style={{maxWidth: '950px'}}>
 
-                {/* 1. HEADER */}
-                <div className="text-center mb-5">
-                    <div className="d-inline-flex align-items-center justify-content-center bg-white p-3 rounded-circle shadow-sm mb-3 border border-3 border-light">
-                        <i className="bi bi-person-vcard fs-1 text-nook"></i>
-                    </div>
-                    <h1 className="display-5 fw-black ac-font text-dark mb-1">Island Passport</h1>
-                    <p className="text-muted fw-bold text-uppercase spacing-wide mb-0 opacity-75">Resident Registration</p>
-                </div>
 
                 {/* 2. THE PASSPORT CARD (Hero) */}
                 <div className="passport-card bg-white rounded-4 shadow-sm border border-light p-4 p-md-5 mb-5 position-relative overflow-hidden mx-auto" style={{maxWidth: '800px'}}>
@@ -47,17 +39,16 @@ const About = () => {
                                 {/* Title Field */}
                                 <div className="passport-field">
                                     <span className="field-label text-muted small fw-bold text-uppercase">Title</span>
-                                    <h5 className="text-nook fw-bold mb-0">Island Representative</h5>
+                                    <h5 className="text-nook fw-bold mb-0">Islander</h5>
                                 </div>
 
                                 {/* Comment (Bio) */}
                                 <div className="passport-comment bg-light rounded-4 p-3 border border-2 border-light mt-2 position-relative">
                                     <span className="field-label text-muted small fw-bold text-uppercase position-absolute top-0 start-0 translate-middle-y ms-3 bg-light px-2">
-                                        Comment
+                                        Bio
                                     </span>
                                     <p className="mb-0 text-dark fw-bold small lh-base">
-                                        "Coffee lover. Twitch Partner. Building the Bayanihan spirit one Dodo Code at a time. Welcome to the Beshy community!"
-                                    </p>
+                                        People call me Cho or Chops. I'm a Filipino streamer currently located here in the Philippines. I love playing games specially Animal Crossing: New Horizons. I only stream this game as of now. This is also my way to connect to different people. Please join me in my adventure in gaming and let's explore the world of ACNH!</p>
                                 </div>
                             </div>
                         </div>
@@ -123,19 +114,7 @@ const About = () => {
                     </div>
                 </div>
 
-                {/* 5. ECOSYSTEM LIST */}
-                <div className="bg-success bg-opacity-10 rounded-4 p-4 border border-success border-opacity-25 d-flex flex-column flex-md-row align-items-center gap-4">
-                    <div className="bg-white p-3 rounded-circle shadow-sm text-success">
-                        <i className="bi bi-controller fs-2"></i>
-                    </div>
-                    <div className="text-center text-md-start">
-                        <h4 className="fw-black ac-font text-dark mb-1">More Than Just Items</h4>
-                        <p className="small text-dark opacity-75 fw-bold mb-0">
-                            From Valorant streams to custom Discord bots and turnip hacks,
-                            Chopaeng is a full gaming ecosystem.
-                        </p>
-                    </div>
-                </div>
+
 
             </div>
 

@@ -6,9 +6,7 @@ const Contact = () => {
 
                 {/* 1. APP HEADER */}
                 <div className="text-center mb-5">
-                    <div className="d-inline-flex align-items-center justify-content-center bg-white p-3 rounded-circle shadow-sm mb-3 border border-2 border-light">
-                        <i className="bi bi-headset fs-1 text-success"></i>
-                    </div>
+
                     <h1 className="display-5 fw-black ac-font text-dark mb-2">Resident Services</h1>
                     <p className="text-muted fw-bold text-uppercase spacing-wide mb-0">How can we help you today?</p>
                 </div>
@@ -64,7 +62,7 @@ const Contact = () => {
                 {/* 3. HOURS WIDGET */}
                 <div className="bg-white rounded-4 p-4 border border-light shadow-sm d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
                     <div className="d-flex align-items-center gap-3">
-                        <div className="bg-warning bg-opacity-10 text-warning p-3 rounded-circle">
+                        <div className="bg-warning bg-opacity-10 text-warning p-2 rounded-circle">
                             <i className="bi bi-clock-history fs-4"></i>
                         </div>
                         <div>

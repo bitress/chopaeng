@@ -33,7 +33,7 @@ const FindItems = () => {
         try {
             const endpoint = searchMode === 'item' ? 'find' : 'villager';
 
-            const response = await fetch(`https://yt.amburayanresearchjournal.xyz/api/${endpoint}?q=${encodeURIComponent(term)}`);
+            const response = await fetch(`http://127.0.0.1:8100/api/${endpoint}?q=${encodeURIComponent(term)}`);
 
             if (!response.ok) throw new Error("Server error");
 
@@ -155,7 +155,7 @@ const FindItems = () => {
 
                 {/* SUCCESS STATE */}
                 {data && data.found && data.results && (
-                    <div className="card border-0 shadow-lg rounded-5 overflow-hidden mb-2 bg-white">
+                    <div className="card border-0 rounded-5 overflow-hidden mb-5 bg-white">
                         {/* Result Header */}
                         <div className="card-header bg-cream border-bottom border-light p-4 text-center">
                             <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
