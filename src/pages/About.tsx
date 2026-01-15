@@ -1,163 +1,205 @@
-
 const About = () => {
     return (
-        <div className="about-wrapper bg-white">
-            {/* 1. HERO: The Face Behind the Island */}
-            <section className="py-5 bg-light overflow-hidden">
-                <div className="container py-lg-5">
-                    <div className="row align-items-center">
-                        <div className="col-lg-6 mb-5 mb-lg-0">
-                            <div className="badge bg-success-subtle text-success px-3 py-2 rounded-pill mb-3 fw-bold letter-spacing-2">
-                                EST. NOVEMBER 2020
-                            </div>
-                            <h1 className="display-4 fw-bold mb-4 font-heading text-dark">
-                                Meet <span className="text-success">Kuya Cho</span>
-                            </h1>
-                            <p className="lead text-muted mb-4 fs-4">
-                                Filipino streamer, coffee lover, and the heart behind the world’s most active 24/7 Treasure Islands.
-                            </p>
-                            <p className="text-muted fs-5 lh-base">
-                                Chopaeng (Karl Presto) started his journey on November 24, 2020, with a simple goal: to make
-                                Animal Crossing: New Horizons more accessible for everyone. What began as a small stream
-                                quickly grew into a global "Beshy" community, reaching Twitch Partnership in just four months.
-                            </p>
-                        </div>
-                        <div className="col-lg-6 text-center position-relative">
-                            <div className="profile-frame mx-auto">
+        <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center">
+
+            <div className="app-container w-100" style={{maxWidth: '950px'}}>
+
+                {/* 1. HEADER */}
+                <div className="text-center mb-5">
+                    <div className="d-inline-flex align-items-center justify-content-center bg-white p-3 rounded-circle shadow-sm mb-3 border border-3 border-light">
+                        <i className="bi bi-person-vcard fs-1 text-nook"></i>
+                    </div>
+                    <h1 className="display-5 fw-black ac-font text-dark mb-1">Island Passport</h1>
+                    <p className="text-muted fw-bold text-uppercase spacing-wide mb-0 opacity-75">Resident Registration</p>
+                </div>
+
+                {/* 2. THE PASSPORT CARD (Hero) */}
+                <div className="passport-card bg-white rounded-4 shadow-sm border border-light p-4 p-md-5 mb-5 position-relative overflow-hidden mx-auto" style={{maxWidth: '800px'}}>
+                    {/* Background Pattern */}
+                    <div className="passport-bg"></div>
+
+                    <div className="row align-items-center position-relative z-1">
+                        {/* Left: Photo */}
+                        <div className="col-md-5 text-center mb-4 mb-md-0">
+                            <div className="photo-frame bg-white p-2 shadow-sm transform-rotate-n3">
                                 <img
                                     src="logo.webp"
-                                    alt="Kuya Cho Chopaeng"
-                                    className="img-fluid rounded-circle shadow-lg border border-5 border-white"
-                                    style={{ width: '350px', height: '350px', objectFit: 'cover' }}
+                                    alt="Kuya Cho"
+                                    className="img-fluid rounded-3 border border-light"
                                 />
                             </div>
+                            <div className="mt-3">
+                                <span className="badge bg-success text-white rounded-pill px-3 py-1 ac-font shadow-sm">
+                                    EST. 2020
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
 
-            {/* 2. VALUES: The Bayanihan Spirit */}
-            <section className="py-5">
-                <div className="container py-4 text-center">
-                    <div className="row justify-content-center">
-                        <div className="col-lg-8">
-                            <h2 className="fw-bold font-heading mb-3">Our Philosophy</h2>
-                            <p className="text-muted fs-5 mb-5">
-                                We believe in the Filipino spirit of <strong>Bayanihan</strong>—community members helping
-                                one another to achieve a common goal. This culture defines every island we host.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="row g-4">
-                        {[
-                            { icon: '🏳️‍🌈', title: 'Inclusivity', desc: 'No matter who you are or who you love, you are welcome in our islands.' },
-                            { icon: '🏝️', title: '24/7 Access', desc: 'Paradise shouldn’t have an opening time. Our islands stay open day and night.' },
-                            { icon: '🤝', title: 'Free Support', desc: 'We provide free islands daily to ensure every player can build their dream.' }
-                        ].map((item, i) => (
-                            <div key={i} className="col-md-4">
-                                <div className="p-4 rounded-4 border bg-white h-100 shadow-hover">
-                                    <div className="display-5 mb-3">{item.icon}</div>
-                                    <h5 className="fw-bold mb-2">{item.title}</h5>
-                                    <p className="small text-muted mb-0">{item.desc}</p>
+                        {/* Right: Info */}
+                        <div className="col-md-7">
+                            <div className="d-flex flex-column gap-3">
+                                {/* Name Field */}
+                                <div className="passport-field">
+                                    <span className="field-label text-muted small fw-bold text-uppercase">Name</span>
+                                    <h2 className="text-dark fw-black ac-font mb-0">Kuya Cho</h2>
+                                </div>
+
+                                {/* Title Field */}
+                                <div className="passport-field">
+                                    <span className="field-label text-muted small fw-bold text-uppercase">Title</span>
+                                    <h5 className="text-nook fw-bold mb-0">Island Representative</h5>
+                                </div>
+
+                                {/* Comment (Bio) */}
+                                <div className="passport-comment bg-light rounded-4 p-3 border border-2 border-light mt-2 position-relative">
+                                    <span className="field-label text-muted small fw-bold text-uppercase position-absolute top-0 start-0 translate-middle-y ms-3 bg-light px-2">
+                                        Comment
+                                    </span>
+                                    <p className="mb-0 text-dark fw-bold small lh-base">
+                                        "Coffee lover. Twitch Partner. Building the Bayanihan spirit one Dodo Code at a time. Welcome to the Beshy community!"
+                                    </p>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* 3. MILESTONES: The Journey */}
-            <section className="py-5 bg-dark text-white rounded-5 mx-2 mx-md-5 my-5">
-                <div className="container py-4 text-center">
-                    <h2 className="fw-bold mb-5 font-heading">Our Milestones</h2>
-                    <div className="row">
-                        <div className="col-md-4 mb-4">
-                            <h3 className="text-success fw-bold display-6">Nov 2020</h3>
-                            <p className="opacity-75">The First Island Code Shared</p>
-                        </div>
-                        <div className="col-md-4 mb-4">
-                            <h3 className="text-success fw-bold display-6">Mar 2021</h3>
-                            <p className="opacity-75">Official Twitch Partner</p>
-                        </div>
-                        <div className="col-md-4 mb-4">
-                            <h3 className="text-success fw-bold display-6">130k+</h3>
-                            <p className="opacity-75">Global "Beshy" Explorers</p>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            {/* 4. WHAT WE DO: Beyond Treasure Islands */}
-            <section className="py-5">
-                <div className="container">
-                    <div className="row g-5 align-items-center">
-                        <div className="col-lg-6 order-2 order-lg-1">
-                            <h2 className="fw-bold font-heading mb-4">More than just items</h2>
-                            <p className="text-muted">
-                                While we are known for our <strong>Marahuyo</strong> and <strong>Bahaghari</strong> premium islands,
-                                Chopaeng is a multi-gaming ecosystem. From the "Max Bell" turnip hacks to DIY request bots,
-                                we use technology to simplify the grind.
-                            </p>
-                            <ul className="list-unstyled d-flex flex-column gap-3 mt-4">
-                                <li className="d-flex align-items-center gap-3">
-                                    <i className="bi bi-check-circle-fill text-success fs-4"></i>
-                                    <span><strong>Island Requests:</strong> Order any item, villager, or DIY.</span>
-                                </li>
-                                <li className="d-flex align-items-center gap-3">
-                                    <i className="bi bi-check-circle-fill text-success fs-4"></i>
-                                    <span><strong>Variety Gaming:</strong> Catch Kuya Cho playing Valorant, Stardew Valley, or Roblox.</span>
-                                </li>
-                                <li className="d-flex align-items-center gap-3">
-                                    <i className="bi bi-check-circle-fill text-success fs-4"></i>
-                                    <span><strong>Safe Community:</strong> A mod-protected Discord for trading and chatting.</span>
-                                </li>
-                            </ul>
+                {/* 3. MILESTONES (Stamps) */}
+                <div className="row g-4 mb-5 justify-content-center">
+                    {[
+                        { date: "Nov 2020", label: "First Flight", icon: "airplane-engines" },
+                        { date: "Mar 2021", label: "Twitch Partner", icon: "twitch" },
+                        { date: "130k+", label: "Beshy Family", icon: "people-fill" }
+                    ].map((milestone, i) => (
+                        <div key={i} className="col-4 col-md-3">
+                            <div className="stamp-circle mx-auto d-flex flex-column align-items-center justify-content-center text-center p-3">
+                                <i className={`bi bi-${milestone.icon} fs-2 text-nook opacity-50 mb-1`}></i>
+                                <h6 className="fw-black text-nook mb-0 ac-font">{milestone.date}</h6>
+                                <small className="tiny-text fw-bold text-nook opacity-75 text-uppercase">{milestone.label}</small>
+                            </div>
                         </div>
-                        <div className="col-lg-6 order-1 order-lg-2">
-                            <div className="bg-success-subtle p-4 rounded-5 border">
-                                <img
-                                    src="https://images.unsplash.com/photo-1614853316476-de00d14cb1fc?auto=format&fit=crop&q=80&w=800"
-                                    alt="Gaming Community"
-                                    className="img-fluid rounded-4 shadow"
-                                />
+                    ))}
+                </div>
+
+                {/* 4. PHILOSOPHY (Ordinance Card) */}
+                <div className="row g-4 mb-5">
+                    <div className="col-lg-12">
+                        <div className="bg-white rounded-4 p-4 p-md-5 shadow-sm border position-relative">
+                            <div className="text-center mb-4">
+                                <h3 className="fw-black ac-font text-dark">Island Ordinances</h3>
+                                <p className="text-muted fw-bold small">Our Core Philosophy</p>
+                            </div>
+
+                            <div className="row g-4">
+                                <div className="col-md-4">
+                                    <div className="ordinance-item text-center p-3 rounded-4 hover-lift">
+                                        <div className="icon-bubble bg-warning text-white mx-auto mb-3 shadow-sm">
+                                            <i className="bi bi-heart-fill"></i>
+                                        </div>
+                                        <h5 className="fw-bold text-dark">Bayanihan</h5>
+                                        <p className="small text-muted mb-0 fw-bold">Community members helping one another achieve a common goal.</p>
+                                    </div>
+                                </div>
+                                <div className="col-md-4">
+                                    <div className="ordinance-item text-center p-3 rounded-4 hover-lift">
+                                        <div className="icon-bubble bg-info text-white mx-auto mb-3 shadow-sm">
+                                            <i className="bi bi-globe-americas"></i>
+                                        </div>
+                                        <h5 className="fw-bold text-dark">Inclusivity</h5>
+                                        <p className="small text-muted mb-0 fw-bold">No matter who you are, you have a home on our islands.</p>
+                                    </div>
+                                </div>
+                                <div className="col-md-4">
+                                    <div className="ordinance-item text-center p-3 rounded-4 hover-lift">
+                                        <div className="icon-bubble bg-success text-white mx-auto mb-3 shadow-sm">
+                                            <i className="bi bi-clock-fill"></i>
+                                        </div>
+                                        <h5 className="fw-bold text-dark">24/7 Access</h5>
+                                        <p className="small text-muted mb-0 fw-bold">Paradise doesn't have a closing time. We are always open.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
+
+                {/* 5. ECOSYSTEM LIST */}
+                <div className="bg-success bg-opacity-10 rounded-4 p-4 border border-success border-opacity-25 d-flex flex-column flex-md-row align-items-center gap-4">
+                    <div className="bg-white p-3 rounded-circle shadow-sm text-success">
+                        <i className="bi bi-controller fs-2"></i>
+                    </div>
+                    <div className="text-center text-md-start">
+                        <h4 className="fw-black ac-font text-dark mb-1">More Than Just Items</h4>
+                        <p className="small text-dark opacity-75 fw-bold mb-0">
+                            From Valorant streams to custom Discord bots and turnip hacks,
+                            Chopaeng is a full gaming ecosystem.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
 
             <style>{`
-        .font-heading { font-family: 'Inter', sans-serif; }
-        .letter-spacing-2 { letter-spacing: 2px; }
-        .bg-success-subtle { background-color: rgba(25, 135, 84, 0.1); }
-        
-        .profile-frame {
-            position: relative;
-            width: fit-content;
-        }
+                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
 
-        .floating-badge {
-            position: absolute;
-            bottom: 20px;
-            right: -10px;
-            animation: float 3s ease-in-out infinite;
-        }
+                :root {
+                    --nook-bg: #f2f4e6;
+                    --nook-green: #88e0a0;
+                    --nook-dark-green: #28a745;
+                }
 
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
+                .nook-os {
+                    background-color: var(--nook-bg);
+                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
+                    background-size: 30px 30px;
+                    font-family: 'Nunito', sans-serif;
+                }
 
-        .shadow-hover {
-            transition: all 0.3s ease;
-        }
-        .shadow-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
-            border-color: #198754 !important;
-        }
-      `}</style>
+                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
+                .fw-black { font-weight: 900; }
+                .text-nook { color: var(--nook-dark-green); }
+                .spacing-wide { letter-spacing: 1.5px; }
+                .tiny-text { font-size: 0.65rem; }
+
+                /* PASSPORT STYLING */
+                .passport-card {
+                    background-color: #fff;
+                    background-image: linear-gradient(45deg, #ffffff 25%, #f9f9f9 25%, #f9f9f9 50%, #ffffff 50%, #ffffff 75%, #f9f9f9 75%, #f9f9f9 100%);
+                    background-size: 20px 20px;
+                }
+                
+                .photo-frame {
+                    transform: rotate(-3deg);
+                    border: 1px solid #eee;
+                }
+
+                .passport-field {
+                    border-bottom: 2px dashed #eee;
+                    padding-bottom: 5px;
+                }
+
+                /* STAMPS */
+                .stamp-circle {
+                    width: 100px; height: 100px;
+                    border: 3px double var(--nook-dark-green);
+                    border-radius: 50%;
+                    transform: rotate(-10deg);
+                    opacity: 0.8;
+                    transition: transform 0.2s;
+                }
+                .stamp-circle:hover { transform: rotate(0deg) scale(1.1); opacity: 1; }
+
+                /* ICONS */
+                .icon-bubble {
+                    width: 50px; height: 50px;
+                    border-radius: 18px; /* Squircle */
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 1.5rem;
+                }
+
+                .hover-lift { transition: transform 0.2s; }
+                .hover-lift:hover { transform: translateY(-5px); }
+            `}</style>
         </div>
     );
 };

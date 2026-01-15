@@ -1,134 +1,140 @@
-
 const Contact = () => {
     return (
-        <div className="bg-white min-vh-100">
+        <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center justify-content-center">
 
-            {/* 1. HERO SECTION */}
-            <section className="py-5 bg-light border-bottom">
-                <div className="container py-5">
-                    <div className="row justify-content-center text-center">
-                        <div className="col-lg-8">
-                            <h1 className="display-4 fw-bold text-dark mb-3">Contact Support</h1>
-                            <p className="lead text-muted mb-0">
-                                Need help with an island? Have a question about your membership?
-                                Reach out to the Chopaeng team through the channels below.
-                            </p>
-                        </div>
+            <div className="app-container w-100" style={{maxWidth: '900px'}}>
+
+                {/* 1. APP HEADER */}
+                <div className="text-center mb-5">
+                    <div className="d-inline-flex align-items-center justify-content-center bg-white p-3 rounded-circle shadow-sm mb-3 border border-2 border-light">
+                        <i className="bi bi-headset fs-1 text-success"></i>
                     </div>
+                    <h1 className="display-5 fw-black ac-font text-dark mb-2">Resident Services</h1>
+                    <p className="text-muted fw-bold text-uppercase spacing-wide mb-0">How can we help you today?</p>
                 </div>
-            </section>
 
-            {/* 2. CONTACT CARDS */}
-            <section className="py-5">
-                <div className="container">
-                    <div className="row g-4">
+                {/* 2. CONTACT CARDS */}
+                <div className="row g-4 justify-content-center mb-5">
 
-                        {/* Discord Support */}
-                        <div className="col-md-6">
-                            <div className="card h-100 border-0 shadow-sm rounded-4">
-                                <div className="card-body p-4 p-lg-5">
-                                    <div className="d-flex align-items-center mb-4">
-                                        <div className="bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-3">
-                                            <i className="bi bi-discord fs-2"></i>
-                                        </div>
-                                        <div>
-                                            <h3 className="fw-bold mb-0">Live Chat</h3>
-                                            <span className="badge bg-success rounded-pill">Fastest Response</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-muted mb-4">
-                                        Join our Discord server and open a support ticket. Our staff team is active 24/7 to help with island codes, bot issues, and technical support.
-                                    </p>
-                                    <a href="https://discord.gg/chopaeng" target="_blank" className="btn btn-primary btn-lg w-100 rounded-pill fw-bold">
-                                        Join Discord Server
-                                    </a>
+                    {/* Discord (Community Support) */}
+                    <div className="col-md-6">
+                        <div className="contact-card h-100 bg-white p-4 rounded-4 shadow-sm border border-light position-relative overflow-hidden d-flex flex-column text-center hover-lift transition-all">
+                            <div className="card-bg-icon text-primary opacity-10">
+                                <i className="bi bi-discord"></i>
+                            </div>
+
+                            <div className="z-1 position-relative">
+                                <div className="icon-squircle bg-primary text-white mx-auto mb-3 shadow-sm">
+                                    <i className="bi bi-chat-dots-fill fs-3"></i>
                                 </div>
+                                <h3 className="fw-black ac-font text-dark mb-2">Community Chat</h3>
+                                <p className="text-muted fw-bold small mb-4 lh-sm px-3">
+                                    Need a Dodo Code? Bot stuck? Join our Discord server for 24/7 support from our mod team.
+                                </p>
+                                <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="btn btn-primary rounded-pill fw-bold px-5 py-2 w-100 shadow-sm btn-nook">
+                                    Open Discord
+                                </a>
                             </div>
                         </div>
-
-                        {/* Business Email */}
-                        <div className="col-md-6">
-                            <div className="card h-100 border-0 shadow-sm rounded-4">
-                                <div className="card-body p-4 p-lg-5">
-                                    <div className="d-flex align-items-center mb-4">
-                                        <div className="bg-success bg-opacity-10 text-success rounded-3 p-3 me-3">
-                                            <i className="bi bi-envelope-fill fs-2"></i>
-                                        </div>
-                                        <div>
-                                            <h3 className="fw-bold mb-0">Business</h3>
-                                            <span className="badge bg-secondary rounded-pill">24h Response</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-muted mb-4">
-                                        For sponsorships, brand collaborations, or official business inquiries, please reach out via email. We look forward to working with you.
-                                    </p>
-                                    <a href="mailto:hello@chopaeng.com" className="btn btn-success btn-lg w-100 rounded-pill fw-bold text-white">
-                                        hello@chopaeng.com
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
-                </div>
-            </section>
 
-            {/* 3. CONTACT FORM */}
-            <section className="py-5 bg-light">
-                <div className="container">
-                    <div className="row justify-content-center">
-                        <div className="col-lg-6">
-                            <div className="card border-0 shadow-sm rounded-4">
-                                <div className="card-body p-4 p-lg-5">
-                                    <h2 className="fw-bold mb-4 text-center">Send a Message</h2>
-                                    <form>
-                                        <div className="mb-3">
-                                            <label className="form-label fw-bold small text-uppercase">Full Name</label>
-                                            <input type="text" className="form-control form-control-lg bg-light border-0 px-3" placeholder="Enter your name" />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="form-label fw-bold small text-uppercase">Email Address</label>
-                                            <input type="email" className="form-control form-control-lg bg-light border-0 px-3" placeholder="name@example.com" />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="form-label fw-bold small text-uppercase">Subject</label>
-                                            <select className="form-select form-select-lg bg-light border-0 px-3">
-                                                <option>Island Access Issue</option>
-                                                <option>Membership & Billing</option>
-                                                <option>Technical Support</option>
-                                                <option>Business Inquiry</option>
-                                            </select>
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="form-label fw-bold small text-uppercase">Message</label>
-                                            <textarea className="form-control bg-light border-0 px-3" rows={5} placeholder="How can we help you?"></textarea>
-                                        </div>
-                                        <button type="submit" className="btn btn-success btn-lg w-100 rounded-pill fw-bold text-white shadow-sm">
-                                            Send Message
-                                        </button>
-                                    </form>
+                    {/* Email (Business) */}
+                    <div className="col-md-6">
+                        <div className="contact-card h-100 bg-white p-4 rounded-4 shadow-sm border border-light position-relative overflow-hidden d-flex flex-column text-center hover-lift transition-all">
+                            <div className="card-bg-icon text-success opacity-10">
+                                <i className="bi bi-envelope-paper"></i>
+                            </div>
+
+                            <div className="z-1 position-relative">
+                                <div className="icon-squircle bg-success text-white mx-auto mb-3 shadow-sm">
+                                    <i className="bi bi-mailbox2 fs-3"></i>
                                 </div>
+                                <h3 className="fw-black ac-font text-dark mb-2">Business Mail</h3>
+                                <p className="text-muted fw-bold small mb-4 lh-sm px-3">
+                                    For brand collaborations, sponsorships, or urgent account inquiries. (Replies within 24h).
+                                </p>
+                                <a href="mailto:hello@chopaeng.com" className="btn btn-success rounded-pill fw-bold px-5 py-2 w-100 shadow-sm btn-nook">
+                                    Send Letter
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            {/* 4. SOCIAL LINKS */}
-            <section className="py-5">
-                <div className="container text-center">
-                    <p className="text-muted fw-bold text-uppercase small mb-4">Follow us on Social Media</p>
-                    <div className="d-flex justify-content-center gap-4">
-                        <a href="#" className="text-dark fs-3"><i className="bi bi-twitch"></i></a>
-                        <a href="#" className="text-dark fs-3"><i className="bi bi-youtube"></i></a>
-                        <a href="#" className="text-dark fs-3"><i className="bi bi-instagram"></i></a>
-                        <a href="#" className="text-dark fs-3"><i className="bi bi-tiktok"></i></a>
+                {/* 3. HOURS WIDGET */}
+                <div className="bg-white rounded-4 p-4 border border-light shadow-sm d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                    <div className="d-flex align-items-center gap-3">
+                        <div className="bg-warning bg-opacity-10 text-warning p-3 rounded-circle">
+                            <i className="bi bi-clock-history fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 className="fw-black ac-font text-dark mb-0">Operating Hours</h5>
+                            <p className="small text-muted fw-bold mb-0">Islands are open 24/7 unless refreshing.</p>
+                        </div>
+                    </div>
+                    <div className="d-flex gap-2">
+                        <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-bold">
+                            <span className="dot bg-success me-2"></span>
+                            System Online
+                        </span>
                     </div>
                 </div>
-            </section>
 
-            {/* Bootstrap Icons Link */}
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+            </div>
+
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+                .nook-os {
+                    background-color: #f2f4e6;
+                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
+                    background-size: 30px 30px;
+                    font-family: 'Nunito', sans-serif;
+                }
+
+                .ac-font { font-family: 'Fredoka One', cursive; }
+                .fw-black { font-weight: 900; }
+                .spacing-wide { letter-spacing: 1.5px; }
+
+                /* Squircle Icon */
+                .icon-squircle {
+                    width: 60px; height: 60px;
+                    border-radius: 22px;
+                    display: flex; align-items: center; justify-content: center;
+                    transform: rotate(-3deg);
+                    border: 2px solid rgba(255,255,255,0.4);
+                }
+
+                /* Background Icon Decoration */
+                .card-bg-icon {
+                    position: absolute;
+                    top: -20px; right: -20px;
+                    font-size: 8rem;
+                    transform: rotate(15deg);
+                    z-index: 0;
+                }
+
+                /* Card Interaction */
+                .contact-card {
+                    border: 2px solid transparent;
+                }
+                .hover-lift:hover {
+                    transform: translateY(-5px);
+                    border-color: #88e0a0;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+                }
+                .transition-all { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+                /* Buttons */
+                .btn-nook {
+                    border: 2px solid rgba(255,255,255,0.2);
+                    transition: transform 0.1s;
+                }
+                .btn-nook:active { transform: scale(0.98); }
+
+                /* Dot */
+                .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+            `}</style>
         </div>
     );
 };

@@ -1,201 +1,295 @@
-import {useState} from "react";
-
 const Home = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-
-    const posts = [
-        {
-            id: 1,
-            date: "Nov 04, 2025",
-            title: "ACNH Switch 2 Edition is coming!",
-            category: "News",
-            img: "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?auto=format&fit=crop&q=80&w=1000",
-            excerpt: "Nintendo officially sails into the next generation. Jan 15, 2026."
-        },
-        {
-            id: 2,
-            date: "Jul 09, 2025",
-            title: "Crocs x Animal Crossing Collaboration",
-            category: "Collab",
-            img: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=1000",
-            excerpt: "Step into the relaxing world of island life with official footwear."
-        }
-    ];
-
-    const islands = [
-        { name: "Marahuyo", icon: "✨", status: "Members Only", type: "Full Catalog" },
-        { name: "Bahaghari", icon: "🌈", status: "Members Only", type: "Max Bells & Mats" },
-        { name: "Paradise", icon: "🌴", status: "Public Access", type: "Variety Items" },
-    ];
-
     return (
-        <div className="bg-white min-vh-100 font-sans text-dark">
+        <>
+        <div className="nook-os min-vh-100 d-flex align-items-center font-nunito overflow-hidden position-relative">
 
-            {/* 1. HERO SECTION: Split Layout */}
-            <section className="container-fluid px-lg-5 pt-5 pb-5 bg-light border-bottom">
-                <div className="row align-items-center min-vh-75 py-5">
-                    <div className="col-lg-7 mb-5 mb-lg-0">
-                        <div className="d-inline-flex align-items-center gap-2 mb-4">
+            {/* Background Decoration (Leaf Pattern) */}
+            <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block pointer-events-none">
+                <i className="fa-solid fa-leaf text-success" style={{fontSize: '30rem', transform: 'rotate(45deg)'}}></i>
+            </div>
+
+            <section className="container-fluid px-lg-5 position-relative z-1">
+                <div className="row align-items-center py-5">
+
+                    {/* LEFT: TEXT CONTENT */}
+                    <div className="col-lg-6 order-2 order-lg-1 ps-lg-5">
+
+                        {/* Status Badge */}
+                        <div className="d-inline-flex align-items-center gap-2 mb-4 px-3 py-2 rounded-pill bg-white border border-success border-opacity-25 shadow-sm">
                             <span className="live-dot"></span>
-                            <span className="text-success fw-bold small text-uppercase tracking-wider">24/7 Live Treasure Islands</span>
+                            <span className="text-success fw-bold x-small text-uppercase tracking-wider">
+                                Stream Online Now
+                            </span>
                         </div>
-                        <h1 className="display-1 fw-bold lh-1 mb-4">
-                            Your <span className="text-success">Island</span> <br />
-                            Starts Here.
+
+                        {/* Headline */}
+                        <h1 className="display-3 fw-black ac-font lh-1 mb-4 text-dark">
+                            Your Ticket to <br />
+                            <span className="text-nook">Island Paradise.</span>
                         </h1>
-                        <p className="lead text-muted mb-5 fs-4 fw-light" style={{ maxWidth: '500px' }}>
-                            Access 130,000+ items, request villagers via ChoBot, and join the ultimate ACNH community.
+
+                        {/* Subtext */}
+                        <p className="lead text-muted mb-5 fw-bold opacity-75" style={{ maxWidth: '480px', fontSize: '1.1rem' }}>
+                            Skip the grind. Join the Chopaeng community to access 24/7 Treasure Islands, Max Bells, and order any villager via ChoBot.
                         </p>
 
-                        {/* SEARCH HUB: Pange-influenced but functional */}
-                        <div className="bg-white p-2 rounded-4 shadow-sm d-flex align-items-center border" style={{ maxWidth: '550px' }}>
-                            <i className="bi bi-search ms-3 text-muted"></i>
-                            <input
-                                type="text"
-                                className="form-control border-0 shadow-none px-3 py-3"
-                                placeholder="Find an item (e.g. Ironwood Dresser)..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                        {/* CTA Buttons */}
+                        <div className="d-flex flex-column flex-sm-row gap-3 mb-5">
+                            <button className="btn btn-nook-primary rounded-pill px-5 py-3 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
+                                <i className="fa-solid fa-plane-departure"></i>
+                                Start Looting
+                            </button>
+                            <button className="btn btn-white rounded-pill px-5 py-3 fw-bold border shadow-sm text-muted transform-active">
+                                <i className="fa-solid fa-map me-2"></i>
+                                View Maps
+                            </button>
+                        </div>
+
+                        {/* Social Proof */}
+                        <div className="d-flex align-items-center gap-4 text-muted small fw-bold">
+                            <div className="d-flex align-items-center gap-2">
+                                <i className="fa-brands fa-discord fs-4 text-primary opacity-75"></i>
+                                <span>15k+ Beshies</span>
+                            </div>
+                            <div className="d-flex align-items-center gap-2">
+                                <i className="fa-solid fa-box-open fs-4 text-success opacity-75"></i>
+                                <span>Auto-Restock</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* RIGHT: HERO IMAGE (Snapshot Style) */}
+                    <div className="col-lg-6 order-1 order-lg-2 mb-5 mb-lg-0 text-center position-relative">
+
+                        {/* Main Image */}
+                        <div className="snapshot-frame mx-auto position-relative">
+                            <div className="tape-strip"></div>
+                            <img
+                                src="https://images.unsplash.com/photo-1599939571322-792a326991f2?q=80&w=1000&auto=format&fit=crop"
+                                alt="ACNH Setup"
+                                className="img-fluid rounded-3 border border-light"
                             />
-                            <button className="btn btn-success rounded-3 px-4 fw-bold">Search</button>
-                        </div>
-                    </div>
-
-                    <div className="col-lg-5 d-none d-lg-block position-relative">
-                        <div className="hero-visual-container">
-                            <img src="logo.webp" alt="Chopaeng" className="img-fluid rounded-5 shadow-lg main-hero-img" />
-                            <div className="floating-card p-3 rounded-4 bg-white shadow-sm">
-                                <span className="text-success fw-bold">999,999,999</span>
-                                <p className="small text-muted mb-0">Max Bells Available</p>
+                            {/* Floating Floating Elements */}
+                            <div className="floating-badge bg-white p-3 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-4 ms-4">
+                                <i className="fa-solid fa-sack-dollar text-warning fs-2"></i>
+                            </div>
+                            <div className="floating-badge-2 bg-white p-3 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-4 me-n4">
+                                <i className="fa-solid fa-gift text-danger fs-2"></i>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </section>
+        </div>
 
-            {/* 2. ISLAND DIRECTORY: Shereigna-influenced Clean Grid */}
-            <section className="container-fluid px-lg-5 py-5 border-bottom">
-                <div className="d-flex justify-content-between align-items-end mb-5">
-                    <div>
-                        <h2 className="fw-bold mb-1">Active Islands</h2>
-                        <p className="text-muted small mb-0 text-uppercase tracking-widest">Global Live Directory</p>
-                    </div>
-                    <button className="btn btn-outline-dark rounded-pill px-4 btn-sm fw-bold">View Status</button>
-                </div>
-
+            {/* SECTION 2: NOOK SERVICES (Features) */}
+            <section className="container py-5">
                 <div className="row g-4">
-                    {islands.map((island, i) => (
-                        <div key={i} className="col-lg-4">
-                            <div className="island-card p-5 rounded-5 border bg-white h-100 transition-all">
-                                <div className="display-5 mb-4">{island.icon}</div>
-                                <h3 className="fw-bold mb-1">{island.name}</h3>
-                                <p className="text-success small fw-bold text-uppercase mb-4 tracking-wide">{island.status}</p>
-                                <p className="text-muted small mb-5">Specialized in {island.type}. 24/7 uptime guaranteed with automated recovery bots.</p>
-                                <button className="btn btn-link text-dark p-0 fw-bold text-decoration-none">Explore Island <i className="bi bi-arrow-right ms-2"></i></button>
+                    {/* Feature 1 */}
+                    <div className="col-md-4">
+                        <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
+                            <div className="app-icon mb-3 mx-auto bg-light-green text-nook d-flex align-items-center justify-content-center rounded-circle">
+                                <i className="fa-solid fa-robot fs-2"></i>
                             </div>
+                            <h3 className="h4 fw-black text-dark mb-2">ChoBot Orders</h3>
+                            <p className="text-muted small fw-bold mb-0">
+                                Don't wait for drops. Type a command, receive a Dodo code, and fly to an island generated just for you.
+                            </p>
                         </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* 3. JOURNAL: Editorial Post Feed */}
-            <section className="container-fluid px-lg-5 py-5 bg-light">
-                <div className="row g-5">
-                    <div className="col-lg-8">
-                        <h2 className="fw-bold mb-5">Recent Journal</h2>
-                        {posts.map((post) => (
-                            <article key={post.id} className="row g-0 mb-5 post-hover pb-5 border-bottom border-dark border-opacity-10 align-items-center">
-                                <div className="col-md-4 mb-4 mb-md-0">
-                                    <div className="overflow-hidden rounded-4 shadow-sm" style={{ height: '240px' }}>
-                                        <img src={post.img} className="img-fluid h-100 w-100 object-fit-cover transition-img" alt="post" />
-                                    </div>
-                                </div>
-                                <div className="col-md-8 ps-md-5">
-                                    <div className="d-flex gap-3 mb-3 text-uppercase x-small tracking-widest fw-bold text-success">
-                                        <span>{post.date}</span>
-                                        <span>/</span>
-                                        <span>{post.category}</span>
-                                    </div>
-                                    <h3 className="fw-bold h2 mb-3">{post.title}</h3>
-                                    <p className="text-muted mb-4 fs-5">{post.excerpt}</p>
-                                    <button className="btn btn-link text-dark p-0 fw-bold text-decoration-none border-bottom border-dark">Read Full Post</button>
-                                </div>
-                            </article>
-                        ))}
                     </div>
 
-                    {/* Sidebar: Clean Widgets */}
-                    <div className="col-lg-4">
-                        <div className="sticky-top" style={{ top: '100px' }}>
-                            <div className="p-5 rounded-5 bg-dark text-white mb-4">
-                                <h4 className="fw-bold mb-4">Support the Dream.</h4>
-                                <p className="opacity-75 small mb-5">Unlock priority access to all 9 private islands and our custom ChoBot delivery service.</p>
-                                <button className="btn btn-success w-100 rounded-pill py-3 fw-bold shadow-sm">View Membership Tiers</button>
+                    {/* Feature 2 */}
+                    <div className="col-md-4">
+                        <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
+                            <div className="app-icon mb-3 mx-auto bg-light-yellow text-warning d-flex align-items-center justify-content-center rounded-circle">
+                                <i className="fa-solid fa-coins fs-2"></i>
                             </div>
+                            <h3 className="h4 fw-black text-dark mb-2">Max Bells</h3>
+                            <p className="text-muted small fw-bold mb-0">
+                                Pay off that raccoon today. Hit max bells (999,999,999) in a single trip with the Turnip glitch.
+                            </p>
+                        </div>
+                    </div>
 
-                            <div className="p-5 rounded-5 border bg-white shadow-sm">
-                                <h5 className="fw-bold mb-4">Community Support</h5>
-                                <p className="small text-muted mb-4">Our Discord is active 24/7. Get help from our staff team and connect with other Beshies.</p>
-                                <a href="#" className="btn btn-outline-dark w-100 rounded-pill py-3 fw-bold">Join the Discord</a>
+                    {/* Feature 3 */}
+                    <div className="col-md-4">
+                        <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
+                            <div className="app-icon mb-3 mx-auto bg-light-blue text-info d-flex align-items-center justify-content-center rounded-circle">
+                                <i className="fa-solid fa-ticket fs-2"></i>
                             </div>
+                            <h3 className="h4 fw-black text-dark mb-2">Villager Injection</h3>
+                            <p className="text-muted small fw-bold mb-0">
+                                Need Raymond? Sasha? Any villager in boxes ready to move to your island instantly.
+                            </p>
                         </div>
                     </div>
                 </div>
             </section>
+
+            {/* SECTION 3: PASSPORT (Pricing/Access) */}
+            <section className="container py-5 mb-5">
+                <div className="passport-card mx-auto bg-nook-green rounded-5 p-4 p-lg-5 shadow-lg" style={{maxWidth: '900px'}}>
+                    <div className="row align-items-center">
+                        <div className="col-lg-5 text-center text-lg-start mb-4 mb-lg-0">
+                            <h2 className="display-5 fw-black text-white ac-font mb-3">
+                                Get Your <br/> Passport
+                            </h2>
+                            <p className="text-white opacity-75 fw-bold mb-4">
+                                Join the sub squad on Twitch or Discord to unlock the premium Dodo codes.
+                            </p>
+                            <button className="btn btn-light rounded-pill px-4 py-2 fw-black text-nook shadow-sm">
+                                <i className="fa-brands fa-twitch me-2"></i>
+                                Subscribe Now
+                            </button>
+                        </div>
+
+                        {/* Passport Visual */}
+                        <div className="col-lg-7">
+                            <div className="bg-cream rounded-4 p-4 shadow-sm rotate-n2 position-relative">
+                                {/* Stamp decoration */}
+                                <div className="position-absolute top-0 end-0 m-3 opacity-25">
+                                    <i className="fa-solid fa-stamp fa-4x text-nook"></i>
+                                </div>
+
+                                <div className="d-flex align-items-center gap-3 mb-4">
+                                    <div className="bg-secondary bg-opacity-25 rounded rounded-3" style={{width: '80px', height: '80px'}}></div>
+                                    <div>
+                                        <h4 className="fw-black text-dark m-0">PASSPORT</h4>
+                                        <span className="text-muted small text-uppercase fw-bold">Nook Inc. Membership</span>
+                                    </div>
+                                </div>
+                                <div className="border-top border-2 border-dashed my-3 opacity-25"></div>
+                                <div className="row fw-bold text-dark small">
+                                    <div className="col-6 mb-2 text-muted text-uppercase x-small">Benefits</div>
+                                    <div className="col-6 mb-2 text-end text-nook">Active</div>
+                                    <div className="col-12 mb-2">
+                                        <i className="fa-solid fa-check text-success me-2"></i> 24/7 Access
+                                    </div>
+                                    <div className="col-12 mb-2">
+                                        <i className="fa-solid fa-check text-success me-2"></i> Priority Queue
+                                    </div>
+                                    <div className="col-12">
+                                        <i className="fa-solid fa-check text-success me-2"></i> Exclusive Discord Role
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+
+
 
             <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; letter-spacing: -0.01em; }
-        
-        .tracking-wider { letter-spacing: 0.1em; }
-        .tracking-widest { letter-spacing: 0.2em; }
-        .x-small { font-size: 0.75rem; }
+                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+                
+                :root {
+                    --nook-bg: #f2f4e6;
+                    --nook-green: #28a745;
+                    --nook-cream: #fffdf0;
+                    --nook-blue: #5bc0de;
+                    --nook-yellow: #f0ad4e;
+                    
+                }
+                
+                .app-card {
+                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+                    border: 2px solid transparent;
+                }
+                .app-card:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 15px 30px rgba(40, 167, 69, 0.15);
+                    border-color: rgba(40, 167, 69, 0.2);
+                }
+                .app-icon {
+                    width: 80px; height: 80px;
+                }
+                .bg-light-green { background-color: #e8f5e9; }
+                .bg-light-yellow { background-color: #fff3cd; }
+                .bg-light-blue { background-color: #e0f7fa; }
+                
+                /* PASSPORT SECTION */
+                .bg-nook-green { background-color: #28a745; }
+                .bg-cream { background-color: #fffdf0; }
+                .rotate-n2 { transform: rotate(-2deg); }
+                .rotate-n2:hover { transform: rotate(0deg); transition: 0.3s ease; }
 
-        /* HERO ELEMENTS */
-        .main-hero-img { transform: rotate(-2deg); }
-        .hero-visual-container { position: relative; padding: 20px; }
-        .floating-card {
-            position: absolute;
-            bottom: 20px;
-            right: -20px;
-            animation: float 4s ease-in-out infinite;
-        }
+                .nook-os {
+                    background-color: var(--nook-bg);
+                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
+                    background-size: 30px 30px;
+                }
+                
+                .font-nunito { font-family: 'Nunito', sans-serif; }
+                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
+                .fw-black { font-weight: 900; }
+                .text-nook { color: var(--nook-green); }
+                .pointer-events-none { pointer-events: none; }
 
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
-            100% { transform: translateY(0px); }
-        }
+                /* ANIMATIONS */
+                .live-dot {
+                    width: 10px; height: 10px; background: #28a745; border-radius: 50%;
+                    display: inline-block; animation: pulse 2s infinite; margin-right: 8px;
+                }
+                @keyframes pulse {
+                    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+                    70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+                }
 
-        /* ISLAND CARDS */
-        .island-card {
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        .island-card:hover {
-            background-color: #f8fbf9;
-            transform: translateY(-8px);
-            border-color: #198754 !important;
-        }
+                /* BUTTONS */
+                .btn-nook-primary {
+                    background-color: #88e0a0;
+                    color: white;
+                    border: 2px solid #fff;
+                    transition: all 0.2s;
+                }
+                .btn-nook-primary:hover {
+                    background-color: #6fd18b;
+                    transform: translateY(-3px);
+                    box-shadow: 0 10px 20px rgba(136, 224, 160, 0.4) !important;
+                }
+                .btn-white:hover { transform: translateY(-3px); background-color: #f8f9fa; }
+                .transform-active:active { transform: scale(0.95) !important; }
 
-        /* POST HOVER */
-        .transition-img { transition: transform 0.8s ease; }
-        .post-hover:hover .transition-img { transform: scale(1.08); }
+                /* SNAPSHOT FRAME */
+                .snapshot-frame {
+                    background: #fff;
+                    padding: 15px;
+                    padding-bottom: 50px; /* Polaroid style bottom */
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                    transform: rotate(-3deg);
+                    max-width: 550px;
+                    transition: transform 0.3s ease;
+                }
+                .snapshot-frame:hover { transform: rotate(0deg) scale(1.02); }
 
-        .live-dot {
-            width: 10px; height: 10px; background: #198754; border-radius: 50%;
-            display: inline-block; animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
-        }
+                /* TAPE STRIP */
+                .tape-strip {
+                    position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+                    width: 120px; height: 35px;
+                    background-color: rgba(255, 255, 255, 0.4);
+                    border-left: 2px dashed rgba(0,0,0,0.1);
+                    border-right: 2px dashed rgba(0,0,0,0.1);
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    z-index: 10;
+                    backdrop-filter: blur(2px);
+                }
 
-        .shadow-sm { box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important; }
-        .bg-light { background-color: #f9fbf9 !important; }
-      `}</style>
-        </div>
+                /* FLOATING ICONS */
+                .floating-badge { animation: float 3s ease-in-out infinite; }
+                .floating-badge-2 { animation: float 4s ease-in-out infinite reverse; }
+
+                @keyframes float {
+                    0% { transform: translateY(0px); }
+                    50% { transform: translateY(-10px); }
+                    100% { transform: translateY(0px); }
+                }
+            `}</style>
+        </>
     );
 };
 
