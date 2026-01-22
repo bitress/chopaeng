@@ -333,10 +333,10 @@ const Home = () => {
                             <p className="text-white opacity-75 fw-bold mb-4">
                                 Join the sub squad on Twitch or Discord to unlock the premium Dodo codes.
                             </p>
-                            <button className="btn btn-light rounded-pill px-4 py-2 fw-black text-nook shadow-sm">
-                                <i className="fa-brands fa-twitch me-2"></i>
+                            <a href="https://www.patreon.com/cw/chopaeng/membership" target="_blank" className="btn btn-light rounded-pill px-4 py-2 fw-black text-nook shadow-sm">
+                                <i className="fa-brands fa-patreon me-2"></i>
                                 Subscribe Now
-                            </button>
+                            </a>
                         </div>
 
                         {/* Passport Visual */}

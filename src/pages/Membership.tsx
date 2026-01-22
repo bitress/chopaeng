@@ -2,7 +2,7 @@
 const Membership = () => {
 
     const links = {
-        patreon: "https://www.patreon.com/chopaeng",
+        patreon: "https://www.patreon.com/cw/chopaeng/membership",
         twitch: "https://www.twitch.tv/chopaeng",
         youtube: "https://www.youtube.com/c/chopaengtv"
     };
