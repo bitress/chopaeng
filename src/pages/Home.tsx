@@ -11,9 +11,8 @@ interface SearchResult {
     suggestions?: string[];
     message: string;
 }
-
 const Home = () => {
-    // --- Search State ---
+
     const [searchTerm, setSearchTerm] = useState('');
     const [searchMode, setSearchMode] = useState<'item' | 'villager'>('item');
     const [loading, setLoading] = useState(false);
@@ -45,81 +44,91 @@ const Home = () => {
             setLoading(false);
         }
     };
+
     return (
-        <div className="nook-os">
-            {/* 1. HERO SECTION */}
-            <div className="min-vh-100 d-flex align-items-center font-nunito overflow-hidden position-relative">
-                {/* Background Decoration */}
-                <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block pointer-events-none">
-                    <i className="fa-solid fa-leaf text-success" style={{fontSize: '30rem', transform: 'rotate(45deg)'}}></i>
-                </div>
+        <>
+        <div className="nook-os min-vh-100 d-flex align-items-center font-nunito overflow-hidden position-relative">
 
-                <section className="container-fluid px-lg-5 position-relative z-1">
-                    <div className="row align-items-center py-5">
-                        {/* LEFT: TEXT CONTENT */}
-                        <div className="col-lg-6 order-2 order-lg-1 ps-lg-5">
-                            <div className="d-inline-flex align-items-center gap-2 mb-4 px-3 py-2 rounded-pill bg-white border border-success border-opacity-25 shadow-sm">
-                                <span className="live-dot"></span>
-                                <span className="text-success fw-bold x-small text-uppercase tracking-wider">
-                                    Stream Online Now
-                                </span>
-                            </div>
+            {/* Background Decoration (Leaf Pattern) */}
+            <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block pointer-events-none">
+                <i className="fa-solid fa-leaf text-success" style={{fontSize: '30rem', transform: 'rotate(45deg)'}}></i>
+            </div>
 
-                            <h1 className="display-3 fw-black ac-font lh-1 mb-4 text-dark">
-                                Your Ticket to <br />
-                                <span className="text-nook">Island Paradise.</span>
-                            </h1>
+            <section className="container-fluid px-lg-5 position-relative z-1">
+                <div className="row align-items-center py-5">
 
-                            <p className="lead text-muted mb-5 fw-bold opacity-75" style={{ maxWidth: '480px', fontSize: '1.1rem' }}>
-                                Skip the grind. Join the Chopaeng community to access 24/7 Treasure Islands, Max Bells, and order any villager via ChoBot.
-                            </p>
+                    {/* LEFT: TEXT CONTENT */}
+                    <div className="col-lg-6 order-2 order-lg-1 ps-lg-5">
 
-                            <div className="d-flex flex-column flex-sm-row gap-3 mb-5">
-                                {/* Linked to the new search section */}
-                                <a href="#search-hub" className="btn btn-nook-primary rounded-pill px-5 py-3 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active text-decoration-none">
-                                    <i className="fa-solid fa-plane-departure"></i>
-                                    Start Looting
-                                </a>
-                                <button className="btn btn-white rounded-pill px-5 py-3 fw-bold border shadow-sm text-muted transform-active">
-                                    <i className="fa-solid fa-map me-2"></i>
-                                    View Maps
-                                </button>
-                            </div>
-
-                            <div className="d-flex align-items-center gap-4 text-muted small fw-bold">
-                                <div className="d-flex align-items-center gap-2">
-                                    <i className="fa-brands fa-discord fs-4 text-primary opacity-75"></i>
-                                    <span>15k+ Beshies</span>
-                                </div>
-                                <div className="d-flex align-items-center gap-2">
-                                    <i className="fa-solid fa-box-open fs-4 text-success opacity-75"></i>
-                                    <span>Auto-Restock</span>
-                                </div>
-                            </div>
+                        {/* Status Badge */}
+                        <div className="d-inline-flex align-items-center gap-2 mb-4 px-3 py-2 rounded-pill bg-white border border-success border-opacity-25 shadow-sm">
+                            <span className="live-dot"></span>
+                            <span className="text-success fw-bold x-small text-uppercase tracking-wider">
+                                Stream Online Now
+                            </span>
                         </div>
 
-                        {/* RIGHT: HERO IMAGE */}
-                        <div className="col-lg-6 order-1 order-lg-2 mb-5 mb-lg-0 text-center position-relative">
-                            <div className="snapshot-frame mx-auto position-relative">
-                                <div className="tape-strip"></div>
-                                <img
-                                    src="https://images.unsplash.com/photo-1599939571322-792a326991f2?q=80&w=1000&auto=format&fit=crop"
-                                    alt="ACNH Setup"
-                                    className="img-fluid rounded-3 border border-light"
-                                />
-                                <div className="floating-badge bg-white p-3 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-4 ms-4">
-                                    <i className="fa-solid fa-sack-dollar text-warning fs-2"></i>
-                                </div>
-                                <div className="floating-badge-2 bg-white p-3 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-4 me-n4">
-                                    <i className="fa-solid fa-gift text-danger fs-2"></i>
-                                </div>
+                        {/* Headline */}
+                        <h1 className="display-3 fw-black ac-font lh-1 mb-4 text-dark">
+                            Your Ticket to <br />
+                            <span className="text-nook">Island Paradise.</span>
+                        </h1>
+
+                        {/* Subtext */}
+                        <p className="lead text-muted mb-5 fw-bold opacity-75" style={{ maxWidth: '480px', fontSize: '1.1rem' }}>
+                            Skip the grind. Join the Chopaeng community to access 24/7 Treasure Islands, Max Bells, and order any villager via ChoBot.
+                        </p>
+
+                        {/* CTA Buttons */}
+                        <div className="d-flex flex-column flex-sm-row gap-3 mb-5">
+                            <button className="btn btn-nook-primary rounded-pill px-5 py-3 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
+                                <i className="fa-solid fa-plane-departure"></i>
+                                Start Looting
+                            </button>
+                            <button className="btn btn-white rounded-pill px-5 py-3 fw-bold border shadow-sm text-muted transform-active">
+                                <i className="fa-solid fa-map me-2"></i>
+                                View Maps
+                            </button>
+                        </div>
+
+                        {/* Social Proof */}
+                        <div className="d-flex align-items-center gap-4 text-muted small fw-bold">
+                            <div className="d-flex align-items-center gap-2">
+                                <i className="fa-brands fa-discord fs-4 text-primary opacity-75"></i>
+                                <span>15k+ Beshies</span>
+                            </div>
+                            <div className="d-flex align-items-center gap-2">
+                                <i className="fa-solid fa-box-open fs-4 text-success opacity-75"></i>
+                                <span>Auto-Restock</span>
                             </div>
                         </div>
                     </div>
-                </section>
-            </div>
 
-            {/* 2. [NEW] SEARCH HUB SECTION */}
+                    {/* RIGHT: HERO IMAGE (Snapshot Style) */}
+                    <div className="col-lg-6 order-1 order-lg-2 mb-5 mb-lg-0 text-center position-relative">
+
+                        {/* Main Image */}
+                        <div className="snapshot-frame mx-auto position-relative">
+                            <div className="tape-strip"></div>
+                            <img
+                                src="https://images.unsplash.com/photo-1599939571322-792a326991f2?q=80&w=1000&auto=format&fit=crop"
+                                alt="ACNH Setup"
+                                className="img-fluid rounded-3 border border-light"
+                            />
+                            {/* Floating Floating Elements */}
+                            <div className="floating-badge bg-white p-3 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-4 ms-4">
+                                <i className="fa-solid fa-sack-dollar text-warning fs-2"></i>
+                            </div>
+                            <div className="floating-badge-2 bg-white p-3 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-4 me-n4">
+                                <i className="fa-solid fa-gift text-danger fs-2"></i>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+        </div>
+
             <section id="search-hub" className="container py-5 mt-n5 position-relative z-2">
                 <div className="bg-white rounded-5 shadow-lg p-4 p-lg-5 border border-success border-opacity-10 position-relative overflow-hidden">
 
@@ -250,9 +259,10 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* 3. FEATURES SECTION */}
+            {/* SECTION 2: NOOK SERVICES (Features) */}
             <section className="container py-5">
                 <div className="row g-4">
+                    {/* Feature 1 */}
                     <div className="col-md-4">
                         <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
                             <div className="app-icon mb-3 mx-auto bg-light-green text-nook d-flex align-items-center justify-content-center rounded-circle">
@@ -264,6 +274,8 @@ const Home = () => {
                             </p>
                         </div>
                     </div>
+
+                    {/* Feature 2 */}
                     <div className="col-md-4">
                         <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
                             <div className="app-icon mb-3 mx-auto bg-light-yellow text-warning d-flex align-items-center justify-content-center rounded-circle">
@@ -275,6 +287,8 @@ const Home = () => {
                             </p>
                         </div>
                     </div>
+
+                    {/* Feature 3 */}
                     <div className="col-md-4">
                         <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
                             <div className="app-icon mb-3 mx-auto bg-light-blue text-info d-flex align-items-center justify-content-center rounded-circle">
@@ -289,7 +303,7 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* 4. PASSPORT SECTION */}
+            {/* SECTION 3: PASSPORT (Pricing/Access) */}
             <section className="container py-5 mb-5">
                 <div className="passport-card mx-auto bg-nook-green rounded-5 p-4 p-lg-5 shadow-lg" style={{maxWidth: '900px'}}>
                     <div className="row align-items-center">
@@ -313,6 +327,7 @@ const Home = () => {
                                 <div className="position-absolute top-0 end-0 m-3 opacity-25">
                                     <i className="fa-solid fa-stamp fa-4x text-nook"></i>
                                 </div>
+
                                 <div className="d-flex align-items-center gap-3 mb-4">
                                     <div className="bg-secondary bg-opacity-25 rounded rounded-3" style={{width: '80px', height: '80px'}}></div>
                                     <div>
@@ -340,6 +355,10 @@ const Home = () => {
                 </div>
             </section>
 
+
+
+
+
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
                 
@@ -349,32 +368,44 @@ const Home = () => {
                     --nook-cream: #fffdf0;
                     --nook-blue: #5bc0de;
                     --nook-yellow: #f0ad4e;
+                    
                 }
                 
-                /* --- GENERAL LAYOUT --- */
+                .app-card {
+                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+                    border: 2px solid transparent;
+                }
+                .app-card:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 15px 30px rgba(40, 167, 69, 0.15);
+                    border-color: rgba(40, 167, 69, 0.2);
+                }
+                .app-icon {
+                    width: 80px; height: 80px;
+                }
+                .bg-light-green { background-color: #e8f5e9; }
+                .bg-light-yellow { background-color: #fff3cd; }
+                .bg-light-blue { background-color: #e0f7fa; }
+                
+                /* PASSPORT SECTION */
+                .bg-nook-green { background-color: #28a745; }
+                .bg-cream { background-color: #fffdf0; }
+                .rotate-n2 { transform: rotate(-2deg); }
+                .rotate-n2:hover { transform: rotate(0deg); transition: 0.3s ease; }
+
                 .nook-os {
                     background-color: var(--nook-bg);
                     background-image: radial-gradient(#dce2c8 15%, transparent 16%);
                     background-size: 30px 30px;
                 }
+                
                 .font-nunito { font-family: 'Nunito', sans-serif; }
                 .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
                 .fw-black { font-weight: 900; }
                 .text-nook { color: var(--nook-green); }
-                .bg-nook-green { background-color: var(--nook-green); }
-                .bg-cream { background-color: var(--nook-cream); }
-                .bg-light-green { background-color: #e8f5e9; }
-                .bg-light-yellow { background-color: #fff3cd; }
-                .bg-light-blue { background-color: #e0f7fa; }
-                .bg-success-subtle { background-color: #d1e7dd; }
-                .bg-danger-subtle { background-color: #f8d7da; }
-                .x-small { font-size: 0.75rem; }
                 .pointer-events-none { pointer-events: none; }
-                
-                /* Negative Margin to pull Search Hub up */
-                .mt-n5 { margin-top: -5rem !important; }
 
-                /* --- ANIMATIONS --- */
+                /* ANIMATIONS */
                 .live-dot {
                     width: 10px; height: 10px; background: #28a745; border-radius: 50%;
                     display: inline-block; animation: pulse 2s infinite; margin-right: 8px;
@@ -385,64 +416,56 @@ const Home = () => {
                     100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
                 }
 
-                .animate-up { animation: slideUp 0.4s ease-out forwards; }
-                @keyframes slideUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                /* --- COMPONENTS --- */
+                /* BUTTONS */
                 .btn-nook-primary {
-                    background-color: #88e0a0; color: white; border: 2px solid #fff; transition: all 0.2s;
+                    background-color: #88e0a0;
+                    color: white;
+                    border: 2px solid #fff;
+                    transition: all 0.2s;
                 }
                 .btn-nook-primary:hover {
-                    background-color: #6fd18b; transform: translateY(-3px);
+                    background-color: #6fd18b;
+                    transform: translateY(-3px);
                     box-shadow: 0 10px 20px rgba(136, 224, 160, 0.4) !important;
                 }
                 .btn-white:hover { transform: translateY(-3px); background-color: #f8f9fa; }
                 .transform-active:active { transform: scale(0.95) !important; }
 
-                .app-card {
-                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
-                    border: 2px solid transparent;
-                }
-                .app-card:hover {
-                    transform: translateY(-10px);
-                    box-shadow: 0 15px 30px rgba(40, 167, 69, 0.15);
-                    border-color: rgba(40, 167, 69, 0.2);
-                }
-                .app-icon { width: 80px; height: 80px; }
-
-                /* --- DECORATIONS --- */
+                /* SNAPSHOT FRAME */
                 .snapshot-frame {
-                    background: #fff; padding: 15px; padding-bottom: 50px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.1); transform: rotate(-3deg);
-                    max-width: 550px; transition: transform 0.3s ease;
+                    background: #fff;
+                    padding: 15px;
+                    padding-bottom: 50px; /* Polaroid style bottom */
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                    transform: rotate(-3deg);
+                    max-width: 550px;
+                    transition: transform 0.3s ease;
                 }
                 .snapshot-frame:hover { transform: rotate(0deg) scale(1.02); }
 
+                /* TAPE STRIP */
                 .tape-strip {
                     position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-                    width: 120px; height: 35px; background-color: rgba(255, 255, 255, 0.4);
-                    border-left: 2px dashed rgba(0,0,0,0.1); border-right: 2px dashed rgba(0,0,0,0.1);
-                    backdrop-filter: blur(2px); z-index: 10;
+                    width: 120px; height: 35px;
+                    background-color: rgba(255, 255, 255, 0.4);
+                    border-left: 2px dashed rgba(0,0,0,0.1);
+                    border-right: 2px dashed rgba(0,0,0,0.1);
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    z-index: 10;
+                    backdrop-filter: blur(2px);
                 }
-                
-                .rotate-n2 { transform: rotate(-2deg); }
-                .rotate-n2:hover { transform: rotate(0deg); transition: 0.3s ease; }
 
+                /* FLOATING ICONS */
                 .floating-badge { animation: float 3s ease-in-out infinite; }
                 .floating-badge-2 { animation: float 4s ease-in-out infinite reverse; }
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-10px); }
-                }
 
-                @media (min-width: 992px) {
-                    .border-end-lg { border-right: 1px solid #dee2e6 !important; }
+                @keyframes float {
+                    0% { transform: translateY(0px); }
+                    50% { transform: translateY(-10px); }
+                    100% { transform: translateY(0px); }
                 }
             `}</style>
-        </div>
+        </>
     );
 };
 

@@ -7,10 +7,8 @@ type FilterKey = "ALL" | Category;
 type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
 type Theme = "pink" | "teal" | "purple" | "gold";
 
-// Search Modes
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
 
-// Internal App State
 interface Island {
     name: string;
     status: IslandStatus;
@@ -18,12 +16,12 @@ interface Island {
     type: string;
     seasonal: string;
     items: string[];
-    visitors: number; // Normalized to 0-7
+    visitors: number;
     cat: Category;
     theme: Theme;
+    mapUrl?: string;
 }
 
-// Finder API Response
 interface FinderResponse {
     found: boolean;
     query: string;
@@ -33,7 +31,6 @@ interface FinderResponse {
     };
 }
 
-// Live Status API Response
 interface ApiIsland {
     dodo: string;
     name: string;
@@ -61,7 +58,10 @@ interface StatusMeta {
     aria: string;
 }
 
-// --- CONFIGURATION ---
+const getIslandMap = (islandName: string) => {
+    return `/maps/${islandName.toLowerCase()}.png`;
+};
+
 const FILTERS: FilterTab[] = [
     { key: "ALL", label: "All Islands", icon: "fa-globe" },
     { key: "public", label: "Free Access", icon: "fa-lock-open" },
@@ -113,7 +113,7 @@ const parseVisitors = (raw: string): number => {
 };
 
 // Source of Truth
-const STATIC_ISLAND_METADATA: Island[] = [
+const RAW_METADATA: Island[] = [
     // ROW 1
     { name: "ALAPAAP", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs", "Materials"], visitors: 7, cat: "member", theme: "gold" },
     { name: "ARUGA", status: "SUB ONLY", type: "Patreon Exclusive", seasonal: "Year-Round", items: ["Exclusive Sets", "Materials"], visitors: 1, cat: "member", theme: "gold" },
@@ -137,7 +137,7 @@ const STATIC_ISLAND_METADATA: Island[] = [
     // ROW 4
     { name: "KAULAYAW", status: "ONLINE", type: "2.0 Treasure Island", seasonal: "Year-Round", items: ["2.0 Furniture", "Food"], visitors: 7, cat: "public", theme: "teal" },
     { name: "TADHANA", status: "ONLINE", type: "Furniture Island", seasonal: "Year-Round", items: ["Antique", "Imperial", "Cute"], visitors: 7, cat: "public", theme: "purple" },
-    { name: "RAGSUYO", status: "ONLINE", type: "Critters & DIY", seasonal: "Year-Round", items: ["Fish Models", "Bug Models"], visitors: 7, cat: "public", theme: "teal" },
+    { name: "PAGSUYO", status: "ONLINE", type: "Critters & DIY", seasonal: "Year-Round", items: ["Fish Models", "Bug Models"], visitors: 7, cat: "public", theme: "teal" },
     { name: "KALAWAKAN", status: "ONLINE", type: "1.0 Treasure Island", seasonal: "Year-Round", items: ["Rattan", "Diner", "Throwback"], visitors: 7, cat: "public", theme: "teal" },
     { name: "DALANGIN", status: "REFRESHING", type: "2.0 Treasure Island", seasonal: "Year-Round", items: ["Refreshing..."], visitors: 0, cat: "public", theme: "teal" },
     // ROW 5
@@ -156,20 +156,26 @@ const STATIC_ISLAND_METADATA: Island[] = [
     { name: "SINTA", status: "ONLINE", type: "Seasonal Items", seasonal: "Wedding", items: ["Wedding Set", "Hearts"], visitors: 7, cat: "public", theme: "teal" },
 ];
 
+const STATIC_ISLAND_METADATA = RAW_METADATA.map(island => ({
+    ...island,
+    mapUrl: getIslandMap(island.name)
+}));
+
 const TreasureIslands = () => {
     // State
     const [islands, setIslands] = useState<Island[]>(STATIC_ISLAND_METADATA);
     const [filter, setFilter] = useState<FilterKey>("ALL");
     const [loading, setLoading] = useState<boolean>(true);
 
-    // UI State for "Copied!" feedback
+    // UI State
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [selectedMap, setSelectedMap] = useState<Island | null>(null);
 
     // Search Logic
     const [search, setSearch] = useState<string>("");
     const [searchMode, setSearchMode] = useState<SearchMode>("FILTER");
     const [isFinderLoading, setIsFinderLoading] = useState(false);
-    const [finderResults, setFinderResults] = useState<string[] | null>(null); // Null = No search, [] = Not found, [...] = Found
+    const [finderResults, setFinderResults] = useState<string[] | null>(null);
     const [lastQuery, setLastQuery] = useState("");
 
     // --- 1. Fetch Live Status (Dodo/Visitors) ---
@@ -210,6 +216,15 @@ const TreasureIslands = () => {
         fetchStatus();
         const interval = setInterval(fetchStatus, 15000);
         return () => clearInterval(interval);
+    }, []);
+
+    // Handle Escape Key for Modal
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setSelectedMap(null);
+        };
+        window.addEventListener("keydown", handleEsc);
+        return () => window.removeEventListener("keydown", handleEsc);
     }, []);
 
     // --- 2. Handle Item/Villager Finder Search ---
@@ -263,7 +278,6 @@ const TreasureIslands = () => {
         return data;
     }, [filter, search, islands, searchMode, finderResults]);
 
-    // Handle Code Copy with UI Feedback
     const onCopyCode = (island: Island, code: string) => {
         if (code === "GETTIN'" || code === "....." || code === "SUB ONLY") return;
 
@@ -291,7 +305,7 @@ const TreasureIslands = () => {
                             <p className="text-muted fw-bold small">Live Status • Dodo Codes • Item Finder</p>
                         </div>
 
-                        {/* 1. Category Tabs */}
+                        {/* Category Tabs */}
                         <div className="d-flex justify-content-center gap-3 mb-4">
                             {FILTERS.map((t) => (
                                 <button
@@ -305,7 +319,7 @@ const TreasureIslands = () => {
                             ))}
                         </div>
 
-                        {/* 2. Search Area */}
+                        {/* Search Area */}
                         <div className="search-container mx-auto" style={{ maxWidth: '650px' }}>
                             {/* Mode Segmented Toggle */}
                             <div className="mode-toggle p-1 bg-light rounded-pill d-flex mb-3 border">
@@ -368,7 +382,6 @@ const TreasureIslands = () => {
                 </div>
 
                 {/* --- FEEDBACK AREA --- */}
-                {/* Search Results */}
                 {searchMode !== "FILTER" && finderResults !== null && (
                     <div className="text-center mb-5 animate-up">
                         {finderResults.length > 0 ? (
@@ -405,15 +418,12 @@ const TreasureIslands = () => {
                     {filteredData.map((island) => {
                         const statusMeta = STATUS_CONFIG[island.status] || STATUS_CONFIG["OFFLINE"];
 
-                        // Check if this island is a "hit" from the finder
                         const isMatch = finderResults && finderResults.includes(island.name.toUpperCase());
 
-                        // Determine Code Display
                         const hasCode = island.status === "ONLINE" && island.dodoCode && island.dodoCode.length === 5;
                         const btnText = hasCode ? island.dodoCode : statusMeta.btn.text;
                         const isCopied = copiedId === island.name;
 
-                        // Visitor Math
                         const pct = (island.visitors / 7) * 100;
                         const isFull = island.visitors >= 7;
 
@@ -421,14 +431,13 @@ const TreasureIslands = () => {
                             <div key={island.name} className="col-xl-3 col-lg-4 col-md-6">
                                 <div className={`island-card card h-100 border-0 shadow-sm overflow-hidden position-relative ${statusMeta.cardClass} ${isMatch ? 'match-highlight' : ''}`}>
 
-                                    {/* Match Badge */}
                                     {isMatch && (
                                         <div className="position-absolute top-0 start-0 w-100 bg-warning text-dark text-center fw-black x-small py-1 z-2 shadow-sm">
                                             <i className="fa-solid fa-star me-1"></i> ITEM FOUND HERE
                                         </div>
                                     )}
 
-                                    {/* Card Header (Status + Name) */}
+                                    {/* Card Header */}
                                     <div className={`card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-start ${isMatch ? 'mt-4' : ''}`}>
                                         <div>
                                             <div className="d-flex align-items-center gap-2 mb-1">
@@ -438,15 +447,29 @@ const TreasureIslands = () => {
                                             <h3 className="ac-font mb-0 text-dark h4">{island.name}</h3>
                                             <span className="text-muted fw-bold x-small text-uppercase">{island.type}</span>
                                         </div>
-                                        <div className={`theme-badge rounded-circle d-flex align-items-center justify-content-center theme-${island.theme}`} title={`${island.seasonal} Season`}>
-                                            <i className="fa-solid fa-leaf"></i>
+
+                                        <div className="d-flex gap-2">
+                                            {/* MAP BUTTON: Only Show if NOT a Member/Sub Island */}
+                                            {island.cat !== "member" && (
+                                                <button
+                                                    className="btn btn-light rounded-circle border d-flex align-items-center justify-content-center shadow-sm"
+                                                    style={{width: 40, height: 40}}
+                                                    onClick={() => setSelectedMap(island)}
+                                                    title="View Map"
+                                                >
+                                                    <i className="fa-regular fa-map text-muted"></i>
+                                                </button>
+                                            )}
+
+                                            <div className={`theme-badge rounded-circle d-flex align-items-center justify-content-center theme-${island.theme}`} title={`${island.seasonal} Season`}>
+                                                <i className="fa-solid fa-leaf"></i>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Card Body */}
                                     <div className="card-body p-4 pt-3">
 
-                                        {/* Tag Cloud */}
                                         <div className="d-flex flex-wrap gap-1 mb-4">
                                             {island.items.slice(0, 3).map((item) => (
                                                 <span key={item} className="badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">
@@ -455,7 +478,6 @@ const TreasureIslands = () => {
                                             ))}
                                         </div>
 
-                                        {/* Action Button */}
                                         <button
                                             onClick={() => hasCode && onCopyCode(island, island.dodoCode!)}
                                             disabled={statusMeta.btn.disabled}
@@ -476,7 +498,6 @@ const TreasureIslands = () => {
                                             </div>
                                         </button>
 
-                                        {/* Visitor Meter */}
                                         <div className="visitor-meter">
                                             <div className="d-flex justify-content-between align-items-end mb-1">
                                                 <span className="x-small fw-bold text-muted">Capacity</span>
@@ -499,6 +520,55 @@ const TreasureIslands = () => {
                 </div>
             </div>
 
+            {/* --- MAP MODAL --- */}
+            {selectedMap && (
+                <div className="modal-overlay d-flex align-items-center justify-content-center" onClick={() => setSelectedMap(null)}>
+                    <div
+                        className="modal-content-card bg-white rounded-5 shadow-lg overflow-hidden position-relative p-0"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: '800px', width: '90%' }}
+                    >
+                        <div className="p-3 d-flex justify-content-between align-items-center bg-light border-bottom">
+                            <div className="d-flex align-items-center gap-2">
+                                <div className={`theme-badge rounded-circle d-flex align-items-center justify-content-center theme-${selectedMap.theme}`} style={{width: 32, height: 32, fontSize: '0.9rem'}}>
+                                    <i className="fa-solid fa-leaf"></i>
+                                </div>
+                                <h4 className="ac-font m-0 text-dark">{selectedMap.name} Map</h4>
+                            </div>
+                            <button className="btn btn-sm btn-light border rounded-circle" onClick={() => setSelectedMap(null)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div className="map-container bg-dark text-center">
+                            <img
+                                src={selectedMap.mapUrl}
+                                alt={`${selectedMap.name} Map`}
+                                className="img-fluid"
+                                style={{ maxHeight: '70vh', objectFit: 'contain' }}
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    if (target.src.includes('.png')) {
+                                        target.src = target.src.replace('.png', '.jpg');
+                                    } else if (target.src.endsWith('.jpg')) {
+                                        target.src = target.src.replace('.jpg', '.jpeg');
+                                    } else {
+                                        target.src = 'https://www.chopaeng.com/banner.png';
+                                    }
+                                }}
+                            />
+                        </div>
+
+                        <div className="p-3 bg-white d-flex justify-content-between align-items-center">
+                            <span className="fw-bold text-muted small">{selectedMap.seasonal} Season</span>
+                            <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                {selectedMap.type}
+                             </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
 
@@ -508,6 +578,7 @@ const TreasureIslands = () => {
                     --nook-bg: #f2f4e6;
                 }
 
+                body { font-family: 'Nunito', sans-serif; }
                 .font-nunito { font-family: 'Nunito', sans-serif; }
                 .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
                 .fw-black { font-weight: 900; }
@@ -517,6 +588,25 @@ const TreasureIslands = () => {
                     background-color: var(--nook-bg);
                     background-image: radial-gradient(#dce2c8 15%, transparent 16%);
                     background-size: 30px 30px;
+                }
+
+                /* --- MODAL --- */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.6);
+                    backdrop-filter: blur(8px);
+                    z-index: 1050;
+                    animation: fadeIn 0.3s ease;
+                }
+                .modal-content-card {
+                    animation: slideUpFade 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUpFade { 
+                    from { opacity: 0; transform: translateY(50px) scale(0.9); } 
+                    to { opacity: 1; transform: translateY(0) scale(1); } 
                 }
 
                 /* --- CONTROL CENTER --- */
