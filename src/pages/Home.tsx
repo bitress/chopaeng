@@ -181,29 +181,49 @@ const Home = () => {
                     </div>
 
                     {/* Results Area */}
-                    <div className="results-container" style={{minHeight: data ? 'auto' : '0'}}>
-                        {/* Error */}
+                    <div className="results-container" style={{ minHeight: data ? 'auto' : '0' }}>
+
+                        {/* 1. Network/API Error */}
                         {error && (
                             <div className="alert alert-danger rounded-4 text-center fw-bold border-0 bg-danger-subtle text-danger">
                                 <i className="fa-solid fa-triangle-exclamation me-2"></i> {error}
                             </div>
                         )}
 
-                        {/* Suggestions */}
-                        {data && !data.found && data.suggestions && data.suggestions.length > 0 && (
-                            <div className="text-center py-4 animate-up">
-                                <p className="fw-bold text-muted mb-3">Not found. Did you mean?</p>
-                                <div className="d-flex justify-content-center flex-wrap gap-2">
-                                    {data.suggestions.map((sugg, i) => (
-                                        <button key={i} onClick={() => handleSearch(sugg)} className="btn btn-outline-warning text-dark border-2 rounded-pill px-4 fw-bold">
-                                            {sugg}
-                                        </button>
-                                    ))}
+                        {/* 2. NOT FOUND STATE (Fixes the issue) */}
+                        {data && !data.found && (
+                            <div className="text-center py-5 animate-up bg-white rounded-4 border border-light shadow-sm">
+                                <div className="mb-3">
+                                    <i className="fa-solid fa-circle-question text-muted opacity-25" style={{ fontSize: '4rem' }}></i>
                                 </div>
+                                <h4 className="fw-black text-dark mb-2">
+                                    Oops! No {searchMode} found.
+                                </h4>
+                                <p className="text-muted fw-bold mb-4">
+                                    We couldn't find <span className="text-success">"{data.query}"</span>. Check the spelling?
+                                </p>
+
+                                {/* Suggestions (Only shows if they exist) */}
+                                {data.suggestions && data.suggestions.length > 0 && (
+                                    <div className="d-flex flex-column align-items-center">
+                                        <p className="small text-uppercase fw-bold text-muted mb-2">Did you mean:</p>
+                                        <div className="d-flex justify-content-center flex-wrap gap-2">
+                                            {data.suggestions.map((sugg, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => handleSearch(sugg)}
+                                                    className="btn btn-outline-warning text-dark border-2 rounded-pill px-4 fw-bold"
+                                                >
+                                                    {sugg}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
-                        {/* Found Card */}
+                        {/* 3. FOUND CARD */}
                         {data && data.found && data.results && (
                             <div className="card border-0 rounded-4 shadow-sm bg-light animate-up overflow-hidden">
                                 <div className="card-body p-0">
@@ -211,12 +231,11 @@ const Home = () => {
                                         {/* Left: Info */}
                                         <div className="col-lg-4 bg-cream p-4 text-center text-lg-start border-end-lg d-flex flex-column justify-content-center">
                                             <div className="mb-3">
-                                                <span className="badge bg-success text-white rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
-                                                    Found {searchMode}
-                                                </span>
+                            <span className="badge bg-success text-white rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
+                                Found {searchMode}
+                            </span>
                                                 <h3 className="ac-font display-6 text-dark text-capitalize lh-1">{data.query}</h3>
                                             </div>
-
                                         </div>
 
                                         {/* Right: Locations */}
@@ -230,8 +249,8 @@ const Home = () => {
                                                     <div className="d-flex flex-wrap gap-2">
                                                         {data.results.free.length > 0 ? data.results.free.map((island, i) => (
                                                             <span key={i} className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
-                                                                <i className="fa-solid fa-plane me-1 opacity-50"></i> {island}
-                                                            </span>
+                                            <i className="fa-solid fa-plane me-1 opacity-50"></i> {island}
+                                        </span>
                                                         )) : <span className="text-muted small fst-italic py-2 px-3 bg-light rounded-pill">Not on free islands</span>}
                                                     </div>
                                                 </div>
@@ -244,8 +263,8 @@ const Home = () => {
                                                     <div className="d-flex flex-wrap gap-2">
                                                         {data.results.sub.length > 0 ? data.results.sub.map((island, i) => (
                                                             <span key={i} className="badge bg-warning text-dark border border-white rounded-pill px-3 py-2 fw-bold shadow-sm">
-                                                                <i className="fa-solid fa-star me-1 opacity-50"></i> {island}
-                                                            </span>
+                                            <i className="fa-solid fa-star me-1 opacity-50"></i> {island}
+                                        </span>
                                                         )) : <span className="text-muted small fst-italic py-2 px-3 bg-light rounded-pill">Not on sub islands</span>}
                                                     </div>
                                                 </div>
