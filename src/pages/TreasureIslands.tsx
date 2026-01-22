@@ -578,7 +578,6 @@ const TreasureIslands = () => {
                     --nook-bg: #f2f4e6;
                 }
 
-                body { font-family: 'Nunito', sans-serif; }
                 .font-nunito { font-family: 'Nunito', sans-serif; }
                 .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
                 .fw-black { font-weight: 900; }
