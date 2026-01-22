@@ -28,12 +28,12 @@ const FindItems = () => {
         setLoading(true);
         setData(null);
         setError(null);
-        setSearchTerm(term); // Update input if called via suggestion click
+        setSearchTerm(term);
 
         try {
             const endpoint = searchMode === 'item' ? 'find' : 'villager';
 
-            const response = await fetch(`http://127.0.0.1:8100/api/${endpoint}?q=${encodeURIComponent(term)}`);
+            const response = await fetch(`https://acnh-finder.chopaeng.com/api/${endpoint}?q=${encodeURIComponent(term)}`);
 
             if (!response.ok) throw new Error("Server error");
 
