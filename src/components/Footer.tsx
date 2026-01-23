@@ -30,7 +30,7 @@ const Footer = () => {
         ]
     };
 
-    const handleSubscribe = (e) => {
+    const handleSubscribe = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
     };
 
