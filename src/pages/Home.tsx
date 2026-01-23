@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {Link} from "react-router-dom";
 
-// --- Types for the Search API ---
 interface SearchResult {
     found: boolean;
     query: string;
@@ -20,7 +19,6 @@ const Home = () => {
     const [data, setData] = useState<SearchResult | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // --- Search Handlers ---
     const handleSearch = async (term: string = searchTerm) => {
         if (!term.trim()) return;
 
@@ -133,11 +131,11 @@ const Home = () => {
             <section id="search-hub" className="container py-5 mt-n5 position-relative z-2">
                 <div className="bg-white rounded-5 shadow-lg p-4 p-lg-5 border border-success border-opacity-10 position-relative overflow-hidden">
 
-                    {/* Header */}
+                    {/* Header (Unchanged) */}
                     <div className="text-center mb-5">
-                        <span className="badge bg-light-green text-nook rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
-                             <i className="fa-solid fa-database me-1"></i> Database
-                        </span>
+            <span className="badge bg-light-green text-nook rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
+                 <i className="fa-solid fa-database me-1"></i> Database
+            </span>
                         <h2 className="display-5 fw-black ac-font text-dark mb-3">Island Catalog</h2>
                         <p className="text-muted fw-bold">Find which island has your items or villagers instantly.</p>
 
@@ -191,7 +189,7 @@ const Home = () => {
                             </div>
                         )}
 
-                        {/* 2. NOT FOUND STATE (Fixes the issue) */}
+                        {/* 2. NOT FOUND STATE */}
                         {data && !data.found && (
                             <div className="text-center py-5 animate-up bg-white rounded-4 border border-light shadow-sm">
                                 <div className="mb-3">
@@ -204,7 +202,7 @@ const Home = () => {
                                     We couldn't find <span className="text-success">"{data.query}"</span>. Check the spelling?
                                 </p>
 
-                                {/* Suggestions (Only shows if they exist) */}
+                                {/* Suggestions */}
                                 {data.suggestions && data.suggestions.length > 0 && (
                                     <div className="d-flex flex-column align-items-center">
                                         <p className="small text-uppercase fw-bold text-muted mb-2">Did you mean:</p>
@@ -224,7 +222,7 @@ const Home = () => {
                             </div>
                         )}
 
-                        {/* 3. FOUND CARD */}
+                        {/* 3. FOUND CARD - WITH LINKS */}
                         {data && data.found && data.results && (
                             <div className="card border-0 rounded-4 shadow-sm bg-light animate-up overflow-hidden">
                                 <div className="card-body p-0">
@@ -232,9 +230,9 @@ const Home = () => {
                                         {/* Left: Info */}
                                         <div className="col-lg-4 bg-cream p-4 text-center text-lg-start border-end-lg d-flex flex-column justify-content-center">
                                             <div className="mb-3">
-                            <span className="badge bg-success text-white rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
-                                Found {searchMode}
-                            </span>
+                                    <span className="badge bg-success text-white rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
+                                        Found {searchMode}
+                                    </span>
                                                 <h3 className="ac-font display-6 text-dark text-capitalize lh-1">{data.query}</h3>
                                             </div>
                                         </div>
@@ -249,9 +247,13 @@ const Home = () => {
                                                     </h6>
                                                     <div className="d-flex flex-wrap gap-2">
                                                         {data.results.free.length > 0 ? data.results.free.map((island, i) => (
-                                                            <span key={i} className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
-                                            <i className="fa-solid fa-plane me-1 opacity-50"></i> {island}
-                                        </span>
+                                                            <Link
+                                                                key={i}
+                                                                to={`/island/${island.toLowerCase()}`}
+                                                                className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold text-decoration-none island-link"
+                                                            >
+                                                                <i className="fa-solid fa-plane me-1 opacity-50"></i> {island}
+                                                            </Link>
                                                         )) : <span className="text-muted small fst-italic py-2 px-3 bg-light rounded-pill">Not on free islands</span>}
                                                     </div>
                                                 </div>
@@ -263,9 +265,13 @@ const Home = () => {
                                                     </h6>
                                                     <div className="d-flex flex-wrap gap-2">
                                                         {data.results.sub.length > 0 ? data.results.sub.map((island, i) => (
-                                                            <span key={i} className="badge bg-warning text-dark border border-white rounded-pill px-3 py-2 fw-bold shadow-sm">
-                                            <i className="fa-solid fa-star me-1 opacity-50"></i> {island}
-                                        </span>
+                                                            <Link
+                                                                key={i}
+                                                                to={`/island/${island.toLowerCase()}`}
+                                                                className="badge bg-warning text-dark border border-white rounded-pill px-3 py-2 fw-bold shadow-sm text-decoration-none island-link"
+                                                            >
+                                                                <i className="fa-solid fa-star me-1 opacity-50"></i> {island}
+                                                            </Link>
                                                         )) : <span className="text-muted small fst-italic py-2 px-3 bg-light rounded-pill">Not on sub islands</span>}
                                                     </div>
                                                 </div>
@@ -276,6 +282,18 @@ const Home = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Optional CSS for hover effect */}
+                    <style>{`
+                        .island-link {
+                            transition: transform 0.2s ease, box-shadow 0.2s ease;
+                        }
+                        .island-link:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+                            filter: brightness(0.95);
+                        }
+                    `}</style>
                 </div>
             </section>
 
