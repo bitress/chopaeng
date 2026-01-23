@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom"; // Import Link
 
 interface SearchResult {
     found: boolean;
@@ -18,9 +19,6 @@ const FindItems = () => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<SearchResult | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    // Debounce Logic (Optional: Only search when user stops typing or hits enter)
-    // For this implementation, I'll trigger on "Enter" or button click to save API calls
 
     const handleSearch = async (term: string = searchTerm) => {
         if (!term.trim()) return;
@@ -109,12 +107,12 @@ const FindItems = () => {
 
                 {/* Decoration */}
                 <div className="position-absolute bottom-0 start-0 opacity-10 ms-n5 mb-n5 text-white">
-                    <i className="fa-solid fa-leaf" style={{fontSize: '15rem', transform: 'rotate(-20deg)'}}></i>
+                    <i className="fa-solid fa-leaf" style={{ fontSize: '15rem', transform: 'rotate(-20deg)' }}></i>
                 </div>
             </header>
 
             {/* 2. RESULTS SECTION */}
-            <section className="container" style={{maxWidth: '800px'}}>
+            <section className="container" style={{ maxWidth: '800px' }}>
 
                 {/* ERROR STATE */}
                 {error && (
@@ -155,7 +153,7 @@ const FindItems = () => {
 
                 {/* SUCCESS STATE */}
                 {data && data.found && data.results && (
-                    <div className="card border-0 rounded-5 overflow-hidden mb-5 bg-white">
+                    <div className="card border-0 rounded-5 overflow-hidden mb-5 bg-white shadow-lg animate-up">
                         {/* Result Header */}
                         <div className="card-header bg-cream border-bottom border-light p-4 text-center">
                             <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
@@ -166,7 +164,7 @@ const FindItems = () => {
                             </h2>
                             <button
                                 onClick={() => copyCommand(data.query)}
-                                className="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold hover-nook"
+                                className="d-none btn btn-outline-dark rounded-pill px-4 py-2 fw-bold hover-nook"
                             >
                                 <i className="fa-regular fa-copy me-2"></i> Copy {searchMode === 'item' ? 'Order' : 'Villager'} Command
                             </button>
@@ -187,9 +185,13 @@ const FindItems = () => {
                                         {data.results.free.length > 0 ? (
                                             <div className="d-flex flex-wrap gap-2">
                                                 {data.results.free.map((island, i) => (
-                                                    <span key={i} className="badge bg-success text-white rounded-pill px-3 py-2 fw-bold shadow-sm">
+                                                    <Link
+                                                        key={i}
+                                                        to={`/island/${island.toLowerCase()}`}
+                                                        className="badge bg-success text-white rounded-pill px-3 py-2 fw-bold shadow-sm text-decoration-none hover-scale"
+                                                    >
                                                         <i className="fa-solid fa-plane me-1"></i> {island}
-                                                    </span>
+                                                    </Link>
                                                 ))}
                                             </div>
                                         ) : (
@@ -213,9 +215,13 @@ const FindItems = () => {
                                         {data.results.sub.length > 0 ? (
                                             <div className="d-flex flex-wrap gap-2">
                                                 {data.results.sub.map((island, i) => (
-                                                    <span key={i} className="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold shadow-sm border border-white">
+                                                    <Link
+                                                        key={i}
+                                                        to={`/island/${island.toLowerCase()}`}
+                                                        className="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold shadow-sm border border-white text-decoration-none hover-scale"
+                                                    >
                                                         <i className="fa-solid fa-star me-1"></i> {island}
-                                                    </span>
+                                                    </Link>
                                                 ))}
                                             </div>
                                         ) : (
@@ -274,6 +280,16 @@ const FindItems = () => {
                 .hover-nook:hover {
                     background-color: #f8f9fa;
                     transform: translateY(-2px);
+                }
+
+                /* Hover scale effect for links */
+                .hover-scale {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: inline-block;
+                }
+                .hover-scale:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 5px 10px rgba(0,0,0,0.1) !important;
                 }
                 
                 .transition-all { transition: all 0.3s ease; }

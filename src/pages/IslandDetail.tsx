@@ -81,8 +81,34 @@ const IslandDetail = () => {
     const canShowDodo = live?.isOnline && !live?.isSubOnly && live?.dodo && !["GETTIN'", "FULL"].includes(live.dodo);
     const mapImageSrc = `/maps/${island.name.toLowerCase()}.png`;
 
+    const siteUrl = window.location.origin;
+    const currentUrl = `${siteUrl}${location.pathname}`;
+    const seoImage = `${siteUrl}${mapImageSrc}`;
+    const pageTitle = `${island.name} | ChoPaeng`;
+    const pageDesc = `Visit ${island.name}, a ${island.seasonal} ${island.type}! Status: ${live?.status || 'Offline'}. Notable items: ${island.items.slice(0, 3).join(', ')}...`;
+
     return (
         <div className="nook-bg min-vh-100 py-4 py-md-5">
+
+            <title>{pageTitle}</title>
+            <meta name="description" content={pageDesc} />
+            <meta name="theme-color" content="#7ec9b1" />
+            <link rel="canonical" href={currentUrl} />
+
+            {/* Open Graph */}
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content={currentUrl} />
+            <meta property="og:title" content={pageTitle} />
+            <meta property="og:description" content={pageDesc} />
+            <meta property="og:image" content={seoImage} />
+            <meta property="og:site_name" content="Chopaeng Dodo Codes" />
+
+            {/* Twitter Cards */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={pageTitle} />
+            <meta name="twitter:description" content={pageDesc} />
+            <meta name="twitter:image" content={seoImage} />
+
             <div className="container" style={{ maxWidth: "1050px" }}>
 
                 {/* Navigation Breadcrumb */}

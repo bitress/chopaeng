@@ -12,38 +12,6 @@ interface SearchResult {
     message: string;
 }
 const Home = () => {
-
-    const [searchTerm, setSearchTerm] = useState('');
-    const [searchMode, setSearchMode] = useState<'item' | 'villager'>('item');
-    const [loading, setLoading] = useState(false);
-    const [data, setData] = useState<SearchResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-
-    const handleSearch = async (term: string = searchTerm) => {
-        if (!term.trim()) return;
-
-        setLoading(true);
-        setData(null);
-        setError(null);
-        setSearchTerm(term); // Update input if triggered by suggestion
-
-        try {
-            const endpoint = searchMode === 'item' ? 'find' : 'villager';
-            // Assuming localhost:8100 based on previous context
-            const response = await fetch(`https://acnh-finder.chopaeng.com/api/${endpoint}?q=${encodeURIComponent(term)}`);
-
-            if (!response.ok) throw new Error("Server error");
-
-            const result: SearchResult = await response.json();
-            setData(result);
-        } catch (err) {
-            console.error(err);
-            setError("Could not reach NookNet services. Is the bot online?");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
         <>
         <div className="nook-os min-vh-100 d-flex align-items-center font-nunito overflow-hidden position-relative">

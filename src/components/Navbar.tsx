@@ -20,7 +20,7 @@ const Navbar = () => {
     const navLinks = [
         { name: "Home", path: "/", icon: "fa-house" },
         { name: "Treasure Islands", path: "/islands", icon: "fa-map" },
-        // { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
+        { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
         { name: "Membership", path: "/membership", icon: "fa-crown" },
         { name: "Guide", path: "/guides", icon: "fa-book-open" },
         { name: "About", path: "/about", icon: "fa-circle-info" },
