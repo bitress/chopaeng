@@ -1,4 +1,5 @@
 import { useState } from "react";
+import {Link} from "react-router-dom";
 
 // --- Types for the Search API ---
 interface SearchResult {
@@ -81,21 +82,21 @@ const Home = () => {
 
                         {/* CTA Buttons */}
                         <div className="d-flex flex-column flex-sm-row gap-3 mb-5">
-                            <button className="btn btn-nook-primary rounded-pill px-5 py-3 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
+                            <Link to="/islands" className="btn btn-nook-primary rounded-pill px-5 py-3 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
                                 <i className="fa-solid fa-plane-departure"></i>
                                 Start Looting
-                            </button>
-                            <button className="btn btn-white rounded-pill px-5 py-3 fw-bold border shadow-sm text-muted transform-active">
+                            </Link>
+                            <Link to="/maps" className="btn btn-white rounded-pill px-5 py-3 fw-bold border shadow-sm text-muted transform-active">
                                 <i className="fa-solid fa-map me-2"></i>
                                 View Maps
-                            </button>
+                            </Link>
                         </div>
 
                         {/* Social Proof */}
                         <div className="d-flex align-items-center gap-4 text-muted small fw-bold">
                             <div className="d-flex align-items-center gap-2">
                                 <i className="fa-brands fa-discord fs-4 text-primary opacity-75"></i>
-                                <span>15k+ Beshies</span>
+                                <span>29k Potatoes</span>
                             </div>
                             <div className="d-flex align-items-center gap-2">
                                 <i className="fa-solid fa-box-open fs-4 text-success opacity-75"></i>

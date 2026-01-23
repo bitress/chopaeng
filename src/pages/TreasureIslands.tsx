@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
 
-// --- TYPES ---
 type Category = "public" | "member";
 type FilterKey = "ALL" | Category;
 
@@ -112,9 +111,7 @@ const parseVisitors = (raw: string): number => {
     return 0;
 };
 
-// Source of Truth
 const RAW_METADATA: Island[] = [
-    // ROW 1
     { name: "ALAPAAP", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs", "Materials"], visitors: 7, cat: "member", theme: "gold" },
     { name: "ARUGA", status: "SUB ONLY", type: "Patreon Exclusive", seasonal: "Year-Round", items: ["Exclusive Sets", "Materials"], visitors: 1, cat: "member", theme: "gold" },
     { name: "BAHAGHARI", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs"], visitors: 7, cat: "member", theme: "gold" },
@@ -153,7 +150,7 @@ const RAW_METADATA: Island[] = [
     { name: "AMIHAN", status: "ONLINE", type: "Seasonal Items", seasonal: "Festive", items: ["Ornaments", "Toy Day"], visitors: 7, cat: "public", theme: "teal" },
     { name: "BABAYLAN", status: "ONLINE", type: "Seasonal Items", seasonal: "Cherry Blossom", items: ["Petals", "Bonsai", "Branches"], visitors: 7, cat: "public", theme: "teal" },
     { name: "PAGSUYO", status: "ONLINE", type: "Seasonal Items", seasonal: "Autumn", items: ["Mushrooms", "Maple"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "SINTA", status: "ONLINE", type: "Seasonal Items", seasonal: "Wedding", items: ["Wedding Set", "Hearts"], visitors: 7, cat: "public", theme: "teal" },
+    { name: "SINTA", status: "ONLINE", type: "!orderbot", seasonal: "Wedding", items: ["Order Bot"], visitors: 7, cat: "public", theme: "teal" },
 ];
 
 const STATIC_ISLAND_METADATA = RAW_METADATA.map(island => ({
@@ -291,6 +288,7 @@ const TreasureIslands = () => {
         setSearch("");
         setFinderResults(null);
     };
+
 
     return (
         <div className="nook-bg min-vh-100 py-5 font-nunito">
@@ -478,6 +476,8 @@ const TreasureIslands = () => {
                                             ))}
                                         </div>
 
+
+
                                         <button
                                             onClick={() => hasCode && onCopyCode(island, island.dodoCode!)}
                                             disabled={statusMeta.btn.disabled}
@@ -577,7 +577,6 @@ const TreasureIslands = () => {
                     --nook-dark: #5faf63;
                     --nook-bg: #f2f4e6;
                 }
-
                 .font-nunito { font-family: 'Nunito', sans-serif; }
                 .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
                 .fw-black { font-weight: 900; }

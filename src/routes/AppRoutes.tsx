@@ -7,6 +7,8 @@ import TreasureIslands from "../pages/TreasureIslands.tsx";
 import Membership from "../pages/Membership.tsx";
 import FindItems from "../pages/FindItems.tsx";
 import Contact from "../pages/Contact.tsx";
+import Maps from "../pages/Maps.tsx";
+import IslandDetail from "../pages/IslandDetail.tsx";
 
 const AppRoutes = () => {
     return (
@@ -15,7 +17,9 @@ const AppRoutes = () => {
                 <Route path="/" element={<Home/>}/>
                 <Route path="/about" element={<About/>}/>
                 <Route path="/guides" element={<Guides/>}/>
+                <Route path="/maps" element={<Maps/>}/>
                 <Route path="/islands" element={<TreasureIslands/>}/>
+                <Route path="/islands/:id" element={<IslandDetail />} />
                 <Route path="/membership" element={<Membership/>}/>
                 <Route path="/find" element={<FindItems/>}/>
                 <Route path="/contact" element={<Contact/>}/>

@@ -60,7 +60,7 @@ const About = () => {
                     {[
                         { date: "Nov 2020", label: "First Flight", icon: "airplane-engines" },
                         { date: "Mar 2021", label: "Twitch Partner", icon: "twitch" },
-                        { date: "130k+", label: "Beshy Family", icon: "people-fill" }
+                        { date: "29k+", label: "Potatoes", icon: "people-fill" }
                     ].map((milestone, i) => (
                         <div key={i} className="col-4 col-md-3">
                             <div className="stamp-circle mx-auto d-flex flex-column align-items-center justify-content-center text-center p-3">
