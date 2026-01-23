@@ -458,17 +458,14 @@ const TreasureIslands = () => {
                                         </div>
 
                                         <div className="d-flex gap-2">
-                                            {/* MAP BUTTON: Only Show if NOT a Member/Sub Island */}
-                                            {island.cat !== "member" && (
-                                                <button
-                                                    className="btn btn-light rounded-circle border d-flex align-items-center justify-content-center shadow-sm"
-                                                    style={{width: 40, height: 40}}
-                                                    onClick={() => setSelectedMap(island)}
-                                                    title="View Map"
-                                                >
-                                                    <i className="fa-regular fa-map text-muted"></i>
-                                                </button>
-                                            )}
+                                            <button
+                                                className="btn btn-light rounded-circle border d-flex align-items-center justify-content-center shadow-sm"
+                                                style={{width: 40, height: 40}}
+                                                onClick={() => setSelectedMap(island)}
+                                                title="View Map"
+                                            >
+                                                <i className="fa-regular fa-map text-muted"></i>
+                                            </button>
 
                                             <div className={`theme-badge rounded-circle d-flex align-items-center justify-content-center theme-${island.theme}`} title={`${island.seasonal} Season`}>
                                                 <i className="fa-solid fa-leaf"></i>
