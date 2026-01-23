@@ -165,7 +165,7 @@ const IslandDetail = () => {
                                     <div>
                                         <div className="passport-stamp mb-2">VERIFIED</div>
                                         <h1 className="island-title">{island.name}</h1>
-                                        <span className="island-badge">{island.type} Island</span>
+                                        <span className="island-badge">{island.type}</span>
                                     </div>
                                     <i className="fa-solid fa-passport fa-4x opacity-25 text-white rotate-12"></i>
                                 </div>
