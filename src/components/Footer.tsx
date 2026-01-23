@@ -1,145 +1,105 @@
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.webp"; // adjust path to where your logo is
+import logo from "../assets/logo.webp";
 
 const Footer = () => {
+    const [email, setEmail] = useState("");
     const currentYear = new Date().getFullYear();
+
+    const socialLinks = [
+        { icon: "bi-discord", url: "https://discord.com/invite/chopaeng", label: "Discord" },
+        { icon: "bi-facebook", url: "https://www.facebook.com/ChoPaengTV", label: "Facebook" },
+        { icon: "bi-tiktok", url: "https://www.tiktok.com/@ChoPaengTV", label: "Tiktok" },
+        { icon: "bi-instagram", url: "https://www.instagram.com/itschopaeng", label: "Instagram" },
+        { icon: "bi-twitch", url: "https://www.twitch.tv/chopaeng", label: "Twitch" },
+        { icon: "bi-youtube", url: "https://www.youtube.com/chopaengtv", label: "YouTube" },
+    ];
+
+    const footerNav = {
+        islands: [
+            { name: "Treasure Islands", path: "/islands" },
+            { name: "Maps", path: "/maps" },
+            { name: "Membership", path: "/membership" },
+            { name: "Guides", path: "/guides" },
+        ],
+        support: [
+            { name: "Guide Book", path: "/guides" },
+            { name: "Help Center", path: "/contact" },
+            { name: "About Us", path: "/about" },
+            { name: "Terms of Service", path: "/terms" },
+        ]
+    };
+
+    const handleSubscribe = (e) => {
+        e.preventDefault();
+    };
 
     return (
         <footer className="bg-white pt-5 pb-4 border-top">
             <div className="container">
-                <div className="row gy-4">
-                    {/* Brand & Description */}
-                    <div className="col-lg-4 col-md-6">
-                        <div className="d-flex align-items-center gap-2 mb-3 footer-brand-wrapper">
+                <div className="row gy-5">
+                    {/* Brand Section */}
+                    <div className="col-lg-4 col-md-12 text-center text-lg-start">
+                        <Link to="/" className="d-flex align-items-center justify-content-center justify-content-lg-start gap-2 mb-3 text-decoration-none">
                             <div className="footer-logo bg-success rounded-3 d-flex align-items-center justify-content-center shadow-sm overflow-hidden">
-                                <img src={logo} alt="CHOPAENG Logo" className="footer-logo-img" />
+                                <img src={logo} alt="CHOPAENG" className="footer-logo-img" />
                             </div>
-
                             <span className="h5 fw-bold mb-0 text-dark font-heading letter-spacing-1">
-                CHOPAENG
-              </span>
-                        </div>
-
-                        <p className="text-muted small lh-lg" style={{ maxWidth: 320 }}>
-                            Your ultimate destination for treasure island adventures and premium gaming services.
-                            Join our community to explore, trade, and discover the secrets of the islands.
+                                CHOPAENG
+                            </span>
+                        </Link>
+                        <p className="text-muted small lh-lg mx-auto mx-lg-0" style={{ maxWidth: 320 }}>
+                            Premium gaming services and treasure island adventures.
+                            Join the community to explore and trade secrets.
                         </p>
-
-                        <div className="d-flex gap-3 mt-4">
-                            <a
-                                href="https://discord.com/invite/chopaeng"
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="social-icon-link text-muted"
-                                aria-label="Discord"
-                            >
-                                <i className="bi bi-discord fs-5"></i>
-                            </a>
-                            <a
-                                href="https://www.facebook.com/ChoPaengTV"
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="social-icon-link text-muted"
-                                aria-label="Facebook"
-                            >
-                                <i className="bi bi-facebook fs-5"></i>
-                            </a>
-                            <a
-                                href="https://www.tiktok.com/@ChoPaengTV"
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="social-icon-link text-muted"
-                                aria-label="Tiktok"
-                            >
-                                <i className="bi bi-tiktok fs-5"></i>
-                            </a>
-                            <a
-                                href="https://www.instagram.com/itschopaeng"
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="social-icon-link text-muted"
-                                aria-label="Instagram"
-                            >
-                                <i className="bi bi-instagram fs-5"></i>
-                            </a>
-                            <a
-                                href="https://www.twitch.tv/chopaeng"
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="social-icon-link text-muted"
-                                aria-label="Twitch"
-                            >
-                                <i className="bi bi-twitch fs-5"></i>
-                            </a>
-                            <a
-                                href="https://www.youtube.com/chopaengtv"
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="social-icon-link text-muted"
-                                aria-label="YouTube"
-                            >
-                                <i className="bi bi-youtube fs-5"></i>
-                            </a>
+                        <div className="d-flex justify-content-center justify-content-lg-start gap-3 mt-4">
+                            {socialLinks.map((social) => (
+                                <a key={social.label} href={social.url} target="_blank" rel="noreferrer" className="social-icon-link text-muted" aria-label={social.label}>
+                                    <i className={`bi ${social.icon} fs-5`}></i>
+                                </a>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Quick Links */}
-                    <div className="col-lg-2 col-6 col-md-3">
-                        <h6 className="fw-bold text-dark text-uppercase small mb-4 letter-spacing-1">
-                            Islands
-                        </h6>
-                        <ul className="list-unstyled d-flex flex-column gap-2">
-                            <li><Link to="/islands" className="footer-link">Treasure Islands</Link></li>
-                            <li><Link to="/find" className="footer-link">Find Items</Link></li>
-                            <li><Link to="/membership" className="footer-link">Membership</Link></li>
-                            <li><Link to="/guides" className="footer-link">Guides</Link></li>
-                        </ul>
-                    </div>
-
-                    {/* Support */}
-                    <div className="col-lg-2 col-6 col-md-3">
-                        <h6 className="fw-bold text-dark text-uppercase small mb-4 letter-spacing-1">
-                            Support
-                        </h6>
-                        <ul className="list-unstyled d-flex flex-column gap-2">
-                            <li><Link to="/guides" className="footer-link">Guide Book</Link></li>
-                            <li><Link to="/contact" className="footer-link">Help Center</Link></li>
-                            <li><Link to="/about" className="footer-link">About</Link></li>
-                            <li><a href="#" className="footer-link">Terms of Service</a></li>
-                        </ul>
+                    {/* Nav Links */}
+                    <div className="col-lg-4 col-md-12">
+                        <div className="row">
+                            <div className="col-6">
+                                <h6 className="fw-bold text-dark text-uppercase small mb-4">Islands</h6>
+                                <ul className="list-unstyled d-flex flex-column gap-2">
+                                    {footerNav.islands.map(link => (
+                                        <li key={link.name}><Link to={link.path} className="footer-link">{link.name}</Link></li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="col-6">
+                                <h6 className="fw-bold text-dark text-uppercase small mb-4">Support</h6>
+                                <ul className="list-unstyled d-flex flex-column gap-2">
+                                    {footerNav.support.map(link => (
+                                        <li key={link.name}><Link to={link.path} className="footer-link">{link.name}</Link></li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Newsletter */}
                     <div className="col-lg-4 col-md-12">
-                        <div className="p-4 rounded-4 bg-light border">
-                            <h6 className="fw-bold text-dark mb-2">Join the Island Newsletter</h6>
-                            <p className="small text-muted mb-3">
-                                Get notified about the latest island drops and events.
-                            </p>
-
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    // TODO: handle submit (API / Mailchimp / etc.)
-                                }}
-                            >
-                                <label className="visually-hidden" htmlFor="footerEmail">
-                                    Email address
-                                </label>
+                        <div className="p-4 rounded-4 bg-light border-0 shadow-sm">
+                            <h6 className="fw-bold text-dark mb-2">Island Newsletter</h6>
+                            <p className="small text-muted mb-3">Get notified about the latest drops.</p>
+                            <form onSubmit={handleSubscribe}>
                                 <div className="input-group">
                                     <input
-                                        id="footerEmail"
                                         type="email"
                                         className="form-control border-0 shadow-none px-3"
                                         placeholder="Email address"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         required
-                                        style={{ borderRadius: "10px 0 0 10px" }}
+                                        style={{ borderRadius: "8px 0 0 8px", fontSize: "0.9rem" }}
                                     />
-                                    <button
-                                        type="submit"
-                                        className="btn btn-success px-3"
-                                        style={{ borderRadius: "0 10px 10px 0" }}
-                                    >
+                                    <button type="submit" className="btn btn-success px-3" style={{ borderRadius: "0 8px 8px 0" }}>
                                         Join
                                     </button>
                                 </div>
@@ -148,68 +108,29 @@ const Footer = () => {
                     </div>
                 </div>
 
-                {/* Bottom Bar */}
                 <hr className="my-5 opacity-10" />
 
+                {/* Bottom Bar */}
                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                     <p className="small text-muted mb-0">
-                        &copy; {currentYear} <strong>CHOPAENG</strong>. All rights reserved.
+                        &copy; {currentYear} <strong>CHOPAENG</strong>.
                     </p>
-
                     <div className="d-flex gap-4">
-                        <a href="#" className="text-decoration-none small text-muted hover-success">
-                            Privacy Policy
-                        </a>
-                        <a href="#" className="text-decoration-none small text-muted hover-success">
-                            Cookies
-                        </a>
+                        <Link to="/privacy" className="text-decoration-none small text-muted hover-success">Privacy</Link>
+                        <Link to="/cookies" className="text-decoration-none small text-muted hover-success">Cookies</Link>
                     </div>
                 </div>
             </div>
 
-            {/* Footer CSS */}
             <style>{`
-        .footer-logo {
-          width: 36px;
-          height: 36px;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .footer-logo-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .footer-brand-wrapper:hover .footer-logo {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 14px rgba(25, 135, 84, 0.2) !important;
-        }
-
-        .footer-link {
-          text-decoration: none;
-          color: #6c757d;
-          font-size: 0.9rem;
-          transition: all 0.2s ease;
-        }
-        .footer-link:hover {
-          color: #198754;
-          padding-left: 5px;
-        }
-
-        .hover-success:hover {
-          color: #198754 !important;
-        }
-
-        .social-icon-link {
-          transition: transform 0.2s ease, color 0.2s ease;
-        }
-        .social-icon-link:hover {
-          color: #198754 !important;
-          transform: translateY(-3px);
-        }
-
-        .letter-spacing-1 { letter-spacing: 1px; }
-      `}</style>
+                .footer-logo { width: 40px; height: 40px; transition: transform 0.2s ease; }
+                .footer-logo-img { width: 100%; height: 100%; object-fit: cover; }
+                .footer-link { text-decoration: none; color: #6c757d; font-size: 0.9rem; transition: 0.2s; }
+                .footer-link:hover { color: #198754; transform: translateX(3px); }
+                .social-icon-link:hover { color: #198754 !important; transform: translateY(-3px); transition: 0.2s; }
+                .hover-success:hover { color: #198754 !important; }
+                .letter-spacing-1 { letter-spacing: 1px; }
+            `}</style>
         </footer>
     );
 };

@@ -9,6 +9,7 @@ import FindItems from "../pages/FindItems.tsx";
 import Contact from "../pages/Contact.tsx";
 import Maps from "../pages/Maps.tsx";
 import IslandDetail from "../pages/IslandDetail.tsx";
+import Chopaeng404 from "../errors/404.tsx";
 
 const AppRoutes = () => {
     return (
@@ -24,6 +25,7 @@ const AppRoutes = () => {
                 <Route path="/find" element={<FindItems/>}/>
                 <Route path="/contact" element={<Contact/>}/>
             </Route>
+            <Route path="*" element={<Chopaeng404 />} />
         </Routes>
 
     );
