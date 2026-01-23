@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-
+import logo from '../assets/logo.webp';
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -55,7 +55,7 @@ const Navbar = () => {
                             }}
                         >
                             <img
-                                src="logo.webp"
+                                src={logo}
                                 alt="CHOPAENG Logo"
                                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                             />
