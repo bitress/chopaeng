@@ -87,7 +87,7 @@ const IslandDetail = () => {
 
                 {/* Navigation Breadcrumb */}
                 <div className="d-flex align-items-center mb-4 px-2">
-                    <button onClick={() => navigate("/maps")} className="btn-nook-back me-3">
+                    <button onClick={() => navigate(-1)} className="btn-nook-back me-3">
                         <i className="fa-solid fa-arrow-left"></i>
                     </button>
                     <span className="text-muted fw-bold text-uppercase small tracking-wide">Dodo Airlines Travel Guide</span>
