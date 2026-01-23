@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PUBLIC_ISLANDS, type Islands } from "../data/islands.tsx";
 
+// --- Types & Helpers ---
 type ApiIsland = {
     dodo: string;
     name: string;
@@ -43,7 +44,6 @@ const IslandDetail = () => {
     const [loading, setLoading] = useState(true);
     const [showImageModal, setShowImageModal] = useState(false);
 
-
     useEffect(() => {
         let cancelled = false;
         const fetchIslands = async () => {
@@ -53,186 +53,185 @@ const IslandDetail = () => {
                 if (!res.ok) throw new Error(`API error: ${res.status}`);
                 const data = await res.json();
                 if (!cancelled) setApiIslands(data);
-            } catch  {
-                if (!cancelled) console.log("error")
+            } catch {
+                if (!cancelled) console.log("error fetching islands");
             } finally {
                 if (!cancelled) setLoading(false);
             }
         };
         fetchIslands();
-        const interval = setInterval(fetchIslands, 30000); // Refresh every 30s
+        const interval = setInterval(fetchIslands, 30000);
         return () => { cancelled = true; clearInterval(interval); };
     }, []);
 
     const MERGED_ISLANDS = useMemo(() => mergeIslands(PUBLIC_ISLANDS, apiIslands), [apiIslands]);
     const island = MERGED_ISLANDS.find((i) => i.id === id);
 
-    if (!island) return <div className="text-center p-5 fw-bold">Island not found!</div>;
+    if (!island) return (
+        <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{ background: '#f0f4e4', color: '#7ba592' }}>
+            <div className="text-center">
+                <i className="fa-solid fa-plane-slash fa-3x mb-3 opacity-50"></i>
+                <h2 className="fw-black">Destination Not Found</h2>
+                <button onClick={() => navigate("/maps")} className="btn btn-link text-success fw-bold">Return Home</button>
+            </div>
+        </div>
+    );
 
-    const themeColor =
-        island.theme === "teal"
-            ? "#7ec9b1"
-            : island.theme === "purple"
-                ? "#d0bfff"
-                : island.theme === "gold"
-                    ? "#f2c94c"
-                    : "#ffb7ce";
     const live = island.live;
     const canShowDodo = live?.isOnline && !live?.isSubOnly && live?.dodo && !["GETTIN'", "FULL"].includes(live.dodo);
     const mapImageSrc = `/maps/${island.name.toLowerCase()}.png`;
-    return (
-        <div className="nook-detail-root min-vh-100 py-4 py-md-5">
-            <div className="container" style={{ maxWidth: "1000px" }}>
 
-                {/* Header Navigation */}
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <button onClick={() => navigate("/maps")} className="btn-passport-back">
-                        <i className="fa-solid fa-chevron-left me-2"></i> Gallery
+    return (
+        <div className="nook-bg min-vh-100 py-4 py-md-5">
+            <div className="container" style={{ maxWidth: "1050px" }}>
+
+                {/* Navigation Breadcrumb */}
+                <div className="d-flex align-items-center mb-4 px-2">
+                    <button onClick={() => navigate("/maps")} className="btn-nook-back me-3">
+                        <i className="fa-solid fa-arrow-left"></i>
                     </button>
-                    <div className="badge-stamp shadow-sm">Verified Destination</div>
+                    <span className="text-muted fw-bold text-uppercase small tracking-wide">Dodo Airlines Travel Guide</span>
                 </div>
 
-                <div className="passport-frame shadow-lg">
-                    {/* Top Section: Postcard Title */}
-                    <div className="postcard-header" style={{ borderBottom: `8px solid ${themeColor}` }}>
-                        <div className="row align-items-center">
-                            <div className="col-md-8">
-                                <span className="text-uppercase x-small fw-black text-muted tracking-widest mb-1 d-block">Official Entry Passport</span>
-                                <h1 className="ac-display display-3 mb-0">{island.name}</h1>
-                                <p className="text-muted fw-bold mb-0">{island.type}</p>
+                <div className="row g-4">
+                    {/* LEFT COLUMN: Map & Status */}
+                    <div className="col-lg-5">
+
+                        {/* Map Polaroid */}
+                        <div className="polaroid-stack mb-4">
+                            <div
+                                className="map-polaroid cursor-pointer"
+                                onClick={() => setShowImageModal(true)}
+                            >
+                                <div className="tape-strip"></div>
+                                <div className="img-wrapper">
+                                    <img
+                                        src={mapImageSrc}
+                                        alt={island.name}
+                                        className="img-fluid"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            if (target.src.includes('.png')) target.src = target.src.replace('.png', '.jpg');
+                                            else if (target.src.endsWith('.jpg')) target.src = target.src.replace('.jpg', '.jpeg');
+                                            else target.src = 'https://www.chopaeng.com/banner.png';
+                                        }}
+                                    />
+                                    <div className="zoom-indicator">
+                                        <i className="fa-solid fa-expand"></i>
+                                    </div>
+                                </div>
+                                <div className="polaroid-caption">
+                                    <i className="fa-solid fa-map-location-dot me-2 text-warning"></i>
+                                    {island.name} Map
+                                </div>
                             </div>
-                            <div className="col-md-4 text-md-end d-none d-md-block">
-                                <div className="airmail-strip"></div>
-                                <i className="fa-solid fa-plane-departure fa-4x opacity-10"></i>
+                        </div>
+
+                        {/* DAL Flight Board */}
+                        <div className="dal-card shadow-sm">
+                            <div className="dal-header">
+                                <i className="fa-solid fa-plane-up me-2"></i> DAL Flight Info
+                            </div>
+                            <div className="dal-body">
+                                <div className="flight-row">
+                                    <span className="flight-label">STATUS</span>
+                                    <span className={`flight-value ${live?.isOnline ? 'text-dal-blue' : 'text-danger'}`}>
+                                        {loading ? <span className="pulse">SCANNING...</span> : (live?.status || 'OFFLINE')}
+                                    </span>
+                                </div>
+                                <div className="flight-divider"></div>
+                                <div className="flight-row">
+                                    <span className="flight-label">PASSENGERS</span>
+                                    <span className="flight-value">{live?.visitors || '0/7'}</span>
+                                </div>
+                                <div className="flight-divider"></div>
+                                <div className="flight-row">
+                                    <span className="flight-label">GATE TYPE</span>
+                                    <span className="flight-value text-warning">{live?.access || 'PUBLIC'}</span>
+                                </div>
+                            </div>
+                            <div className="dal-footer">
+                                <small>Dodo Airlines • We make travel a breeze!</small>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 p-lg-5 bg-white">
-                        <div className="row g-4 g-lg-5">
-                            {/* Left: Map & Live Display */}
-                            <div className="col-lg-5">
-                                <div className="map-tape-container">
-                                    <div className="tape-deco top-left"></div>
-                                    <div className="tape-deco top-right"></div>
-                                    <div
-                                        className="cursor-pointer position-relative"
-                                        onClick={() => setShowImageModal(true)}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => e.key === "Enter" && setShowImageModal(true)}
-                                    >
-                                        <img
-                                            src={mapImageSrc}
-                                            alt={`${island.name} map`}
-                                            className="img-fluid rounded-2 border shadow-sm hover-zoom"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                if (target.src.includes('.png')) {
-                                                    target.src = target.src.replace('.png', '.jpg');
-                                                } else if (target.src.endsWith('.jpg')) {
-                                                    target.src = target.src.replace('.jpg', '.jpeg');
-                                                } else {
-                                                    target.src = 'https://www.chopaeng.com/banner.png';
-                                                }
-                                            }}
-                                        />
-                                        <div className="zoom-hint">
-                                            <i className="fa-solid fa-magnifying-glass-plus"></i> Click to zoom
-                                        </div>
+                    {/* RIGHT COLUMN: Passport Info */}
+                    <div className="col-lg-7">
+                        <div className="passport-booklet shadow-lg">
+                            {/* Passport Header with Tear-off effect */}
+                            <div className="passport-header">
+                                <div className="d-flex justify-content-between align-items-start position-relative z-2">
+                                    <div>
+                                        <div className="passport-stamp mb-2">VERIFIED</div>
+                                        <h1 className="island-title">{island.name}</h1>
+                                        <span className="island-badge">{island.type} Island</span>
                                     </div>
+                                    <i className="fa-solid fa-passport fa-4x opacity-25 text-white rotate-12"></i>
                                 </div>
-
-                                {/* Live Terminal Card */}
-                                <div className="live-terminal mt-4">
-                                    <div className="terminal-header">
-                                        <i className="fa-solid fa-satellite-dish fa-spin-slow me-2"></i>
-                                        Live Flight Data
-                                    </div>
-                                    <div className="terminal-body">
-                                        <div className="d-flex justify-content-between mb-2">
-                                            <span className="label">STATUS:</span>
-                                            <span className={`value ${live?.isOnline ? 'text-success' : 'text-danger'}`}>
-                                                {loading ? 'SYNCING...' : live?.status || 'OFFLINE'}
-                                            </span>
-                                        </div>
-                                        <div className="d-flex justify-content-between mb-2">
-                                            <span className="label">CAPACITY:</span>
-                                            <span className="value">{live?.visitors || '0/7'}</span>
-                                        </div>
-                                        <div className="d-flex justify-content-between">
-                                            <span className="label">ACCESS:</span>
-                                            <span className="value text-warning">{live?.access || 'PUBLIC'}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <div className="wave-pattern"></div>
                             </div>
 
-                            {/* Right: Details & Action */}
-                            <div className="col-lg-7">
-                                <div className="details-scroll pe-lg-3">
-                                    <section className="mb-4">
-                                        <h4 className="section-title"><i className="fa-solid fa-quote-left me-2"></i>Briefing</h4>
-                                        <p className="text-muted lh-base">{island.description}</p>
-                                    </section>
-
-                                    <section className="mb-4">
-                                        <h4 className="section-title"><i className="fa-solid fa-box-open me-2"></i>Inventory Highlights</h4>
-                                        <div className="d-flex flex-wrap gap-2">
-                                            {( island.items ?? []).map((set: string) => (
-                                                <span key={set} className="inventory-chip" style={{ borderLeft: `4px solid ${themeColor}` }}>
-                                                    {set}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </section>
-
-
-                                    {/* Final CTA */}
-                                    <div className="mt-5">
-                                        <button
-                                            className={`btn-dodo-action w-100 ${canShowDodo ? "active" : "disabled"}`}
-                                            disabled={!canShowDodo}
-                                        >
-                                            <div className="d-flex align-items-center justify-content-center gap-3 py-2">
-                                                <i
-                                                    className={`fa-solid ${
-                                                        canShowDodo ? "fa-plane-arrival" : live?.isSubOnly ? "fa-lock" : "fa-ban"
-                                                    }`}
-                                                ></i>
-
-                                                <div className="text-start">
-                                                    <div className="fw-black h5 mb-0">
-                                                        {canShowDodo
-                                                            ? `Dodo Code: ${live?.dodo}`
-                                                            : live?.isSubOnly
-                                                                ? "Subscribers Only"
-                                                                : "Gate Closed"}
-                                                    </div>
-
-                                                    <div className="x-small opacity-75 fw-bold">
-                                                        {canShowDodo
-                                                            ? "Use this code at the airport ✈️"
-                                                            : live?.isSubOnly
-                                                                ? "Subscribe on Patreon to unlock"
-                                                                : "Island is currently unavailable"}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </button>
-
-                                        {live?.isSubOnly && (
-                                            <a
-                                                href="https://www.patreon.com/cw/chopaeng/membership"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="btn btn-link w-100 mt-2 text-warning fw-bold text-decoration-none small"
-                                            >
-                                                Unlock VIP Access <i className="fa-solid fa-arrow-up-right-from-square ms-1"></i>
-                                            </a>
-                                        )}
+                            <div className="passport-body">
+                                <div className="mb-4">
+                                    <h5 className="notebook-heading">
+                                        <i className="fa-solid fa-bullhorn me-2 text-nook"></i>
+                                        Island Bulletin
+                                    </h5>
+                                    <div className="notebook-lines p-3">
+                                        {island.description}
                                     </div>
+                                </div>
 
+                                <div className="mb-5">
+                                    <h5 className="notebook-heading">
+                                        <i className="fa-solid fa-gem me-2 text-nook"></i>
+                                        Available Loot
+                                    </h5>
+                                    <div className="d-flex flex-wrap gap-2">
+                                        {(island.items ?? []).map((item) => (
+                                            <div key={item} className="item-pill">
+                                                <span className="dot"></span> {item}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Call to Action Area */}
+                                <div className="action-area">
+                                    <button
+                                        disabled={!canShowDodo}
+                                        className={`btn-dodo-3d ${canShowDodo ? '' : 'disabled'}`}
+                                        onClick={() => {
+                                            if (canShowDodo && live?.dodo) navigator.clipboard.writeText(live.dodo);
+                                        }}
+                                    >
+                                        <div className="content">
+                                            <div className="icon-box">
+                                                <i className={`fa-solid ${canShowDodo ? 'fa-plane-departure' : 'fa-lock'}`}></i>
+                                            </div>
+                                            <div className="text-group">
+                                                <span className="action-label">
+                                                    {canShowDodo ? 'Copy Dodo Code™' : live?.isSubOnly ? 'VIP Access Only' : 'Gate Closed'}
+                                                </span>
+                                                <span className="action-code">
+                                                    {canShowDodo ? live?.dodo : live?.isSubOnly ? 'Subscribers' : 'Offline'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    {live?.isSubOnly && (
+                                        <a
+                                            href="https://www.patreon.com/cw/chopaeng/membership"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="patreon-link"
+                                        >
+                                            <i className="fa-brands fa-patreon me-2"></i>
+                                            Subscribe to Join Queue
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -240,224 +239,269 @@ const IslandDetail = () => {
                 </div>
             </div>
 
+            {/* Modal */}
             {showImageModal && (
-                <div
-                    className="image-modal-overlay"
-                    onClick={() => setShowImageModal(false)}
-                >
-                    <div
-                        className="image-modal-content"
-                        onClick={(e) => e.stopPropagation()} // prevent closing when clicking image
-                    >
-                        <button
-                            className="modal-close-btn"
-                            onClick={() => setShowImageModal(false)}
-                            aria-label="Close"
-                        >
-                            <i className="fa-solid fa-times"></i>
-                        </button>
-
+                <div className="modal-backdrop-custom" onClick={() => setShowImageModal(false)}>
+                    <div className="modal-content-custom" onClick={(e) => e.stopPropagation()}>
                         <img
                             src={mapImageSrc}
-                            alt={`${island.name} map - zoomed`}
-                            className="modal-image"
+                            alt="Zoomed Map"
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                if (target.src.includes('.png')) {
-                                    target.src = target.src.replace('.png', '.jpg');
-                                } else if (target.src.endsWith('.jpg')) {
-                                    target.src = target.src.replace('.jpg', '.jpeg');
-                                } else {
-                                    target.src = 'https://www.chopaeng.com/banner.png';
-                                }
+                                if (target.src.includes('.png')) target.src = target.src.replace('.png', '.jpg');
+                                else if (target.src.endsWith('.jpg')) target.src = target.src.replace('.jpg', '.jpeg');
+                                else target.src = 'https://www.chopaeng.com/banner.png';
                             }}
                         />
+                        <button className="close-fab" onClick={() => setShowImageModal(false)}>
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
             )}
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;800;900&display=swap');
 
-                .nook-detail-root {
-                    background-color: #f2f4e6;
-                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
-                    background-size: 30px 30px;
+                :root {
+                    --nook-green: #7ec9b1;
+                    --nook-dark: #3b8c73;
+                    --dal-blue: #4090bd;
+                    --dal-yellow: #f5c452;
+                    --paper: #fdfbf7;
+                    --text: #5e564d;
+                }
+
+                .nook-bg {
+                    background-color: #f0f4e4;
+                    background-image: 
+                        linear-gradient(45deg, #e6ebd6 25%, transparent 25%, transparent 75%, #e6ebd6 75%, #e6ebd6),
+                        linear-gradient(45deg, #e6ebd6 25%, transparent 25%, transparent 75%, #e6ebd6 75%, #e6ebd6);
+                    background-size: 40px 40px;
+                    background-position: 0 0, 20px 20px;
                     font-family: 'Nunito', sans-serif;
+                    color: var(--text);
                 }
 
-                .ac-display { font-family: 'Fredoka One', cursive; color: #5a524a; }
                 .fw-black { font-weight: 900; }
-                .x-small { font-size: 0.75rem; }
+                .text-nook { color: var(--nook-green); }
+                .text-dal-blue { color: var(--dal-blue); }
 
-                /* Passport Frame */
-                .passport-frame {
-                    background: #fff;
-                    border-radius: 40px;
-                    overflow: hidden;
-                    border: 2px solid #eeebe5;
+                /* Back Button */
+                .btn-nook-back {
+                    width: 45px; height: 45px;
+                    border-radius: 50%;
+                    background: white;
+                    border: 3px solid #e1e6d3;
+                    color: #9bac85;
+                    display: flex; align-items: center; justify-content: center;
+                    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                .btn-nook-back:hover {
+                    transform: scale(1.1) rotate(-10deg);
+                    border-color: var(--nook-green);
+                    color: var(--nook-green);
                 }
 
-                .postcard-header {
-                    background: #fffdf5;
-                    padding: 40px;
+                /* Polaroid Styling */
+                .polaroid-stack { position: relative; perspective: 1000px; }
+                .map-polaroid {
+                    background: white;
+                    padding: 15px 15px 50px 15px;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                    transform: rotate(-2deg);
+                    transition: transform 0.3s ease;
                     position: relative;
                 }
-
-                .btn-passport-back {
-                    background: white; border: 2px solid #eeebe5; color: #8c8378;
-                    padding: 10px 25px; border-radius: 50px; font-weight: 800;
-                    box-shadow: 0 4px 0 #eeebe5; transition: 0.2s;
+                .map-polaroid:hover { transform: rotate(0deg) scale(1.02); z-index: 10; }
+                
+                .img-wrapper { 
+                    position: relative; 
+                    background: #eee; 
+                    overflow: hidden;
+                    border: 1px solid #ddd;
                 }
-                .btn-passport-back:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #eeebe5; }
-
-                .badge-stamp {
-                    background: #fff; border: 2px dashed #7ec9b1; color: #7ec9b1;
-                    padding: 5px 20px; border-radius: 10px; font-weight: 900;
-                    text-transform: uppercase; transform: rotate(2deg); font-size: 0.8rem;
+                .zoom-indicator {
+                    position: absolute; bottom: 10px; right: 10px;
+                    background: rgba(0,0,0,0.6); color: white;
+                    width: 32px; height: 32px; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 0.8rem; pointer-events: none;
                 }
 
-                /* Map Tape Deco */
-                .map-tape-container { position: relative; padding: 15px; background: #fdfbf7; border: 1px solid #eeebe5; }
-                .tape-deco {
-                    position: absolute; width: 100px; height: 35px;
-                    background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(2px);
-                    border-left: 2px dashed rgba(0,0,0,0.05); border-right: 2px dashed rgba(0,0,0,0.05);
-                    z-index: 2;
+                .tape-strip {
+                    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+                    width: 120px; height: 35px;
+                    background: rgba(255,255,255,0.6);
+                    border-left: 2px dotted rgba(0,0,0,0.1);
+                    border-right: 2px dotted rgba(0,0,0,0.1);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    z-index: 5;
                 }
-                .tape-deco.top-left { top: -10px; left: -10px; transform: rotate(-45deg); }
-                .tape-deco.top-right { top: -10px; right: -10px; transform: rotate(45deg); }
+                .polaroid-caption {
+                    position: absolute; bottom: 15px; left: 0; right: 0;
+                    text-align: center; font-family: 'Fredoka One', cursive;
+                    color: #aaa; letter-spacing: 1px;
+                }
 
-                /* Live Terminal */
-                .live-terminal {
-                    background: #2d2a26; border-radius: 20px; overflow: hidden;
-                    color: #fff; border: 4px solid #3d3a36;
+                /* DAL Card */
+                .dal-card {
+                    background: white; border-radius: 20px; overflow: hidden;
+                    border: 3px solid white;
+                    margin-top: 2rem;
                 }
-                .terminal-header {
-                    background: #3d3a36; padding: 10px 20px; font-size: 0.75rem;
-                    font-weight: 900; text-transform: uppercase; color: #7ec9b1;
-                }
-                .terminal-body { padding: 15px 20px; font-family: 'Courier New', monospace; }
-                .terminal-body .label { color: #888; font-size: 0.8rem; }
-                .terminal-body .value { font-weight: bold; }
-
-                /* Details */
-                .section-title { font-family: 'Fredoka One', cursive; font-size: 1.25rem; color: #5a524a; margin-bottom: 1rem; }
-                .inventory-chip {
-                    background: #fdfbf7; padding: 8px 16px; border-radius: 10px;
-                    font-weight: 800; color: #5a524a; border: 1px solid #eeebe5;
+                .dal-header {
+                    background: var(--dal-blue); color: white;
+                    padding: 12px 20px; font-weight: 900; letter-spacing: 1px;
                     font-size: 0.9rem;
+                    border-bottom: 4px solid var(--dal-yellow);
                 }
+                .dal-body { padding: 20px; background: #f4f8fb; }
+                .flight-row { display: flex; justify-content: space-between; align-items: center; }
+                .flight-label { font-size: 0.75rem; font-weight: 800; color: #8faab8; letter-spacing: 0.5px; }
+                .flight-value { font-family: 'Fredoka One', cursive; font-size: 1.2rem; color: #555; }
+                .flight-divider { height: 2px; background: #e1e9ef; margin: 12px 0; border-radius: 2px; }
+                .dal-footer {
+                    background: var(--dal-blue); color: rgba(255,255,255,0.8);
+                    font-size: 0.7rem; text-align: center; padding: 6px; font-weight: 700;
+                }
+                .pulse { animation: pulse 1.5s infinite; }
+                @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-                .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-                .info-item { background: #fdfbf7; padding: 15px; border-radius: 15px; border: 1px solid #eeebe5; }
-                .info-item .label { display: block; font-size: 0.7rem; font-weight: 900; color: #b8ac97; }
-                .info-item .value { font-weight: 900; font-size: 1.1rem; color: #5a524a; }
-                .dodo-reveal { color: #7ec9b1 !important; letter-spacing: 2px; }
-
-                /* Action Button */
-                .btn-dodo-action {
-                    border: none; border-radius: 25px; padding: 15px;
-                    transition: all 0.3s; color: white;
+                /* Passport Booklet */
+                .passport-booklet {
+                    background: var(--paper);
+                    border-radius: 25px 5px 5px 25px;
+                    overflow: hidden;
+                    position: relative;
                 }
-                .btn-dodo-action.active {
-                    background: #7ec9b1; box-shadow: 0 8px 0 #5faf93;
-                }
-                .btn-dodo-action.active:hover {
-                    transform: translateY(-4px); box-shadow: 0 12px 0 #5faf93;
-                }
-                .btn-dodo-action.disabled {
-                    background: #b8ac97; cursor: not-allowed; opacity: 0.7;
-                }
-
-                @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
-                .fa-spin-slow { animation: fa-spin 5s infinite linear; }
-
-                @media (max-width: 768px) {
-                    .postcard-header { padding: 25px; }
-                    .info-grid { grid-template-columns: 1fr; }
+                .passport-booklet::before {
+                    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 25px;
+                    background: linear-gradient(to right, rgba(0,0,0,0.05), transparent);
+                    border-right: 1px solid rgba(0,0,0,0.05);
+                    z-index: 5;
                 }
                 
-                /* Hover zoom hint on map */
-        .cursor-pointer {
-          cursor: pointer;
-        }
-        .hover-zoom {
-          transition: transform 0.25s ease;
-        }
-        .hover-zoom:hover {
-          transform: scale(1.04);
-        }
-        .zoom-hint {
-          position: absolute;
-          bottom: 12px;
-          right: 12px;
-          background: rgba(0,0,0,0.65);
-          color: white;
-          padding: 6px 12px;
-          border-radius: 999px;
-          font-size: 0.8rem;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          opacity: 0.9;
-          pointer-events: none;
-        }
+                .passport-header {
+                    background: var(--nook-green);
+                    padding: 40px 40px 60px 50px; /* Extra left padding for binding */
+                    color: white;
+                    position: relative;
+                    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+                }
+                .passport-stamp {
+                    display: inline-block;
+                    border: 2px solid rgba(255,255,255,0.6);
+                    padding: 4px 10px; border-radius: 8px;
+                    font-size: 0.7rem; font-weight: 800; letter-spacing: 2px;
+                }
+                .island-title { font-family: 'Fredoka One', cursive; font-size: 3.5rem; line-height: 1; margin-bottom: 5px; text-shadow: 2px 2px 0 rgba(0,0,0,0.1); }
+                .island-badge { background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+                .passport-body { padding: 30px 40px 40px 50px; }
 
-        /* Modal */
-        .image-modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.92);
-          z-index: 2000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-        }
-        .image-modal-content {
-          position: relative;
-          max-width: 95vw;
-          max-height: 95vh;
-        }
-        .modal-image {
-          max-width: 100%;
-          max-height: 90vh;
-          object-fit: contain;
-          border-radius: 12px;
-          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
-        }
-        .modal-close-btn {
-          position: absolute;
-          top: -18px;
-          right: -18px;
-          background: #fff;
-          border: 3px solid #fff;
-          border-radius: 50%;
-          width: 48px;
-          height: 48px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.5rem;
-          color: #333;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .modal-close-btn:hover {
-          transform: scale(1.15);
-        }
+                .notebook-heading {
+                    font-family: 'Fredoka One', cursive; color: #5e564d;
+                    margin-bottom: 15px; display: flex; align-items: center;
+                }
+                .notebook-lines {
+                    background-image: repeating-linear-gradient(transparent, transparent 31px, #e3dfd3 31px, #e3dfd3 32px);
+                    line-height: 32px;
+                    padding-top: 8px !important;
+                    color: #6c6358;
+                }
 
-        @media (max-width: 576px) {
-          .modal-close-btn {
-            top: -10px;
-            right: -10px;
-            width: 40px;
-            height: 40px;
-            font-size: 1.3rem;
-          }
-        }
+                /* Items Pills */
+                .item-pill {
+                    background: white; border: 2px solid #eaddcf;
+                    border-radius: 20px; padding: 6px 14px;
+                    font-weight: 700; font-size: 0.85rem; color: #8c7e6e;
+                    display: inline-flex; align-items: center;
+                }
+                .item-pill .dot { width: 8px; height: 8px; background: #eaddcf; border-radius: 50%; margin-right: 8px; }
+
+                /* 3D Button */
+                .action-area { margin-top: 40px; }
+                .btn-dodo-3d {
+                    width: 100%; border: none; background: transparent; padding: 0;
+                    position: relative; transition: all 0.1s;
+                }
+                .btn-dodo-3d .content {
+                    background: var(--nook-green);
+                    border-radius: 20px;
+                    padding: 15px;
+                    display: flex; align-items: center; gap: 20px;
+                    color: white;
+                    transform: translateY(-6px);
+                    transition: transform 0.1s, background 0.2s;
+                    border: 3px solid var(--nook-dark);
+                    box-shadow: 0 6px 0 var(--nook-dark);
+                }
+                .btn-dodo-3d:active:not(.disabled) .content {
+                    transform: translateY(0);
+                    box-shadow: 0 0 0 var(--nook-dark);
+                }
+                .btn-dodo-3d.disabled .content {
+                    background: #ccc; border-color: #999; box-shadow: 0 6px 0 #999;
+                    cursor: not-allowed;
+                }
+                .icon-box {
+                    width: 50px; height: 50px; background: rgba(0,0,0,0.15);
+                    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+                    font-size: 1.5rem;
+                }
+                .text-group { display: flex; flex-direction: column; align-items: flex-start; }
+                .action-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; opacity: 0.9; }
+                .action-code { font-family: 'Fredoka One', cursive; font-size: 1.8rem; line-height: 1; }
+
+                .patreon-link {
+                    display: block; text-align: center; margin-top: 15px;
+                    color: #d1b080; font-weight: 800; font-size: 0.9rem; text-decoration: none;
+                }
+                .patreon-link:hover { text-decoration: underline; color: #b89768; }
+
+                /* --- UPDATED MODAL CSS FOR LARGE SCALE IMAGE --- */
+                .modal-backdrop-custom {
+                    position: fixed; inset: 0; 
+                    background: rgba(45, 42, 38, 0.9);
+                    z-index: 9999; 
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 25px; /* Add padding so image doesn't touch screen edge */
+                    backdrop-filter: blur(5px); animation: fadeIn 0.2s;
+                }
+                
+                .modal-content-custom { 
+                    position: relative;
+                    /* Let image define size, up to viewport limits minus padding */
+                    width: auto;
+                    height: auto; 
+                    max-width: 100%;
+                    max-height: 100%;
+                    display: flex;
+                }
+
+                .modal-content-custom img { 
+                    /* Max dimensions calculated based on padding */
+                    max-width: calc(100vw - 50px);
+                    max-height: calc(100vh - 50px);
+                    width: auto;
+                    height: auto;
+                    object-fit: contain; /* Ensure aspect ratio is kept */
+                    border-radius: 12px;
+                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+                }
+
+                .close-fab {
+                    position: absolute; 
+                    top: -20px; right: -20px;
+                    width: 50px; height: 50px; border-radius: 50%;
+                    background: white; border: none; color: #333;
+                    font-size: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    transition: transform 0.2s;
+                    cursor: pointer;
+                }
+                .close-fab:hover { transform: scale(1.1) rotate(90deg); }
+
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             `}</style>
         </div>
     );
