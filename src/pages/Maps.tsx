@@ -121,7 +121,7 @@ const IslandMaps = () => {
                                 >
                                     <div
                                         className="ticket-card"
-                                        onClick={() => navigate(`/islands/${island.id}`)}
+                                        onClick={() => navigate(`/island/${island.id}`)}
                                     >
                                         <div className="tape-strip"></div>
 

@@ -19,7 +19,7 @@ const AppRoutes = () => {
                 <Route path="/guides" element={<Guides/>}/>
                 <Route path="/maps" element={<Maps/>}/>
                 <Route path="/islands" element={<TreasureIslands/>}/>
-                <Route path="/islands/:id" element={<IslandDetail />} />
+                <Route path="/island/:id" element={<IslandDetail />} />
                 <Route path="/membership" element={<Membership/>}/>
                 <Route path="/find" element={<FindItems/>}/>
                 <Route path="/contact" element={<Contact/>}/>

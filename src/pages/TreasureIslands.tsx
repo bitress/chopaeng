@@ -436,7 +436,7 @@ const TreasureIslands = () => {
                                     onClick={(e) => {
                                         // prevent navigation if clicking buttons/icons inside
                                         if ((e.target as HTMLElement).closest("button, a")) return;
-                                        navigate(`/islands/${island.name.toLowerCase()}`);
+                                        navigate(`/island/${island.name.toLowerCase()}`);
                                     }}
                                 >
 
