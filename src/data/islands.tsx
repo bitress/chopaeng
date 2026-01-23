@@ -315,6 +315,16 @@ export const PUBLIC_ISLANDS: Islands[] = [
         description: "Cold-weather fashion island with coats, boots, and stylish headwear."
     },
     {
+        id: "gunita",
+        name: "Gunita",
+        type: "2.0 Treasure Islands",
+        items: ["1.0 Sets", "Walls/Floors"],
+        theme: "teal",
+        cat: "public",
+        description: "Classic island for complete 1.0 furniture sets and interior walls and floors."
+
+    },
+    {
         id: "amihan",
         name: "AMIHAN",
         type: "Seasonal Items",
@@ -349,5 +359,7 @@ export const PUBLIC_ISLANDS: Islands[] = [
         theme: "teal",
         cat: "public",
         description: "Romantic seasonal island featuring wedding furniture and love-themed items."
-    }
+    },
+
+
 ];
