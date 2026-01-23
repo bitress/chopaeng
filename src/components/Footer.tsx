@@ -36,13 +36,31 @@ const Footer = () => {
                                 <i className="bi bi-discord fs-5"></i>
                             </a>
                             <a
-                                href="https://facebook.com"
+                                href="https://www.facebook.com/ChoPaengTV"
                                 target="_blank"
                                 rel="noreferrer noopener"
                                 className="social-icon-link text-muted"
                                 aria-label="Facebook"
                             >
                                 <i className="bi bi-facebook fs-5"></i>
+                            </a>
+                            <a
+                                href="https://www.tiktok.com/@ChoPaengTV"
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="social-icon-link text-muted"
+                                aria-label="Tiktok"
+                            >
+                                <i className="bi bi-tiktok fs-5"></i>
+                            </a>
+                            <a
+                                href="https://www.instagram.com/itschopaeng"
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="social-icon-link text-muted"
+                                aria-label="Instagram"
+                            >
+                                <i className="bi bi-instagram fs-5"></i>
                             </a>
                             <a
                                 href="https://www.twitch.tv/chopaeng"
