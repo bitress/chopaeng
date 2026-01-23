@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 type Category = "public" | "member";
 type FilterKey = "ALL" | Category;
@@ -98,7 +99,6 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
     },
 };
 
-// --- HELPER FUNCTIONS ---
 const parseVisitors = (raw: string): number => {
     if (!raw) return 0;
     const clean = raw.toUpperCase();
@@ -175,7 +175,8 @@ const TreasureIslands = () => {
     const [finderResults, setFinderResults] = useState<string[] | null>(null);
     const [lastQuery, setLastQuery] = useState("");
 
-    // --- 1. Fetch Live Status (Dodo/Visitors) ---
+    const navigate = useNavigate();
+
     useEffect(() => {
         const fetchStatus = async () => {
             try {
@@ -427,7 +428,17 @@ const TreasureIslands = () => {
 
                         return (
                             <div key={island.name} className="col-xl-3 col-lg-4 col-md-6">
-                                <div className={`island-card card h-100 border-0 shadow-sm overflow-hidden position-relative ${statusMeta.cardClass} ${isMatch ? 'match-highlight' : ''}`}>
+                                <div
+                                    className={`island-card card h-100 border-0 shadow-sm overflow-hidden position-relative 
+                                 ${statusMeta.cardClass} ${isMatch ? "match-highlight" : ""}`}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(e) => {
+                                        // prevent navigation if clicking buttons/icons inside
+                                        if ((e.target as HTMLElement).closest("button, a")) return;
+                                        navigate(`/islands/${island.name.toLowerCase()}`);
+                                    }}
+                                >
 
                                     {isMatch && (
                                         <div className="position-absolute top-0 start-0 w-100 bg-warning text-dark text-center fw-black x-small py-1 z-2 shadow-sm">

@@ -53,7 +53,7 @@ const IslandDetail = () => {
                 if (!res.ok) throw new Error(`API error: ${res.status}`);
                 const data = await res.json();
                 if (!cancelled) setApiIslands(data);
-            } catch (err: any) {
+            } catch  {
                 if (!cancelled) console.log("error")
             } finally {
                 if (!cancelled) setLoading(false);
@@ -80,7 +80,6 @@ const IslandDetail = () => {
     const live = island.live;
     const canShowDodo = live?.isOnline && !live?.isSubOnly && live?.dodo && !["GETTIN'", "FULL"].includes(live.dodo);
     const mapImageSrc = `/maps/${island.name.toLowerCase()}.png`;
-    const fallbackImageSrc = mapImageSrc.replace(".png", ".jpg");
     return (
         <div className="nook-detail-root min-vh-100 py-4 py-md-5">
             <div className="container" style={{ maxWidth: "1000px" }}>
@@ -180,7 +179,7 @@ const IslandDetail = () => {
                                     <section className="mb-4">
                                         <h4 className="section-title"><i className="fa-solid fa-box-open me-2"></i>Inventory Highlights</h4>
                                         <div className="d-flex flex-wrap gap-2">
-                                            {(island.details?.sets ?? island.items ?? []).map((set: string) => (
+                                            {( island.items ?? []).map((set: string) => (
                                                 <span key={set} className="inventory-chip" style={{ borderLeft: `4px solid ${themeColor}` }}>
                                                     {set}
                                                 </span>
@@ -188,45 +187,52 @@ const IslandDetail = () => {
                                         </div>
                                     </section>
 
-                                    <div className="info-grid mt-4">
-                                        <div className="info-item">
-                                            <span className="label">SEASON</span>
-                                            <span className="value">{island.details?.seasonal ?? "Year-Round"}</span>
-                                        </div>
-                                        <div className="info-item">
-                                            <span className="label">DODO CODE</span>
-                                            <div className="value dodo-reveal">
-                                                {loading ? "..." : live?.isSubOnly ? "LOCKED" : live?.dodo || "—"}
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     {/* Final CTA */}
                                     <div className="mt-5">
                                         <button
-                                            className={`btn-dodo-action w-100 ${canShowDodo ? 'active' : 'disabled'}`}
+                                            className={`btn-dodo-action w-100 ${canShowDodo ? "active" : "disabled"}`}
                                             disabled={!canShowDodo}
-                                            onClick={() => alert(`Dodo Code: ${live?.dodo}`)}
                                         >
                                             <div className="d-flex align-items-center justify-content-center gap-3 py-2">
-                                                <i className={`fa-solid ${live?.isSubOnly ? 'fa-lock' : 'fa-plane-arrival'}`}></i>
+                                                <i
+                                                    className={`fa-solid ${
+                                                        canShowDodo ? "fa-plane-arrival" : live?.isSubOnly ? "fa-lock" : "fa-ban"
+                                                    }`}
+                                                ></i>
+
                                                 <div className="text-start">
                                                     <div className="fw-black h5 mb-0">
-                                                        {canShowDodo ? "Boarding Now" : live?.isSubOnly ? "Subscribers Only" : "Gate Closed"}
+                                                        {canShowDodo
+                                                            ? `Dodo Code: ${live?.dodo}`
+                                                            : live?.isSubOnly
+                                                                ? "Subscribers Only"
+                                                                : "Gate Closed"}
                                                     </div>
+
                                                     <div className="x-small opacity-75 fw-bold">
-                                                        {canShowDodo ? "Click to reveal Dodo Code" : "Follow our Twitch for access"}
+                                                        {canShowDodo
+                                                            ? "Use this code at the airport ✈️"
+                                                            : live?.isSubOnly
+                                                                ? "Subscribe on Patreon to unlock"
+                                                                : "Island is currently unavailable"}
                                                     </div>
                                                 </div>
                                             </div>
                                         </button>
 
                                         {live?.isSubOnly && (
-                                            <a href="https://patreon.com" target="_blank" className="btn btn-link w-100 mt-2 text-warning fw-bold text-decoration-none small">
+                                            <a
+                                                href="https://www.patreon.com/cw/chopaeng/membership"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn btn-link w-100 mt-2 text-warning fw-bold text-decoration-none small"
+                                            >
                                                 Unlock VIP Access <i className="fa-solid fa-arrow-up-right-from-square ms-1"></i>
                                             </a>
                                         )}
                                     </div>
+
                                 </div>
                             </div>
                         </div>

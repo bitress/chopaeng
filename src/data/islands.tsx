@@ -347,7 +347,7 @@ export const PUBLIC_ISLANDS: Islands[] = [
         type: "Order Bot",
         items: ["Order Bot"],
         theme: "teal",
-        cat: "Order Bot",
+        cat: "public",
         description: "Romantic seasonal island featuring wedding furniture and love-themed items."
     }
 ];
