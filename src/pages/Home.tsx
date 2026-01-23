@@ -1,16 +1,5 @@
-import { useState } from "react";
 import {Link} from "react-router-dom";
 
-interface SearchResult {
-    found: boolean;
-    query: string;
-    results?: {
-        free: string[];
-        sub: string[];
-    };
-    suggestions?: string[];
-    message: string;
-}
 const Home = () => {
     return (
         <>
