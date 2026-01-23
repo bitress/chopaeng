@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { PUBLIC_ISLANDS, type Islands } from "../data/islands.tsx";
+import { ISLANDS_DATA, type IslandData } from "../data/islands.ts";
 
 // --- Types & Helpers ---
 type ApiIsland = {
@@ -13,7 +13,7 @@ type ApiIsland = {
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/['"]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
-const mergeIslands = (publicIslands: Islands[], apiIslands: ApiIsland[]) => {
+const mergeIslands = (publicIslands: IslandData[], apiIslands: ApiIsland[]) => {
     const apiById = new Map<string, ApiIsland>();
     const apiByName = new Map<string, ApiIsland>();
     for (const a of apiIslands) {
@@ -64,7 +64,7 @@ const IslandDetail = () => {
         return () => { cancelled = true; clearInterval(interval); };
     }, []);
 
-    const MERGED_ISLANDS = useMemo(() => mergeIslands(PUBLIC_ISLANDS, apiIslands), [apiIslands]);
+    const MERGED_ISLANDS = useMemo(() => mergeIslands(ISLANDS_DATA, apiIslands), [apiIslands]);
     const island = MERGED_ISLANDS.find((i) => i.id === id);
 
     if (!island) return (

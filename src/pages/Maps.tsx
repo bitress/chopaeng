@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PUBLIC_ISLANDS } from "../data/islands.tsx";
+import { ISLANDS_DATA } from "../data/islands.ts";
 
 type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
 
@@ -49,7 +49,7 @@ const IslandMaps = () => {
     }, []);
 
     const filteredIslands = useMemo(() => {
-        return PUBLIC_ISLANDS.filter(island =>
+        return ISLANDS_DATA.filter(island =>
             island.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             island.items.some(i => i.toLowerCase().includes(searchQuery.toLowerCase()))
         );

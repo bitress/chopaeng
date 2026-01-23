@@ -1,25 +1,16 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-type Category = "public" | "member";
-type FilterKey = "ALL" | Category;
-
-type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
-type Theme = "pink" | "teal" | "purple" | "gold";
+import { ISLANDS_DATA, type IslandData, type IslandCategory, type IslandStatus } from "../data/islands";
 
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
+type FilterKey = "ALL" | IslandCategory;
 
-interface Island {
+interface ApiIsland {
+    dodo: string;
     name: string;
-    status: IslandStatus;
-    dodoCode?: string;
+    status: string;
     type: string;
-    seasonal: string;
-    items: string[];
-    visitors: number;
-    cat: Category;
-    theme: Theme;
-    mapUrl?: string;
+    visitors: string;
 }
 
 interface FinderResponse {
@@ -29,14 +20,6 @@ interface FinderResponse {
         free: string[];
         sub: string[];
     };
-}
-
-interface ApiIsland {
-    dodo: string;
-    name: string;
-    status: string;
-    type: string;
-    visitors: string;
 }
 
 interface FilterTab {
@@ -58,8 +41,14 @@ interface StatusMeta {
     aria: string;
 }
 
-const getIslandMap = (islandName: string) => {
-    return `/maps/${islandName.toLowerCase()}.png`;
+const getIslandMap = (islandName: string) => `/maps/${islandName.toLowerCase()}.png`;
+
+const parseVisitors = (raw: string): number => {
+    if (!raw) return 0;
+    const clean = raw.toUpperCase();
+    if (clean.includes("FULL")) return 7;
+    const match = clean.match(/(\d+)/);
+    return match ? Math.max(0, Math.min(7, parseInt(match[0], 10))) : 0;
 };
 
 const FILTERS: FilterTab[] = [
@@ -99,83 +88,24 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
     },
 };
 
-const parseVisitors = (raw: string): number => {
-    if (!raw) return 0;
-    const clean = raw.toUpperCase();
-    if (clean.includes("FULL")) return 7;
-    const match = clean.match(/(\d+)/);
-    if (match) {
-        const num = parseInt(match[0], 10);
-        return Math.max(0, Math.min(7, num));
-    }
-    return 0;
-};
-
-const RAW_METADATA: Island[] = [
-    { name: "ALAPAAP", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs", "Materials"], visitors: 7, cat: "member", theme: "gold" },
-    { name: "ARUGA", status: "SUB ONLY", type: "Patreon Exclusive", seasonal: "Year-Round", items: ["Exclusive Sets", "Materials"], visitors: 1, cat: "member", theme: "gold" },
-    { name: "BAHAGHARI", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs"], visitors: 7, cat: "member", theme: "gold" },
-    { name: "BITUIN", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs"], visitors: 7, cat: "member", theme: "gold" },
-    { name: "BONITA", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs"], visitors: 3, cat: "member", theme: "gold" },
-    { name: "DALISAY", status: "SUB ONLY", type: "Patreon Exclusive", seasonal: "Year-Round", items: ["Exclusive Sets"], visitors: 2, cat: "member", theme: "gold" },
-    // ROW 2
-    { name: "GALAK", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs"], visitors: 4, cat: "member", theme: "gold" },
-    { name: "HIRAYA", status: "SUB ONLY", type: "Patreon Exclusive", seasonal: "Year-Round", items: ["Exclusive Sets"], visitors: 5, cat: "member", theme: "gold" },
-    { name: "LAKAN", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs"], visitors: 4, cat: "member", theme: "gold" },
-    { name: "LIKHA", status: "SUB ONLY", type: "Treasure Island", seasonal: "Year-Round", items: ["General", "DIYs"], visitors: 7, cat: "member", theme: "gold" },
-    { name: "MARAHUYO", status: "SUB ONLY", type: "Patreon Exclusive", seasonal: "Year-Round", items: ["Max Bells", "Turnips"], visitors: 4, cat: "member", theme: "gold" },
-    { name: "TAGUMPAY", status: "SUB ONLY", type: "Patreon Exclusive", seasonal: "Year-Round", items: ["Exclusive Sets"], visitors: 5, cat: "member", theme: "gold" },
-    // ROW 3
-    { name: "KILIG", status: "ONLINE", type: "1.0 Treasure Island", seasonal: "Year-Round", items: ["1.0 Furniture", "DIYs"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "MAHARLIKA", status: "ONLINE", type: "Furniture Island", seasonal: "Year-Round", items: ["Furniture Sets", "Housewares"], visitors: 7, cat: "public", theme: "purple" },
-    { name: "HARANA", status: "ONLINE", type: "Critters & DIY", seasonal: "Year-Round", items: ["Models", "Golden Tools", "DIYs"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "KAKANGGATA", status: "ONLINE", type: "1.0 Treasure Island", seasonal: "Summer", items: ["Shell DIYs", "Surfboards"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "BATHALA", status: "ONLINE", type: "2.0 Treasure Island", seasonal: "Year-Round", items: ["2.0 Items", "Vehicles"], visitors: 7, cat: "public", theme: "teal" },
-    // ROW 4
-    { name: "KAULAYAW", status: "ONLINE", type: "2.0 Treasure Island", seasonal: "Year-Round", items: ["2.0 Furniture", "Food"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "TADHANA", status: "ONLINE", type: "Furniture Island", seasonal: "Year-Round", items: ["Antique", "Imperial", "Cute"], visitors: 7, cat: "public", theme: "purple" },
-    { name: "PAGSUYO", status: "ONLINE", type: "Critters & DIY", seasonal: "Year-Round", items: ["Fish Models", "Bug Models"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "KALAWAKAN", status: "ONLINE", type: "1.0 Treasure Island", seasonal: "Year-Round", items: ["Rattan", "Diner", "Throwback"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "DALANGIN", status: "REFRESHING", type: "2.0 Treasure Island", seasonal: "Year-Round", items: ["Refreshing..."], visitors: 0, cat: "public", theme: "teal" },
-    // ROW 5
-    { name: "PAGSAMO", status: "ONLINE", type: "Furniture Island", seasonal: "Year-Round", items: ["Elegant", "Nordic", "Ranch"], visitors: 7, cat: "public", theme: "purple" },
-    { name: "TALA", status: "ONLINE", type: "Materials and DIY", seasonal: "Year-Round", items: ["Wood", "Iron", "Gold"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "MATAHOM", status: "ONLINE", type: "Clothing Island", seasonal: "Spring", items: ["Kimonos", "Bags", "Shoes"], visitors: 7, cat: "public", theme: "pink" },
-    { name: "KUNDIMAN", status: "ONLINE", type: "1.0 Treasure Island", seasonal: "Year-Round", items: ["1.0 Sets", "Walls/Floors"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "GUNITA", status: "ONLINE", type: "2.0 Treasure Island", seasonal: "Year-Round", items: ["Castle Sets", "Plaza Items"], visitors: 7, cat: "public", theme: "teal" },
-    // ROW 6
-    { name: "SILAKBO", status: "ONLINE", type: "Seasonal Items", seasonal: "Halloween", items: ["Spooky Set", "Candy", "Pumpkins"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "SINAGTALA", status: "ONLINE", type: "Materials and DIY", seasonal: "Year-Round", items: ["Star Frags", "Seasonal Mats"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "PARALUMAN", status: "ONLINE", type: "Clothing Island", seasonal: "Winter", items: ["Coats", "Boots", "Hats"], visitors: 7, cat: "public", theme: "pink" },
-    { name: "AMIHAN", status: "ONLINE", type: "Seasonal Items", seasonal: "Festive", items: ["Ornaments", "Toy Day"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "BABAYLAN", status: "ONLINE", type: "Seasonal Items", seasonal: "Cherry Blossom", items: ["Petals", "Bonsai", "Branches"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "PAGSUYO", status: "ONLINE", type: "Seasonal Items", seasonal: "Autumn", items: ["Mushrooms", "Maple"], visitors: 7, cat: "public", theme: "teal" },
-    { name: "SINTA", status: "ONLINE", type: "!orderbot", seasonal: "Wedding", items: ["Order Bot"], visitors: 7, cat: "public", theme: "teal" },
-];
-
-const STATIC_ISLAND_METADATA = RAW_METADATA.map(island => ({
-    ...island,
-    mapUrl: getIslandMap(island.name)
-}));
-
 const TreasureIslands = () => {
-    // State
-    const [islands, setIslands] = useState<Island[]>(STATIC_ISLAND_METADATA);
-    const [filter, setFilter] = useState<FilterKey>("ALL");
+    const navigate = useNavigate();
+
+    const [islands, setIslands] = useState<IslandData[]>(() =>
+        ISLANDS_DATA.map(i => ({ ...i, mapUrl: i.mapUrl || getIslandMap(i.name) }))
+    );
+
     const [loading, setLoading] = useState<boolean>(true);
+    const [filter, setFilter] = useState<FilterKey>("ALL");
 
-    // UI State
     const [copiedId, setCopiedId] = useState<string | null>(null);
-    const [selectedMap, setSelectedMap] = useState<Island | null>(null);
+    const [selectedMap, setSelectedMap] = useState<IslandData | null>(null);
 
-    // Search Logic
     const [search, setSearch] = useState<string>("");
     const [searchMode, setSearchMode] = useState<SearchMode>("FILTER");
     const [isFinderLoading, setIsFinderLoading] = useState(false);
     const [finderResults, setFinderResults] = useState<string[] | null>(null);
     const [lastQuery, setLastQuery] = useState("");
-
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchStatus = async () => {
@@ -184,8 +114,9 @@ const TreasureIslands = () => {
                 if (!response.ok) throw new Error("Network response was not ok");
                 const apiData: ApiIsland[] = await response.json();
 
-                const mergedData = STATIC_ISLAND_METADATA.map((staticIsland) => {
+                setIslands(currentData => currentData.map((staticIsland) => {
                     const liveData = apiData.find((api) => api.name.toUpperCase() === staticIsland.name.toUpperCase());
+
                     if (liveData) {
                         let computedStatus: IslandStatus = "OFFLINE";
                         if (["SUB ONLY", "PATREON"].some(k => liveData.status.includes(k))) computedStatus = "SUB ONLY";
@@ -201,9 +132,7 @@ const TreasureIslands = () => {
                         };
                     }
                     return { ...staticIsland, status: "OFFLINE" as IslandStatus, visitors: 0 };
-                });
-
-                setIslands(mergedData);
+                }));
             } catch (error) {
                 console.error("Failed to fetch island status:", error);
             } finally {
@@ -216,7 +145,6 @@ const TreasureIslands = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Handle Escape Key for Modal
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === "Escape") setSelectedMap(null);
@@ -225,7 +153,6 @@ const TreasureIslands = () => {
         return () => window.removeEventListener("keydown", handleEsc);
     }, []);
 
-    // --- 2. Handle Item/Villager Finder Search ---
     const executeFinderSearch = async () => {
         if (!search.trim()) return;
 
@@ -241,7 +168,7 @@ const TreasureIslands = () => {
             const data: FinderResponse = await response.json();
 
             if (data.found && data.results) {
-                const allFound = [...data.results.free, ...data.results.sub].map(n => n.toUpperCase());
+                const allFound = [...(data.results.free || []), ...(data.results.sub || [])].map(n => n.toUpperCase());
                 setFinderResults(allFound);
             } else {
                 setFinderResults([]);
@@ -254,9 +181,12 @@ const TreasureIslands = () => {
         }
     };
 
-    // --- 3. Compute Filtered Grid ---
     const filteredData = useMemo(() => {
-        let data = islands.filter((island) => (filter === "ALL" ? true : island.cat === filter));
+        let data = islands;
+
+        if (filter !== "ALL") {
+            data = data.filter((island) => island.cat === filter);
+        }
 
         if (searchMode === "FILTER") {
             const q = search.trim().toLowerCase();
@@ -268,15 +198,14 @@ const TreasureIslands = () => {
                     return haystack.includes(q);
                 });
             }
-        } else {
-            if (finderResults !== null) {
-                data = data.filter(island => finderResults.includes(island.name.toUpperCase()));
-            }
+        } else if (finderResults !== null) {
+            // Finder Filter
+            data = data.filter(island => finderResults.includes(island.name.toUpperCase()));
         }
         return data;
     }, [filter, search, islands, searchMode, finderResults]);
 
-    const onCopyCode = (island: Island, code: string) => {
+    const onCopyCode = (island: IslandData, code: string) => {
         if (code === "GETTIN'" || code === "....." || code === "SUB ONLY") return;
 
         navigator.clipboard.writeText(code);
@@ -289,7 +218,6 @@ const TreasureIslands = () => {
         setSearch("");
         setFinderResults(null);
     };
-
 
     return (
         <div className="nook-bg min-vh-100 py-5 font-nunito">
@@ -320,7 +248,7 @@ const TreasureIslands = () => {
 
                         {/* Search Area */}
                         <div className="search-container mx-auto" style={{ maxWidth: '650px' }}>
-                            {/* Mode Segmented Toggle */}
+                            {/* Mode Toggle */}
                             <div className="mode-toggle p-1 bg-light rounded-pill d-flex mb-3 border">
                                 <button
                                     onClick={() => handleModeSwitch("FILTER")}
@@ -427,16 +355,15 @@ const TreasureIslands = () => {
                         const isFull = island.visitors >= 7;
 
                         return (
-                            <div key={island.name} className="col-xl-3 col-lg-4 col-md-6">
+                            <div             key={`${island.id}-${island.cat}`} className="col-xl-3 col-lg-4 col-md-6">
                                 <div
                                     className={`island-card card h-100 border-0 shadow-sm overflow-hidden position-relative 
                                  ${statusMeta.cardClass} ${isMatch ? "match-highlight" : ""}`}
                                     role="button"
                                     tabIndex={0}
                                     onClick={(e) => {
-                                        // prevent navigation if clicking buttons/icons inside
                                         if ((e.target as HTMLElement).closest("button, a")) return;
-                                        navigate(`/island/${island.name.toLowerCase()}`);
+                                        navigate(`/island/${island.id}`);
                                     }}
                                 >
 
@@ -461,7 +388,10 @@ const TreasureIslands = () => {
                                             <button
                                                 className="btn btn-light rounded-circle border d-flex align-items-center justify-content-center shadow-sm"
                                                 style={{width: 40, height: 40}}
-                                                onClick={() => setSelectedMap(island)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedMap(island);
+                                                }}
                                                 title="View Map"
                                             >
                                                 <i className="fa-regular fa-map text-muted"></i>
@@ -477,17 +407,23 @@ const TreasureIslands = () => {
                                     <div className="card-body p-4 pt-3">
 
                                         <div className="d-flex flex-wrap gap-1 mb-4">
-                                            {island.items.slice(0, 3).map((item) => (
+                                            {island.items.slice(0, 4).map((item) => (
                                                 <span key={item} className="badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">
                                                     {item}
                                                 </span>
+
                                             ))}
+
+                                            {island.items.length > 4 && (
+                                                <span className="loot-pill more badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">+{island.items.length - 4}</span>
+                                            )}
                                         </div>
 
-
-
                                         <button
-                                            onClick={() => hasCode && onCopyCode(island, island.dodoCode!)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                hasCode && onCopyCode(island, island.dodoCode!);
+                                            }}
                                             disabled={statusMeta.btn.disabled}
                                             className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : statusMeta.btn.className}`}
                                         >
@@ -722,6 +658,12 @@ const TreasureIslands = () => {
                 @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 
                 .transition-all { transition: all 0.2s ease; }
+                  .loot-pill {
+                    background: #f0f2f5; color: #666;
+                    padding: 4px 10px; border-radius: 8px;
+                    font-size: 0.75rem; font-weight: 700;
+                }
+                .loot-pill.more { background: var(--dal-yellow); color: #5a4a1b; }
             `}</style>
         </div>
     );
