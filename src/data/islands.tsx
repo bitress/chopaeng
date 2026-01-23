@@ -225,8 +225,8 @@ export const PUBLIC_ISLANDS: Islands[] = [
         description: "Furniture island featuring popular themed sets like Antique, Imperial, and Cute."
     },
     {
-        id: "ragsuyo",
-        name: "RAGSUYO",
+        id: "pagsuyo",
+        name: "PAGSUYO",
         type: "Critters & DIY",
         items: ["Fish Models", "Bug Models", "Art"],
         theme: "teal",
