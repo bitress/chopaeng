@@ -204,7 +204,8 @@ const TreasureIslands = () => {
             if (q) {
                 data = data.filter((island) =>
                     island.name.toLowerCase().includes(q) ||
-                    island.type.toLowerCase().includes(q)
+                    island.type.toLowerCase().includes(q) ||
+                    island.items.some(item => item.toLowerCase().includes(q))
                 );
             }
         } else if (finderResults !== null) {
