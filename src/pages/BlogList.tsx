@@ -1,18 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
+import banner from '../assets/banner.png';
 // --- CONFIGURATION ---
 const API_URL = "https://blogs.chopaeng.com/api/patreon/posts";
 
-// --- FALLBACK IMAGES ---
-const FALLBACK_IMAGES = [
-    "https://images.unsplash.com/photo-1544551763-46a8723ba3f9?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1595009901132-723a3b7c20eb?q=80&w=800&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1598556886362-7e04097f5831?q=80&w=800&auto=format&fit=crop"
-];
-
-// --- HELPERS ---
 const stripHtml = (html: string) => {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     return doc.body.textContent || "";
@@ -24,7 +15,6 @@ const formatDate = (isoString: string) => {
     });
 };
 
-// --- CATEGORIES (Derived from API Data) ---
 const CATEGORIES = ["All", "Announcement", "Members Only"];
 
 const BlogList = () => {
@@ -40,15 +30,15 @@ const BlogList = () => {
                 const json = await response.json();
 
                 // Transform API Data
-                const transformed = json.data.map((item: any, index: number) => {
+                const transformed = json.data.map((item: any) => {
                     const attr = item.attributes;
 
                     // Image Logic (Same as Home.tsx)
                     let imageUrl = attr.image?.large_url;
                     if (!imageUrl && attr.embed_data?.provider === "YouTube") {
-                        imageUrl = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+                        imageUrl = banner;
                     }
-                    if (!imageUrl) imageUrl = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+                    if (!imageUrl) imageUrl = banner;
 
                     // Excerpt Logic
                     const rawText = stripHtml(attr.content);

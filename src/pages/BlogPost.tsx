@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-
+import banner from '../assets/banner.png'
 const API_BASE_URL = "https://blogs.chopaeng.com";
 
 const BlogPost = () => {
@@ -80,7 +80,7 @@ const BlogPost = () => {
 
             {/* HERO HEADER */}
             <div className="position-relative" style={{ height: '50vh', minHeight: '400px' }}>
-                <img src={post.image} alt={post.title} className="w-100 h-100 object-fit-cover" style={{ filter: 'brightness(0.6)' }} />
+                <img src={banner} alt={post.title} className="w-100 h-100 object-fit-cover" style={{ filter: 'brightness(0.6)' }} />
 
                 {/* Nav */}
                 <div className="position-absolute top-0 start-0 p-4 w-100 d-flex justify-content-between">
@@ -167,7 +167,7 @@ const BlogPost = () => {
                                 {recentPosts.map((p) => (
                                     <div key={p.id} onClick={() => navigate(`/blog/${p.id}`)} className="d-flex gap-3 align-items-center group-hover cursor-pointer">
                                         <div className="rounded-3 bg-light flex-shrink-0 overflow-hidden" style={{ width: 60, height: 60 }}>
-                                            <img src={p.image || "https://via.placeholder.com/60"} className="w-100 h-100 object-fit-cover" alt="" />
+                                            <img src={p.image || banner} className="w-100 h-100 object-fit-cover" alt="" />
                                         </div>
                                         <div>
                                             <h6 className="fw-bold text-dark m-0 small line-clamp-2 transition-colors">{p.title}</h6>

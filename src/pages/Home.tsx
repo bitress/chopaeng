@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import banner from '../assets/banner.png'
 
-// --- TYPES ---
 interface BlogPost {
     id: string;
     title: string;
@@ -11,16 +11,6 @@ interface BlogPost {
     excerpt: string;
 }
 
-// --- FALLBACK IMAGES (To make the UI look good if Patreon doesn't provide an image) ---
-const FALLBACK_IMAGES = [
-    "https://images.unsplash.com/photo-1599939571322-792a326991f2?q=80&w=800&auto=format&fit=crop", // Setup
-    "https://images.unsplash.com/photo-1579621970588-a35d0e879b94?q=80&w=800&auto=format&fit=crop", // Beach
-    "https://images.unsplash.com/photo-1595009901132-723a3b7c20eb?q=80&w=800&auto=format&fit=crop", // Villager
-    "https://images.unsplash.com/photo-1628260412297-a3377e45006f?q=80&w=800&auto=format&fit=crop", // Turnips
-    "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?q=80&w=800&auto=format&fit=crop"  // Switch
-];
-
-// --- HELPER: HTML STRIPPER ---
 const stripHtml = (html: string) => {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     return doc.body.textContent || "";
@@ -41,34 +31,22 @@ const Home = () => {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                // Point this to your actual Flask API URL
                 const response = await fetch("https://blogs.chopaeng.com/api/patreon/posts");
                 if (!response.ok) throw new Error("Failed to fetch");
-
                 const json = await response.json();
-
-                // TRANSFORM RAW API DATA TO UI DATA
-                const transformed: BlogPost[] = json.data.slice(0, 3).map((item: any, index: number) => {
+                const transformed: BlogPost[] = json.data.slice(0, 3).map((item: any) => {
                     const attr = item.attributes;
 
-                    // 1. Determine Image
-                    // Check if 'image' exists in attributes (from your python merge logic)
-                    // If not, check embed_data for youtube thumbnail
-                    // Finally, fallback to static list
                     let imageUrl = attr.image?.large_url;
                     if (!imageUrl && attr.embed_data?.provider === "YouTube") {
-                        // Extract youtube ID roughly if needed, or just use fallback
-                        // For stability, let's use the fallback rotation
-                        imageUrl = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+                        imageUrl = banner;
                     }
                     if (!imageUrl) {
-                        imageUrl = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+                        imageUrl = banner;
                     }
 
-                    // 2. Determine Category
                     const category = attr.is_public ? "Announcement" : "Members Only";
 
-                    // 3. Create Excerpt
                     const rawText = stripHtml(attr.content);
                     const excerpt = rawText.length > 100 ? rawText.substring(0, 100) + "..." : rawText;
 
@@ -85,7 +63,6 @@ const Home = () => {
                 setPosts(transformed);
             } catch (error) {
                 console.error("Error loading posts:", error);
-                // Keep placeholder or empty on error
             } finally {
                 setLoading(false);
             }
@@ -130,11 +107,28 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-lg-6 order-1 order-lg-2 mb-5 mb-lg-0 text-center position-relative">
+                            {/* Main Snapshot Frame */}
                             <div className="snapshot-frame mx-auto position-relative">
                                 <div className="tape-strip"></div>
-                                <img src="https://images.unsplash.com/photo-1599939571322-792a326991f2?q=80&w=1000&auto=format&fit=crop" alt="ACNH Setup" className="img-fluid rounded-3 border border-light" />
-                                <div className="floating-badge bg-white p-3 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-4 ms-4"><i className="fa-solid fa-sack-dollar text-warning fs-2"></i></div>
-                                <div className="floating-badge-2 bg-white p-3 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-4 me-n4"><i className="fa-solid fa-gift text-danger fs-2"></i></div>
+
+                                {/* Responsive Video Container */}
+                                <div className="ratio ratio-16x9 rounded-3 overflow-hidden border border-light shadow-sm">
+                                    <iframe
+                                        src="https://www.youtube.com/embed/Oq3ECNa4vmo?autoplay=1&mute=1&loop=1&playlist=Oq3ECNa4vmo"
+                                        title="ChoPaeng TV Treasure Island Tour"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                        style={{ border: 0 }}
+                                    ></iframe>
+                                </div>
+
+                                {/* Floating Badges */}
+                                <div className="floating-badge bg-white p-3 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-4 ms-4">
+                                    <i className="fa-solid fa-sack-dollar text-warning fs-2"></i>
+                                </div>
+                                <div className="floating-badge-2 bg-white p-3 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-4 me-n4">
+                                    <i className="fa-solid fa-gift text-danger fs-2"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
