@@ -155,9 +155,33 @@ const BlogPost = () => {
                     {/* Sidebar */}
                     <div className="col-lg-4">
                         <div className="bg-cream rounded-4 p-4 shadow-sm border border-light mb-4">
-                            <h5 className="fw-black m-0 text-dark mb-3">Nook Inc. Updates</h5>
-                            <p className="small text-muted fw-bold mb-3">Join Discord for live notifications.</p>
-                            <a href="https://discord.gg/chopaeng" target="_blank" className="btn btn-dark w-100 rounded-pill fw-bold small">Join Discord</a>
+                            <div className="d-flex align-items-center gap-3 mb-3">
+                                <div className="bg-nook-green rounded-circle d-flex align-items-center justify-content-center text-white overflow-hidden shadow-sm" style={{ width: 50, height: 50, flexShrink: 0 }}>
+                                    <img
+                                        src="https://cdn.discordapp.com/icons/729590421478703135/a_df114e705c4d246df0e5a71a786c46af.png?size=256"
+                                        alt="Chopaeng Logo"
+                                        className="w-100 h-100 object-fit-cover"
+                                    />
+                                </div>
+                                <div>
+                                    <h5 className="fw-black m-0 text-dark lh-1">Chopaeng Camp</h5>
+                                    <span className="text-nook x-small fw-black">Official Updates</span>
+                                </div>
+                            </div>
+
+                            <p className="small text-muted fw-bold mb-3 lh-sm">
+                                Stay tuned to this channel for server maintenance schedules and new island drops.
+                            </p>
+
+                            <a
+                                href="https://discord.gg/chopaeng"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-dark w-100 rounded-pill fw-black small py-2 d-flex align-items-center justify-content-center gap-2 transform-active"
+                            >
+                                <i className="fa-brands fa-discord fs-5"></i>
+                                Join Discord
+                            </a>
                         </div>
 
                         {/* Recent Posts List */}

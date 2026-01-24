@@ -114,25 +114,36 @@ const TreasureIslands = () => {
                 if (!response.ok) throw new Error("Network response was not ok");
                 const apiData: ApiIsland[] = await response.json();
 
-                setIslands(currentData => currentData.map((staticIsland) => {
-                    const liveData = apiData.find((api) => api.name.toUpperCase() === staticIsland.name.toUpperCase());
+                setIslands(currentData => {
+                    // Create a NEW array. Do not mutate.
+                    return currentData.map((staticIsland, index) => {
+                        const liveData = apiData.find((api) =>
+                            api.name.toUpperCase() === staticIsland.name.toUpperCase()
+                        );
 
-                    if (liveData) {
-                        let computedStatus: IslandStatus = "OFFLINE";
-                        if (["SUB ONLY", "PATREON"].some(k => liveData.status.includes(k))) computedStatus = "SUB ONLY";
-                        else if (liveData.dodo === "GETTIN'") computedStatus = "REFRESHING";
-                        else if (liveData.status === "ONLINE") computedStatus = "ONLINE";
-                        else if (liveData.status === "REFRESHING") computedStatus = "REFRESHING";
+                        // Force a unique ID if it doesn't exist
+                        const uniqueId = staticIsland.id || `island-${index}`;
 
-                        return {
-                            ...staticIsland,
-                            status: computedStatus,
-                            dodoCode: liveData.dodo,
-                            visitors: parseVisitors(liveData.visitors),
-                        };
-                    }
-                    return { ...staticIsland, status: "OFFLINE" as IslandStatus, visitors: 0 };
-                }));
+                        if (liveData) {
+                            let computedStatus: IslandStatus = "OFFLINE";
+                            if (["SUB ONLY", "PATREON"].some(k => liveData.status.includes(k))) computedStatus = "SUB ONLY";
+                            else if (liveData.dodo === "GETTIN'") computedStatus = "REFRESHING";
+                            else if (liveData.status === "ONLINE") computedStatus = "ONLINE";
+                            else if (liveData.status === "REFRESHING") computedStatus = "REFRESHING";
+
+                            return {
+                                ...staticIsland,
+                                id: uniqueId, // Ensure ID is set
+                                status: computedStatus,
+                                dodoCode: liveData.dodo,
+                                visitors: parseVisitors(liveData.visitors),
+                            };
+                        }
+
+                        // Return a fresh object even if offline
+                        return { ...staticIsland, id: uniqueId, status: "OFFLINE", visitors: 0 };
+                    });
+                });
             } catch (error) {
                 console.error("Failed to fetch island status:", error);
             } finally {
@@ -182,27 +193,30 @@ const TreasureIslands = () => {
     };
 
     const filteredData = useMemo(() => {
-        let data = islands;
+        let data = [...islands];
 
         if (filter !== "ALL") {
-            data = data.filter((island) => island.cat === filter);
+            data = data.filter((island) => island.cat === filter.toLowerCase());
         }
 
         if (searchMode === "FILTER") {
             const q = search.trim().toLowerCase();
             if (q) {
-                data = data.filter((island) => {
-                    const haystack = [island.name, island.type, island.seasonal, ...island.items]
-                        .join(" ")
-                        .toLowerCase();
-                    return haystack.includes(q);
-                });
+                data = data.filter((island) =>
+                    island.name.toLowerCase().includes(q) ||
+                    island.type.toLowerCase().includes(q)
+                );
             }
         } else if (finderResults !== null) {
-            // Finder Filter
             data = data.filter(island => finderResults.includes(island.name.toUpperCase()));
         }
-        return data;
+
+        const seen = new Set();
+        return data.filter(island => {
+            const duplicate = seen.has(island.id);
+            seen.add(island.id);
+            return !duplicate;
+        });
     }, [filter, search, islands, searchMode, finderResults]);
 
     const onCopyCode = (island: IslandData, code: string) => {
@@ -213,12 +227,20 @@ const TreasureIslands = () => {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
+// Update this function
     const handleModeSwitch = (mode: SearchMode) => {
         setSearchMode(mode);
         setSearch("");
-        setFinderResults(null);
+        setFinderResults(null); // Clear the API results immediately
+        setLastQuery("");
     };
 
+// Add this useEffect to handle manual clearing of the search bar
+    useEffect(() => {
+        if (search === "" && searchMode !== "FILTER") {
+            setFinderResults(null);
+        }
+    }, [search, searchMode]);
     return (
         <div className="nook-bg min-vh-100 py-5 font-nunito">
             <div className="container px-md-4">
@@ -283,12 +305,18 @@ const TreasureIslands = () => {
                                 <input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && searchMode !== 'FILTER' && executeFinderSearch()}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            if (searchMode !== 'FILTER') {
+                                                executeFinderSearch();
+                                            }
+                                        }
+                                    }}
                                     className="form-control border-0 shadow-none fw-bold text-dark"
                                     placeholder={
                                         searchMode === "FILTER" ? "Filter list by name, theme..." :
-                                            searchMode === "ITEM" ? "Type item name..." :
-                                                "Type villager name..."
+                                            searchMode === "ITEM" ? "Type item name (e.g. Royal Crown)..." :
+                                                "Type villager name (e.g. Raymond)..."
                                     }
                                 />
 
@@ -355,7 +383,7 @@ const TreasureIslands = () => {
                         const isFull = island.visitors >= 7;
 
                         return (
-                            <div             key={`${island.id}-${island.cat}`} className="col-xl-3 col-lg-4 col-md-6">
+                            <div key={`${island.id}-${island.cat}`} className="col-xl-3 col-lg-4 col-md-6">
                                 <div
                                     className={`island-card card h-100 border-0 shadow-sm overflow-hidden position-relative 
                                  ${statusMeta.cardClass} ${isMatch ? "match-highlight" : ""}`}

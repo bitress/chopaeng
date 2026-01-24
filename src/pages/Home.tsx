@@ -111,7 +111,6 @@ const Home = () => {
                             <div className="snapshot-frame mx-auto position-relative">
                                 <div className="tape-strip"></div>
 
-                                {/* Responsive Video Container */}
                                 <div className="ratio ratio-16x9 rounded-3 overflow-hidden border border-light shadow-sm">
                                     <iframe
                                         src="https://www.youtube.com/embed/Oq3ECNa4vmo?autoplay=1&mute=1&loop=1&playlist=Oq3ECNa4vmo"
