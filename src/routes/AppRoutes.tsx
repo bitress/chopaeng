@@ -12,6 +12,7 @@ import IslandDetail from "../pages/IslandDetail.tsx";
 import Chopaeng404 from "../errors/404.tsx";
 import BlogList from "../pages/BlogList.tsx";
 import BlogPost from "../pages/BlogPost.tsx";
+import DodoDecryptor from "../pages/DodoDecryptor.tsx";
 
 const AppRoutes = () => {
     return (
@@ -26,6 +27,7 @@ const AppRoutes = () => {
                 <Route path="/membership" element={<Membership/>}/>
                 <Route path="/find" element={<FindItems/>}/>
                 <Route path="/contact" element={<Contact/>}/>
+                <Route path="/dodo" element={<DodoDecryptor/>}/>
 
 
                 <Route path="/blog" element={<BlogList />} />
