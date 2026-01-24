@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ISLANDS_DATA, type IslandData } from "../data/islands.ts";
 
-// --- Types & Helpers ---
 type ApiIsland = {
     dodo: string;
     name: string;
@@ -116,7 +115,7 @@ const IslandDetail = () => {
                     <button onClick={() => navigate(-1)} className="btn-nook-back me-3">
                         <i className="fa-solid fa-arrow-left"></i>
                     </button>
-                    <span className="text-muted fw-bold text-uppercase small tracking-wide">Dodo Airlines Travel Guide</span>
+                    <span className="text-muted fw-bold text-uppercase small tracking-wide">Islands</span>
                 </div>
 
                 <div className="row g-4">
