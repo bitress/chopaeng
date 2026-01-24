@@ -20,7 +20,7 @@ const Footer = () => {
             { name: "Treasure Islands", path: "/islands" },
             { name: "Maps", path: "/maps" },
             { name: "Membership", path: "/membership" },
-            { name: "Guides", path: "/guides" },
+            { name: "Get Dodo Code", path: "/dodo" },
         ],
         support: [
             { name: "Guide Book", path: "/guides" },
