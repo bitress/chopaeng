@@ -10,6 +10,8 @@ import Contact from "../pages/Contact.tsx";
 import Maps from "../pages/Maps.tsx";
 import IslandDetail from "../pages/IslandDetail.tsx";
 import Chopaeng404 from "../errors/404.tsx";
+import BlogList from "../pages/BlogList.tsx";
+import BlogPost from "../pages/BlogPost.tsx";
 
 const AppRoutes = () => {
     return (
@@ -24,6 +26,10 @@ const AppRoutes = () => {
                 <Route path="/membership" element={<Membership/>}/>
                 <Route path="/find" element={<FindItems/>}/>
                 <Route path="/contact" element={<Contact/>}/>
+
+
+                <Route path="/blog" element={<BlogList />} />
+                <Route path="/blog/:id" element={<BlogPost />} />
             </Route>
             <Route path="*" element={<Chopaeng404 />} />
         </Routes>

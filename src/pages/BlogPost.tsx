@@ -1,0 +1,233 @@
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+
+// Configuration
+const API_BASE_URL = "http://127.0.0.1:5000";
+
+const BlogPost = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+
+    // --- STATE ---
+    const [post, setPost] = useState<any>(null);
+    const [recentPosts, setRecentPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+
+    // --- FETCH DATA ---
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // 1. Fetch Post
+                const postRes = await fetch(`${API_BASE_URL}/api/patreon/posts/${id}`);
+                if (!postRes.ok) throw new Error("Post not found");
+                const postJson = await postRes.json();
+                const attr = postJson.data.attributes;
+
+                // Format Post
+                setPost({
+                    id: postJson.data.id,
+                    title: attr.title,
+                    date: new Date(attr.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                    author: "Nook Inc.",
+                    // Determine if locked based on API 'is_public' flag
+                    isLocked: !attr.is_public,
+                    category: attr.is_public ? "Announcement" : "Members Only",
+                    image: attr.image?.large_url || "https://images.unsplash.com/photo-1544551763-46a8723ba3f9?q=80&w=800&auto=format&fit=crop",
+                    content: attr.content,
+                    url: attr.url
+                });
+
+                // 2. Fetch Sidebar (Optimized: Only needed if we succeed)
+                const listRes = await fetch(`${API_BASE_URL}/api/patreon/posts`);
+                if (listRes.ok) {
+                    const listJson = await listRes.json();
+                    setRecentPosts(listJson.data
+                        .filter((p: any) => p.id !== id)
+                        .slice(0, 3)
+                        .map((p: any) => ({
+                            id: p.id,
+                            title: p.attributes.title,
+                            date: new Date(p.attributes.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                            image: p.attributes.image?.large_url
+                        }))
+                    );
+                }
+
+            } catch (err) {
+                console.error(err);
+                setError(true);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) fetchData();
+        window.scrollTo(0, 0);
+    }, [id]);
+
+    if (loading) return <div className="min-vh-100 d-flex justify-content-center align-items-center nook-bg"><i className="fa-solid fa-spinner fa-spin fa-3x text-nook"></i></div>;
+
+    if (error || !post) return (
+        <div className="min-vh-100 d-flex flex-column justify-content-center align-items-center nook-bg font-nunito">
+            <h2 className="fw-black text-muted opacity-50">Post Not Found</h2>
+            <button onClick={() => navigate("/blog")} className="btn btn-nook-primary rounded-pill fw-bold shadow-sm px-4 mt-3">Return to Board</button>
+        </div>
+    );
+
+    return (
+        <div className="nook-bg min-vh-100 font-nunito pb-5">
+
+            {/* HERO HEADER */}
+            <div className="position-relative" style={{ height: '50vh', minHeight: '400px' }}>
+                <img src={post.image} alt={post.title} className="w-100 h-100 object-fit-cover" style={{ filter: 'brightness(0.6)' }} />
+
+                {/* Nav */}
+                <div className="position-absolute top-0 start-0 p-4 w-100 d-flex justify-content-between">
+                    <button onClick={() => navigate(-1)} className="btn btn-light rounded-circle shadow-sm" style={{ width: 45, height: 45 }}><i className="fa-solid fa-arrow-left"></i></button>
+                    <Link to="/" className="btn btn-light rounded-pill px-4 fw-bold shadow-sm opacity-90 text-decoration-none text-dark">Home</Link>
+                </div>
+
+                {/* Title Overlay */}
+                <div className="position-absolute bottom-0 start-0 w-100 bg-gradient-fade p-4 p-lg-5">
+                    <div className="container" style={{ maxWidth: '900px' }}>
+                        <span className={`badge border border-white fw-bold px-3 py-2 rounded-pill shadow-sm mb-3 ${post.isLocked ? 'bg-warning text-dark' : 'bg-success text-white'}`}>
+                            {post.isLocked ? <><i className="fa-solid fa-lock me-2"></i>Members Only</> : post.category}
+                        </span>
+                        <h1 className="display-3 fw-black text-white ac-font mb-3 text-shadow">{post.title}</h1>
+                        <div className="d-flex align-items-center gap-4 text-white fw-bold opacity-90 small">
+                            <span><i className="fa-regular fa-calendar me-2"></i> {post.date}</span>
+                            <span><i className="fa-solid fa-pen-nib me-2"></i> {post.author}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* CONTENT AREA */}
+            <div className="container mt-n5 position-relative z-2" style={{ maxWidth: '1100px' }}>
+                <div className="row g-4 justify-content-center">
+
+                    {/* Main Article */}
+                    <div className="col-lg-8">
+                        <div className="bg-white rounded-5 shadow-lg p-5 border border-light article-paper position-relative overflow-hidden">
+
+                            {/* --- LOCKED OVERLAY UI --- */}
+                            {post.isLocked && (
+                                <div className="locked-overlay d-flex flex-column align-items-center justify-content-center text-center p-4">
+                                    <div className="bg-white p-5 rounded-4 shadow-lg border border-warning" style={{maxWidth: '450px'}}>
+                                        <div className="mb-3 text-warning">
+                                            <i className="fa-solid fa-lock fa-3x"></i>
+                                        </div>
+                                        <h2 className="fw-black text-dark mb-3 ac-font">Member Exclusive</h2>
+                                        <p className="text-muted mb-4 fw-bold">
+                                            This post is for Patreon members only. <br/>
+                                            Subscribe to the squad to unlock this island drop!
+                                        </p>
+                                        <a
+                                            href={`https://www.patreon.com${post.url}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-warning rounded-pill px-5 py-3 fw-black shadow-sm w-100 transform-active"
+                                        >
+                                            Unlock on Patreon
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Render Content (Blurred if Locked) */}
+                            <div className={`article-body ${post.isLocked ? 'blur-content' : ''}`} dangerouslySetInnerHTML={{ __html: post.content }} />
+
+                            {!post.isLocked && (
+                                <>
+                                    <hr className="my-5 border-secondary opacity-10" />
+                                    <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+                                        <span className="fw-bold text-muted small">Support us on Patreon:</span>
+                                        <a href={post.url} target="_blank" rel="noreferrer" className="btn btn-nook-primary rounded-pill px-5 fw-bold shadow-sm">
+                                            <i className="fa-brands fa-patreon me-2"></i> View Original
+                                        </a>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Sidebar */}
+                    <div className="col-lg-4">
+                        <div className="bg-cream rounded-4 p-4 shadow-sm border border-light mb-4">
+                            <h5 className="fw-black m-0 text-dark mb-3">Nook Inc. Updates</h5>
+                            <p className="small text-muted fw-bold mb-3">Join Discord for live notifications.</p>
+                            <a href="https://discord.gg/chopaeng" target="_blank" className="btn btn-dark w-100 rounded-pill fw-bold small">Join Discord</a>
+                        </div>
+
+                        {/* Recent Posts List */}
+                        <div className="bg-white rounded-4 p-4 shadow-sm border border-light sticky-top" style={{ top: '20px', zIndex: 1 }}>
+                            <h6 className="fw-black text-uppercase text-muted x-small tracking-wide mb-3">Recent Posts</h6>
+                            <div className="d-flex flex-column gap-3">
+                                {recentPosts.map((p) => (
+                                    <div key={p.id} onClick={() => navigate(`/blog/${p.id}`)} className="d-flex gap-3 align-items-center group-hover cursor-pointer">
+                                        <div className="rounded-3 bg-light flex-shrink-0 overflow-hidden" style={{ width: 60, height: 60 }}>
+                                            <img src={p.image || "https://via.placeholder.com/60"} className="w-100 h-100 object-fit-cover" alt="" />
+                                        </div>
+                                        <div>
+                                            <h6 className="fw-bold text-dark m-0 small line-clamp-2 transition-colors">{p.title}</h6>
+                                            <small className="text-muted x-small fw-bold">{p.date}</small>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>{`
+                :root { --nook-green: #28a745; --nook-bg: #f2f4e6; --nook-cream: #fffdf0; }
+                .bg-cream { background-color: var(--nook-cream); }
+                .bg-nook-green { background-color: var(--nook-green); }
+                .text-nook { color: var(--nook-green); }
+                .nook-bg { background-color: var(--nook-bg); background-image: radial-gradient(#dce2c8 15%, transparent 16%); background-size: 30px 30px; }
+                
+                .font-nunito { font-family: 'Nunito', sans-serif; }
+                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
+                .fw-black { font-weight: 900; }
+                .text-shadow { text-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+                .bg-gradient-fade { background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%); }
+                .btn-nook-primary { background-color: #88e0a0; color: white; border: 2px solid #fff; transition: all 0.2s; }
+                .btn-nook-primary:hover { background-color: #6fd18b; transform: translateY(-3px); }
+                .mt-n5 { margin-top: -4rem !important; }
+
+                /* --- LOCKED CONTENT STYLES --- */
+                .blur-content {
+                    filter: blur(8px);
+                    user-select: none;
+                    pointer-events: none;
+                    opacity: 0.5;
+                    /* Prevent scrolling/interaction */
+                    max-height: 400px; 
+                    overflow: hidden; 
+                }
+
+                .locked-overlay {
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    z-index: 10;
+                    /* Create a gradient fade at the top so it looks seamless */
+                    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 20%, rgba(255,255,255,1) 100%);
+                }
+                
+                .transform-active:active { transform: scale(0.95); }
+
+                /* Article Images */
+                .article-body img { max-width: 100%; height: auto; border-radius: 12px; margin: 20px 0; }
+                .article-body { font-size: 1.15rem; line-height: 1.8; color: #444; }
+                .group-hover:hover .transition-colors { color: var(--nook-green) !important; transition: color 0.2s; }
+                .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+                .cursor-pointer { cursor: pointer; }
+            `}</style>
+        </div>
+    );
+};
+
+export default BlogPost;
