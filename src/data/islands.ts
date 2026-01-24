@@ -1185,17 +1185,5 @@ export const ISLANDS_DATA: IslandData[] = [
         cat: "public",
         visitors: 7,
         description: "Autumn island featuring mushroom sets, maple leaves, and fall materials."
-    },
-    {
-        id: "sinta",
-        name: "SINTA",
-        status: "ONLINE",
-        type: "Order Bot",
-        seasonal: "Wedding",
-        items: ["Order Bot"],
-        theme: "teal",
-        cat: "public",
-        visitors: 7,
-        description: "Romantic seasonal island featuring wedding furniture and love-themed items."
     }
 ];
