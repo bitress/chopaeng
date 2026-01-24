@@ -29,18 +29,15 @@ const BlogList = () => {
                 if (!response.ok) throw new Error("Failed to fetch");
                 const json = await response.json();
 
-                // Transform API Data
                 const transformed = json.data.map((item: any) => {
                     const attr = item.attributes;
 
-                    // Image Logic (Same as Home.tsx)
                     let imageUrl = attr.image?.large_url;
                     if (!imageUrl && attr.embed_data?.provider === "YouTube") {
                         imageUrl = banner;
                     }
                     if (!imageUrl) imageUrl = banner;
 
-                    // Excerpt Logic
                     const rawText = stripHtml(attr.content);
                     const excerpt = rawText.length > 120 ? rawText.substring(0, 120) + "..." : rawText;
 
@@ -169,46 +166,6 @@ const BlogList = () => {
                     </div>
                 )}
             </div>
-
-            <style>{`
-                /* Nook Colors */
-                :root {
-                    --nook-green: #28a745;
-                    --nook-bg: #f2f4e6;
-                }
-                .nook-bg { background-color: var(--nook-bg); background-image: radial-gradient(#dce2c8 15%, transparent 16%); background-size: 30px 30px; }
-                .bg-nook-green { background-color: var(--nook-green); }
-                .text-nook-green { color: var(--nook-green); }
-                
-                /* Fonts */
-                .font-nunito { font-family: 'Nunito', sans-serif; }
-                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
-                .fw-black { font-weight: 900; }
-
-                /* Card Animations */
-                .post-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-                .post-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
-                
-                .transition-scale { transition: transform 0.5s ease; }
-                .post-card:hover .transition-scale { transform: scale(1.05); }
-
-                /* Washi Tape */
-                .washi-tape {
-                    position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-2deg);
-                    width: 90px; height: 30px;
-                    background: rgba(255,255,255,0.35); backdrop-filter: blur(4px);
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 5;
-                    border-left: 2px dotted rgba(0,0,0,0.1); border-right: 2px dotted rgba(0,0,0,0.1);
-                }
-
-                .group-hover-arrow:hover .transition-transform { transform: translateX(5px); }
-                .transition-transform { transition: transform 0.2s ease; }
-                .btn-white { background: white; color: var(--nook-green); border: none; }
-                .hover-opacity-100:hover { opacity: 1 !important; }
-                
-                .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-                .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-            `}</style>
         </div>
     );
 };

@@ -211,48 +211,13 @@ const BlogPost = () => {
             </div>
 
             <style>{`
-                :root { --nook-green: #28a745; --nook-bg: #f2f4e6; --nook-cream: #fffdf0; }
-                .bg-cream { background-color: var(--nook-cream); }
-                .bg-nook-green { background-color: var(--nook-green); }
-                .text-nook { color: var(--nook-green); }
-                .nook-bg { background-color: var(--nook-bg); background-image: radial-gradient(#dce2c8 15%, transparent 16%); background-size: 30px 30px; }
-                
-                .font-nunito { font-family: 'Nunito', sans-serif; }
-                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
                 .fw-black { font-weight: 900; }
                 .text-shadow { text-shadow: 0 4px 20px rgba(0,0,0,0.3); }
                 .bg-gradient-fade { background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%); }
                 .btn-nook-primary { background-color: #88e0a0; color: white; border: 2px solid #fff; transition: all 0.2s; }
                 .btn-nook-primary:hover { background-color: #6fd18b; transform: translateY(-3px); }
                 .mt-n5 { margin-top: -4rem !important; }
-
-                /* --- LOCKED CONTENT STYLES --- */
-                .blur-content {
-                    filter: blur(8px);
-                    user-select: none;
-                    pointer-events: none;
-                    opacity: 0.5;
-                    /* Prevent scrolling/interaction */
-                    max-height: 400px; 
-                    overflow: hidden; 
-                }
-
-                .locked-overlay {
-                    position: absolute;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    z-index: 10;
-                    /* Create a gradient fade at the top so it looks seamless */
-                    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 20%, rgba(255,255,255,1) 100%);
-                }
-                
-                .transform-active:active { transform: scale(0.95); }
-
-                /* Article Images */
-                .article-body img { max-width: 100%; height: auto; border-radius: 12px; margin: 20px 0; }
-                .article-body { font-size: 1.15rem; line-height: 1.8; color: #444; }
-                .group-hover:hover .transition-colors { color: var(--nook-green) !important; transition: color 0.2s; }
-                .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-                .cursor-pointer { cursor: pointer; }
+            
             `}</style>
         </div>
     );

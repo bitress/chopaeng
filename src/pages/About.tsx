@@ -114,72 +114,7 @@ const About = () => {
                         </div>
                     </div>
                 </div>
-
-
-
             </div>
-
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
-
-                :root {
-                    --nook-bg: #f2f4e6;
-                    --nook-green: #88e0a0;
-                    --nook-dark-green: #28a745;
-                }
-
-                .nook-os {
-                    background-color: var(--nook-bg);
-                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
-                    background-size: 30px 30px;
-                    font-family: 'Nunito', sans-serif;
-                }
-
-                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
-                .fw-black { font-weight: 900; }
-                .text-nook { color: var(--nook-dark-green); }
-                .spacing-wide { letter-spacing: 1.5px; }
-                .tiny-text { font-size: 0.65rem; }
-
-                /* PASSPORT STYLING */
-                .passport-card {
-                    background-color: #fff;
-                    background-image: linear-gradient(45deg, #ffffff 25%, #f9f9f9 25%, #f9f9f9 50%, #ffffff 50%, #ffffff 75%, #f9f9f9 75%, #f9f9f9 100%);
-                    background-size: 20px 20px;
-                }
-                
-                .photo-frame {
-                    transform: rotate(-3deg);
-                    border: 1px solid #eee;
-                }
-
-                .passport-field {
-                    border-bottom: 2px dashed #eee;
-                    padding-bottom: 5px;
-                }
-
-                /* STAMPS */
-                .stamp-circle {
-                    width: 100px; height: 100px;
-                    border: 3px double var(--nook-dark-green);
-                    border-radius: 50%;
-                    transform: rotate(-10deg);
-                    opacity: 0.8;
-                    transition: transform 0.2s;
-                }
-                .stamp-circle:hover { transform: rotate(0deg) scale(1.1); opacity: 1; }
-
-                /* ICONS */
-                .icon-bubble {
-                    width: 50px; height: 50px;
-                    border-radius: 18px; /* Squircle */
-                    display: flex; align-items: center; justify-content: center;
-                    font-size: 1.5rem;
-                }
-
-                .hover-lift { transition: transform 0.2s; }
-                .hover-lift:hover { transform: translateY(-5px); }
-            `}</style>
         </div>
     );
 };

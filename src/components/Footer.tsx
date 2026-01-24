@@ -121,16 +121,6 @@ const Footer = () => {
                     </div>
                 </div>
             </div>
-
-            <style>{`
-                .footer-logo { width: 40px; height: 40px; transition: transform 0.2s ease; }
-                .footer-logo-img { width: 100%; height: 100%; object-fit: cover; }
-                .footer-link { text-decoration: none; color: #6c757d; font-size: 0.9rem; transition: 0.2s; }
-                .footer-link:hover { color: #198754; transform: translateX(3px); }
-                .social-icon-link:hover { color: #198754 !important; transform: translateY(-3px); transition: 0.2s; }
-                .hover-success:hover { color: #198754 !important; }
-                .letter-spacing-1 { letter-spacing: 1px; }
-            `}</style>
         </footer>
     );
 };

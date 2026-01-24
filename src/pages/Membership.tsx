@@ -10,7 +10,7 @@ const Membership = () => {
     const tiers = [
         {
             name: "Chotato",
-            price: "2",
+            price: "3",
             tagline: "Entry Level",
             isSoldOut: true,
             features: ["2 Private Islands", "Unlimited Trips", "Bot Access", "Discord Role"],
@@ -190,60 +190,6 @@ const Membership = () => {
                 </div>
 
             </div>
-
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
-
-                .nook-os {
-                    background-color: #f2f4e6;
-                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
-                    background-size: 30px 30px;
-                    font-family: 'Nunito', sans-serif;
-                }
-
-                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
-                .fw-black { font-weight: 900; }
-                .spacing-wide { letter-spacing: 1.5px; }
-                .tiny-text { font-size: 0.7rem; letter-spacing: 0.5px; }
-
-                /* UTILS */
-                .cursor-pointer { cursor: pointer; }
-                .transition-all { transition: all 0.2s ease; }
-                .hover-border-danger:hover { border-color: #dc3545 !important; transform: translateY(-3px); }
-                .hover-border-primary:hover { border-color: #0d6efd !important; transform: translateY(-3px); }
-                .transform-rotate-n3 { transform: rotate(-3deg); }
-
-                /* TIER CARDS */
-                .tier-card {
-                    transition: transform 0.2s;
-                }
-                .tier-card:hover { transform: translateY(-5px); }
-                
-                .icon-circle {
-                    width: 50px; height: 50px;
-                    border-radius: 50%;
-                    display: flex; align-items: center; justify-content: center;
-                }
-
-                .receipt-line {
-                    height: 2px;
-                    background-image: linear-gradient(to right, #ccc 50%, rgba(255,255,255,0) 0%);
-                    background-position: bottom;
-                    background-size: 10px 1px;
-                    background-repeat: repeat-x;
-                }
-
-                .ring-success { box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1); }
-
-                /* DIAGRAM BG */
-                .bg-grid {
-                    background-image: linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px);
-                    background-size: 20px 20px;
-                }
-                
-                .spin-hover:hover { animation: spin 1s linear infinite; }
-                @keyframes spin { 100% { transform: rotate(360deg); } }
-            `}</style>
         </div>
     );
 };
