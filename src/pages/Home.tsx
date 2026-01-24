@@ -280,8 +280,8 @@ const Home = () => {
                                 <div className="row fw-bold text-dark small">
                                     <div className="col-6 mb-2 text-muted text-uppercase x-small">Benefits</div>
                                     <div className="col-6 mb-2 text-end text-nook">Active</div>
-                                    <div className="col-6 mb-2"><i className="fa-solid fa-check text-success me-2"></i> 24/7 Access</div>
-                                    <div className="col-6 mb-2"><i className="fa-solid fa-check text-success me-2"></i> Request Items, DIYs, or Villagers</div>
+                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> 24/7 Access</div>
+                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> Request Items, DIYs, or Villagers</div>
                                     <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> Access to Exclusive Islands</div>
                                     <div className="col-12"><i className="fa-solid fa-check text-success me-2"></i> Exclusive Discord Role</div>
                                 </div>
