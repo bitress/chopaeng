@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
-// Configuration
-const API_BASE_URL = "http://127.0.0.1:5000";
+const API_BASE_URL = "https://blogs.chopaeng.com";
 
 const BlogPost = () => {
     const { id } = useParams();

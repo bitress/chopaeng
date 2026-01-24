@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 // --- CONFIGURATION ---
-const API_URL = "http://127.0.0.1:5000/api/patreon/posts";
+const API_URL = "https://blogs.chopaeng.com/api/patreon/posts";
 
 // --- FALLBACK IMAGES ---
 const FALLBACK_IMAGES = [

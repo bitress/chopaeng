@@ -42,7 +42,7 @@ const Home = () => {
         const fetchPosts = async () => {
             try {
                 // Point this to your actual Flask API URL
-                const response = await fetch("http://127.0.0.1:5000/api/patreon/posts");
+                const response = await fetch("https://blogs.chopaeng.com/api/patreon/posts");
                 if (!response.ok) throw new Error("Failed to fetch");
 
                 const json = await response.json();
