@@ -214,7 +214,7 @@ const BlogPost = () => {
                 .text-shadow { text-shadow: 0 4px 20px rgba(0,0,0,0.3); }
                 .bg-gradient-fade { background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%); }
                 .mt-n5 { margin-top: -4rem !important; }
-            
+                
             `}</style>
         </div>
     );

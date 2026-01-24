@@ -66,7 +66,7 @@ const IslandMaps = () => {
                             <i className="fa-solid fa-chevron-left me-2"></i> Return
                         </button>
                         <div className="dal-badge">
-                            <i className="fa-solid fa-plane-up me-2"></i> FLIGHT SCHEDULE
+                            <i className="fa-solid fa-plane-up me-2"></i> FLIGHTS
                         </div>
                     </div>
 
