@@ -143,7 +143,12 @@ const BlogPost = () => {
                                     <hr className="my-5 border-secondary opacity-10" />
                                     <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
                                         <span className="fw-bold text-muted small">Support us on Patreon:</span>
-                                        <a href={post.url} target="_blank" rel="noreferrer" className="btn btn-nook-primary rounded-pill px-5 fw-bold shadow-sm">
+                                        <a
+                                            href={`https://www.patreon.com${post.url}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-nook-primary rounded-pill px-5 fw-bold shadow-sm"
+                                        >
                                             <i className="fa-brands fa-patreon me-2"></i> View Original
                                         </a>
                                     </div>
