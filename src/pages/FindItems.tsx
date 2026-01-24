@@ -59,7 +59,7 @@ const FindItems = () => {
             <header className="w-100 bg-nook-green pt-5 pb-5 position-relative shadow-sm rounded-bottom-5 mb-5">
                 <div className="container position-relative z-1 text-center">
                     <span className="badge bg-white text-nook-green rounded-pill mb-3 px-3 py-2 fw-black text-uppercase tracking-wide shadow-sm">
-                        <i className="fa-solid fa-wifi me-2"></i> Connected to NookNet
+                        <i className="fa-solid fa-wifi me-2"></i> Connected to ChoBot
                     </span>
                     <h1 className="display-4 fw-black text-white ac-font mb-4">
                         {searchMode === 'item' ? 'Item Finder' : 'Villager Finder'}
