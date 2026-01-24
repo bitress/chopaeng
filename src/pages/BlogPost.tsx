@@ -211,11 +211,8 @@ const BlogPost = () => {
             </div>
 
             <style>{`
-                .fw-black { font-weight: 900; }
                 .text-shadow { text-shadow: 0 4px 20px rgba(0,0,0,0.3); }
                 .bg-gradient-fade { background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%); }
-                .btn-nook-primary { background-color: #88e0a0; color: white; border: 2px solid #fff; transition: all 0.2s; }
-                .btn-nook-primary:hover { background-color: #6fd18b; transform: translateY(-3px); }
                 .mt-n5 { margin-top: -4rem !important; }
             
             `}</style>
