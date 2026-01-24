@@ -131,9 +131,9 @@ const Guide = () => {
                             </div>
 
                             <div className="text-center mt-4">
-                                <button className="btn btn-outline-dark rounded-pill fw-bold px-4 btn-sm">
+                                <a target="_blank" href="https://discord.gg/chopaeng" className="btn btn-outline-dark rounded-pill fw-bold px-4 btn-sm">
                                     Open Discord Support
-                                </button>
+                                </a>
                             </div>
                         </div>
                     )}
