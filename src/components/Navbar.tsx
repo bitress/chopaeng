@@ -45,7 +45,7 @@ const Navbar = () => {
                         </div>
                         <div className="brand-text-group">
                             <span className="brand-name ac-font text-dark h5 mb-0">CHOPAENG</span>
-                            <span className="brand-subtext x-small fw-black text-success d-none d-sm-block">ISLAND TOUR</span>
+                            <span className="brand-subtext x-small fw-black text-success d-none d-sm-block">Treasure Island</span>
                         </div>
                     </Link>
 
