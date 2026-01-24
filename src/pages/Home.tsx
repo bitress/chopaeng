@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import banner from '../assets/banner.png'
-
+import logo from '../assets/logo.webp'
 interface BlogPost {
     id: string;
     title: string;
@@ -248,7 +248,7 @@ const Home = () => {
 
             {/* PASSPORT SECTION */}
             <section className="container py-5 mb-5">
-                <div className="passport-card mx-auto bg-nook-green rounded-5 p-4 p-lg-5 shadow-lg" style={{ maxWidth: '900px' }}>
+                <div className=" mx-auto bg-nook-green rounded-5 p-4 p-lg-5 shadow-lg" style={{ maxWidth: '900px' }}>
                     <div className="row align-items-center">
                         <div className="col-lg-5 text-center text-lg-start mb-4 mb-lg-0">
                             <h2 className="display-5 fw-black text-white ac-font mb-3">Get Your <br /> Passport</h2>
@@ -256,10 +256,24 @@ const Home = () => {
                             <a href="https://www.patreon.com/cw/chopaeng/membership" target="_blank" className="btn btn-light rounded-pill px-4 py-2 fw-black text-nook shadow-sm"><i className="fa-brands fa-patreon me-2"></i> Subscribe Now</a>
                         </div>
                         <div className="col-lg-7">
-                            <div className="bg-cream rounded-4 p-4 shadow-sm rotate-n2 position-relative">
+                            <div className="bg-cream passport-card rounded-4 p-4 shadow-sm rotate-n2 position-relative">
                                 <div className="position-absolute top-0 end-0 m-3 opacity-25"><i className="fa-solid fa-stamp fa-4x text-nook"></i></div>
                                 <div className="d-flex align-items-center gap-3 mb-4">
-                                    <div className="bg-secondary bg-opacity-25 rounded rounded-3" style={{ width: '80px', height: '80px' }}></div>
+                                    <div
+                                        className="bg-white rounded-3 d-flex align-items-center justify-content-center shadow-sm"
+                                        style={{ width: '80px', height: '80px', overflow: 'hidden' }}
+                                    >
+                                        <img
+                                            src={logo}
+                                            alt="Chopaeng Logo"
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'contain',
+                                                padding: '8px' // Optional: adds a little breathing room around the logo
+                                            }}
+                                        />
+                                    </div>
                                     <div><h4 className="fw-black text-dark m-0">PASSPORT</h4><span className="text-muted small text-uppercase fw-bold">Nook Inc. Membership</span></div>
                                 </div>
                                 <div className="border-top border-2 border-dashed my-3 opacity-25"></div>
@@ -274,6 +288,114 @@ const Home = () => {
                     </div>
                 </div>
             </section>
+
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+                
+                :root {
+                    --nook-bg: #f2f4e6;
+                    --nook-green: #28a745;
+                    --nook-cream: #fffdf0;
+                    --nook-blue: #5bc0de;
+                    --nook-yellow: #f0ad4e;
+                }
+
+                .font-nunito { font-family: 'Nunito', sans-serif; }
+                .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
+                .fw-black { font-weight: 900; }
+                .text-nook { color: var(--nook-green); }
+
+                /* --- NEW BULLETIN BOARD STYLES --- */
+                
+                .post-card {
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    transform-origin: center top;
+                }
+                .post-card:hover {
+                    transform: translateY(-8px) rotate(1deg);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+                    z-index: 5;
+                }
+
+                .post-img-container {
+                    height: 220px;
+                    position: relative;
+                    overflow: hidden;
+                    border-bottom: 2px dashed #f0f0f0;
+                }
+
+                .transition-scale { transition: transform 0.6s ease; }
+                .post-card:hover .transition-scale { transform: scale(1.05); }
+
+                /* Washi Tape Effect */
+                .washi-tape-small {
+                    position: absolute;
+                    top: -10px; left: 50%;
+                    transform: translateX(-50%) rotate(-2deg);
+                    width: 80px; height: 25px;
+                    background: rgba(255,255,255,0.4);
+                    backdrop-filter: blur(2px);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    z-index: 5;
+                    border-left: 2px dotted rgba(0,0,0,0.1);
+                    border-right: 2px dotted rgba(0,0,0,0.1);
+                }
+
+                /* Date Sticker */
+                .date-sticker {
+                    position: absolute;
+                    bottom: 15px; left: 15px;
+                    background: white;
+                    color: var(--nook-green);
+                    padding: 8px 12px;
+                    border-radius: 12px;
+                    text-align: center;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                    border: 2px solid var(--nook-green);
+                    transform: rotate(-3deg);
+                }
+
+                .group-hover-arrow:hover .transition-transform { transform: translateX(5px); }
+                .transition-transform { transition: transform 0.2s ease; }
+
+                /* --- EXISTING STYLES --- */
+                .bg-light-green { background-color: #e8f5e9; }
+                .bg-light-yellow { background-color: #fff3cd; }
+                .bg-light-blue { background-color: #e0f7fa; }
+                .bg-nook-green { background-color: #28a745; }
+                .bg-cream { background-color: #fffdf0; }
+                .rotate-n2 { transform: rotate(-2deg); }
+                .rotate-n10 { transform: rotate(-10deg); }
+                
+                .nook-os {
+                    background-color: var(--nook-bg);
+                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
+                    background-size: 30px 30px;
+                }
+                
+                .app-card { transition: transform 0.3s ease; border: 2px solid transparent; }
+                .app-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(40,167,69,0.15); border-color: rgba(40,167,69,0.2); }
+                .app-icon { width: 80px; height: 80px; }
+
+                .live-dot { width: 10px; height: 10px; background: #28a745; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+                @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+
+                .btn-nook-primary { background-color: #88e0a0; color: white; border: 2px solid #fff; transition: all 0.2s; }
+                .btn-nook-primary:hover { background-color: #6fd18b; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(136, 224, 160, 0.4) !important; }
+                .btn-white:hover { transform: translateY(-3px); background-color: #f8f9fa; }
+                .transform-active:active { transform: scale(0.95) !important; }
+
+                .snapshot-frame { background: #fff; padding: 15px; padding-bottom: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transform: rotate(-3deg); max-width: 550px; transition: transform 0.3s ease; }
+                .snapshot-frame:hover { transform: rotate(0deg) scale(1.02); }
+                .tape-strip { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 120px; height: 35px; background-color: rgba(255, 255, 255, 0.4); border-left: 2px dashed rgba(0,0,0,0.1); border-right: 2px dashed rgba(0,0,0,0.1); box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; backdrop-filter: blur(2px); }
+                
+                .floating-badge { animation: float 3s ease-in-out infinite; }
+                .floating-badge-2 { animation: float 4s ease-in-out infinite reverse; }
+                @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
+                .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+                .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+            `}</style>
         </>
     );
 };

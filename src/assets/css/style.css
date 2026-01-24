@@ -74,7 +74,7 @@ body {
 .text-nook { color: var(--nook-green); }
 .text-nook-green { color: var(--nook-green); }
 
-.bg-nook-green { background-color: var(--nook-green); }
+.bg-nook-green { background-color: var(--nook-green);}
 .bg-cream { background-color: var(--nook-cream); }
 .bg-success-dark { background-color: #1e7e34; }
 
@@ -590,7 +590,6 @@ body {
    Passport Styling
 ---------------------------- */
 .passport-card {
-    background-color: #fff;
     background-image: linear-gradient(
             45deg,
             #ffffff 25%,
@@ -989,8 +988,15 @@ body {
 }
 
 /* Card Animations */
-.post-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-.post-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
+.post-card {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-origin: center top;
+}
+.post-card:hover {
+    transform: translateY(-8px) rotate(1deg);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+    z-index: 5;
+}
 
 .transition-scale { transition: transform 0.5s ease; }
 .post-card:hover .transition-scale { transform: scale(1.05); }
