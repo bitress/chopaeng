@@ -1,3 +1,4 @@
+import logo from '../assets/logo.webp'
 const About = () => {
     return (
         <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center">
@@ -15,7 +16,7 @@ const About = () => {
                         <div className="col-md-5 text-center mb-4 mb-md-0">
                             <div className="photo-frame bg-white p-2 shadow-sm transform-rotate-n3">
                                 <img
-                                    src="logo.webp"
+                                    src={logo}
                                     alt="Kuya Cho"
                                     className="img-fluid rounded-3 border border-light"
                                 />
