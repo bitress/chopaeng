@@ -44,7 +44,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 7,
         cat: "member",
         theme: "gold",
-        description: "Subscriber-only treasure island. Unlock access with membership."
+        description: "Subscriber-only treasure island packed with full 2.0 content, DIYs, vehicles, gyroids, and villagers in boxes."
     },
     {
         id: "aruga",
@@ -83,7 +83,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 1,
         cat: "member",
         theme: "gold",
-        description: "Patreon-exclusive island featuring curated premium sets and materials."
+        description: "Patreon-exclusive seasonal island featuring complete event items, materials, golden tools, and rotating monthly sets."
     },
     {
         id: "bahaghari",
@@ -109,7 +109,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 7,
         cat: "member",
         theme: "gold",
-        description: "Subscriber-only treasure island with general loot and DIYs."
+        description: "Subscriber-only treasure island offering a balanced mix of 2.0 items, DIYs, vehicles, food, and villagers."
     },
     {
         id: "bituin",
@@ -143,7 +143,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 7,
         cat: "member",
         theme: "gold",
-        description: "Subscriber-only treasure island with general loot and DIYs."
+        description: "Subscriber-only furniture island focused on household items, decor, electronics, plants, and lifestyle essentials."
     },
     {
         id: "bonita",
@@ -166,7 +166,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 3,
         cat: "member",
         theme: "gold",
-        description: "Subscriber-only treasure island with general loot and DIYs."
+        description: "Subscriber-only fashion island with complete clothing sets, accessories, bags, shoes, and umbrellas."
     },
     {
         id: "dalisay",
@@ -199,7 +199,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 2,
         cat: "member",
         theme: "gold",
-        description: "Patreon-exclusive island focused on premium exclusive sets."
+        description: "Patreon-exclusive resource island featuring DIYs, critters, plants, materials, currency items, and villagers."
     },
     {
         id: "galak",
@@ -238,7 +238,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 4,
         cat: "member",
         theme: "gold",
-        description: "Subscriber-only treasure island with general loot and DIYs."
+        description: "Subscriber-only seasonal island stocked with event furniture, materials, golden tools, and rare collectibles."
     },
     {
         id: "hiraya",
@@ -286,7 +286,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 5,
         cat: "member",
         theme: "gold",
-        description: "Patreon-exclusive island featuring curated exclusive sets."
+        description: "Patreon-exclusive curated island featuring premium furniture sets, Sanrio items, Celeste items, and rare décor."
     },
     {
         id: "lakan",
@@ -320,7 +320,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 4,
         cat: "member",
         theme: "gold",
-        description: "Subscriber-only treasure island with general loot and DIYs."
+        description: "Subscriber-only furniture island offering a wide selection of indoor, outdoor, and themed home furnishings."
     },
     {
         id: "likha",
@@ -358,7 +358,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 7,
         cat: "member",
         theme: "gold",
-        description: "Subscriber-only treasure island with general loot and DIYs."
+        description: "Subscriber-only materials and DIY island filled with crafting resources, critters, plants, and essential tools."
     },
     {
         id: "marahuyo",
@@ -400,7 +400,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 4,
         cat: "member",
         theme: "gold",
-        description: "Patreon-exclusive island for max bells and turnips."
+        description: "Patreon-exclusive island focused on rare items, complete DIYs, art, villager photos, and high-value collectibles."
     },
     {
         id: "tagumpay",
@@ -412,7 +412,7 @@ export const ISLANDS_DATA: IslandData[] = [
         visitors: 5,
         cat: "member",
         theme: "gold",
-        description: "Patreon-exclusive island featuring curated exclusive sets."
+        description: "Patreon-exclusive island showcasing carefully curated premium and exclusive item sets."
     },
 
     // --- PUBLIC ISLANDS ---
@@ -466,7 +466,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "teal",
         cat: "public",
         visitors: 7,
-        description: "Classic 1.0 treasure island featuring essential furniture, DIY recipes, and complete furniture sets."
+        description: "Classic 1.0 treasure island featuring complete furniture sets, rare items, DIYs, and villagers in boxes."
     },
     {
         id: "maharlika",
@@ -500,7 +500,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "purple",
         cat: "public",
         visitors: 7,
-        description: "Premium furniture island focused on elegant housewares and kitchen essentials."
+        description: "Furniture-focused island offering elegant housewares, appliances, decor, and complete home essentials."
     },
     {
         id: "harana",
@@ -539,7 +539,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "teal",
         cat: "public",
         visitors: 7,
-        description: "A curated island for critter models, golden tools, and must-have DIY recipes."
+        description: "Curated island for DIYs, art, critter models, posters, and must-have progression items."
     },
     {
         id: "kakanggata",
@@ -588,7 +588,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "teal",
         cat: "public",
         visitors: 7,
-        description: "Summer-themed island featuring beach items, shell DIYs, and surfboard collections."
+        description: "Summer-themed treasure island featuring beach items, seasonal furniture, and warm-weather collectibles."
     },
     {
         id: "bathala",
@@ -614,7 +614,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "teal",
         cat: "public",
         visitors: 7,
-        description: "Full Animal Crossing 2.0 content including vehicles, vines, moss, and new items."
+        description: "Full 2.0 treasure island featuring vehicles, vines, moss, cooking items, and modern furniture."
     },
     {
         id: "kaulayaw",
@@ -640,7 +640,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "teal",
         cat: "public",
         visitors: 7,
-        description: "2.0 island centered on cooking, food items, and modern furniture pieces."
+        description: "2.0-focused island centered on cooking, food items, and contemporary furniture pieces."
     },
     {
         id: "tadhana",
@@ -674,7 +674,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "purple",
         cat: "public",
         visitors: 7,
-        description: "Furniture island featuring popular themed sets like Antique, Imperial, and Cute."
+        description: "Furniture island featuring popular themed sets and a wide range of stylish home decor."
     },
     {
         id: "pagsuyo",
