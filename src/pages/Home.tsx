@@ -73,45 +73,66 @@ const Home = () => {
 
     return (
         <>
-            <div className="nook-os min-vh-100 d-flex align-items-center font-nunito overflow-hidden position-relative">
-                {/* Background Decoration */}
-                <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block pointer-events-none">
-                    <i className="fa-solid fa-leaf text-success" style={{ fontSize: '30rem', transform: 'rotate(45deg)' }}></i>
+            <div
+                className="nook-os position-relative d-flex align-items-center font-nunito overflow-hidden w-100"
+                style={{ minHeight: 'var(--hero-height)' }}
+            >
+                <style>
+                    {`
+            :root { --hero-height: 100vh; }
+            @media (min-width: 992px) { :root { --hero-height: 65vh; } }
+            .transform-active:active { transform: scale(0.95); }
+        `}
+                </style>
+
+                <div className="position-absolute top-0 end-0 opacity-10 p-4 d-none d-lg-block pointer-events-none">
+                    <i className="fa-solid fa-leaf text-success" style={{ fontSize: '20rem', transform: 'rotate(45deg)' }}></i>
                 </div>
 
-                {/* HERO SECTION (Unchanged) */}
-                <section className="container-fluid px-lg-5 position-relative z-1">
-                    <div className="row align-items-center py-5">
-                        <div className="col-lg-6 order-2 order-lg-1 ps-lg-5">
-                            <div className="d-inline-flex align-items-center gap-2 mb-4 px-3 py-2 rounded-pill bg-white border border-success border-opacity-25 shadow-sm">
-                                <span className="live-dot"></span>
-                                <span className="text-success fw-bold x-small text-uppercase tracking-wider">Stream Online Now</span>
+                <section className="container px-4 px-lg-5 position-relative z-1">
+                    <div className="row align-items-center py-5 py-lg-4">
+
+                        <div className="col-lg-6 order-2 order-lg-1 ps-lg-5 text-center text-lg-start mt-4 mt-lg-0">
+
+                            <div className="d-inline-flex align-items-center gap-2 mb-3 px-3 py-1 rounded-pill bg-white border border-success border-opacity-25 shadow-sm">
+                                <span className="live-dot bg-danger rounded-circle" style={{ width: '8px', height: '8px' }}></span>
+                                <span className="text-success fw-bold x-small text-uppercase tracking-wider" style={{ fontSize: '0.75rem' }}>Stream Online</span>
                             </div>
-                            <h1 className="display-3 fw-black ac-font lh-1 mb-4 text-dark">
+
+                            <h1 className="fw-black ac-font lh-1 mb-3 text-dark display-5 display-lg-4">
                                 Your Ticket to <br /> <span className="text-nook">Island Paradise.</span>
                             </h1>
-                            <p className="lead text-muted mb-5 fw-bold opacity-75" style={{ maxWidth: '480px', fontSize: '1.1rem' }}>
+
+                            <p className="lead text-muted mb-4 fw-bold opacity-75 fs-6 mx-auto mx-lg-0" style={{ maxWidth: '480px' }}>
                                 Skip the grind. Join the community to access 24/7 Treasure Islands, Max Bells, and order any villager via ChoBot.
                             </p>
-                            <div className="d-flex flex-column flex-sm-row gap-3 mb-5">
-                                <Link to="/islands" className="btn btn-nook-primary rounded-pill px-5 py-3 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
+
+                            <div className="d-flex flex-column flex-sm-row gap-3 mb-4 justify-content-center justify-content-lg-start">
+                                <Link to="/islands" className="btn btn-nook-primary rounded-pill px-4 py-3 py-lg-2 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
                                     <i className="fa-solid fa-plane-departure"></i> Start Looting
                                 </Link>
-                                <Link to="/maps" className="btn btn-white rounded-pill px-5 py-3 fw-bold border shadow-sm text-muted transform-active">
+                                <Link to="/maps" className="btn btn-white rounded-pill px-4 py-3 py-lg-2 fw-bold border shadow-sm text-muted transform-active">
                                     <i className="fa-solid fa-map me-2"></i> View Maps
                                 </Link>
                             </div>
-                            <div className="d-flex align-items-center gap-4 text-muted small fw-bold">
-                                <div className="d-flex align-items-center gap-2"><i className="fa-brands fa-discord fs-4 text-primary opacity-75"></i> <span>29k Potatoes</span></div>
-                                <div className="d-flex align-items-center gap-2"><i className="fa-solid fa-box-open fs-4 text-success opacity-75"></i> <span>Auto-Restock</span></div>
+
+                            <div className="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start gap-3 gap-md-4 text-muted small fw-bold">
+                                <div className="d-flex align-items-center gap-2">
+                                    <i className="fa-brands fa-discord fs-5 text-primary opacity-75"></i> <span>29k Potatoes</span>
+                                </div>
+                                <div className="d-flex align-items-center gap-2">
+                                    <i className="fa-solid fa-box-open fs-5 text-success opacity-75"></i> <span>Auto-Restock</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="col-lg-6 order-1 order-lg-2 mb-5 mb-lg-0 text-center position-relative">
-                            {/* Main Snapshot Frame */}
-                            <div className="snapshot-frame mx-auto position-relative">
-                                <div className="tape-strip"></div>
 
-                                <div className="ratio ratio-16x9 rounded-3 overflow-hidden border border-light shadow-sm">
+                        <div className="col-lg-6 order-1 order-lg-2 text-center position-relative">
+                            <div className="snapshot-frame mx-auto position-relative w-100" style={{ maxWidth: '450px' }}>
+
+                                <div className="tape-strip position-absolute start-50 translate-middle-x bg-white opacity-50 shadow-sm"
+                                     style={{ height: '30px', width: '100px', top: '-15px', zIndex: 2, transform: 'rotate(-2deg)' }}></div>
+
+                                <div className="ratio ratio-16x9 rounded-4 overflow-hidden border border-4 border-white shadow-sm bg-dark">
                                     <iframe
                                         src="https://www.youtube.com/embed/Oq3ECNa4vmo?autoplay=1&mute=1&loop=1&playlist=Oq3ECNa4vmo"
                                         title="ChoPaeng TV Treasure Island Tour"
@@ -121,20 +142,17 @@ const Home = () => {
                                     ></iframe>
                                 </div>
 
-                                {/* Floating Badges */}
-                                <div className="floating-badge bg-white p-3 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-4 ms-4">
-                                    <i className="fa-solid fa-sack-dollar text-warning fs-2"></i>
+                                <div className="floating-badge bg-white p-2 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-3 ms-2 ms-lg-4 d-none d-sm-block">
+                                    <i className="fa-solid fa-sack-dollar text-warning fs-3"></i>
                                 </div>
-                                <div className="floating-badge-2 bg-white p-3 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-4 me-n4">
-                                    <i className="fa-solid fa-gift text-danger fs-2"></i>
+                                <div className="floating-badge-2 bg-white p-2 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-3 me-n2 me-lg-n4 d-none d-sm-block">
+                                    <i className="fa-solid fa-gift text-danger fs-3"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
             </div>
-
-            {/* --- DYNAMIC BULLETIN BOARD --- */}
             <section className="container py-5 mt-4 position-relative z-2">
 
                 {/* Section Header */}
