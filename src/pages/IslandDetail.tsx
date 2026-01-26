@@ -10,6 +10,12 @@ type ApiIsland = {
     visitors: string;
 };
 
+type VillagerApiResponse = {
+    timestamp: string;
+    total_islands: number;
+    islands: Record<string, string[]>;
+};
+
 const slugify = (s: string) => s.toLowerCase().trim().replace(/['"]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
 const mergeIslands = (publicIslands: IslandData[], apiIslands: ApiIsland[]) => {
@@ -39,27 +45,42 @@ const mergeIslands = (publicIslands: IslandData[], apiIslands: ApiIsland[]) => {
 const IslandDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+
+    // --- STATE ---
     const [apiIslands, setApiIslands] = useState<ApiIsland[]>([]);
+    const [villagersMap, setVillagersMap] = useState<Record<string, string[]>>({});
     const [loading, setLoading] = useState(true);
     const [showImageModal, setShowImageModal] = useState(false);
 
+    // --- EFFECTS ---
     useEffect(() => {
         let cancelled = false;
-        const fetchIslands = async () => {
+
+        const fetchData = async () => {
             try {
-                setLoading(true);
-                const res = await fetch("https://dodo.chopaeng.com/api/islands");
-                if (!res.ok) throw new Error(`API error: ${res.status}`);
-                const data = await res.json();
-                if (!cancelled) setApiIslands(data);
-            } catch {
-                if (!cancelled) console.log("error fetching islands");
+                if (!cancelled) setLoading(true);
+
+                // 1. Fetch Island Status (Dodo codes, etc)
+                const islandRes = await fetch("https://dodo.chopaeng.com/api/islands");
+                const islandData = islandRes.ok ? await islandRes.json() : [];
+
+                // 2. Fetch Villagers List
+                const villagerRes = await fetch("https://acnh-finder.chopaeng.com/api/villagers/list");
+                const villagerData: VillagerApiResponse = villagerRes.ok ? await villagerRes.json() : { islands: {} };
+
+                if (!cancelled) {
+                    setApiIslands(islandData);
+                    setVillagersMap(villagerData.islands);
+                }
+            } catch (error) {
+                if (!cancelled) console.log("Error fetching data:", error);
             } finally {
                 if (!cancelled) setLoading(false);
             }
         };
-        fetchIslands();
-        const interval = setInterval(fetchIslands, 30000);
+
+        fetchData();
+        const interval = setInterval(fetchData, 30000); // Refresh every 30s
         return () => { cancelled = true; clearInterval(interval); };
     }, []);
 
@@ -80,11 +101,17 @@ const IslandDetail = () => {
     const canShowDodo = live?.isOnline && !live?.isSubOnly && live?.dodo && !["GETTIN'", "FULL"].includes(live.dodo);
     const mapImageSrc = `/maps/${island.name.toLowerCase()}.png`;
 
+    // Try to find villagers by exact name, or fallback to case-insensitive match
+    const currentVillagers = villagersMap[island.name] ||
+    Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase())
+        ? villagersMap[Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase()) as string]
+        : [];
+
     const siteUrl = window.location.origin;
     const currentUrl = `${siteUrl}${location.pathname}`;
     const seoImage = `${siteUrl}${mapImageSrc}`;
     const pageTitle = `${island.name} | ChoPaeng`;
-    const pageDesc = `Visit ${island.name}, a ${island.seasonal} ${island.type}! Status: ${live?.status || 'Offline'}. Notable items: ${island.items.slice(0, 3).join(', ')}...`;
+    const pageDesc = `Visit ${island.name}, a ${island.seasonal} ${island.type}! Status: ${live?.status || 'Offline'}. Villagers: ${currentVillagers.slice(0,5).join(', ')}...`;
 
     return (
         <div className="nook-bg min-vh-100 py-4 py-md-5">
@@ -208,7 +235,7 @@ const IslandDetail = () => {
                                     </div>
                                 </div>
 
-                                <div className="mb-5">
+                                <div className="mb-4">
                                     <h5 className="notebook-heading">
                                         <i className="fa-solid fa-gem me-2 text-nook"></i>
                                         Available Loot
@@ -220,6 +247,26 @@ const IslandDetail = () => {
                                             </div>
                                         ))}
                                     </div>
+                                </div>
+
+                                <div className="mb-5">
+                                    <h5 className="notebook-heading">
+                                        <i className="fa-solid fa-house-user me-2 text-nook"></i>
+                                        Current Residents
+                                    </h5>
+                                    {currentVillagers.length > 0 ? (
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {currentVillagers.map((villager, index) => (
+                                                <div key={`${villager}-${index}`} className="villager-pill">
+                                                    <i className="fa-solid fa-paw me-1 text-secondary opacity-50"></i> {villager}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="notebook-lines p-2 text-muted fst-italic">
+                                            Unknown or loading...
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Call to Action Area */}
