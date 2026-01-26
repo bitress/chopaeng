@@ -417,7 +417,7 @@ export const ISLANDS_DATA: IslandData[] = [
 
     // --- PUBLIC ISLANDS ---
     {
-        id: "gig",
+        id: "kilig",
         name: "KILIG",
         status: "ONLINE",
         type: "1.0 Treasure Island",
