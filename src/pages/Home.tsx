@@ -285,7 +285,7 @@ const Home = () => {
                                             }}
                                         />
                                     </div>
-                                    <div><h4 className="fw-black text-dark m-0">PASSPORT</h4><span className="text-muted small text-uppercase fw-bold">Nook Inc. Membership</span></div>
+                                    <div><h4 className="fw-black text-dark m-0">PASSPORT</h4><span className="text-muted small text-uppercase fw-bold">Cho Membership</span></div>
                                 </div>
                                 <div className="border-top border-2 border-dashed my-3 opacity-25"></div>
                                 <div className="row fw-bold text-dark small">

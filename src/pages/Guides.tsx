@@ -28,7 +28,7 @@ const Guide = () => {
                         </div>
                         <div>
                             <h2 className="mb-0 ac-font fw-black text-dark lh-1">Island Guide</h2>
-                            <p className="mb-0 small text-muted fw-bold text-uppercase tracking-wide">Nook Inc.</p>
+                            <p className="mb-0 small text-muted fw-bold text-uppercase tracking-wide">ChoPaeng</p>
                         </div>
                     </div>
                     {/* Fake Battery/Time - Optional aesthetic touch */}

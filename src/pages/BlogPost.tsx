@@ -29,7 +29,7 @@ const BlogPost = () => {
                     id: postJson.data.id,
                     title: attr.title,
                     date: new Date(attr.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                    author: "Nook Inc.",
+                    author: "ChoPaeng",
                     // Determine if locked based on API 'is_public' flag
                     isLocked: !attr.is_public,
                     category: attr.is_public ? "Announcement" : "Members Only",

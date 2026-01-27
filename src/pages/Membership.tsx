@@ -57,7 +57,7 @@ const Membership = () => {
                         <i className="fa-solid fa-landmark fs-1 text-success"></i>
                     </div>
                     <h1 className="display-5 fw-black ac-font text-dark mb-1">Membership Plans</h1>
-                    <p className="text-muted fw-bold text-uppercase spacing-wide mb-0 opacity-75">Nook Inc. Financial Services</p>
+                    <p className="text-muted fw-bold text-uppercase spacing-wide mb-0 opacity-75">Cho's Financial Services</p>
                 </div>
 
                 {/* 2. PLATFORM SELECTOR */}
@@ -185,7 +185,7 @@ const Membership = () => {
 
                 <div className="text-center mt-5">
                     <p className="tiny-text text-muted fw-bold text-uppercase opacity-50">
-                        * NO REFUNDS ON DIGITAL GOODS. ISLANDS MANAGED BY NOOK INC.
+                        * NO REFUNDS ON DIGITAL GOODS. ISLANDS MANAGED BY CHOPAENG
                     </p>
                 </div>
 
