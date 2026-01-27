@@ -134,9 +134,9 @@ const Home = () => {
 
                                 <div className="ratio ratio-16x9 rounded-4 overflow-hidden border border-4 border-white shadow-sm bg-dark">
                                     <iframe
-                                        src="https://www.youtube.com/embed/Oq3ECNa4vmo?autoplay=1&mute=1&loop=1&playlist=Oq3ECNa4vmo"
-                                        title="ChoPaeng TV Treasure Island Tour"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        src="https://player.twitch.tv/?channel=chopaeng&parent=chopaeng.com&muted=true&autoplay=true"
+                                        title="ChoPaeng Twitch Stream"
+                                        allow="autoplay; encrypted-media; fullscreen"
                                         allowFullScreen
                                         style={{ border: 0 }}
                                     ></iframe>
