@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import banner from '../assets/banner.png'
 import logo from '../assets/logo.webp'
+import StreamEmbed from "../components/StreamEmbed.tsx";
 interface BlogPost {
     id: string;
     title: string;
@@ -132,17 +133,7 @@ const Home = () => {
                                 <div className="tape-strip position-absolute start-50 translate-middle-x bg-white opacity-50 shadow-sm"
                                      style={{ height: '30px', width: '100px', top: '-15px', zIndex: 2, transform: 'rotate(-2deg)' }}></div>
 
-                                <div className="ratio ratio-16x9 rounded-4 overflow-hidden border border-4 border-white shadow-sm bg-dark">
-                                    <div className="ratio ratio-16x9 rounded-4 overflow-hidden border border-4 border-white shadow-sm bg-dark">
-                                        <iframe
-                                            src="https://player.twitch.tv/?channel=chopaeng&parent=www.chopaeng.com&parent=chopaeng.com&muted=true&autoplay=true"
-                                            title="ChoPaeng Twitch Stream"
-                                            allow="autoplay; encrypted-media; fullscreen"
-                                            allowFullScreen
-                                            style={{ border: 0 }}
-                                        ></iframe>
-                                    </div>
-                                </div>
+                               <StreamEmbed/>
 
                                 <div className="floating-badge bg-white p-2 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-3 ms-2 ms-lg-4 d-none d-sm-block">
                                     <i className="fa-solid fa-sack-dollar text-warning fs-3"></i>
