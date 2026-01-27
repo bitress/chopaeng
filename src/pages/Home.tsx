@@ -133,13 +133,15 @@ const Home = () => {
                                      style={{ height: '30px', width: '100px', top: '-15px', zIndex: 2, transform: 'rotate(-2deg)' }}></div>
 
                                 <div className="ratio ratio-16x9 rounded-4 overflow-hidden border border-4 border-white shadow-sm bg-dark">
-                                    <iframe
-                                        src="https://player.twitch.tv/?channel=chopaeng&parent=chopaeng.com&muted=true&autoplay=true"
-                                        title="ChoPaeng Twitch Stream"
-                                        allow="autoplay; encrypted-media; fullscreen"
-                                        allowFullScreen
-                                        style={{ border: 0 }}
-                                    ></iframe>
+                                    <div className="ratio ratio-16x9 rounded-4 overflow-hidden border border-4 border-white shadow-sm bg-dark">
+                                        <iframe
+                                            src="https://player.twitch.tv/?channel=chopaeng&parent=www.chopaeng.com&parent=chopaeng.com&muted=true&autoplay=true"
+                                            title="ChoPaeng Twitch Stream"
+                                            allow="autoplay; encrypted-media; fullscreen"
+                                            allowFullScreen
+                                            style={{ border: 0 }}
+                                        ></iframe>
+                                    </div>
                                 </div>
 
                                 <div className="floating-badge bg-white p-2 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-3 ms-2 ms-lg-4 d-none d-sm-block">
