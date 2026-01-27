@@ -17,6 +17,7 @@ export default function StreamEmbed() {
                     style={{ border: 0 }}
                 ></iframe>
             )}
+
             {source === 'yt_vod' && (
                 <iframe
                     src="https://www.youtube.com/embed/Oq3ECNa4vmo?autoplay=1&mute=1&loop=1&playlist=Oq3ECNa4vmo"
@@ -26,9 +27,10 @@ export default function StreamEmbed() {
                     style={{ border: 0 }}
                 ></iframe>
             )}
+
             {source === 'yt_latest' && (
                 <iframe
-                    src="https://www.youtube.com/embed/videoseries?list=UUNKiq8m-qlXcev9fl0rHNBg&autoplay=1"
+                    src="https://www.youtube.com/embed/videoseries?list=UUNKiq8m-qlXcev9fl0rHNBg&autoplay=1&mute=1"
                     title="ChoPaeng Latest Uploads"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
