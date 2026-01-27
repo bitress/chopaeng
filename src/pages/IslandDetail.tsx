@@ -254,22 +254,31 @@ const IslandDetail = () => {
                                         <i className="fa-solid fa-house-user me-2 text-nook"></i>
                                         Current Residents
                                     </h5>
-                                    {currentVillagers.length > 0 ? (
+                                    {loading ? (
+                                        <div className="notebook-lines p-2 text-muted fst-italic">
+                                            <i className="fa-solid fa-circle-notch fa-spin me-2"></i> Scanning resident list...
+                                        </div>
+                                    ) : currentVillagers.length > 0 ? (
                                         <div className="d-flex flex-wrap gap-2">
                                             {currentVillagers.map((villager, index) => (
-                                                <div key={`${villager}-${index}`} className="villager-pill">
-                                                    <i className="fa-solid fa-paw me-1 text-secondary opacity-50"></i> {villager}
+                                                <div
+                                                    key={`${villager}-${index}`}
+                                                    className="villager-pill"
+                                                    title={`Ask ChoBot to order ${villager}!`}
+                                                    style={{ cursor: 'help' }}
+                                                >
+                                                    <i className="fa-solid fa-paw me-1 text-nook opacity-50"></i>
+                                                    {villager}
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
                                         <div className="notebook-lines p-2 text-muted fst-italic">
-                                            Unknown or loading...
+                                            No residents currently tracked on this island.
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Call to Action Area */}
                                 <div className="action-area">
                                     <button
                                         disabled={!canShowDodo}
@@ -280,14 +289,14 @@ const IslandDetail = () => {
                                     >
                                         <div className="content">
                                             <div className="icon-box">
-                                                <i className={`fa-solid ${canShowDodo ? 'fa-plane-departure' : 'fa-lock'}`}></i>
+                                                <i className={`fa-solid ${canShowDodo ? 'fa-plane-departure' : live?.isSubOnly ? 'fa-brands fa-discord' : 'fa-lock'}`}></i>
                                             </div>
                                             <div className="text-group">
                                                 <span className="action-label">
-                                                    {canShowDodo ? 'Copy Dodo Code™' : live?.isSubOnly ? 'VIP Access Only' : 'Gate Closed'}
+                                                    {canShowDodo ? 'Copy Dodo Code™' : live?.isSubOnly ? 'Subscribers Only' : 'Gate Closed'}
                                                 </span>
                                                 <span className="action-code">
-                                                    {canShowDodo ? live?.dodo : live?.isSubOnly ? 'Subscribers' : 'Offline'}
+                                                    {canShowDodo ? live?.dodo : live?.isSubOnly ? 'Join Discord' : 'Offline'}
                                                 </span>
                                             </div>
                                         </div>
