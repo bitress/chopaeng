@@ -75,36 +75,43 @@ const Home = () => {
     return (
         <>
             <div
-                className="nook-os position-relative d-flex align-items-center font-nunito overflow-hidden w-100"
-                style={{ minHeight: 'var(--hero-height)' }}
+                className="nook-os position-relative d-flex align-items-center font-nunito w-100"
+                style={{ minHeight: '100dvh' }} // Use dynamic viewport height for mobile browsers
             >
                 <style>
                     {`
-            :root { --hero-height: 100vh; }
-            @media (min-width: 992px) { :root { --hero-height: 65vh; } }
+            /* Only force a slightly shorter hero on true desktop to keep it tight */
+            @media (min-width: 992px) { 
+                .nook-os { min-height: 80vh !important; } 
+            }
             .transform-active:active { transform: scale(0.95); }
+            /* Prevent text overflow on narrow "desktop mode" viewports */
+            .text-balance { text-wrap: balance; }
         `}
                 </style>
 
-                <div className="position-absolute top-0 end-0 opacity-10 p-4 d-none d-lg-block pointer-events-none">
+                {/* Background Leaf - Kept explicit size to prevent layout shifts */}
+                <div className="position-absolute top-0 end-0 opacity-10 p-4 d-none d-lg-block pointer-events-none" style={{ zIndex: 0 }}>
                     <i className="fa-solid fa-leaf text-success" style={{ fontSize: '20rem', transform: 'rotate(45deg)' }}></i>
                 </div>
 
-                <section className="container px-4 px-lg-5 position-relative z-1">
-                    <div className="row align-items-center py-5 py-lg-4">
+                <section className="container px-4 px-lg-4 position-relative z-1">
+                    <div className="row align-items-center justify-content-center py-5">
 
-                        <div className="col-lg-6 order-2 order-lg-1 ps-lg-5 text-center text-lg-start mt-4 mt-lg-0">
+                        {/* Text Section */}
+                        {/* Added col-md-10 to prevent it from being too wide on tablet portrait */}
+                        <div className="col-12 col-md-10 col-lg-6 order-2 order-lg-1 ps-lg-4 text-center text-lg-start mt-5 mt-lg-0">
 
                             <div className="d-inline-flex align-items-center gap-2 mb-3 px-3 py-1 rounded-pill bg-white border border-success border-opacity-25 shadow-sm">
                                 <span className="live-dot bg-danger rounded-circle" style={{ width: '8px', height: '8px' }}></span>
                                 <span className="text-success fw-bold x-small text-uppercase tracking-wider" style={{ fontSize: '0.75rem' }}>Stream Online</span>
                             </div>
 
-                            <h1 className="fw-black ac-font lh-1 mb-3 text-dark display-5 display-lg-4">
-                                Your Ticket to <br /> <span className="text-nook">Island Paradise.</span>
+                            <h1 className="fw-black ac-font lh-1 mb-3 text-dark display-5 display-lg-4 text-balance">
+                                Your Ticket to <br className="d-none d-lg-block" /> <span className="text-nook">Island Paradise.</span>
                             </h1>
 
-                            <p className="lead text-muted mb-4 fw-bold opacity-75 fs-6 mx-auto mx-lg-0" style={{ maxWidth: '480px' }}>
+                            <p className="lead text-muted mb-4 fw-bold opacity-75 fs-6 mx-auto mx-lg-0" style={{ maxWidth: '500px' }}>
                                 Skip the grind. Join the community to access 24/7 Treasure Islands, Max Bells, and order any villager via ChoBot.
                             </p>
 
@@ -127,18 +134,24 @@ const Home = () => {
                             </div>
                         </div>
 
-                        <div className="col-lg-6 order-1 order-lg-2 text-center position-relative">
-                            <div className="snapshot-frame mx-auto position-relative w-100" style={{ maxWidth: '450px' }}>
+                        {/* Image/Stream Section */}
+                        {/* Center on tablet (md), split on desktop (lg) */}
+                        <div className="col-12 col-md-8 col-lg-6 order-1 order-lg-2 text-center position-relative mb-3 mb-lg-0">
+                            <div className="snapshot-frame mx-auto position-relative w-100" style={{ maxWidth: '480px' }}>
 
                                 <div className="tape-strip position-absolute start-50 translate-middle-x bg-white opacity-50 shadow-sm"
                                      style={{ height: '30px', width: '100px', top: '-15px', zIndex: 2, transform: 'rotate(-2deg)' }}></div>
 
-                               <StreamEmbed/>
+                                {/* Ensure StreamEmbed is responsive within this container */}
+                                <div className="ratio ratio-16x9 bg-dark rounded shadow overflow-hidden border border-4 border-white">
+                                    <StreamEmbed />
+                                </div>
 
-                                <div className="floating-badge bg-white p-2 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-3 ms-2 ms-lg-4 d-none d-sm-block">
+                                {/* Adjusted badges to not float outside the container on small screens */}
+                                <div className="floating-badge bg-white p-2 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-n3 ms-4 d-none d-sm-block">
                                     <i className="fa-solid fa-sack-dollar text-warning fs-3"></i>
                                 </div>
-                                <div className="floating-badge-2 bg-white p-2 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-3 me-n2 me-lg-n4 d-none d-sm-block">
+                                <div className="floating-badge-2 bg-white p-2 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-n3 me-n2 d-none d-sm-block">
                                     <i className="fa-solid fa-gift text-danger fs-3"></i>
                                 </div>
                             </div>
@@ -146,6 +159,7 @@ const Home = () => {
                     </div>
                 </section>
             </div>
+
             <section className="container py-5 mt-4 position-relative z-2">
 
                 {/* Section Header */}
@@ -301,7 +315,6 @@ const Home = () => {
                     </div>
                 </div>
             </section>
-
         </>
     );
 };
