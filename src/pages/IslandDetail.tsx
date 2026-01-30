@@ -194,14 +194,33 @@ const IslandDetail = () => {
                             <div className="dal-body">
                                 <div className="flight-row">
                                     <span className="flight-label">STATUS</span>
-                                    <span className={`flight-value ${live?.isOnline ? 'text-dal-blue' : 'text-danger'}`}>
-                                        {loading ? <span className="pulse">SCANNING...</span> : (live?.status || 'OFFLINE')}
+                                    <span
+                                        className={`flight-value ${
+                                            live?.isOnline && live?.dodo !== "GETTIN'"
+                                                ? 'text-dal-blue'
+                                                : 'text-danger'
+                                        }`}
+                                    >
+                                      {loading ? (
+                                          <span className="pulse">SCANNING...</span>
+                                      ) : live?.dodo === "GETTIN'" ? (
+                                          'OFFLINE'
+                                      ) : (
+                                          live?.status || 'OFFLINE'
+                                      )}
                                     </span>
+
                                 </div>
                                 <div className="flight-divider"></div>
                                 <div className="flight-row">
-                                    <span className="flight-label">PASSENGERS</span>
-                                    <span className="flight-value">{live?.visitors || '0/7'}</span>
+                                <span className="flight-label">PASSENGERS</span>
+                                    <span className="flight-value">
+                                      {(() => {
+                                          if (!live?.visitors) return '0/7';
+                                          const count = live.visitors.match(/\d+/)?.[0];
+                                          return `${count ?? 7}/7`;
+                                      })()}
+                                    </span>
                                 </div>
                                 <div className="flight-divider"></div>
                                 <div className="flight-row">
