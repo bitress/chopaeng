@@ -2,6 +2,27 @@ const Contact = () => {
     return (
         <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center justify-content-center">
 
+            <title>Contact & Support | Get Help With Chopaeng Treasure Islands</title>
+
+            <meta
+                name="description"
+                content="Need help with Chopaeng Treasure Islands? Contact our support team for assistance with island access, Dodo codes, memberships, orders, or account-related questions."
+            />
+
+            <link rel="canonical" href="https://www.chopaeng.com/contact" />
+
+            <meta property="og:type" content="website" />
+            <meta property="og:site_name" content="Chopaeng" />
+            <meta property="og:title" content="Chopaeng – Contact & Support" />
+            <meta
+                property="og:description"
+                content="Contact Chopaeng via Discord or email for ACNH Treasure Island support and business inquiries."
+            />
+            <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
+
+            <meta name="twitter:card" content="summary_large_image" />
+
+
             <div className="app-container w-100" style={{maxWidth: '900px'}}>
 
                 {/* 1. APP HEADER */}

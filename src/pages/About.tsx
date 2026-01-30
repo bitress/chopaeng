@@ -1,7 +1,29 @@
 import logo from '../assets/logo.webp'
 const About = () => {
     return (
-        <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center">
+        <>
+            <title>About Chopaeng – Meet the Islander Behind the Treasure Islands</title>
+            <meta
+                name="description"
+                content="Meet Kuya Cho, the Islander behind Chopaeng, and learn how our community provides free and premium Animal Crossing Treasure Islands through a Bayanihan spirit."
+            />
+            <link rel="canonical" href="https://www.chopaeng.com/about" />
+
+            <meta property="og:type" content="website" />
+            <meta property="og:site_name" content="Chopaeng" />
+            <meta property="og:title" content="About | Chopaeng – ACNH Treasure Islands, Items, Villagers, DIYs & Guides" />
+            <meta property="og:description" content="Meet Kuya Cho, the Islander behind Chopaeng. We provide free & premium Animal Crossing: New Horizons treasure islands with a Bayanihan spirit." />
+            <meta property="og:url" content="https://www.chopaeng.com/about" />
+            <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content="About | Chopaeng – ACNH Treasure Islands, 2.0 Items, DIYs & Guides" />
+            <meta name="twitter:description" content="Meet Kuya Cho, the Islander behind Chopaeng. We provide free & premium Animal Crossing: New Horizons treasure islands with a Bayanihan spirit." />
+            <meta name="twitter:image" content="https://www.chopaeng.com/banner.png" />
+
+            <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center">
 
             <div className="app-container w-100" style={{maxWidth: '950px'}}>
 
@@ -116,6 +138,7 @@ const About = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

@@ -56,6 +56,58 @@ const DodoDecryptor: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        const site = window.location.origin;
+        const url = `${site}/dodo-translator`;
+        const img = `${site}/banner.png`;
+
+        const title = hasHashInUrl
+            ? "Dodo Translator – Decrypt Code | Chopaeng"
+            : "Dodo Translator | Chopaeng";
+
+        const desc = hasHashInUrl
+            ? "Decrypt a Chopaeng Dodo hash using your Whisper Key to reveal the destination code."
+            : "Paste your encrypted Dodo hash and enter the Whisper Key to reveal the destination code.";
+
+        document.title = title;
+
+        const setMeta = (attr: string, key: string, value: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+                el = document.createElement("meta");
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("content", value);
+        };
+
+        const setLink = (rel: string, href: string) => {
+            let el = document.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement("link");
+                el.setAttribute("rel", rel);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("href", href);
+        };
+
+        setMeta("name", "description", desc);
+        setLink("canonical", url);
+
+        setMeta("property", "og:type", "website");
+        setMeta("property", "og:site_name", "Chopaeng");
+        setMeta("property", "og:url", url);
+        setMeta("property", "og:title", title);
+        setMeta("property", "og:description", desc);
+        setMeta("property", "og:image", img);
+
+        setMeta("name", "twitter:card", "summary_large_image");
+        setMeta("name", "twitter:title", title);
+        setMeta("name", "twitter:description", desc);
+        setMeta("name", "twitter:image", img);
+    }, [hasHashInUrl]);
+
+
     return (
         <div className="nook-os min-vh-100 py-5 font-nunito position-relative overflow-hidden d-flex flex-column justify-content-center">
 

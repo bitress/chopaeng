@@ -1,6 +1,56 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 
 const Chopaeng404: React.FC = () => {
+
+    useEffect(() => {
+        const site = window.location.origin;
+        const url = `${site}/404`;
+        const img = `${site}/banner.png`;
+
+        const title = "404 – Page Not Found | Chopaeng";
+        const desc = "Destination unknown. The page you’re looking for may have moved or no longer exists.";
+
+        document.title = title;
+
+        const setMeta = (attr: string, key: string, value: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+                el = document.createElement("meta");
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("content", value);
+        };
+
+        const setLink = (rel: string, href: string) => {
+            let el = document.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement("link");
+                el.setAttribute("rel", rel);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("href", href);
+        };
+
+        setMeta("name", "description", desc);
+        setLink("canonical", url);
+
+        setMeta("property", "og:type", "website");
+        setMeta("property", "og:site_name", "Chopaeng");
+        setMeta("property", "og:url", url);
+        setMeta("property", "og:title", title);
+        setMeta("property", "og:description", desc);
+        setMeta("property", "og:image", img);
+
+        setMeta("name", "twitter:card", "summary_large_image");
+        setMeta("name", "twitter:title", title);
+        setMeta("name", "twitter:description", desc);
+        setMeta("name", "twitter:image", img);
+
+        setMeta("name", "robots", "noindex, nofollow");
+    }, []);
+
+
     return (
         <div className="dal-bg min-vh-100 d-flex align-items-center justify-content-center p-3 font-nunito">
             {/* CUSTOM CSS STYLES */}

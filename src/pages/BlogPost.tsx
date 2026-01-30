@@ -13,6 +13,61 @@ const BlogPost = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
+    useEffect(() => {
+        if (!post || !id) return;
+
+        const site = window.location.origin;
+        const url = `${site}/blog/${id}`;
+        const img = post.image || `${site}/banner.png`;
+
+        const title = `${post.title} | Chopaeng`;
+        const desc = (() => {
+            const text = String(post.content || "")
+                .replace(/<[^>]*>/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+            return (text || "Official Chopaeng updates, island drops, and maintenance notices.").slice(0, 160);
+        })();
+
+        document.title = title;
+
+        const setMeta = (attr: string, key: string, value: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+                el = document.createElement("meta");
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("content", value);
+        };
+
+        const setLink = (rel: string, href: string) => {
+            let el = document.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement("link");
+                el.setAttribute("rel", rel);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("href", href);
+        };
+
+        setMeta("name", "description", desc);
+        setLink("canonical", url);
+
+        setMeta("property", "og:type", "article");
+        setMeta("property", "og:site_name", "Chopaeng");
+        setMeta("property", "og:url", url);
+        setMeta("property", "og:title", title);
+        setMeta("property", "og:description", desc);
+        setMeta("property", "og:image", img);
+
+        setMeta("name", "twitter:card", "summary_large_image");
+        setMeta("name", "twitter:title", title);
+        setMeta("name", "twitter:description", desc);
+        setMeta("name", "twitter:image", img);
+    }, [post, id]);
+
+
     // --- FETCH DATA ---
     useEffect(() => {
         const fetchData = async () => {
@@ -74,6 +129,8 @@ const BlogPost = () => {
             <button onClick={() => navigate("/blog")} className="btn btn-nook-primary rounded-pill fw-bold shadow-sm px-4 mt-3">Return to Board</button>
         </div>
     );
+
+
 
     return (
         <div className="nook-bg min-vh-100 font-nunito pb-5">

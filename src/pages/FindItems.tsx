@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { Link } from "react-router-dom"; // Import Link
 
 interface SearchResult {
@@ -51,6 +51,64 @@ const FindItems = () => {
         navigator.clipboard.writeText(cmd);
         // Optional: Add toast notification here
     };
+
+    useEffect(() => {
+        const site = window.location.origin;
+        const url = `${site}/finder`;
+        const img = `${site}/banner.png`;
+
+        const title =
+            searchMode === "item"
+                ? "Find Items on Live Treasure Islands | Chopaeng"
+                : "Find Villagers on Live Treasure Islands | Chopaeng";
+
+        const desc =
+            searchMode === "item"
+                ? "Use the Chopaeng item finder to check which live Treasure Islands currently have the item you want, including free and member islands with real-time updates."
+                : "Use the Chopaeng villager finder to check which live Treasure Islands currently have the villager you want, including free and member islands with real-time updates.";
+
+
+        document.title = title;
+
+        const setMeta = (attr: string, key: string, value: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+                el = document.createElement("meta");
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("content", value);
+        };
+
+        const setLink = (rel: string, href: string) => {
+            let el = document.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement("link");
+                el.setAttribute("rel", rel);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("href", href);
+        };
+
+        // Basic SEO
+        setMeta("name", "description", desc);
+        setLink("canonical", url);
+
+        // Open Graph (Facebook)
+        setMeta("property", "og:type", "website");
+        setMeta("property", "og:site_name", "Chopaeng");
+        setMeta("property", "og:url", url);
+        setMeta("property", "og:title", title);
+        setMeta("property", "og:description", desc);
+        setMeta("property", "og:image", img);
+
+        // Twitter
+        setMeta("name", "twitter:card", "summary_large_image");
+        setMeta("name", "twitter:title", title);
+        setMeta("name", "twitter:description", desc);
+        setMeta("name", "twitter:image", img);
+    }, [searchMode]);
+
 
     return (
         <div className="nook-catalog min-vh-100 font-nunito bg-pattern d-flex flex-column align-items-center">

@@ -107,18 +107,25 @@ const IslandDetail = () => {
         ? villagersMap[Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase()) as string]
         : [];
 
+    const capitalizeFirstLetter = (string: string) => {
+        if (!string) return string;
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    };
+
+
     const siteUrl = window.location.origin;
     const currentUrl = `${siteUrl}${location.pathname}`;
     const seoImage = `${siteUrl}${mapImageSrc}`;
-    const pageTitle = `${island.name} | ChoPaeng`;
-    const pageDesc = `Visit ${island.name}, a ${island.seasonal} ${island.type}! Status: ${live?.status || 'Offline'}. Villagers: ${currentVillagers.slice(0,5).join(', ')}...`;
+    const pageTitle = `${capitalizeFirstLetter(island.id)} Treasure Island – Map, Items, and Villagers | Chopaeng`;
+
+    const pageDesc =
+        `${island.description}. View the island map, available items, seasonal details, and live status updates for this Chopaeng Treasure Island.`;
 
     return (
         <div className="nook-bg min-vh-100 py-4 py-md-5">
 
             <title>{pageTitle}</title>
             <meta name="description" content={pageDesc} />
-            <meta name="theme-color" content="#7ec9b1" />
             <link rel="canonical" href={currentUrl} />
 
             {/* Open Graph */}
@@ -127,7 +134,7 @@ const IslandDetail = () => {
             <meta property="og:title" content={pageTitle} />
             <meta property="og:description" content={pageDesc} />
             <meta property="og:image" content={seoImage} />
-            <meta property="og:site_name" content="Chopaeng Dodo Codes" />
+            <meta property="og:site_name" content="Chopaeng" />
 
             {/* Twitter Cards */}
             <meta name="twitter:card" content="summary_large_image" />

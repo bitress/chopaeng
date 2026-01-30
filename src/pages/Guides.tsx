@@ -1,7 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Guide = () => {
-    const [activeTab, setActiveTab] = useState('steps');
+    const [activeTab, setActiveTab] = useState("steps");
+
+    useEffect(() => {
+        const site = window.location.origin;
+        const url = `${site}/guide`;
+        const img = `${site}/banner.png`;
+
+        const title =
+            activeTab === "steps"
+                ? "Island Guide – How to Join | Chopaeng"
+                : activeTab === "rules"
+                    ? "Island Guide – Golden Rules | Chopaeng"
+                    : "Island Guide – Help & FAQ | Chopaeng";
+
+        const desc =
+            activeTab === "steps"
+                ? "Learn how to join Chopaeng Treasure Islands with step-by-step instructions, Dodo code tips, and best practices for smooth entry and uninterrupted island visits."
+                : activeTab === "rules"
+                    ? "Review the essential rules that keep Chopaeng Treasure Islands stable, including proper airport exits, clean item handling, and maintaining a reliable internet connection."
+                    : "Find solutions to common issues such as interference messages, communication errors, and learn how to order items using the Chopaeng Discord bot.";
+
+        document.title = title;
+
+        const setMeta = (attr: string, key: string, value: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+                el = document.createElement("meta");
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("content", value);
+        };
+
+        const setLink = (rel: string, href: string) => {
+            let el = document.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement("link");
+                el.setAttribute("rel", rel);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("href", href);
+        };
+
+        setMeta("name", "description", desc);
+        setLink("canonical", url);
+
+        setMeta("property", "og:type", "website");
+        setMeta("property", "og:site_name", "Chopaeng");
+        setMeta("property", "og:url", url);
+        setMeta("property", "og:title", title);
+        setMeta("property", "og:description", desc);
+        setMeta("property", "og:image", img);
+
+        setMeta("name", "twitter:card", "summary_large_image");
+        setMeta("name", "twitter:title", title);
+        setMeta("name", "twitter:description", desc);
+        setMeta("name", "twitter:image", img);
+    }, [activeTab]);
+
 
     const steps = [
         { num: "01", title: "Empty Pockets", desc: "Leave everything at home! You need 40 slots open. Tools are provided on the islands.", icon: "bag-x" },

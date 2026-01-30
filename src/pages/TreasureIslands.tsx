@@ -242,6 +242,43 @@ const TreasureIslands = () => {
             setFinderResults(null);
         }
     }, [search, searchMode]);
+
+
+    useEffect(() => {
+        const site = window.location.origin;
+        const url = `${site}/treasure-islands`; // adjust if needed
+
+        const title =
+            filter === "ALL"
+                ? "Live Animal Crossing Treasure Islands Dashboard | Chopaeng"
+                : filter === "public"
+                    ? "Free Animal Crossing Treasure Islands Dashboard | Chopaeng"
+                    : "VIP Animal Crossing Treasure Islands Dashboard | Chopaeng";
+
+        const desc =
+            "Track live Animal Crossing Treasure Islands with real-time Dodo codes, island capacity, item availability, visitor count, and status updates for free and VIP islands on Chopaeng.";
+
+        document.title = title;
+
+        // description
+        let meta = document.querySelector('meta[name="description"]');
+        if (!meta) {
+            meta = document.createElement("meta");
+            meta.setAttribute("name", "description");
+            document.head.appendChild(meta);
+        }
+        meta.setAttribute("content", desc);
+
+        // canonical
+        let link = document.querySelector('link[rel="canonical"]');
+        if (!link) {
+            link = document.createElement("link");
+            link.setAttribute("rel", "canonical");
+            document.head.appendChild(link);
+        }
+        link.setAttribute("href", url);
+    }, [filter]);
+
     return (
         <div className="nook-bg min-vh-100 py-5 font-nunito">
             <div className="container px-md-4">

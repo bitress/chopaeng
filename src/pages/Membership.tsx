@@ -1,5 +1,55 @@
+import {useEffect} from "react";
 
 const Membership = () => {
+
+    useEffect(() => {
+        const site = window.location.origin;
+        const url = `${site}/membership`;
+        const img = `${site}/banner.png`;
+
+        const title = "Chopaeng Membership Plans – Private Islands, VIP Access, and Perks";
+
+        const desc =
+            "Compare Chopaeng membership plans to unlock private Treasure Islands, priority ChoBot access, exclusive perks, and VIP support through Patreon, Twitch, or YouTube memberships.";
+
+        document.title = title;
+
+        const setMeta = (attr: string, key: string, value: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+                el = document.createElement("meta");
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("content", value);
+        };
+
+        const setLink = (rel: string, href: string) => {
+            let el = document.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement("link");
+                el.setAttribute("rel", rel);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("href", href);
+        };
+
+        setMeta("name", "description", desc);
+        setLink("canonical", url);
+
+        setMeta("property", "og:type", "website");
+        setMeta("property", "og:site_name", "Chopaeng");
+        setMeta("property", "og:url", url);
+        setMeta("property", "og:title", title);
+        setMeta("property", "og:description", desc);
+        setMeta("property", "og:image", img);
+
+        setMeta("name", "twitter:card", "summary_large_image");
+        setMeta("name", "twitter:title", title);
+        setMeta("name", "twitter:description", desc);
+        setMeta("name", "twitter:image", img);
+    }, []);
+
 
     const links = {
         patreon: "https://www.patreon.com/cw/chopaeng/membership",

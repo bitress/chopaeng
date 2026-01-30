@@ -67,7 +67,62 @@ const BlogList = () => {
         ? posts
         : posts.filter(p => p.category === filter);
 
+
+    const upsertMeta = (selector: string, attrs: Record<string, string>) => {
+        let el = document.head.querySelector(selector) as HTMLMetaElement | null;
+        if (!el) {
+            el = document.createElement("meta");
+            document.head.appendChild(el);
+        }
+        Object.entries(attrs).forEach(([k, v]) => el!.setAttribute(k, v));
+    };
+
+    const upsertLink = (rel: string, href: string) => {
+        let el = document.head.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+        if (!el) {
+            el = document.createElement("link");
+            el.setAttribute("rel", rel);
+            document.head.appendChild(el);
+        }
+        el.setAttribute("href", href);
+    };
+
+
+    useEffect(() => {
+        const siteUrl = window.location.origin;
+        const currentUrl = `${siteUrl}/blog`;
+        const seoImage = `${siteUrl}${banner.startsWith("/") ? banner : `/${banner}`}`;
+
+        const pageTitle = "Chopaeng Blog – Treasure Island Updates, Guides, and Announcements";
+
+        const pageDesc =
+            "Read official Chopaeng blog posts featuring Treasure Island drops, maintenance schedules, gameplay guides, service updates, and important announcements for free and member players.";
+
+        document.title = pageTitle;
+
+        upsertLink("canonical", currentUrl);
+
+        upsertMeta('meta[name="description"]', { name: "description", content: pageDesc });
+
+        // Open Graph
+        upsertMeta('meta[property="og:type"]', { property: "og:type", content: "website" });
+        upsertMeta('meta[property="og:site_name"]', { property: "og:site_name", content: "Chopaeng" });
+        upsertMeta('meta[property="og:url"]', { property: "og:url", content: currentUrl });
+        upsertMeta('meta[property="og:title"]', { property: "og:title", content: pageTitle });
+        upsertMeta('meta[property="og:description"]', { property: "og:description", content: pageDesc });
+        upsertMeta('meta[property="og:image"]', { property: "og:image", content: seoImage });
+
+        // Twitter
+        upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
+        upsertMeta('meta[name="twitter:title"]', { name: "twitter:title", content: pageTitle });
+        upsertMeta('meta[name="twitter:description"]', { name: "twitter:description", content: pageDesc });
+        upsertMeta('meta[name="twitter:image"]', { name: "twitter:image", content: seoImage });
+    }, []);
+
+
     return (
+        <>
+
         <div className="nook-bg min-vh-100 pb-5 font-nunito">
 
             {/* HEADER */}
@@ -167,6 +222,7 @@ const BlogList = () => {
                 )}
             </div>
         </div>
+        </>
     );
 };
 

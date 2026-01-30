@@ -74,6 +74,25 @@ const Home = () => {
 
     return (
         <>
+            <title>Chopaeng – ACNH Treasure Islands, Items, Villagers, DIYs & Guides</title>
+            <meta name="description" content="Chopaeng is an Animal Crossing: New Horizons treasure island hub for free & premium islands, items, DIYs, Bells, materials, and guides—fast, safe, and easy." />
+
+            <link rel="canonical" href="https://www.chopaeng.com/" />
+
+            <meta property="og:type" content="website" />
+            <meta property="og:site_name" content="Chopaeng" />
+            <meta property="og:title" content="Chopaeng – ACNH Treasure Islands, Items, Villagers, DIYs & Guides" />
+            <meta property="og:description" content="Free & premium Animal Crossing: New Horizons treasure islands for items, DIYs, Bells, materials, and more. Live status + guides." />
+            <meta property="og:url" content="https://www.chopaeng.com/" />
+            <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content="Chopaeng – ACNH Treasure Islands, 2.0 Items, DIYs & Guides" />
+            <meta name="twitter:description" content="Free & premium ACNH treasure islands for items, DIYs, Bells, materials, and more. Live status + guides." />
+            <meta name="twitter:image" content="https://www.chopaeng.com/banner.png" />
+
             <div
                 className="nook-os position-relative d-flex align-items-center font-nunito w-100"
                 style={{ minHeight: '100dvh' }} // Use dynamic viewport height for mobile browsers
