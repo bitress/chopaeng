@@ -36,7 +36,6 @@ const BlogList = () => {
                             new Date(b.attributes.published_at).getTime() -
                             new Date(a.attributes.published_at).getTime()
                     )
-                    .slice(0, 3)
                     .map((item: any) => {
                         const attr = item.attributes;
 
