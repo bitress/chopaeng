@@ -160,7 +160,9 @@ const IslandMaps = () => {
                     </div>
                 ) : (
                     <div className="row g-4 pb-5">
-                        {filteredIslands.map((island, index) => {
+                        {filteredIslands
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((island, index) => {
                             const live = liveData[island.name.toUpperCase()] || { status: "OFFLINE", dodo: "---", visitors: "0" };
                             const isOnline = live.status === "ONLINE";
                             const delay = index * 50; // Staggered animation
