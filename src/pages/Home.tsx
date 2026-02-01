@@ -34,32 +34,42 @@ const Home = () => {
             try {
                 const response = await fetch("https://blogs.chopaeng.com/api/patreon/posts");
                 if (!response.ok) throw new Error("Failed to fetch");
+
                 const json = await response.json();
-                const transformed: BlogPost[] = json.data.slice(0, 3).map((item: any) => {
-                    const attr = item.attributes;
 
-                    let imageUrl = attr.image?.large_url;
-                    if (!imageUrl && attr.embed_data?.provider === "YouTube") {
-                        imageUrl = banner;
-                    }
-                    if (!imageUrl) {
-                        imageUrl = banner;
-                    }
+                const transformed: BlogPost[] = [...json.data]
+                    .sort(
+                        (a: any, b: any) =>
+                            new Date(b.attributes.published_at).getTime() -
+                            new Date(a.attributes.published_at).getTime()
+                    )
+                    .slice(0, 3)
+                    .map((item: any) => {
+                        const attr = item.attributes;
 
-                    const category = attr.is_public ? "Announcement" : "Members Only";
+                        let imageUrl = attr.image?.large_url;
+                        if (!imageUrl && attr.embed_data?.provider === "YouTube") {
+                            imageUrl = banner;
+                        }
+                        if (!imageUrl) {
+                            imageUrl = banner;
+                        }
 
-                    const rawText = stripHtml(attr.content);
-                    const excerpt = rawText.length > 100 ? rawText.substring(0, 100) + "..." : rawText;
+                        const category = attr.is_public ? "Announcement" : "Members Only";
 
-                    return {
-                        id: item.id,
-                        title: attr.title,
-                        date: formatDate(attr.published_at),
-                        category: category,
-                        image: imageUrl,
-                        excerpt: excerpt
-                    };
-                });
+                        const rawText = stripHtml(attr.content);
+                        const excerpt =
+                            rawText.length > 100 ? rawText.substring(0, 100) + "..." : rawText;
+
+                        return {
+                            id: item.id,
+                            title: attr.title,
+                            date: formatDate(attr.published_at), // format AFTER sorting ✅
+                            category,
+                            image: imageUrl,
+                            excerpt
+                        };
+                    });
 
                 setPosts(transformed);
             } catch (error) {

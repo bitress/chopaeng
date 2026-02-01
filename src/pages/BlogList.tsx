@@ -27,29 +27,38 @@ const BlogList = () => {
             try {
                 const response = await fetch(API_URL);
                 if (!response.ok) throw new Error("Failed to fetch");
+
                 const json = await response.json();
 
-                const transformed = json.data.map((item: any) => {
-                    const attr = item.attributes;
+                const transformed = [...json.data]
+                    .sort(
+                        (a: any, b: any) =>
+                            new Date(b.attributes.published_at).getTime() -
+                            new Date(a.attributes.published_at).getTime()
+                    )
+                    .slice(0, 3)
+                    .map((item: any) => {
+                        const attr = item.attributes;
 
-                    let imageUrl = attr.image?.large_url;
-                    if (!imageUrl && attr.embed_data?.provider === "YouTube") {
-                        imageUrl = banner;
-                    }
-                    if (!imageUrl) imageUrl = banner;
+                        let imageUrl = attr.image?.large_url;
+                        if (!imageUrl && attr.embed_data?.provider === "YouTube") {
+                            imageUrl = banner;
+                        }
+                        if (!imageUrl) imageUrl = banner;
 
-                    const rawText = stripHtml(attr.content);
-                    const excerpt = rawText.length > 120 ? rawText.substring(0, 120) + "..." : rawText;
+                        const rawText = stripHtml(attr.content);
+                        const excerpt =
+                            rawText.length > 120 ? rawText.substring(0, 120) + "..." : rawText;
 
-                    return {
-                        id: item.id,
-                        title: attr.title,
-                        date: formatDate(attr.published_at),
-                        category: attr.is_public ? "Announcement" : "Members Only",
-                        image: imageUrl,
-                        excerpt: excerpt
-                    };
-                });
+                        return {
+                            id: item.id,
+                            title: attr.title,
+                            date: formatDate(attr.published_at), // format AFTER sorting
+                            category: attr.is_public ? "Announcement" : "Members Only",
+                            image: imageUrl,
+                            excerpt
+                        };
+                    });
 
                 setPosts(transformed);
             } catch (error) {
@@ -61,6 +70,7 @@ const BlogList = () => {
 
         fetchPosts();
     }, []);
+
 
     // Filter Logic
     const filteredPosts = filter === "All"
