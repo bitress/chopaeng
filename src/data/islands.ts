@@ -1252,54 +1252,6 @@ export const ISLANDS_DATA: IslandData[] = [
         description: "Subscriber-exclusive themed island featuring Zelda, Splatoon, Lego, and various aesthetic furniture sets."
     },
     {
-        id: "diwa",
-        name: "DIWA",
-        status: "SUB ONLY",
-        type: "Themed Treasure Island",
-        seasonal: "Year-Round",
-        items: [
-            "Zelda Theme",
-            "Splatoon Theme",
-            "Lego Theme",
-            "Mario / Tubular Theme",
-            "Hotel Theme",
-            "Marble Theme",
-            "Kiddie Theme",
-            "Artful Theme",
-            "Standalone Items",
-            "Turnips",
-            "Villagers"
-        ],
-        visitors: 0,
-        cat: "member",
-        theme: "gold",
-        description: "Subscriber-exclusive themed island featuring Zelda, Splatoon, Lego, and various aesthetic furniture sets."
-    },
-    {
-        id: "gabay",
-        name: "GABAY",
-        status: "SUB ONLY",
-        type: "Themed Treasure Island",
-        seasonal: "Year-Round",
-        items: [
-            "Zelda Theme",
-            "Splatoon Theme",
-            "Lego Theme",
-            "Mario / Tubular Theme",
-            "Hotel Theme",
-            "Marble Theme",
-            "Kiddie Theme",
-            "Artful Theme",
-            "Standalone Items",
-            "Turnips",
-            "Villagers"
-        ],
-        visitors: 0,
-        cat: "member",
-        theme: "gold",
-        description: "Subscriber-exclusive themed island featuring Zelda, Splatoon, Lego, and various aesthetic furniture sets."
-    },
-    {
         id: "kalangitan",
         name: "KALANGITAN",
         status: "SUB ONLY",
@@ -1422,30 +1374,6 @@ export const ISLANDS_DATA: IslandData[] = [
         description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
     },
     {
-        id: "tinig",
-        name: "TINIG",
-        status: "ONLINE",
-        type: "3.0 Themed Island",
-        seasonal: "Year-Round",
-        items: [
-            "Zelda Theme",
-            "Splatoon Theme",
-            "Lego Theme",
-            "Mario / Tubular Theme",
-            "Hotel Theme",
-            "Marble Theme",
-            "Kiddie Theme",
-            "Artful Theme",
-            "Standalone Items",
-            "Turnips",
-            "Villagers"
-        ],
-        theme: "teal",
-        cat: "public",
-        visitors: 0,
-        description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
-    },
-    {
         id: "banaag",
         name: "BANAAG",
         status: "ONLINE",
@@ -1516,5 +1444,82 @@ export const ISLANDS_DATA: IslandData[] = [
         cat: "public",
         visitors: 0,
         description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
-    }
+    },
+
+    // No Maps Yet
+
+    // {
+    //     id: "diwa",
+    //     name: "DIWA",
+    //     status: "SUB ONLY",
+    //     type: "Themed Treasure Island",
+    //     seasonal: "Year-Round",
+    //     items: [
+    //         "Zelda Theme",
+    //         "Splatoon Theme",
+    //         "Lego Theme",
+    //         "Mario / Tubular Theme",
+    //         "Hotel Theme",
+    //         "Marble Theme",
+    //         "Kiddie Theme",
+    //         "Artful Theme",
+    //         "Standalone Items",
+    //         "Turnips",
+    //         "Villagers"
+    //     ],
+    //     visitors: 0,
+    //     cat: "member",
+    //     theme: "gold",
+    //     description: "Subscriber-exclusive themed island featuring Zelda, Splatoon, Lego, and various aesthetic furniture sets."
+    // },
+    // {
+    //     id: "gabay",
+    //     name: "GABAY",
+    //     status: "SUB ONLY",
+    //     type: "Themed Treasure Island",
+    //     seasonal: "Year-Round",
+    //     items: [
+    //         "Zelda Theme",
+    //         "Splatoon Theme",
+    //         "Lego Theme",
+    //         "Mario / Tubular Theme",
+    //         "Hotel Theme",
+    //         "Marble Theme",
+    //         "Kiddie Theme",
+    //         "Artful Theme",
+    //         "Standalone Items",
+    //         "Turnips",
+    //         "Villagers"
+    //     ],
+    //     visitors: 0,
+    //     cat: "member",
+    //     theme: "gold",
+    //     description: "Subscriber-exclusive themed island featuring Zelda, Splatoon, Lego, and various aesthetic furniture sets."
+    // },
+    // {
+    //     id: "tinig",
+    //     name: "TINIG",
+    //     status: "ONLINE",
+    //     type: "3.0 Themed Island",
+    //     seasonal: "Year-Round",
+    //     items: [
+    //         "Zelda Theme",
+    //         "Splatoon Theme",
+    //         "Lego Theme",
+    //         "Mario / Tubular Theme",
+    //         "Hotel Theme",
+    //         "Marble Theme",
+    //         "Kiddie Theme",
+    //         "Artful Theme",
+    //         "Standalone Items",
+    //         "Turnips",
+    //         "Villagers"
+    //     ],
+    //     theme: "teal",
+    //     cat: "public",
+    //     visitors: 0,
+    //     description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
+    // }
+
+
 ];
