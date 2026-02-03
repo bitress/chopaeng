@@ -62,15 +62,75 @@ const Guide = () => {
 
 
     const steps = [
-        { num: "01", title: "Empty Pockets", desc: "Leave everything at home! You need 40 slots open. Tools are provided on the islands.", icon: "bag-x" },
-        { num: "02", title: "Dodo Airlines", desc: "Speak to Orville → 'I want to fly' → 'Visit someone' → 'Online play' → 'Search via Dodo Code'.", icon: "airplane-fill" },
-        { num: "03", title: "Enter Code", desc: "Type a live code from the dashboard. If it says 'Interference', keep trying!", icon: "keyboard" }
+        {
+            num: "01",
+            title: "Empty Pockets",
+            desc: "Leave everything at home. You need 40 empty slots. Tools are provided on the island.",
+            icon: "bag-x"
+        },
+        {
+            num: "02",
+            title: "Dodo Airlines",
+            desc: "Speak to Orville → 'I want to fly' → 'Visit someone' → 'Online play' → 'Search via Dodo Code'.",
+            icon: "airplane-fill"
+        },
+        {
+            num: "03",
+            title: "Enter Code",
+            desc: "Type the live code from the dashboard. If you get 'Interference', keep trying immediately.",
+            icon: "keyboard"
+        },
+        {
+            num: "04",
+            title: "Arrival",
+            desc: "Wait for the arrival cutscene to finish completely. Do not move until the banner disappears.",
+            icon: "geo-alt-fill"
+        }
     ];
 
     const rules = [
-        { title: "Airport Only", desc: "NEVER leave quietly (- button). It crashes the island.", type: "danger", icon: "x-octagon-fill" },
-        { title: "No Littering", desc: "Use trash cans for unwanted items. Do not drop items on the floor.", type: "warning", icon: "trash-fill" },
-        { title: "Stable Wi-Fi", desc: "Ensure a strong connection to prevent communication errors.", type: "primary", icon: "wifi" }
+        {
+            title: "Airport Only",
+            desc: "NEVER leave quietly (- button). It crashes the island. Don't be that person.",
+            type: "danger",
+            icon: "x-octagon-fill"
+        },
+        {
+            title: "No Littering",
+            desc: "Use trash cans for unwanted items. Litter prevents item refreshes.",
+            type: "warning",
+            icon: "trash-fill"
+        },
+        {
+            title: "Stable Wi-Fi",
+            desc: "NAT Type A or B required.",
+            type: "primary",
+            icon: "wifi"
+        },
+        {
+            title: "Strict Confidentiality",
+            desc: "Do NOT share the Dodo Code. One character per membership.",
+            type: "danger",
+            icon: "shield-lock-fill"
+        },
+        {
+            title: "Nickname Format",
+            desc: "Set to: 'Character Name | Island Name' so we can identify you.",
+            type: "info",
+            icon: "person-badge-fill"
+        },
+        {
+            title: "Read The Pins",
+            desc: "Check pinned messages before asking. Your answer is likely there.",
+            type: "secondary",
+            icon: "pin-angle-fill"
+        },
+        {
+            title: "ChoBot Protocol",
+            desc: "Only request items when ON the island. Pick up everything you drop.",
+            type: "warning",
+            icon: "robot"
+        }
     ];
 
     return (
@@ -99,7 +159,7 @@ const Guide = () => {
                 <div className="bg-white p-2 rounded-pill shadow-sm border mb-4 d-flex justify-content-between">
                     {[
                         { id: 'steps', label: 'How to Join', icon: 'airplane' },
-                        { id: 'rules', label: 'Golden Rules', icon: 'shield-exclamation' },
+                        { id: 'rules', label: 'Sub Rules', icon: 'shield-exclamation' },
                         { id: 'faq', label: 'Help & FAQ', icon: 'chat-dots' }
                     ].map((tab) => (
                         <button

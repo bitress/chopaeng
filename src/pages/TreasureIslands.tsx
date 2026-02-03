@@ -31,6 +31,7 @@ interface FilterTab {
 interface StatusMeta {
     dotClass: string;
     textClass: string;
+    badgeClass: string; // Added for layout
     btn: {
         className: string;
         text: string;
@@ -61,29 +62,33 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
     ONLINE: {
         dotClass: "bg-success pulse-ring",
         textClass: "text-success",
+        badgeClass: "bg-success-subtle text-success border-success-subtle",
         btn: { className: "btn-nook", text: "REVEAL CODE", icon: "fa-eye", disabled: false },
-        cardClass: "border-success-subtle",
+        cardClass: "border-success-subtle shadow-sm",
         aria: "Online",
     },
     "SUB ONLY": {
         dotClass: "bg-warning",
         textClass: "text-warning",
+        badgeClass: "bg-warning-subtle text-warning-emphasis border-warning-subtle",
         btn: { className: "btn-sub", text: "SUB ONLY", icon: "fa-lock", disabled: false },
-        cardClass: "border-warning-subtle",
+        cardClass: "border-warning-subtle shadow-sm",
         aria: "Subscriber only",
     },
     REFRESHING: {
         dotClass: "bg-secondary",
         textClass: "text-muted",
+        badgeClass: "bg-secondary-subtle text-secondary border-secondary-subtle",
         btn: { className: "btn-disabled", text: "REFRESHING...", icon: "fa-arrows-rotate", disabled: true },
-        cardClass: "opacity-75 grayscale-sm",
+        cardClass: "opacity-75 grayscale-sm border-light",
         aria: "Refreshing",
     },
     OFFLINE: {
         dotClass: "bg-danger",
         textClass: "text-danger",
+        badgeClass: "bg-danger-subtle text-danger border-danger-subtle",
         btn: { className: "btn-disabled", text: "OFFLINE", icon: "fa-power-off", disabled: true },
-        cardClass: "opacity-60 grayscale",
+        cardClass: "opacity-60 grayscale border-light",
         aria: "Offline",
     },
 };
@@ -115,13 +120,11 @@ const TreasureIslands = () => {
                 const apiData: ApiIsland[] = await response.json();
 
                 setIslands(currentData => {
-                    // Create a NEW array. Do not mutate.
                     return currentData.map((staticIsland, index) => {
                         const liveData = apiData.find((api) =>
                             api.name.toUpperCase() === staticIsland.name.toUpperCase()
                         );
 
-                        // Force a unique ID if it doesn't exist
                         const uniqueId = staticIsland.id || `island-${index}`;
 
                         if (liveData) {
@@ -133,14 +136,12 @@ const TreasureIslands = () => {
 
                             return {
                                 ...staticIsland,
-                                id: uniqueId, // Ensure ID is set
+                                id: uniqueId,
                                 status: computedStatus,
                                 dodoCode: liveData.dodo,
                                 visitors: parseVisitors(liveData.visitors),
                             };
                         }
-
-                        // Return a fresh object even if offline
                         return { ...staticIsland, id: uniqueId, status: "OFFLINE", visitors: 0 };
                     });
                 });
@@ -222,31 +223,27 @@ const TreasureIslands = () => {
 
     const onCopyCode = (island: IslandData, code: string) => {
         if (code === "GETTIN'" || code === "....." || code === "SUB ONLY") return;
-
         navigator.clipboard.writeText(code);
         setCopiedId(island.name);
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-// Update this function
     const handleModeSwitch = (mode: SearchMode) => {
         setSearchMode(mode);
         setSearch("");
-        setFinderResults(null); // Clear the API results immediately
+        setFinderResults(null);
         setLastQuery("");
     };
 
-// Add this useEffect to handle manual clearing of the search bar
     useEffect(() => {
         if (search === "" && searchMode !== "FILTER") {
             setFinderResults(null);
         }
     }, [search, searchMode]);
 
-
     useEffect(() => {
         const site = window.location.origin;
-        const url = `${site}/treasure-islands`; // adjust if needed
+        const url = `${site}/treasure-islands`;
 
         const title =
             filter === "ALL"
@@ -255,12 +252,9 @@ const TreasureIslands = () => {
                     ? "Free Animal Crossing Treasure Islands Dashboard | Chopaeng"
                     : "VIP Animal Crossing Treasure Islands Dashboard | Chopaeng";
 
-        const desc =
-            "Track live Animal Crossing Treasure Islands with real-time Dodo codes, island capacity, item availability, visitor count, and status updates for free and VIP islands on Chopaeng.";
-
+        const desc = "Track live Animal Crossing Treasure Islands with real-time Dodo codes...";
         document.title = title;
 
-        // description
         let meta = document.querySelector('meta[name="description"]');
         if (!meta) {
             meta = document.createElement("meta");
@@ -269,7 +263,6 @@ const TreasureIslands = () => {
         }
         meta.setAttribute("content", desc);
 
-        // canonical
         let link = document.querySelector('link[rel="canonical"]');
         if (!link) {
             link = document.createElement("link");
@@ -280,116 +273,101 @@ const TreasureIslands = () => {
     }, [filter]);
 
     return (
-        <div className="nook-bg min-vh-100 py-5 font-nunito">
-            <div className="container px-md-4">
-
-                {/* --- HEADER / CONTROL CENTER --- */}
-                <div className="control-center card border-0 shadow-lg rounded-5 mb-5 overflow-hidden position-relative z-2">
-                    <div className="card-body p-4 p-lg-5">
-
-                        <div className="text-center mb-4">
-                            <h2 className="ac-font display-6 text-dark mb-1">Island Monitor</h2>
-                            <p className="text-muted fw-bold small">Live Status • Dodo Codes • Item Finder</p>
+        <div className="nook-bg min-vh-100 font-nunito pb-5">
+            {/* --- DASHBOARD HEADER --- */}
+            <div className="bg-white shadow-sm border-bottom position-relative z-3">
+                <div className="container py-4">
+                    <div className="row align-items-center gy-4">
+                        {/* Title Section */}
+                        <div className="col-lg-4 text-center text-lg-start">
+                            <h1 className="ac-font h3 text-dark mb-1">
+                                <i className="fa-solid fa-plane-departure text-success me-2"></i>
+                                Island Monitor
+                            </h1>
+                            <p className="text-muted small fw-bold mb-0">Live Dodo Codes & Item Finder</p>
                         </div>
 
-                        {/* Category Tabs */}
-                        <div className="d-flex justify-content-center gap-3 mb-4">
-                            {FILTERS.map((t) => (
-                                <button
-                                    key={t.key}
-                                    onClick={() => setFilter(t.key)}
-                                    className={`filter-tab d-flex align-items-center gap-2 ${filter === t.key ? "active" : ""}`}
-                                >
-                                    <i className={`fa-solid ${t.icon}`}></i>
-                                    {t.label}
-                                </button>
-                            ))}
-                        </div>
+                        {/* Search & Mode Section */}
+                        <div className="col-lg-8">
+                            <div className="d-flex flex-column flex-md-row gap-3 justify-content-lg-end">
 
-                        {/* Search Area */}
-                        <div className="search-container mx-auto" style={{ maxWidth: '650px' }}>
-                            {/* Mode Toggle */}
-                            <div className="mode-toggle p-1 bg-light rounded-pill d-flex mb-3 border">
-                                <button
-                                    onClick={() => handleModeSwitch("FILTER")}
-                                    className={`flex-fill btn rounded-pill fw-bold small py-2 transition-all ${searchMode === "FILTER" ? "bg-white shadow-sm text-dark" : "text-muted"}`}
-                                >
-                                    Filter
-                                </button>
-                                <button
-                                    onClick={() => handleModeSwitch("ITEM")}
-                                    className={`flex-fill btn rounded-pill fw-bold small py-2 transition-all ${searchMode === "ITEM" ? "bg-success text-white shadow-sm" : "text-muted"}`}
-                                >
-                                    Find Item
-                                </button>
-                                <button
-                                    onClick={() => handleModeSwitch("VILLAGER")}
-                                    className={`flex-fill btn rounded-pill fw-bold small py-2 transition-all ${searchMode === "VILLAGER" ? "bg-info text-white shadow-sm" : "text-muted"}`}
-                                >
-                                    Find Villager
-                                </button>
-                            </div>
+                                {/* Search Mode Switcher (Segmented) */}
+                                <div className="bg-light rounded-pill p-1 d-flex border" style={{ minWidth: '280px' }}>
+                                    {(['FILTER', 'ITEM', 'VILLAGER'] as SearchMode[]).map((m) => (
+                                        <button
+                                            key={m}
+                                            onClick={() => handleModeSwitch(m)}
+                                            className={`flex-fill btn btn-sm rounded-pill fw-bold transition-all ${
+                                                searchMode === m
+                                                    ? "bg-white text-dark shadow-sm"
+                                                    : "text-muted border-0"
+                                            }`}
+                                        >
+                                            {m === 'FILTER' ? 'Filter' : m === 'ITEM' ? 'Item' : 'Villager'}
+                                        </button>
+                                    ))}
+                                </div>
 
-                            {/* Search Input */}
-                            <div className="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border border-2 border-light focus-within-green">
-                                <span className="input-group-text bg-white border-0 ps-4">
-                                    {isFinderLoading ? (
-                                        <i className="fa-solid fa-circle-notch fa-spin text-success" />
-                                    ) : (
-                                        <i className={`fa-solid ${searchMode === 'VILLAGER' ? 'fa-user-tag text-info' : searchMode === 'ITEM' ? 'fa-leaf text-success' : 'fa-magnifying-glass text-muted'}`} />
+                                {/* Search Input */}
+                                <div className="input-group rounded-pill overflow-hidden border focus-within-green" style={{ maxWidth: '400px', width: '100%' }}>
+                                    <span className="input-group-text bg-white border-0 ps-3">
+                                        {isFinderLoading ? (
+                                            <i className="fa-solid fa-circle-notch fa-spin text-success" />
+                                        ) : (
+                                            <i className={`fa-solid ${searchMode === 'VILLAGER' ? 'fa-user-tag text-info' : searchMode === 'ITEM' ? 'fa-leaf text-success' : 'fa-magnifying-glass text-muted'}`} />
+                                        )}
+                                    </span>
+                                    <input
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && searchMode !== 'FILTER') executeFinderSearch(); }}
+                                        className="form-control border-0 shadow-none fw-bold"
+                                        placeholder={searchMode === "FILTER" ? "Search islands..." : searchMode === "ITEM" ? "Find items..." : "Find villagers..."}
+                                    />
+                                    {(searchMode !== "FILTER" && search) && (
+                                        <button className="btn btn-nook fw-bold px-3 border-start" onClick={executeFinderSearch}>
+                                            GO
+                                        </button>
                                     )}
-                                </span>
-
-                                <input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            if (searchMode !== 'FILTER') {
-                                                executeFinderSearch();
-                                            }
-                                        }
-                                    }}
-                                    className="form-control border-0 shadow-none fw-bold text-dark"
-                                    placeholder={
-                                        searchMode === "FILTER" ? "Filter list by name, theme..." :
-                                            searchMode === "ITEM" ? "Type item name (e.g. Royal Crown)..." :
-                                                "Type villager name (e.g. Raymond)..."
-                                    }
-                                />
-
-                                {search.length > 0 && (
-                                    <button className="btn btn-white border-0 text-muted pe-3" onClick={() => { setSearch(""); setFinderResults(null); }}>
-                                        <i className="fa-solid fa-xmark" />
-                                    </button>
-                                )}
-
-                                {searchMode !== "FILTER" && (
-                                    <button className="btn btn-nook px-4 fw-black border-0 rounded-0" onClick={executeFinderSearch}>
-                                        GO
-                                    </button>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* --- FEEDBACK AREA --- */}
+            {/* --- MAIN CONTENT --- */}
+            <div className="container py-4">
+
+                {/* Filter Tabs (Pills Layout) */}
+                <div className="d-flex justify-content-center justify-content-lg-start gap-2 mb-4 overflow-x-auto pb-2">
+                    {FILTERS.map((t) => (
+                        <button
+                            key={t.key}
+                            onClick={() => setFilter(t.key)}
+                            className={`btn rounded-pill px-4 fw-bold d-flex align-items-center gap-2 border transition-all ${
+                                filter === t.key
+                                    ? "btn-dark border-dark"
+                                    : "bg-white text-muted border-white hover-shadow"
+                            }`}
+                        >
+                            <i className={`fa-solid ${t.icon}`}></i> {t.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Feedback Messages */}
                 {searchMode !== "FILTER" && finderResults !== null && (
-                    <div className="text-center mb-5 animate-up">
+                    <div className="mb-4 animate-up">
                         {finderResults.length > 0 ? (
-                            <div className="d-inline-flex align-items-center bg-white border border-success border-2 text-success px-5 py-3 rounded-pill shadow fw-bold">
-                                <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{width: 30, height: 30}}>
-                                    <i className="fa-solid fa-check"></i>
-                                </div>
-                                <span>Found <span className="text-dark text-uppercase mx-1">{lastQuery}</span> on {finderResults.length} islands!</span>
+                            <div className="alert alert-success border-success d-flex align-items-center gap-3 shadow-sm rounded-4" role="alert">
+                                <i className="fa-solid fa-circle-check fs-4"></i>
+                                <div>Found <strong>{lastQuery}</strong> on {finderResults.length} islands! Look for the highlighted cards.</div>
                             </div>
                         ) : (
-                            <div className="d-inline-flex align-items-center bg-white border border-danger border-2 text-danger px-5 py-3 rounded-pill shadow fw-bold">
-                                <div className="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{width: 30, height: 30}}>
-                                    <i className="fa-solid fa-xmark"></i>
-                                </div>
-                                <span>Sorry, <span className="text-dark text-uppercase mx-1">{lastQuery}</span> is not available right now.</span>
+                            <div className="alert alert-danger border-danger d-flex align-items-center gap-3 shadow-sm rounded-4" role="alert">
+                                <i className="fa-solid fa-circle-xmark fs-4"></i>
+                                <div>Sorry, <strong>{lastQuery}</strong> is not available on any island right now.</div>
                             </div>
                         )}
                     </div>
@@ -397,130 +375,134 @@ const TreasureIslands = () => {
 
                 {/* Empty State */}
                 {!loading && filteredData.length === 0 && (
-                    <div className="empty-state text-center py-5">
-                        <div className="mb-3 opacity-50">
-                            <i className="fa-solid fa-map-location-dot display-1 text-muted"></i>
-                        </div>
-                        <h4 className="fw-bold text-muted">No islands found</h4>
-                        <p className="text-muted opacity-75">Try adjusting your filters or search query.</p>
+                    <div className="text-center py-5 opacity-75">
+                        <i className="fa-solid fa-map-location-dot display-1 text-secondary mb-3"></i>
+                        <h3 className="h5 text-muted fw-bold">No islands found</h3>
+                        <p className="small">Try adjusting your filters or search terms.</p>
                     </div>
                 )}
 
-                {/* --- ISLAND GRID --- */}
-                <div className="row g-4 justify-content-center">
+                {/* --- ISLANDS GRID --- */}
+                <div className="row g-4">
                     {filteredData.map((island) => {
                         const statusMeta = STATUS_CONFIG[island.status] || STATUS_CONFIG["OFFLINE"];
-
                         const isMatch = finderResults && finderResults.includes(island.name.toUpperCase());
-
                         const hasCode = island.status === "ONLINE" && island.dodoCode && island.dodoCode.length === 5;
                         const btnText = hasCode ? island.dodoCode : statusMeta.btn.text;
                         const isCopied = copiedId === island.name;
-
                         const pct = (island.visitors / 7) * 100;
                         const isFull = island.visitors >= 7;
 
                         return (
                             <div key={`${island.id}-${island.cat}`} className="col-xl-3 col-lg-4 col-md-6">
                                 <div
-                                    className={`island-card card h-100 border-0 shadow-sm overflow-hidden position-relative 
-                                 ${statusMeta.cardClass} ${isMatch ? "match-highlight" : ""}`}
-                                    role="button"
-                                    tabIndex={0}
+                                    className={`card h-100 border transition-all hover-lift overflow-hidden ${statusMeta.cardClass} ${isMatch ? "ring-2 ring-warning" : ""}`}
+                                    style={{ borderRadius: '1.25rem' }}
                                     onClick={(e) => {
                                         if ((e.target as HTMLElement).closest("button, a")) return;
                                         navigate(`/island/${island.id}`);
                                     }}
                                 >
-
                                     {isMatch && (
-                                        <div className="position-absolute top-0 start-0 w-100 bg-warning text-dark text-center fw-black x-small py-1 z-2 shadow-sm">
-                                            <i className="fa-solid fa-star me-1"></i> ITEM FOUND HERE
+                                        <div className="bg-warning text-dark text-center fw-bold small py-1">
+                                            <i className="fa-solid fa-star me-1"></i> MATCH FOUND
                                         </div>
                                     )}
 
-                                    {/* Card Header */}
-                                    <div className={`card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-start ${isMatch ? 'mt-4' : ''}`}>
-                                        <div>
-                                            <div className="d-flex align-items-center gap-2 mb-1">
+                                    <div className="card-body p-3 d-flex flex-column h-100">
+
+                                        {/* Top Row: Status & Theme */}
+                                        <div className="d-flex justify-content-between align-items-start mb-3">
+                                            <div className={`badge rounded-pill border px-3 py-2 d-flex align-items-center gap-2 ${statusMeta.badgeClass}`}>
                                                 <span className={`status-dot ${statusMeta.dotClass}`}></span>
-                                                <span className={`x-small fw-bold ${statusMeta.textClass}`}>{island.status}</span>
+                                                <span className="fw-bold x-small tracking-wide">{island.status}</span>
                                             </div>
-                                            <h3 className="ac-font mb-0 text-dark h4">{island.name}</h3>
-                                            <span className="text-muted fw-bold x-small text-uppercase">{island.type}</span>
-                                        </div>
 
-                                        <div className="d-flex gap-2">
-                                            <button
-                                                className="btn btn-light rounded-circle border d-flex align-items-center justify-content-center shadow-sm"
-                                                style={{width: 40, height: 40}}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedMap(island);
-                                                }}
-                                                title="View Map"
-                                            >
-                                                <i className="fa-regular fa-map text-muted"></i>
-                                            </button>
-
-                                            <div className={`theme-badge rounded-circle d-flex align-items-center justify-content-center theme-${island.theme}`} title={`${island.seasonal} Season`}>
-                                                <i className="fa-solid fa-leaf"></i>
+                                            <div className="d-flex gap-2">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedMap(island); }}
+                                                    className="btn btn-sm btn-light border rounded-circle shadow-sm"
+                                                    title="View Map"
+                                                    style={{ width: 32, height: 32 }}
+                                                >
+                                                    <i className="fa-regular fa-map text-muted small"></i>
+                                                </button>
+                                                <div
+                                                    className={`theme-badge rounded-circle d-flex align-items-center justify-content-center theme-${island.theme} border shadow-sm`}
+                                                    style={{ width: 32, height: 32, fontSize: '0.8rem' }}
+                                                    title={`${island.seasonal} Season`}
+                                                >
+                                                    <i className="fa-solid fa-leaf"></i>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Card Body */}
-                                    <div className="card-body p-4 pt-3">
-
-                                        <div className="d-flex flex-wrap gap-1 mb-4">
-                                            {island.items.slice(0, 4).map((item) => (
-                                                <span key={item} className="badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">
-                                                    {item}
-                                                </span>
-
-                                            ))}
-
-                                            {island.items.length > 4 && (
-                                                <span className="loot-pill more badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">+{island.items.length - 4}</span>
-                                            )}
+                                        {/* Island Info */}
+                                        <div className="mb-4">
+                                            <h3 className="ac-font h4 text-dark mb-1 text-truncate" title={island.name}>{island.name}</h3>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="badge bg-light text-secondary border fw-bold x-small text-uppercase tracking-wide">{island.type}</span>
+                                            </div>
                                         </div>
 
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                hasCode && onCopyCode(island, island.dodoCode!);
-                                            }}
-                                            disabled={statusMeta.btn.disabled}
-                                            className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : statusMeta.btn.className}`}
-                                        >
-                                            <div className="d-flex align-items-center justify-content-center gap-2">
-                                                {isCopied ? (
-                                                    <>
-                                                        <i className="fa-solid fa-check"></i> COPIED!
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        {hasCode && <i className="fa-regular fa-copy opacity-50"></i>}
-                                                        {!hasCode && statusMeta.btn.icon && <i className={`fa-solid ${statusMeta.btn.icon}`}></i>}
-                                                        <span className={hasCode ? "dodo-text" : ""}>{btnText}</span>
-                                                    </>
+                                        {/* Spacer to push content down */}
+                                        <div className="mt-auto">
+
+                                            {/* Item Tags (Limited) */}
+                                            <div className="d-flex flex-wrap gap-1 mb-4">
+                                                {island.items
+                                                    .slice(0, 3)
+                                                    .map((item) => (
+                                                        <span
+                                                            key={item}
+                                                            className="badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small"
+                                                        >{item}</span>
+                                                    ))}
+
+                                                {island.items.length > 3 && (
+                                                    <span className="loot-pill more badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">+{island.items.length - 4}</span>
                                                 )}
                                             </div>
-                                        </button>
 
-                                        <div className="visitor-meter">
-                                            <div className="d-flex justify-content-between align-items-end mb-1">
-                                                <span className="x-small fw-bold text-muted">Capacity</span>
-                                                <span className={`x-small fw-black ${isFull ? 'text-danger' : 'text-success'}`}>
-                                                    {isFull ? 'FULL' : `${island.visitors}/7`}
-                                                </span>
+                                            {/* Visitor Progress */}
+                                            <div className="mb-3">
+                                                <div className="d-flex justify-content-between align-items-end mb-1">
+                                                    <span className="x-small fw-bold text-muted text-uppercase">Visitors</span>
+                                                    <span className={`x-small fw-black ${isFull ? 'text-danger' : 'text-success'}`}>
+                                                        {isFull ? 'FULL' : `${island.visitors}/7`}
+                                                    </span>
+                                                </div>
+                                                <div className="progress rounded-pill bg-secondary-subtle" style={{ height: '8px' }}>
+                                                    <div
+                                                        className={`progress-bar rounded-pill ${isFull ? 'bg-danger' : 'bg-success'}`}
+                                                        style={{ width: `${pct}%`, transition: 'width 0.5s ease' }}
+                                                    ></div>
+                                                </div>
                                             </div>
-                                            <div className="progress rounded-pill bg-light" style={{height: '6px'}}>
-                                                <div
-                                                    className={`progress-bar rounded-pill ${isFull ? 'bg-danger' : 'bg-success'}`}
-                                                    style={{width: `${pct}%`, transition: 'width 0.5s ease'}}
-                                                ></div>
-                                            </div>
+
+                                            {/* Action Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    hasCode && onCopyCode(island, island.dodoCode!);
+                                                }}
+                                                disabled={statusMeta.btn.disabled}
+                                                className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : statusMeta.btn.className}`}
+                                            >
+                                                <div className="d-flex align-items-center justify-content-center gap-2">
+                                                    {isCopied ? (
+                                                        <>
+                                                            <i className="fa-solid fa-check"></i> COPIED!
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {hasCode && <i className="fa-regular fa-copy opacity-50"></i>}
+                                                            {!hasCode && statusMeta.btn.icon && <i className={`fa-solid ${statusMeta.btn.icon}`}></i>}
+                                                            <span className={hasCode ? "dodo-text" : ""}>{btnText}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -530,27 +512,21 @@ const TreasureIslands = () => {
                 </div>
             </div>
 
-            {/* --- MAP MODAL --- */}
+            {/* --- MAP MODAL (Unchanged Logic / Minor Style Tweak) --- */}
             {selectedMap && (
-                <div className="modal-overlay d-flex align-items-center justify-content-center" onClick={() => setSelectedMap(null)}>
+                <div className="modal-overlay d-flex align-items-center justify-content-center p-3" onClick={() => setSelectedMap(null)} style={{ backdropFilter: 'blur(5px)' }}>
                     <div
-                        className="modal-content-card bg-white rounded-5 shadow-lg overflow-hidden position-relative p-0"
+                        className="modal-content bg-white rounded-5 shadow-lg overflow-hidden border-0 animate-up"
                         onClick={(e) => e.stopPropagation()}
-                        style={{ maxWidth: '800px', width: '90%' }}
+                        style={{ maxWidth: '700px', width: '100%' }}
                     >
-                        <div className="p-3 d-flex justify-content-between align-items-center bg-light border-bottom">
-                            <div className="d-flex align-items-center gap-2">
-                                <div className={`theme-badge rounded-circle d-flex align-items-center justify-content-center theme-${selectedMap.theme}`} style={{width: 32, height: 32, fontSize: '0.9rem'}}>
-                                    <i className="fa-solid fa-leaf"></i>
-                                </div>
-                                <h4 className="ac-font m-0 text-dark">{selectedMap.name} Map</h4>
-                            </div>
-                            <button className="btn btn-sm btn-light border rounded-circle" onClick={() => setSelectedMap(null)}>
+                        <div className="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                            <h5 className="ac-font m-0 text-dark ps-2">{selectedMap.name} Map</h5>
+                            <button className="btn btn-sm btn-white border shadow-sm rounded-circle" onClick={() => setSelectedMap(null)}>
                                 <i className="fa-solid fa-xmark"></i>
                             </button>
                         </div>
-
-                        <div className="map-container bg-dark text-center">
+                        <div className="p-0 bg-dark position-relative d-flex justify-content-center align-items-center" style={{ minHeight: '300px' }}>
                             <img
                                 src={selectedMap.mapUrl}
                                 alt={`${selectedMap.name} Map`}
@@ -558,22 +534,15 @@ const TreasureIslands = () => {
                                 style={{ maxHeight: '70vh', objectFit: 'contain' }}
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    if (target.src.includes('.png')) {
-                                        target.src = target.src.replace('.png', '.jpg');
-                                    } else if (target.src.endsWith('.jpg')) {
-                                        target.src = target.src.replace('.jpg', '.jpeg');
-                                    } else {
-                                        target.src = 'https://www.chopaeng.com/banner.png';
-                                    }
+                                    if (target.src.includes('.png')) target.src = target.src.replace('.png', '.jpg');
+                                    else if (target.src.endsWith('.jpg')) target.src = target.src.replace('.jpg', '.jpeg');
+                                    else target.src = 'https://www.chopaeng.com/banner.png';
                                 }}
                             />
                         </div>
-
                         <div className="p-3 bg-white d-flex justify-content-between align-items-center">
-                            <span className="fw-bold text-muted small">{selectedMap.seasonal} Season</span>
-                            <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                                {selectedMap.type}
-                             </span>
+                            <span className="badge bg-light text-dark border">{selectedMap.seasonal}</span>
+                            <span className="badge bg-success-subtle text-success border-success-subtle">{selectedMap.type}</span>
                         </div>
                     </div>
                 </div>
