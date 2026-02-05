@@ -1550,4 +1550,27 @@ export const ISLANDS_DATA: IslandData[] = [
         description: "Celestial materials island featuring star fragments and seasonal crafting mats."
     },
 
+    {
+        id: "marilag",
+        name: "MARILAG",
+        status: "ONLINE",
+        type: "Clothing Island",
+        seasonal: "Spring",
+        items: [
+            "All Tops",
+            "All Bottoms",
+            "All Accessories",
+            "All Bags",
+            "All Headwear",
+            "All Dress-Up",
+            "All Shoes",
+            "Umbrellas",
+            "Turnips",
+            "Villagers in Boxes"
+        ],
+        theme: "pink",
+        cat: "public",
+        visitors: 7,
+        description: "Fashion island offering traditional and modern clothing accessories."
+    },
 ];
