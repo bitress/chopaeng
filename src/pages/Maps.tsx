@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ISLANDS_DATA } from "../data/islands.ts";
 
+// --- Types ---
 type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
 
 interface ApiIsland {
@@ -11,33 +12,51 @@ interface ApiIsland {
     visitors: string;
 }
 
+interface LiveIslandData {
+    status: IslandStatus;
+    dodo: string;
+    visitors: string;
+}
+
 const IslandMaps = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
-    const [liveData, setLiveData] = useState<Record<string, any>>({});
+    const [liveData, setLiveData] = useState<Record<string, LiveIslandData>>({});
 
+    // --- 1. Data Fetching (Safe & Typed) ---
     useEffect(() => {
+        let isMounted = true;
+
         const fetchStatus = async () => {
             try {
                 const response = await fetch("https://dodo.chopaeng.com/api/islands");
                 if (!response.ok) throw new Error("Network response was not ok");
+
                 const apiData: ApiIsland[] = await response.json();
 
-                const statusMap: Record<string, any> = {};
-                apiData.forEach((api) => {
-                    let computedStatus: IslandStatus = "OFFLINE";
-                    if (["SUB ONLY", "PATREON"].some(k => api.status.toUpperCase().includes(k))) computedStatus = "SUB ONLY";
-                    else if (api.dodo === "GETTIN'") computedStatus = "REFRESHING";
-                    else if (api.status === "ONLINE") computedStatus = "ONLINE";
-                    else if (api.status === "REFRESHING") computedStatus = "REFRESHING";
+                if (isMounted) {
+                    const statusMap: Record<string, LiveIslandData> = {};
 
-                    statusMap[api.name.toUpperCase()] = {
-                        status: computedStatus,
-                        dodo: api.dodo,
-                        visitors: api.visitors
-                    };
-                });
-                setLiveData(statusMap);
+                    apiData.forEach((api) => {
+                        let computedStatus: IslandStatus = "OFFLINE";
+                        const rawStatus = api.status ? api.status.toUpperCase() : "";
+
+                        if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) {
+                            computedStatus = "SUB ONLY";
+                        } else if (api.dodo === "GETTIN'" || rawStatus === "REFRESHING") {
+                            computedStatus = "REFRESHING";
+                        } else if (rawStatus === "ONLINE") {
+                            computedStatus = "ONLINE";
+                        }
+
+                        statusMap[api.name.toUpperCase()] = {
+                            status: computedStatus,
+                            dodo: api.dodo || "---",
+                            visitors: api.visitors || "0"
+                        };
+                    });
+                    setLiveData(statusMap);
+                }
             } catch (error) {
                 console.error("Failed to fetch island status:", error);
             }
@@ -45,72 +64,79 @@ const IslandMaps = () => {
 
         fetchStatus();
         const interval = setInterval(fetchStatus, 15000);
-        return () => clearInterval(interval);
+
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, []);
 
+    // --- 2. Memoized Filtering & Sorting ---
+    // Fix: Sort strictly inside useMemo to avoid mutation during render
     const filteredIslands = useMemo(() => {
-        return ISLANDS_DATA.filter(island =>
-            island.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            island.items.some(i => i.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
+        const lowerQuery = searchQuery.toLowerCase().trim();
+
+        return ISLANDS_DATA
+            .filter(island =>
+                island.name.toLowerCase().includes(lowerQuery) ||
+                island.items.some(i => i.toLowerCase().includes(lowerQuery))
+            )
+            .sort((a, b) => a.name.localeCompare(b.name));
     }, [searchQuery]);
 
+    // --- 3. SEO / Meta Tags ---
     useEffect(() => {
         const site = window.location.origin;
-        const url = `${site}/maps`;
         const img = `${site}/banner.png`;
+        const q = searchQuery.trim();
 
-        const title = searchQuery.trim()
-            ? `Island Maps – "${searchQuery.trim()}" | Chopaeng`
+        const title = q
+            ? `Island Maps – "${q}" | Chopaeng`
             : "Island Maps | Chopaeng";
 
-        const desc = searchQuery.trim()
-            ? `Browse Chopaeng island maps and inventory. Results for: ${searchQuery.trim()}.`
+        const desc = q
+            ? `Browse Chopaeng island maps and inventory. Results for: ${q}.`
             : "Browse Chopaeng island maps with live status, Dodo codes, and inventory preview.";
 
         document.title = title;
 
-        const setMeta = (attr: string, key: string, value: string) => {
-            let el = document.querySelector(`meta[${attr}="${key}"]`);
+        // Helper to safely set meta tags
+        const updateMeta = (selector: string, content: string) => {
+            let el = document.querySelector(selector);
             if (!el) {
                 el = document.createElement("meta");
-                el.setAttribute(attr, key);
+                if (selector.startsWith('meta[name=')) el.setAttribute("name", selector.split('"')[1]);
+                if (selector.startsWith('meta[property=')) el.setAttribute("property", selector.split('"')[1]);
                 document.head.appendChild(el);
             }
-            el.setAttribute("content", value);
+            el.setAttribute("content", content);
         };
 
-        const setLink = (rel: string, href: string) => {
-            let el = document.querySelector(`link[rel="${rel}"]`);
-            if (!el) {
-                el = document.createElement("link");
-                el.setAttribute("rel", rel);
-                document.head.appendChild(el);
-            }
-            el.setAttribute("href", href);
-        };
+        updateMeta('meta[name="description"]', desc);
+        updateMeta('meta[property="og:title"]', title);
+        updateMeta('meta[property="og:description"]', desc);
+        updateMeta('meta[property="og:url"]', `${site}/maps`);
+        updateMeta('meta[property="og:image"]', img);
+        updateMeta('meta[name="twitter:title"]', title);
+        updateMeta('meta[name="twitter:description"]', desc);
 
-        setMeta("name", "description", desc);
-        setLink("canonical", url);
-
-        setMeta("property", "og:type", "website");
-        setMeta("property", "og:site_name", "Chopaeng");
-        setMeta("property", "og:url", url);
-        setMeta("property", "og:title", title);
-        setMeta("property", "og:description", desc);
-        setMeta("property", "og:image", img);
-
-        setMeta("name", "twitter:card", "summary_large_image");
-        setMeta("name", "twitter:title", title);
-        setMeta("name", "twitter:description", desc);
-        setMeta("name", "twitter:image", img);
     }, [searchQuery]);
 
+    // --- 4. Robust Image Error Handler ---
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        const target = e.currentTarget;
+        if (target.src.includes('.png')) {
+            target.src = target.src.replace('.png', '.jpg');
+        } else if (!target.src.includes('banner.png')) {
+            // Only set fallback if we aren't ALREADY on the fallback to prevent infinite loops
+            target.src = 'https://www.chopaeng.com/banner.png';
+        }
+    };
 
     return (
         <div className="dal-bg min-vh-100 font-nunito">
 
-            {/* --- HERO HEADER (DAL THEME) --- */}
+            {/* --- HERO HEADER --- */}
             <div className="dal-hero">
                 <div className="container position-relative z-2">
                     <div className="d-flex justify-content-between align-items-center pt-4 mb-4">
@@ -130,7 +156,7 @@ const IslandMaps = () => {
                 <div className="wave-divider"></div>
             </div>
 
-            {/* --- SEARCH & CONTENT --- */}
+            {/* --- CONTENT --- */}
             <div className="container content-offset">
 
                 {/* Search Bar */}
@@ -160,22 +186,31 @@ const IslandMaps = () => {
                     </div>
                 ) : (
                     <div className="row g-4 pb-5">
-                        {filteredIslands
-                            .sort((a, b) => a.name.localeCompare(b.name))
-                            .map((island, index) => {
+                        {filteredIslands.map((island, index) => {
                             const live = liveData[island.name.toUpperCase()] || { status: "OFFLINE", dodo: "---", visitors: "0" };
                             const isOnline = live.status === "ONLINE";
-                            const delay = index * 50; // Staggered animation
+
+                            // FIX: Only animate if NOT searching.
+                            // If searching, show instantly (opacity: 1, no animation) to prevent "flashing".
+                            const isSearching = searchQuery.length > 0;
+                            const animationStyle = isSearching
+                                ? { opacity: 1 }
+                                : {
+                                    animation: `fadeInUp 0.5s ease forwards`,
+                                    animationDelay: `${Math.min(index * 50, 500)}ms`,
+                                    opacity: 0
+                                };
 
                             return (
                                 <div
                                     key={island.id}
                                     className="col-xl-4 col-md-6"
-                                    style={{ animation: `fadeInUp 0.5s ease forwards ${delay}ms`, opacity: 0 }}
+                                    style={animationStyle} // <--- APPLIED HERE
                                 >
                                     <div
                                         className="ticket-card"
                                         onClick={() => navigate(`/island/${island.id}`)}
+                                        style={{ cursor: "pointer" }}
                                     >
                                         <div className="tape-strip"></div>
 
@@ -193,14 +228,8 @@ const IslandMaps = () => {
                                                 src={`/maps/${island.name.toLowerCase()}.png`}
                                                 alt={island.name}
                                                 className={`map-img ${live.status === 'OFFLINE' ? 'sepia' : ''}`}
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement;
-                                                    if (target.src.includes('.png')) {
-                                                        target.src = target.src.replace('.png', '.jpg');
-                                                    } else {
-                                                        target.src = 'https://www.chopaeng.com/banner.png';
-                                                    }
-                                                }}
+                                                loading="lazy"
+                                                onError={handleImageError}
                                             />
 
                                             {isOnline && (
