@@ -225,7 +225,7 @@ const IslandMaps = () => {
                                             </div>
 
                                             <img
-                                                src={`/maps/${island.name.toLowerCase()}.png`}
+                                                src={`https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`}
                                                 alt={island.name}
                                                 className={`map-img ${live.status === 'OFFLINE' ? 'sepia' : ''}`}
                                                 loading="lazy"

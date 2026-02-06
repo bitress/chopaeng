@@ -99,7 +99,7 @@ const IslandDetail = () => {
 
     const live = island.live;
     const canShowDodo = live?.isOnline && !live?.isSubOnly && live?.dodo && !["GETTIN'", "FULL"].includes(live.dodo);
-    const mapImageSrc = `/maps/${island.name.toLowerCase()}.png`;
+    const mapImageSrc = `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
 
     // Try to find villagers by exact name, or fallback to case-insensitive match
     const currentVillagers = villagersMap[island.name] ||
