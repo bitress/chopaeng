@@ -42,7 +42,7 @@ interface StatusMeta {
     aria: string;
 }
 
-const getIslandMap = (islandName: string) => `/maps/${islandName.toLowerCase()}.png`;
+const getIslandMap = (islandName: string) => `https://cdn.chopaeng.com/maps/${islandName.toLowerCase()}.png`;
 
 const parseVisitors = (raw: string): number => {
     if (!raw) return 0;
