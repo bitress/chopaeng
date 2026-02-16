@@ -1,17 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ISLANDS_DATA, type IslandData, type IslandCategory, type IslandStatus } from "../data/islands";
+import { type IslandData, type IslandCategory, type IslandStatus } from "../data/islands";
+import { useIslandData } from "../context/IslandContext";
 
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
 type FilterKey = "ALL" | IslandCategory;
-
-interface ApiIsland {
-    dodo: string;
-    name: string;
-    status: string;
-    type: string;
-    visitors: string;
-}
 
 interface FinderResponse {
     found: boolean;
@@ -42,15 +35,6 @@ interface StatusMeta {
     aria: string;
 }
 
-const getIslandMap = (islandName: string) => `https://cdn.chopaeng.com/maps/${islandName.toLowerCase()}.png`;
-
-const parseVisitors = (raw: string): number => {
-    if (!raw) return 0;
-    const clean = raw.toUpperCase();
-    if (clean.includes("FULL")) return 7;
-    const match = clean.match(/(\d+)/);
-    return match ? Math.max(0, Math.min(7, parseInt(match[0], 10))) : 0;
-};
 
 const FILTERS: FilterTab[] = [
     { key: "ALL", label: "All Islands", icon: "fa-globe" },
@@ -95,12 +79,8 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
 
 const TreasureIslands = () => {
     const navigate = useNavigate();
+    const { islands, loading } = useIslandData();
 
-    const [islands, setIslands] = useState<IslandData[]>(() =>
-        ISLANDS_DATA.map(i => ({ ...i, mapUrl: i.mapUrl || getIslandMap(i.name) }))
-    );
-
-    const [loading, setLoading] = useState<boolean>(true);
     const [filter, setFilter] = useState<FilterKey>("ALL");
 
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -111,51 +91,6 @@ const TreasureIslands = () => {
     const [isFinderLoading, setIsFinderLoading] = useState(false);
     const [finderResults, setFinderResults] = useState<string[] | null>(null);
     const [lastQuery, setLastQuery] = useState("");
-
-    useEffect(() => {
-        const fetchStatus = async () => {
-            try {
-                const response = await fetch("https://dodo.chopaeng.com/api/islands");
-                if (!response.ok) throw new Error("Network response was not ok");
-                const apiData: ApiIsland[] = await response.json();
-
-                setIslands(currentData => {
-                    return currentData.map((staticIsland, index) => {
-                        const liveData = apiData.find((api) =>
-                            api.name.toUpperCase() === staticIsland.name.toUpperCase()
-                        );
-
-                        const uniqueId = staticIsland.id || `island-${index}`;
-
-                        if (liveData) {
-                            let computedStatus: IslandStatus = "OFFLINE";
-                            if (["SUB ONLY", "PATREON"].some(k => liveData.status.includes(k))) computedStatus = "SUB ONLY";
-                            else if (liveData.dodo === "GETTIN'") computedStatus = "REFRESHING";
-                            else if (liveData.status === "ONLINE") computedStatus = "ONLINE";
-                            else if (liveData.status === "REFRESHING") computedStatus = "REFRESHING";
-
-                            return {
-                                ...staticIsland,
-                                id: uniqueId,
-                                status: computedStatus,
-                                dodoCode: liveData.dodo,
-                                visitors: parseVisitors(liveData.visitors),
-                            };
-                        }
-                        return { ...staticIsland, id: uniqueId, status: "OFFLINE", visitors: 0 };
-                    });
-                });
-            } catch (error) {
-                console.error("Failed to fetch island status:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStatus();
-        const interval = setInterval(fetchStatus, 15000);
-        return () => clearInterval(interval);
-    }, []);
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -297,11 +232,10 @@ const TreasureIslands = () => {
                                         <button
                                             key={m}
                                             onClick={() => handleModeSwitch(m)}
-                                            className={`flex-fill btn btn-sm rounded-pill fw-bold transition-all ${
-                                                searchMode === m
-                                                    ? "bg-white text-dark shadow-sm"
-                                                    : "text-muted border-0"
-                                            }`}
+                                            className={`flex-fill btn btn-sm rounded-pill fw-bold transition-all ${searchMode === m
+                                                ? "bg-white text-dark shadow-sm"
+                                                : "text-muted border-0"
+                                                }`}
                                         >
                                             {m === 'FILTER' ? 'Filter' : m === 'ITEM' ? 'Item' : 'Villager'}
                                         </button>
@@ -345,11 +279,10 @@ const TreasureIslands = () => {
                         <button
                             key={t.key}
                             onClick={() => setFilter(t.key)}
-                            className={`btn rounded-pill px-4 fw-bold d-flex align-items-center gap-2 border transition-all ${
-                                filter === t.key
-                                    ? "btn-dark border-dark"
-                                    : "bg-white text-muted border-white hover-shadow"
-                            }`}
+                            className={`btn rounded-pill px-4 fw-bold d-flex align-items-center gap-2 border transition-all ${filter === t.key
+                                ? "btn-dark border-dark"
+                                : "bg-white text-muted border-white hover-shadow"
+                                }`}
                         >
                             <i className={`fa-solid ${t.icon}`}></i> {t.label}
                         </button>

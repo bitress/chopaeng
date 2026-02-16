@@ -1,91 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ISLANDS_DATA, type IslandData } from "../data/islands.ts";
-
-type ApiIsland = {
-    dodo: string;
-    name: string;
-    status: string;
-    type: string;
-    visitors: string;
-};
-
-type VillagerApiResponse = {
-    timestamp: string;
-    total_islands: number;
-    islands: Record<string, string[]>;
-};
-
-const slugify = (s: string) => s.toLowerCase().trim().replace(/['"]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-const mergeIslands = (publicIslands: IslandData[], apiIslands: ApiIsland[]) => {
-    const apiById = new Map<string, ApiIsland>();
-    const apiByName = new Map<string, ApiIsland>();
-    for (const a of apiIslands) {
-        const id = slugify(a.name);
-        apiById.set(id, a);
-        apiByName.set(a.name.toUpperCase(), a);
-    }
-    return publicIslands.map((p) => {
-        const api = apiById.get(p.id) || apiByName.get(String(p.name).toUpperCase());
-        return {
-            ...p,
-            live: api ? {
-                dodo: api.dodo,
-                status: api.status,
-                access: api.type,
-                visitors: api.visitors,
-                isSubOnly: api.dodo?.toUpperCase() === "SUB ONLY" || api.status?.toUpperCase() === "SUB ONLY",
-                isOnline: api.status?.toUpperCase() === "ONLINE",
-            } : null,
-        };
-    });
-};
+import { useIslandData } from "../context/IslandContext";
 
 const IslandDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { islands, villagersMap, loading } = useIslandData();
 
-    // --- STATE ---
-    const [apiIslands, setApiIslands] = useState<ApiIsland[]>([]);
-    const [villagersMap, setVillagersMap] = useState<Record<string, string[]>>({});
-    const [loading, setLoading] = useState(true);
     const [showImageModal, setShowImageModal] = useState(false);
 
-    // --- EFFECTS ---
-    useEffect(() => {
-        let cancelled = false;
+    const island = useMemo(() => {
+        const found = islands.find((i) => i.id === id);
+        if (!found) return null;
 
-        const fetchData = async () => {
-            try {
-                if (!cancelled) setLoading(true);
-
-                // 1. Fetch Island Status (Dodo codes, etc)
-                const islandRes = await fetch("https://dodo.chopaeng.com/api/islands");
-                const islandData = islandRes.ok ? await islandRes.json() : [];
-
-                // 2. Fetch Villagers List
-                const villagerRes = await fetch("https://acnh-finder.chopaeng.com/api/villagers/list");
-                const villagerData: VillagerApiResponse = villagerRes.ok ? await villagerRes.json() : { islands: {} };
-
-                if (!cancelled) {
-                    setApiIslands(islandData);
-                    setVillagersMap(villagerData.islands);
-                }
-            } catch (error) {
-                if (!cancelled) console.log("Error fetching data:", error);
-            } finally {
-                if (!cancelled) setLoading(false);
+        return {
+            ...found,
+            live: {
+                dodo: found.dodoCode,
+                status: found.status,
+                access: found.cat === "member" ? "SUB ONLY" : "PUBLIC",
+                visitors: found.visitors?.toString() || "0",
+                isSubOnly: found.status === "SUB ONLY",
+                isOnline: found.status === "ONLINE",
             }
         };
-
-        fetchData();
-        const interval = setInterval(fetchData, 30000); // Refresh every 30s
-        return () => { cancelled = true; clearInterval(interval); };
-    }, []);
-
-    const MERGED_ISLANDS = useMemo(() => mergeIslands(ISLANDS_DATA, apiIslands), [apiIslands]);
-    const island = MERGED_ISLANDS.find((i) => i.id === id);
+    }, [islands, id]);
 
     if (!island) return (
         <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{ background: '#f0f4e4', color: '#7ba592' }}>
@@ -103,7 +42,7 @@ const IslandDetail = () => {
 
     // Try to find villagers by exact name, or fallback to case-insensitive match
     const currentVillagers = villagersMap[island.name] ||
-    Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase())
+        Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase())
         ? villagersMap[Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase()) as string]
         : [];
 
@@ -195,31 +134,30 @@ const IslandDetail = () => {
                                 <div className="flight-row">
                                     <span className="flight-label">STATUS</span>
                                     <span
-                                        className={`flight-value ${
-                                            live?.isOnline && live?.dodo !== "GETTIN'"
-                                                ? 'text-dal-blue'
-                                                : 'text-danger'
-                                        }`}
+                                        className={`flight-value ${live?.isOnline && live?.dodo !== "GETTIN'"
+                                            ? 'text-dal-blue'
+                                            : 'text-danger'
+                                            }`}
                                     >
-                                      {loading ? (
-                                          <span className="pulse">SCANNING...</span>
-                                      ) : live?.dodo === "GETTIN'" ? (
-                                          'OFFLINE'
-                                      ) : (
-                                          live?.status || 'OFFLINE'
-                                      )}
+                                        {loading ? (
+                                            <span className="pulse">SCANNING...</span>
+                                        ) : live?.dodo === "GETTIN'" ? (
+                                            'OFFLINE'
+                                        ) : (
+                                            live?.status || 'OFFLINE'
+                                        )}
                                     </span>
 
                                 </div>
                                 <div className="flight-divider"></div>
                                 <div className="flight-row">
-                                <span className="flight-label">PASSENGERS</span>
+                                    <span className="flight-label">PASSENGERS</span>
                                     <span className="flight-value">
-                                      {(() => {
-                                          if (!live?.visitors) return '0/7';
-                                          const count = live.visitors.match(/\d+/)?.[0];
-                                          return `${count ?? 7}/7`;
-                                      })()}
+                                        {(() => {
+                                            if (!live?.visitors) return '0/7';
+                                            const count = live.visitors.match(/\d+/)?.[0];
+                                            return `${count ?? 7}/7`;
+                                        })()}
                                     </span>
                                 </div>
                                 <div className="flight-divider"></div>

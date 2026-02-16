@@ -1,75 +1,27 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ISLANDS_DATA } from "../data/islands.ts";
+import { useIslandData } from "../context/IslandContext";
 
 // --- Types ---
 type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
 
-interface ApiIsland {
-    dodo: string;
-    name: string;
-    status: string;
-    visitors: string;
-}
-
-interface LiveIslandData {
-    status: IslandStatus;
-    dodo: string;
-    visitors: string;
-}
-
 const IslandMaps = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
-    const [liveData, setLiveData] = useState<Record<string, LiveIslandData>>({});
+    const { islands } = useIslandData();
 
-    // --- 1. Data Fetching (Safe & Typed) ---
-    useEffect(() => {
-        let isMounted = true;
-
-        const fetchStatus = async () => {
-            try {
-                const response = await fetch("https://dodo.chopaeng.com/api/islands");
-                if (!response.ok) throw new Error("Network response was not ok");
-
-                const apiData: ApiIsland[] = await response.json();
-
-                if (isMounted) {
-                    const statusMap: Record<string, LiveIslandData> = {};
-
-                    apiData.forEach((api) => {
-                        let computedStatus: IslandStatus = "OFFLINE";
-                        const rawStatus = api.status ? api.status.toUpperCase() : "";
-
-                        if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) {
-                            computedStatus = "SUB ONLY";
-                        } else if (api.dodo === "GETTIN'" || rawStatus === "REFRESHING") {
-                            computedStatus = "REFRESHING";
-                        } else if (rawStatus === "ONLINE") {
-                            computedStatus = "ONLINE";
-                        }
-
-                        statusMap[api.name.toUpperCase()] = {
-                            status: computedStatus,
-                            dodo: api.dodo || "---",
-                            visitors: api.visitors || "0"
-                        };
-                    });
-                    setLiveData(statusMap);
-                }
-            } catch (error) {
-                console.error("Failed to fetch island status:", error);
-            }
-        };
-
-        fetchStatus();
-        const interval = setInterval(fetchStatus, 15000);
-
-        return () => {
-            isMounted = false;
-            clearInterval(interval);
-        };
-    }, []);
+    const liveData = useMemo(() => {
+        const statusMap: Record<string, { status: IslandStatus; dodo: string; visitors: string }> = {};
+        islands.forEach(island => {
+            statusMap[island.name.toUpperCase()] = {
+                status: island.status,
+                dodo: island.dodoCode || "---",
+                visitors: island.visitors?.toString() || "0"
+            };
+        });
+        return statusMap;
+    }, [islands]);
 
     // --- 2. Memoized Filtering & Sorting ---
     // Fix: Sort strictly inside useMemo to avoid mutation during render
