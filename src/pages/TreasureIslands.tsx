@@ -178,33 +178,59 @@ const TreasureIslands = () => {
 
     useEffect(() => {
         const site = window.location.origin;
-        const url = `${site}/treasure-islands`;
+        const url = `${site}/islands`;
+        const img = `${site}/banner.png`;
 
         const title =
             filter === "ALL"
-                ? "Live Animal Crossing Treasure Islands Dashboard | Chopaeng"
+                ? "ACNH Treasure Islands – Live Dodo Codes & Free Maps | Chopaeng"
                 : filter === "public"
-                    ? "Free Animal Crossing Treasure Islands Dashboard | Chopaeng"
-                    : "VIP Animal Crossing Treasure Islands Dashboard | Chopaeng";
+                    ? "Free ACNH Treasure Islands – Live Dodo Codes & Maps | Chopaeng"
+                    : "VIP ACNH Treasure Islands – Private Islands & Priority Access | Chopaeng";
 
-        const desc = "Track live Animal Crossing Treasure Islands with real-time Dodo codes...";
+        const desc =
+            filter === "ALL"
+                ? "Browse all live Animal Crossing: New Horizons treasure islands on Chopaeng. Get real-time Dodo codes, free & premium island access, items, DIYs, and more."
+                : filter === "public"
+                    ? "Browse free Animal Crossing: New Horizons treasure islands on Chopaeng. Get live Dodo codes, free island access, items, DIYs, Bells, and materials."
+                    : "Access VIP Animal Crossing: New Horizons treasure islands on Chopaeng. Unlock priority Dodo codes, private islands, exclusive items, and member perks.";
+
         document.title = title;
 
-        let meta = document.querySelector('meta[name="description"]');
-        if (!meta) {
-            meta = document.createElement("meta");
-            meta.setAttribute("name", "description");
-            document.head.appendChild(meta);
-        }
-        meta.setAttribute("content", desc);
+        const setMeta = (attr: string, key: string, value: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+                el = document.createElement("meta");
+                el.setAttribute(attr, key);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("content", value);
+        };
 
-        let link = document.querySelector('link[rel="canonical"]');
-        if (!link) {
-            link = document.createElement("link");
-            link.setAttribute("rel", "canonical");
-            document.head.appendChild(link);
-        }
-        link.setAttribute("href", url);
+        const setLink = (rel: string, href: string) => {
+            let el = document.querySelector(`link[rel="${rel}"]`);
+            if (!el) {
+                el = document.createElement("link");
+                el.setAttribute("rel", rel);
+                document.head.appendChild(el);
+            }
+            el.setAttribute("href", href);
+        };
+
+        setMeta("name", "description", desc);
+        setLink("canonical", url);
+
+        setMeta("property", "og:type", "website");
+        setMeta("property", "og:site_name", "Chopaeng");
+        setMeta("property", "og:url", url);
+        setMeta("property", "og:title", title);
+        setMeta("property", "og:description", desc);
+        setMeta("property", "og:image", img);
+
+        setMeta("name", "twitter:card", "summary_large_image");
+        setMeta("name", "twitter:title", title);
+        setMeta("name", "twitter:description", desc);
+        setMeta("name", "twitter:image", img);
     }, [filter]);
 
     return (

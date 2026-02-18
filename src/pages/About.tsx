@@ -11,7 +11,7 @@ const About = () => {
 
             <meta property="og:type" content="website" />
             <meta property="og:site_name" content="Chopaeng" />
-            <meta property="og:title" content="About | Chopaeng – ACNH Treasure Islands, Items, Villagers, DIYs & Guides" />
+            <meta property="og:title" content="About | Chopaeng – ACNH Treasure Island Maps, Items & Guides" />
             <meta property="og:description" content="Meet Kuya Cho, the Islander behind Chopaeng. We provide free & premium Animal Crossing: New Horizons treasure islands with a Bayanihan spirit." />
             <meta property="og:url" content="https://www.chopaeng.com/about" />
             <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
@@ -19,7 +19,7 @@ const About = () => {
             <meta property="og:image:height" content="630" />
 
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content="About | Chopaeng – ACNH Treasure Islands, 2.0 Items, DIYs & Guides" />
+            <meta name="twitter:title" content="About | Chopaeng – ACNH Treasure Islands, Items & Guides" />
             <meta name="twitter:description" content="Meet Kuya Cho, the Islander behind Chopaeng. We provide free & premium Animal Crossing: New Horizons treasure islands with a Bayanihan spirit." />
             <meta name="twitter:image" content="https://www.chopaeng.com/banner.png" />
 

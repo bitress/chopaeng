@@ -59,13 +59,13 @@ const FindItems = () => {
 
         const title =
             searchMode === "item"
-                ? "Find Items on Live Treasure Islands | Chopaeng"
-                : "Find Villagers on Live Treasure Islands | Chopaeng";
+                ? "Find Items on ACNH Treasure Islands | Chopaeng"
+                : "Find Villagers on ACNH Treasure Islands | Chopaeng";
 
         const desc =
             searchMode === "item"
-                ? "Use the Chopaeng item finder to check which live Treasure Islands currently have the item you want, including free and member islands with real-time updates."
-                : "Use the Chopaeng villager finder to check which live Treasure Islands currently have the villager you want, including free and member islands with real-time updates.";
+                ? "Search which live ACNH treasure islands on Chopaeng currently have the item you want. Real-time results across free and member Animal Crossing: New Horizons islands."
+                : "Search which live ACNH treasure islands on Chopaeng currently have the villager you want. Real-time results across free and member Animal Crossing: New Horizons islands.";
 
 
         document.title = title;

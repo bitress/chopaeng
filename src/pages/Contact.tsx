@@ -6,7 +6,7 @@ const Contact = () => {
 
             <meta
                 name="description"
-                content="Need help with Chopaeng Treasure Islands? Contact our support team for assistance with island access, Dodo codes, memberships, orders, or account-related questions."
+                content="Get help with Chopaeng ACNH treasure island access, Dodo codes, memberships, orders, and account questions. Contact us via Discord or email."
             />
 
             <link rel="canonical" href="https://www.chopaeng.com/contact" />
@@ -21,6 +21,10 @@ const Contact = () => {
             <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
 
             <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content="Contact & Support | Chopaeng ACNH Treasure Islands" />
+            <meta name="twitter:description" content="Get help with Chopaeng ACNH treasure island access, Dodo codes, memberships, orders, or account-related questions. Contact us via Discord or email." />
+            <meta name="twitter:image" content="https://www.chopaeng.com/banner.png" />
+            <meta property="og:url" content="https://www.chopaeng.com/contact" />
 
 
             <div className="app-container w-100" style={{maxWidth: '900px'}}>

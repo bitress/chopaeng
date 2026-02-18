@@ -55,10 +55,9 @@ const IslandDetail = () => {
     const siteUrl = window.location.origin;
     const currentUrl = `${siteUrl}${location.pathname}`;
     const seoImage = `${siteUrl}${mapImageSrc}`;
-    const pageTitle = `${capitalizeFirstLetter(island.id)} Treasure Island – Map, Items, and Villagers | Chopaeng`;
+    const pageTitle = `${capitalizeFirstLetter(island.name)} ACNH Treasure Island – Map, Items & Villagers | Chopaeng`;
 
-    const pageDesc =
-        `${island.description}. View the island map, available items, seasonal details, and live status updates for this Chopaeng Treasure Island.`;
+    const pageDesc = `${island.description ? island.description + '. ' : ''}View the full map, available items, DIYs, Bells, villagers, and live Dodo code status for the ${capitalizeFirstLetter(island.name)} ACNH treasure island on Chopaeng.`;
 
     return (
         <div className="nook-bg min-vh-100 py-4 py-md-5">

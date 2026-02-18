@@ -43,12 +43,12 @@ const IslandMaps = () => {
         const q = searchQuery.trim();
 
         const title = q
-            ? `Island Maps – "${q}" | Chopaeng`
-            : "Island Maps | Chopaeng";
+            ? `ACNH Treasure Island Maps – "${q}" | Chopaeng`
+            : "ACNH Treasure Island Maps – Browse All Islands | Chopaeng";
 
         const desc = q
-            ? `Browse Chopaeng island maps and inventory. Results for: ${q}.`
-            : "Browse Chopaeng island maps with live status, Dodo codes, and inventory preview.";
+            ? `Browse Chopaeng ACNH treasure island maps and inventory. Results for: "${q}". Find items, DIYs, and Bells across free & premium islands.`
+            : "Browse all ACNH treasure island maps on Chopaeng. View live status, Dodo codes, items, DIYs, Bells, and inventory for every Animal Crossing: New Horizons island.";
 
         document.title = title;
 

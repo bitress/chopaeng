@@ -10,17 +10,17 @@ const Guide = () => {
 
         const title =
             activeTab === "steps"
-                ? "Island Guide – How to Join | Chopaeng"
+                ? "How to Join ACNH Treasure Islands – Step-by-Step Guide | Chopaeng"
                 : activeTab === "rules"
-                    ? "Island Guide – Golden Rules | Chopaeng"
-                    : "Island Guide – Help & FAQ | Chopaeng";
+                    ? "ACNH Treasure Island Rules – Golden Rules for Visitors | Chopaeng"
+                    : "ACNH Treasure Island FAQ – Help & Common Issues | Chopaeng";
 
         const desc =
             activeTab === "steps"
-                ? "Learn how to join Chopaeng Treasure Islands with step-by-step instructions, Dodo code tips, and best practices for smooth entry and uninterrupted island visits."
+                ? "Step-by-step guide on how to join Chopaeng ACNH treasure islands. Learn Dodo code entry, airport tips, and best practices for smooth Animal Crossing: New Horizons island visits."
                 : activeTab === "rules"
-                    ? "Review the essential rules that keep Chopaeng Treasure Islands stable, including proper airport exits, clean item handling, and maintaining a reliable internet connection."
-                    : "Find solutions to common issues such as interference messages, communication errors, and learn how to order items using the Chopaeng Discord bot.";
+                    ? "Review the golden rules for visiting Chopaeng ACNH treasure islands. Proper airport exits, clean item handling, and stable connections keep treasure islands running smoothly."
+                    : "Find answers to common ACNH treasure island issues on Chopaeng — interference errors, communication errors, how to order items, and how to use the Chopaeng Discord bot.";
 
         document.title = title;
 
