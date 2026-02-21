@@ -148,7 +148,11 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const handleVisibilityChange = () => {
             if (document.visibilityState === "visible") {
                 // Fetch immediately when coming back to tab if it's been a while
-                const timeSinceLastUpdate = lastUpdated ? Date.now() - lastUpdated : Infinity;
+                const cachedTimestamp = sessionStorage.getItem(STORAGE_KEY_TIMESTAMP);
+                const parsedTimestamp = cachedTimestamp ? parseInt(cachedTimestamp, 10) : null;
+                const timeSinceLastUpdate = parsedTimestamp && !isNaN(parsedTimestamp)
+                    ? Date.now() - parsedTimestamp
+                    : Infinity;
                 if (timeSinceLastUpdate > 25000) {
                     refreshData();
                 }
@@ -165,7 +169,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             clearInterval(intervalId);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
-    }, [refreshData, lastUpdated]);
+    }, [refreshData]);
 
     return (
         <IslandContext.Provider value={{ islands, villagersMap, loading, lastUpdated, refreshData }}>
