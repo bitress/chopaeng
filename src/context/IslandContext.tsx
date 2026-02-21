@@ -149,8 +149,9 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (document.visibilityState === "visible") {
                 // Fetch immediately when coming back to tab if it's been a while
                 const cachedTimestamp = sessionStorage.getItem(STORAGE_KEY_TIMESTAMP);
-                const lastUpdate = cachedTimestamp ? parseInt(cachedTimestamp, 10) : 0;
-                const timeSinceLastUpdate = Date.now() - lastUpdate;
+                const timeSinceLastUpdate = cachedTimestamp 
+                    ? Date.now() - parseInt(cachedTimestamp, 10) 
+                    : Infinity;
                 if (timeSinceLastUpdate > 25000) {
                     refreshData();
                 }
