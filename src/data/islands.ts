@@ -40,7 +40,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Villagers in Boxes",
             "Turnips"
         ],
-        visitors: 0,
+        visitors: 2,
         cat: "member",
         theme: "gold",
         description: "Subscriber-only treasure island packed with full 2.0 content, DIYs, vehicles, gyroids, and villagers in boxes."
@@ -79,7 +79,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 1,
+        visitors: 0,
         cat: "member",
         theme: "gold",
         description: "Patreon-exclusive seasonal island featuring complete event items, materials, golden tools, and rotating monthly sets."
@@ -105,7 +105,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Villagers in Boxes",
             "Turnips"
         ],
-        visitors: 0,
+        visitors: 4,
         cat: "member",
         theme: "gold",
         description: "Subscriber-only treasure island offering a balanced mix of 2.0 items, DIYs, vehicles, food, and villagers."
@@ -162,7 +162,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 3,
+        visitors: 0,
         cat: "member",
         theme: "gold",
         description: "Subscriber-only fashion island with complete clothing sets, accessories, bags, shoes, and umbrellas."
@@ -195,7 +195,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 2,
+        visitors: 0,
         cat: "member",
         theme: "gold",
         description: "Patreon-exclusive resource island featuring DIYs, critters, plants, materials, currency items, and villagers."
@@ -234,7 +234,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 4,
+        visitors: 0,
         cat: "member",
         theme: "gold",
         description: "Subscriber-only seasonal island stocked with event furniture, materials, golden tools, and rare collectibles."
@@ -282,7 +282,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 5,
+        visitors: 0,
         cat: "member",
         theme: "gold",
         description: "Patreon-exclusive curated island featuring premium furniture sets, Sanrio items, Celeste items, and rare décor."
@@ -316,7 +316,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 4,
+        visitors: 1,
         cat: "member",
         theme: "gold",
         description: "Subscriber-only furniture island offering a wide selection of indoor, outdoor, and themed home furnishings."
@@ -354,7 +354,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 0,
+        visitors: 1,
         cat: "member",
         theme: "gold",
         description: "Subscriber-only materials and DIY island filled with crafting resources, critters, plants, and essential tools."
@@ -396,7 +396,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 4,
+        visitors: 0,
         cat: "member",
         theme: "gold",
         description: "Patreon-exclusive island focused on rare items, complete DIYs, art, villager photos, and high-value collectibles."
@@ -447,7 +447,7 @@ export const ISLANDS_DATA: IslandData[] = [
             "Updated Items",
             "Villagers in Boxes"
         ],
-        visitors: 5,
+        visitors: 1,
         cat: "member",
         theme: "gold",
         description: "Patreon-exclusive island showcasing carefully curated premium and exclusive item sets."
@@ -501,7 +501,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 4,
+        dodoCode: "6FVD0",
         description: "Classic 1.0 treasure island featuring complete furniture sets, rare items, DIYs, and villagers in boxes."
     },
     {
@@ -535,7 +536,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "purple",
         cat: "public",
-        visitors: 0,
+        visitors: 4,
+        dodoCode: "2V23R",
         description: "Furniture-focused island offering elegant housewares, appliances, decor, and complete home essentials."
     },
     {
@@ -574,7 +576,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 4,
+        dodoCode: "J8QLW",
         description: "Curated island for DIYs, art, critter models, posters, and must-have progression items."
     },
     {
@@ -624,6 +627,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "teal",
         cat: "public",
         visitors: 0,
+        dodoCode: "GETTIN'",
         description: "Summer-themed treasure island featuring beach items, seasonal furniture, and warm-weather collectibles."
     },
     {
@@ -649,7 +653,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 4,
+        dodoCode: "GR643",
         description: "Full 2.0 treasure island featuring vehicles, vines, moss, cooking items, and modern furniture."
     },
     {
@@ -675,7 +680,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 3,
+        dodoCode: "2PYP0",
         description: "2.0-focused island centered on cooking, food items, and contemporary furniture pieces."
     },
     {
@@ -709,7 +715,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "purple",
         cat: "public",
-        visitors: 0,
+        visitors: 1,
+        dodoCode: "77KB4",
         description: "Furniture island featuring popular themed sets and a wide range of stylish home decor."
     },
     {
@@ -751,7 +758,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 4,
+        dodoCode: "G2BBV",
         description: "Dedicated island for fish and bug models plus genuine and decorative art."
     },
     {
@@ -800,13 +808,14 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 3,
+        dodoCode: "671SW",
         description: "Retro-inspired island with rattan, diner, and throwback furniture sets."
     },
     {
         id: "dalangin",
         name: "DALANGIN",
-        status: "REFRESHING",
+        status: "ONLINE",
         type: "2.0 Treasure Island",
         seasonal: "Year-Round",
         items: [
@@ -826,7 +835,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 6,
+        dodoCode: "2S7Y5",
         description: "2.0 island featuring gyroids, new furniture, and shopping-related items."
     },
     {
@@ -860,7 +870,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "purple",
         cat: "public",
-        visitors: 0,
+        visitors: 5,
+        dodoCode: "C1DXQ",
         description: "Furniture island focused on elegant, nordic, and ranch-style aesthetics."
     },
     {
@@ -898,7 +909,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 5,
+        dodoCode: "8LVHT",
         description: "Material island stocked with crafting resources and star fragments."
     },
     {
@@ -921,7 +933,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "pink",
         cat: "public",
-        visitors: 0,
+        visitors: 3,
+        dodoCode: "LGCWJ",
         description: "Fashion island offering traditional and modern clothing accessories."
     },
     {
@@ -973,7 +986,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 3,
+        dodoCode: "3F3SR",
         description: "Classic island for complete 1.0 furniture sets and interior walls and floors."
     },
     {
@@ -999,7 +1013,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 5,
+        dodoCode: "2XBP1",
         description: "Classic island for complete 1.0 furniture sets and interior walls and floors."
     },
     {
@@ -1036,7 +1051,8 @@ export const ISLANDS_DATA: IslandData[] = [
             "Turnips",
             "Villagers in Boxes"
         ],
-        visitors: 4,
+        visitors: 2,
+        dodoCode: "332CR",
         theme: "teal",
         cat: "public",
         description: "Halloween-themed island with spooky furniture and seasonal treats."
@@ -1077,6 +1093,7 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "teal",
         cat: "public",
         visitors: 0,
+        dodoCode: "NNK75",
         description: "Celestial materials island featuring star fragments and seasonal crafting mats."
     },
     {
@@ -1099,7 +1116,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "pink",
         cat: "public",
-        visitors: 0,
+        visitors: 6,
+        dodoCode: "FNKT6",
         description: "Cold-weather fashion island with coats, boots, and stylish headwear."
     },
     {
@@ -1138,7 +1156,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 1,
+        dodoCode: "9NK7J",
         description: "Winter and holiday island featuring festive decorations and Toy Day items."
     },
     {
@@ -1177,7 +1196,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 2,
+        dodoCode: "17YMJ",
         description: "Spring-themed island with cherry-blossom petals, bonsai, and branches."
     },
     {
@@ -1297,7 +1317,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 4,
+        dodoCode: "JQ1KB",
         description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
     },
     {
@@ -1321,7 +1342,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 3,
+        dodoCode: "33W2J",
         description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
     },
     {
@@ -1345,7 +1367,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 2,
+        dodoCode: "LXXQW",
         description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
     },
     {
@@ -1369,7 +1392,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 6,
+        dodoCode: "3D7L6",
         description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
     },
     {
@@ -1393,7 +1417,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 4,
+        dodoCode: "CG3PD",
         description: "3.0 update island featuring Zelda, Splatoon, Lego, and specific aesthetic themes."
     },
     {
@@ -1494,7 +1519,8 @@ export const ISLANDS_DATA: IslandData[] = [
         ],
         theme: "teal",
         cat: "public",
-        visitors: 0,
+        visitors: 6,
+        dodoCode: "GDY4M",
         description: "Celestial materials island featuring star fragments and seasonal crafting mats."
     },
     {
@@ -1518,6 +1544,8 @@ export const ISLANDS_DATA: IslandData[] = [
         theme: "pink",
         cat: "public",
         visitors: 0,
+        dodoCode: "745QL",
         description: "Fashion island offering traditional and modern clothing accessories."
     },
 ];
+
