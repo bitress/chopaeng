@@ -86,6 +86,7 @@ const Home = () => {
         <>
             <title>Chopaeng | ACNH Treasure Island – Free Maps, Items & DIYs</title>
             <meta name="description" content="Chopaeng is the #1 ACNH treasure island site. Browse free & premium Animal Crossing: New Horizons treasure island maps, items, DIYs, Bells, villagers, and more." />
+            <meta name="keywords" content="ACNH treasure islands, Animal Crossing New Horizons treasure island, treasure island ACNH, ACNH free items, ACNH dodo codes, Animal Crossing treasure island dodo code, ACNH bells, ACNH villagers, ACNH DIYs, free Animal Crossing items" />
 
             <link rel="canonical" href="https://www.chopaeng.com/" />
 

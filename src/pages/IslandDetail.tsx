@@ -64,6 +64,7 @@ const IslandDetail = () => {
 
             <title>{pageTitle}</title>
             <meta name="description" content={pageDesc} />
+            <meta name="keywords" content={`${capitalizeFirstLetter(island.name)} ACNH treasure island, ACNH treasure islands, Animal Crossing New Horizons treasure island, ${capitalizeFirstLetter(island.name)} island dodo code, ACNH free items, Animal Crossing treasure island`} />
             <link rel="canonical" href={currentUrl} />
 
             {/* Open Graph */}
@@ -79,6 +80,17 @@ const IslandDetail = () => {
             <meta name="twitter:title" content={pageTitle} />
             <meta name="twitter:description" content={pageDesc} />
             <meta name="twitter:image" content={seoImage} />
+
+            {/* Breadcrumb + Island structured data */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.chopaeng.com/" },
+                    { "@type": "ListItem", "position": 2, "name": "Islands", "item": "https://www.chopaeng.com/islands" },
+                    { "@type": "ListItem", "position": 3, "name": `${capitalizeFirstLetter(island.name)} Island` }
+                ]
+            }) }} />
 
             <div className="container" style={{ maxWidth: "1050px" }}>
 
