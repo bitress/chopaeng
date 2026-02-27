@@ -218,6 +218,7 @@ const TreasureIslands = () => {
         };
 
         setMeta("name", "description", desc);
+        setMeta("name", "keywords", "ACNH treasure islands, Animal Crossing New Horizons treasure island, treasure island ACNH, ACNH dodo codes, free ACNH items, Animal Crossing treasure island dodo code, ACNH bells, ACNH villagers, ACNH DIYs, free Animal Crossing items");
         setLink("canonical", url);
 
         setMeta("property", "og:type", "website");
@@ -235,6 +236,20 @@ const TreasureIslands = () => {
 
     return (
         <div className="nook-bg min-vh-100 font-nunito pb-5">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "name": "ACNH Treasure Islands on Chopaeng",
+                "description": "Browse all Animal Crossing: New Horizons treasure islands on Chopaeng with live Dodo codes, items, DIYs, Bells, and villagers.",
+                "url": "https://www.chopaeng.com/islands",
+                "numberOfItems": islands.length,
+                "itemListElement": islands.map((island, index) => ({
+                    "@type": "ListItem",
+                    "position": index + 1,
+                    "name": `${island.name} ACNH Treasure Island`,
+                    "url": `https://www.chopaeng.com/island/${island.id}`
+                }))
+            }) }} />
             {/* --- DASHBOARD HEADER --- */}
             <div className="bg-white shadow-sm border-bottom position-relative z-3">
                 <div className="container py-4">
