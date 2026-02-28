@@ -117,6 +117,9 @@ const Home = () => {
             .transform-active:active { transform: scale(0.95); }
             /* Prevent text overflow on narrow "desktop mode" viewports */
             .text-balance { text-wrap: balance; }
+            /* Rotate FAQ chevron when open */
+            .faq-item[open] summary .fa-chevron-down { transform: rotate(180deg); }
+            .faq-item summary .fa-chevron-down { transition: transform 0.2s ease; }
         `}
                 </style>
 
@@ -189,6 +192,74 @@ const Home = () => {
                     </div>
                 </section>
             </div>
+
+            {/* STATS STRIP */}
+            <section className="container py-4 position-relative z-2">
+                <div className="row g-3 text-center">
+                    {[
+                        { icon: "fa-users", color: "text-primary", value: "29k+", label: "Potatoes" },
+                        { icon: "fa-map-location-dot", color: "text-success", value: "100+", label: "Island Maps" },
+                        { icon: "fa-clock", color: "text-warning", value: "24/7", label: "Live Access" },
+                        { icon: "fa-star", color: "text-danger", value: "Est. 2020", label: "Community" },
+                    ].map((stat) => (
+                        <div className="col-6 col-md-3" key={stat.label}>
+                            <div className="bg-white rounded-4 shadow-sm border p-3 h-100 d-flex flex-column align-items-center justify-content-center gap-1">
+                                <i className={`fa-solid ${stat.icon} fs-3 ${stat.color} opacity-75`}></i>
+                                <h4 className="fw-black ac-font mb-0 text-dark">{stat.value}</h4>
+                                <span className="text-muted small fw-bold">{stat.label}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* HOW IT WORKS */}
+            <section className="container py-5 position-relative z-2">
+                <div className="text-center mb-5">
+                    <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                        <i className="fa-solid fa-map text-success fs-4"></i>
+                        <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Quick Start</span>
+                    </div>
+                    <h2 className="display-6 fw-black text-dark ac-font mb-2">How It Works</h2>
+                    <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '480px' }}>Getting free items and villagers is just three steps away.</p>
+                </div>
+                <div className="row g-4 justify-content-center">
+                    {[
+                        {
+                            step: "01",
+                            icon: "fa-ticket",
+                            color: "bg-light-green text-nook",
+                            title: "Join the Community",
+                            desc: "Subscribe on Patreon or join our Discord to become a member and unlock premium island access.",
+                        },
+                        {
+                            step: "02",
+                            icon: "fa-hashtag",
+                            color: "bg-light-yellow text-warning",
+                            title: "Grab a Dodo Code",
+                            desc: "Head to the Island Monitor, pick an online island, and copy the live Dodo code instantly.",
+                        },
+                        {
+                            step: "03",
+                            icon: "fa-plane-departure",
+                            color: "bg-light-blue text-info",
+                            title: "Fly & Loot",
+                            desc: "Enter the code at Dodo Airlines and land on a treasure island packed with items, bells, and DIYs.",
+                        },
+                    ].map((item) => (
+                        <div className="col-md-4" key={item.step}>
+                            <div className="bg-white rounded-5 shadow-sm border p-4 h-100 text-center position-relative overflow-hidden">
+                                <span className="position-absolute top-0 end-0 m-3 fw-black ac-font opacity-10" style={{ fontSize: '4rem', lineHeight: 1 }}>{item.step}</span>
+                                <div className={`app-icon mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle ${item.color}`}>
+                                    <i className={`fa-solid ${item.icon} fs-2`}></i>
+                                </div>
+                                <h5 className="fw-black text-dark ac-font mb-2">{item.title}</h5>
+                                <p className="text-muted small fw-bold mb-0">{item.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
 
             <section className="container py-5 mt-4 position-relative z-2">
 
@@ -297,6 +368,51 @@ const Home = () => {
                             <h3 className="h4 fw-black text-dark mb-2">Villager Injection</h3>
                             <p className="text-muted small fw-bold mb-0">Need Raymond? Sasha? Any villager in boxes ready to move to your island instantly.</p>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ SECTION */}
+            <section className="container py-5">
+                <div className="mx-auto" style={{ maxWidth: '720px' }}>
+                    <div className="text-center mb-5">
+                        <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                            <i className="fa-solid fa-circle-question text-success fs-4"></i>
+                            <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Got Questions?</span>
+                        </div>
+                        <h2 className="display-6 fw-black text-dark ac-font mb-0">FAQ</h2>
+                    </div>
+                    <div className="d-flex flex-column gap-3">
+                        {[
+                            {
+                                q: "Is Chopaeng free to use?",
+                                a: "Yes! Free island access is available to everyone. Premium islands with exclusive items and villager injection require a Patreon subscription.",
+                            },
+                            {
+                                q: "What is a Treasure Island?",
+                                a: "A Treasure Island is an Animal Crossing: New Horizons island loaded with rare items, Bells, DIY recipes, and materials — all free for visitors to take.",
+                            },
+                            {
+                                q: "What is ChoBot and how do I use it?",
+                                a: "ChoBot is our Discord bot. Type a command with the item or villager you want, and it automatically generates a private island just for you with a unique Dodo code.",
+                            },
+                            {
+                                q: "How do I get max Bells (999,999,999)?",
+                                a: "Premium members can visit a dedicated Bells island that uses the turnip glitch to give you max Bells in a single trip.",
+                            },
+                            {
+                                q: "Can I request a specific villager?",
+                                a: "Absolutely! Members can request any villager through ChoBot on Discord. The villager will be placed in boxes, ready to move to your island.",
+                            },
+                        ].map((faq) => (
+                            <details key={faq.q} className="bg-white rounded-4 shadow-sm border p-4 faq-item" style={{ cursor: 'pointer' }}>
+                                <summary className="fw-black text-dark ac-font fs-6 d-flex justify-content-between align-items-center" style={{ listStyle: 'none' }}>
+                                    <span>{faq.q}</span>
+                                    <i className="fa-solid fa-chevron-down text-muted small ms-3 flex-shrink-0"></i>
+                                </summary>
+                                <p className="text-muted small fw-bold mb-0 mt-3">{faq.a}</p>
+                            </details>
+                        ))}
                     </div>
                 </div>
             </section>
