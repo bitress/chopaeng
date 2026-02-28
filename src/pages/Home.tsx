@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import banner from '../assets/banner.png'
 import logo from '../assets/logo.webp'
 import StreamEmbed from "../components/StreamEmbed.tsx";
+import AdBanner from "../components/AdBanner.tsx";
 interface BlogPost {
     id: string;
     title: string;
@@ -190,6 +191,12 @@ const Home = () => {
                 </section>
             </div>
 
+            {/* AdSense – horizontal banner between hero and blog */}
+            {/* Replace adSlot with your actual AdSense ad unit slot ID from your AdSense dashboard */}
+            <div className="container py-3">
+                <AdBanner adSlot="1234567890" adFormat="horizontal" fullWidthResponsive={true} />
+            </div>
+
             <section className="container py-5 mt-4 position-relative z-2">
 
                 {/* Section Header */}
@@ -273,6 +280,12 @@ const Home = () => {
                     )}
                 </div>
             </section>
+
+            {/* AdSense – in-content banner between blog and services */}
+            {/* Replace adSlot with your actual AdSense ad unit slot ID from your AdSense dashboard */}
+            <div className="container py-3">
+                <AdBanner adSlot="0987654321" adFormat="rectangle" fullWidthResponsive={true} />
+            </div>
 
             {/* SERVICES SECTION */}
             <section className="container py-5">
