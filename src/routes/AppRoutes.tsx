@@ -13,6 +13,9 @@ import Chopaeng404 from "../errors/404.tsx";
 import BlogList from "../pages/BlogList.tsx";
 import BlogPost from "../pages/BlogPost.tsx";
 import DodoDecryptor from "../pages/DodoDecryptor.tsx";
+import PrivacyPolicy from "../pages/PrivacyPolicy.tsx";
+import TermsOfService from "../pages/TermsOfService.tsx";
+import CookiesPolicy from "../pages/CookiesPolicy.tsx";
 
 const AppRoutes = () => {
     return (
@@ -32,6 +35,10 @@ const AppRoutes = () => {
 
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/:id" element={<BlogPost />} />
+
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/cookies" element={<CookiesPolicy />} />
             </Route>
             <Route path="*" element={<Chopaeng404 />} />
         </Routes>
