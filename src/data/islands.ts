@@ -20,6 +20,24 @@ export interface IslandData {
 
 export const ISLANDS_DATA: IslandData[] = [
     {
+        id: "adhika",
+        name: "ADHIKA",
+        status: "SUB ONLY",
+        type: "Treasure Island",
+        seasonal: "Year-Round",
+        items: [
+            "Pink Furniture Items",
+            "Pink Decoration Items",
+            "Pink Wall-Mounted Items",
+            "Pink Ceiling Items",
+            "Villagers"
+        ],
+        visitors: 2,
+        cat: "member",
+        theme: "gold",
+        description: "Subscriber-only treasure island dedicated exclusively to pink items (furniture, decorations, wall-mounted, ceiling) and villagers."
+    },
+    {
         id: "alapaap",
         name: "ALAPAAP",
         status: "SUB ONLY",
@@ -238,6 +256,24 @@ export const ISLANDS_DATA: IslandData[] = [
         cat: "member",
         theme: "gold",
         description: "Subscriber-only seasonal island stocked with event furniture, materials, golden tools, and rare collectibles."
+    },
+    {
+        id: "giliw",
+        name: "GILIW",
+        status: "SUB ONLY",
+        type: "Treasure Island",
+        seasonal: "Year-Round",
+        items: [
+            "Pink Furniture Items",
+            "Pink Decoration Items",
+            "Pink Wall-Mounted Items",
+            "Pink Ceiling Items",
+            "Villagers"
+        ],
+        visitors: 2,
+        cat: "member",
+        theme: "gold",
+        description: "Subscriber-only treasure island dedicated exclusively to pink items (furniture, decorations, wall-mounted, ceiling) and villagers."
     },
     {
         id: "hiraya",
