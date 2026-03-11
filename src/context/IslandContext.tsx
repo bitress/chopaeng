@@ -7,6 +7,7 @@ interface ApiIsland {
     cat: string;
     description: string;
     dodo_code: string;
+    discord_bot_online: boolean;
     visitors: number;
     items: string[];
     map_url: string;
@@ -101,8 +102,8 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 const rawStatus = liveData.status ? liveData.status.toUpperCase() : "";
 
                 if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) computedStatus = "SUB ONLY";
-                else if (liveData.dodo_code === "GETTIN'" || rawStatus === "REFRESHING") computedStatus = "REFRESHING";
-                else if (rawStatus === "ONLINE") computedStatus = "ONLINE";
+                else if (liveData.dodo_code === "GETTIN'") computedStatus = "REFRESHING";
+                else if (liveData.discord_bot_online) computedStatus = "ONLINE";
 
                 return {
                     id: liveData.id || `island-${index}`,
@@ -114,6 +115,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     description: liveData.description || "",
                     seasonal: liveData.seasonal || "Year-Round",
                     status: computedStatus,
+                    discordBotOnline: liveData.discord_bot_online ?? false,
                     dodoCode: liveData.dodo_code,
                     visitors: Math.max(0, Math.min(7, liveData.visitors ?? 0)),
                     mapUrl: liveData.map_url || getIslandMap(liveData.name),

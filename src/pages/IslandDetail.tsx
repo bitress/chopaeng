@@ -20,8 +20,8 @@ const IslandDetail = () => {
                 status: found.status,
                 access: found.cat === "member" ? "SUB ONLY" : "PUBLIC",
                 visitors: found.visitors?.toString() || "0",
-                isSubOnly: found.status === "SUB ONLY",
-                isOnline: found.status === "ONLINE",
+                isSubOnly: found.cat === "member",
+                isOnline: found.discordBotOnline === true,
             }
         };
     }, [islands, id]);
@@ -153,9 +153,11 @@ const IslandDetail = () => {
                                         {loading ? (
                                             <span className="pulse">SCANNING...</span>
                                         ) : live?.dodo === "GETTIN'" ? (
-                                            'OFFLINE'
+                                            "GETTIN'"
+                                        ) : live?.isOnline ? (
+                                            "ONLINE"
                                         ) : (
-                                            live?.status || 'OFFLINE'
+                                            "OFFLINE"
                                         )}
                                     </span>
 

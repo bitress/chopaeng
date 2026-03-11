@@ -387,9 +387,17 @@ const TreasureIslands = () => {
 
                                         {/* Top Row: Status & Theme */}
                                         <div className="d-flex justify-content-between align-items-start mb-3">
-                                            <div className={`badge rounded-pill border px-3 py-2 d-flex align-items-center gap-2 ${statusMeta.badgeClass}`}>
-                                                <span className={`status-dot ${statusMeta.dotClass}`}></span>
-                                                <span className="fw-bold x-small tracking-wide">{island.status}</span>
+                                            <div className="d-flex flex-column gap-1">
+                                                <div className={`badge rounded-pill border px-3 py-2 d-flex align-items-center gap-2 ${statusMeta.badgeClass}`}>
+                                                    <span className={`status-dot ${statusMeta.dotClass}`}></span>
+                                                    <span className="fw-bold x-small tracking-wide">{island.status}</span>
+                                                </div>
+                                                {island.status === "SUB ONLY" && (
+                                                    <div className={`badge rounded-pill border px-3 py-2 d-flex align-items-center gap-2 ${island.discordBotOnline ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'}`}>
+                                                        <span className={`status-dot ${island.discordBotOnline ? 'bg-success pulse-ring' : 'bg-danger'}`}></span>
+                                                        <span className="fw-bold x-small tracking-wide">{island.discordBotOnline ? "ONLINE" : "OFFLINE"}</span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="d-flex gap-2">
