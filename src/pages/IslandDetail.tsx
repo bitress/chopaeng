@@ -153,7 +153,7 @@ const IslandDetail = () => {
                                         {loading ? (
                                             <span className="pulse">SCANNING...</span>
                                         ) : live?.dodo === "GETTIN'" ? (
-                                            'OFFLINE'
+                                            "GETTIN'"
                                         ) : (
                                             live?.status || 'OFFLINE'
                                         )}
