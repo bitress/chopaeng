@@ -179,6 +179,11 @@ const IslandDetail = () => {
                             </div>
                             <div className="dal-footer">
                                 <small>Dodo Airlines • We make travel a breeze!</small>
+                                {island.updatedAt && (
+                                    <small className="d-block mt-1 text-muted opacity-75">
+                                        Updated {new Date(island.updatedAt).toLocaleString()}
+                                    </small>
+                                )}
                             </div>
                         </div>
                     </div>

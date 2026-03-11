@@ -16,6 +16,7 @@ export interface IslandData {
     status: IslandStatus;
     visitors: number;
     mapUrl?: string;
+    updatedAt?: string;
 }
 
 export const ISLANDS_DATA: IslandData[] = [
