@@ -38,7 +38,7 @@ const IslandDetail = () => {
 
     const live = island.live;
     const canShowDodo = live?.isOnline && !live?.isSubOnly && live?.dodo && !["GETTIN'", "FULL"].includes(live.dodo);
-    const mapImageSrc = `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
+    const mapImageSrc = island.mapUrl || `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
 
     // Try to find villagers by exact name, or fallback to case-insensitive match
     const currentVillagers = villagersMap[island.name] ||
@@ -54,7 +54,7 @@ const IslandDetail = () => {
 
     const siteUrl = window.location.origin;
     const currentUrl = `${siteUrl}${location.pathname}`;
-    const seoImage = `${siteUrl}${mapImageSrc}`;
+    const seoImage = mapImageSrc;
     const pageTitle = `${capitalizeFirstLetter(island.name)} ACNH Treasure Island – Map, Items & Villagers | Chopaeng`;
 
     const pageDesc = `${island.description ? island.description + '. ' : ''}View the full map, available items, DIYs, Bells, villagers, and live Dodo code status for the ${capitalizeFirstLetter(island.name)} ACNH treasure island on Chopaeng.`;
