@@ -14,6 +14,7 @@ export interface IslandData {
 
     dodoCode?: string;
     status: IslandStatus;
+    discordBotOnline?: boolean;
     visitors: number;
     mapUrl?: string;
     updatedAt?: string;
