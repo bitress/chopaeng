@@ -1,40 +1,24 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ISLANDS_DATA } from "../data/islands.ts";
 import { useIslandData } from "../context/IslandContext";
-
-// --- Types ---
-type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
 
 const IslandMaps = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
     const { islands } = useIslandData();
 
-    const liveData = useMemo(() => {
-        const statusMap: Record<string, { status: IslandStatus; dodo: string; visitors: string }> = {};
-        islands.forEach(island => {
-            statusMap[island.name.toUpperCase()] = {
-                status: island.status,
-                dodo: island.dodoCode || "---",
-                visitors: island.visitors?.toString() || "0"
-            };
-        });
-        return statusMap;
-    }, [islands]);
-
     // --- 2. Memoized Filtering & Sorting ---
     // Fix: Sort strictly inside useMemo to avoid mutation during render
     const filteredIslands = useMemo(() => {
         const lowerQuery = searchQuery.toLowerCase().trim();
 
-        return ISLANDS_DATA
+        return islands
             .filter(island =>
                 island.name.toLowerCase().includes(lowerQuery) ||
                 island.items.some(i => i.toLowerCase().includes(lowerQuery))
             )
             .sort((a, b) => a.name.localeCompare(b.name));
-    }, [searchQuery]);
+    }, [islands, searchQuery]);
 
     // --- 3. SEO / Meta Tags ---
     useEffect(() => {
@@ -139,8 +123,7 @@ const IslandMaps = () => {
                 ) : (
                     <div className="row g-4 pb-5">
                         {filteredIslands.map((island, index) => {
-                            const live = liveData[island.name.toUpperCase()] || { status: "OFFLINE", dodo: "---", visitors: "0" };
-                            const isOnline = live.status === "ONLINE";
+                            const isOnline = island.status === "ONLINE";
 
                             // FIX: Only animate if NOT searching.
                             // If searching, show instantly (opacity: 1, no animation) to prevent "flashing".
@@ -168,25 +151,25 @@ const IslandMaps = () => {
 
                                         {/* Top Half: Image & Status */}
                                         <div className="card-image-container">
-                                            <div className={`status-pill ${live.status.toLowerCase().replace(" ", "-")}`}>
-                                                {live.status === 'ONLINE' && <i className="fa-solid fa-circle-check me-1"></i>}
-                                                {live.status === 'OFFLINE' && <i className="fa-solid fa-circle-xmark me-1"></i>}
-                                                {live.status === 'SUB ONLY' && <i className="fa-solid fa-lock me-1"></i>}
-                                                {live.status === 'REFRESHING' && <i className="fa-solid fa-arrows-rotate fa-spin me-1"></i>}
-                                                {live.status === 'ONLINE' ? 'BOARDING NOW' : live.status}
+                                            <div className={`status-pill ${island.status.toLowerCase().replace(" ", "-")}`}>
+                                                {island.status === 'ONLINE' && <i className="fa-solid fa-circle-check me-1"></i>}
+                                                {island.status === 'OFFLINE' && <i className="fa-solid fa-circle-xmark me-1"></i>}
+                                                {island.status === 'SUB ONLY' && <i className="fa-solid fa-lock me-1"></i>}
+                                                {island.status === 'REFRESHING' && <i className="fa-solid fa-arrows-rotate fa-spin me-1"></i>}
+                                                {island.status === 'ONLINE' ? 'BOARDING NOW' : island.status}
                                             </div>
 
                                             <img
                                                 src={`https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`}
                                                 alt={island.name}
-                                                className={`map-img ${live.status === 'OFFLINE' ? 'sepia' : ''}`}
+                                                className={`map-img ${island.status === 'OFFLINE' ? 'sepia' : ''}`}
                                                 loading="lazy"
                                                 onError={handleImageError}
                                             />
 
                                             {isOnline && (
                                                 <div className="visitor-badge">
-                                                    <i className="fa-solid fa-users me-1"></i> {live.visitors}
+                                                    <i className="fa-solid fa-users me-1"></i> {island.visitors}
                                                 </div>
                                             )}
                                         </div>
@@ -201,7 +184,7 @@ const IslandMaps = () => {
                                                 {isOnline && (
                                                     <div className="dodo-ticket">
                                                         <span className="label">CODE</span>
-                                                        <span className="code">{live.dodo}</span>
+                                                        <span className="code">{island.dodoCode || "---"}</span>
                                                     </div>
                                                 )}
                                             </div>
