@@ -24,20 +24,24 @@ const urlEntry = (loc, lastmod, changefreq = "weekly", priority = "0.7") => `
     <priority>${esc(priority)}</priority>
   </url>`;
 
-function getIslandUrls() {
-    const islandsPath = path.resolve(__dirname, "../src/data/islands.ts");
-    if (!fs.existsSync(islandsPath)) return [];
-
-    const src = fs.readFileSync(islandsPath, "utf8");
-    const ids = [...src.matchAll(/\bid\s*:\s*["']([^"']+)["']/g)].map((m) => m[1]);
-    const unique = [...new Set(ids)].filter(Boolean);
-
-    return unique.map((id) => ({
-        loc: `${SITE}/island/${id}`,
-        lastmod: nowIso(),
-        changefreq: "daily",
-        priority: "0.8",
-    }));
+async function getIslandUrls() {
+    try {
+        const res = await fetch("https://dodo.chopaeng.com/api/islands");
+        if (!res.ok) throw new Error(`API responded with ${res.status}`);
+        const islands = await res.json();
+        return islands
+            .map((island) => island.id)
+            .filter(Boolean)
+            .map((id) => ({
+                loc: `${SITE}/island/${id}`,
+                lastmod: nowIso(),
+                changefreq: "daily",
+                priority: "0.8",
+            }));
+    } catch (e) {
+        console.warn("Failed to fetch islands from API, skipping island URLs:", String(e));
+        return [];
+    }
 }
 
 async function main() {
@@ -53,7 +57,7 @@ async function main() {
         { loc: `${SITE}/dodo`, changefreq: "yearly", priority: "0.5" },
     ].map((p) => ({ ...p, lastmod: nowIso() }));
 
-    const islandUrls = getIslandUrls();
+    const islandUrls = await getIslandUrls();
     const all = [...staticPages, ...islandUrls];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>

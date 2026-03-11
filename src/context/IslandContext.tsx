@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { ISLANDS_DATA, type IslandData, type IslandStatus } from "../data/islands";
+import { type IslandData, type IslandStatus } from "../data/islands";
 
 interface ApiIsland {
     id: string;
@@ -58,7 +58,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 console.error("Failed to parse cached islands", e);
             }
         }
-        return ISLANDS_DATA.map(i => ({ ...i, mapUrl: i.mapUrl || getIslandMap(i.name) }));
+        return [];
     });
 
     const [villagersMap, setVillagersMap] = useState<Record<string, string[]>>(() => {
@@ -91,48 +91,33 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const villagerData: VillagerApiResponse = villagerRes.ok ? await villagerRes.json() : { islands: {} };
 
             // Process Island Data
-            const updatedIslands = ISLANDS_DATA.map((staticIsland, index) => {
-                const liveData = apiData.find((api) =>
-                    api.id === staticIsland.id ||
-                    api.name.toUpperCase() === staticIsland.name.toUpperCase()
-                );
+            const updatedIslands: IslandData[] = apiData.map((liveData, index) => {
+                let computedStatus: IslandStatus = "OFFLINE";
+                const rawStatus = liveData.status ? liveData.status.toUpperCase() : "";
 
-                const uniqueId = staticIsland.id || `island-${index}`;
+                if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) computedStatus = "SUB ONLY";
+                else if (liveData.dodo_code === "GETTIN'" || rawStatus === "REFRESHING") computedStatus = "REFRESHING";
+                else if (rawStatus === "ONLINE") computedStatus = "ONLINE";
 
-                if (liveData) {
-                    let computedStatus: IslandStatus = "OFFLINE";
-                    const rawStatus = liveData.status ? liveData.status.toUpperCase() : "";
-
-                    if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) computedStatus = "SUB ONLY";
-                    else if (liveData.dodo_code === "GETTIN'" || rawStatus === "REFRESHING") computedStatus = "REFRESHING";
-                    else if (rawStatus === "ONLINE") computedStatus = "ONLINE";
-
-                    return {
-                        ...staticIsland,
-                        id: uniqueId,
-                        status: computedStatus,
-                        dodoCode: liveData.dodo_code,
-                        visitors: Math.max(0, Math.min(7, liveData.visitors ?? 0)),
-                        cat: toIslandCat(liveData.cat, staticIsland.cat),
-                        description: liveData.description || staticIsland.description,
-                        items: liveData.items?.length ? liveData.items : staticIsland.items,
-                        seasonal: liveData.seasonal || staticIsland.seasonal,
-                        theme: toIslandTheme(liveData.theme, staticIsland.theme),
-                        mapUrl: liveData.map_url || staticIsland.mapUrl || getIslandMap(staticIsland.name),
-                        updatedAt: liveData.updated_at,
-                    };
-                }
                 return {
-                    ...staticIsland,
-                    id: uniqueId,
-                    status: "OFFLINE",
-                    visitors: 0,
-                    mapUrl: staticIsland.mapUrl || getIslandMap(staticIsland.name)
+                    id: liveData.id || `island-${index}`,
+                    name: liveData.name,
+                    type: liveData.type,
+                    items: liveData.items || [],
+                    theme: toIslandTheme(liveData.theme, "teal"),
+                    cat: toIslandCat(liveData.cat, "public"),
+                    description: liveData.description || "",
+                    seasonal: liveData.seasonal || "Year-Round",
+                    status: computedStatus,
+                    dodoCode: liveData.dodo_code,
+                    visitors: Math.max(0, Math.min(7, liveData.visitors ?? 0)),
+                    mapUrl: liveData.map_url || getIslandMap(liveData.name),
+                    updatedAt: liveData.updated_at,
                 };
             });
 
             const now = Date.now();
-            setIslands(updatedIslands as IslandData[]);
+            setIslands(updatedIslands);
             setVillagersMap(villagerData.islands);
             setLastUpdated(now);
             setLoading(false);
