@@ -2,11 +2,19 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { ISLANDS_DATA, type IslandData, type IslandStatus } from "../data/islands";
 
 interface ApiIsland {
-    dodo: string;
+    id: string;
     name: string;
+    cat: string;
+    description: string;
+    dodo_code: string;
+    visitors: number;
+    items: string[];
+    map_url: string;
+    seasonal: string;
     status: string;
+    theme: string;
     type: string;
-    visitors: string;
+    updated_at: string;
 }
 
 interface VillagerApiResponse {
@@ -29,15 +37,16 @@ const STORAGE_KEY_ISLANDS = "chopaeng_islands_cache";
 const STORAGE_KEY_VILLAGERS = "chopaeng_villagers_cache";
 const STORAGE_KEY_TIMESTAMP = "chopaeng_cache_timestamp";
 
-const parseVisitors = (raw: string): number => {
-    if (!raw) return 0;
-    const clean = raw.toUpperCase();
-    if (clean.includes("FULL")) return 7;
-    const match = clean.match(/(\d+)/);
-    return match ? Math.max(0, Math.min(7, parseInt(match[0], 10))) : 0;
-};
-
 const getIslandMap = (islandName: string) => `https://cdn.chopaeng.com/maps/${islandName.toLowerCase()}.png`;
+
+const VALID_CATS = ["public", "member"] as const;
+const VALID_THEMES = ["pink", "teal", "purple", "gold"] as const;
+
+const toIslandCat = (value: string, fallback: IslandData["cat"]): IslandData["cat"] =>
+    (VALID_CATS as readonly string[]).includes(value) ? (value as IslandData["cat"]) : fallback;
+
+const toIslandTheme = (value: string, fallback: IslandData["theme"]): IslandData["theme"] =>
+    (VALID_THEMES as readonly string[]).includes(value) ? (value as IslandData["theme"]) : fallback;
 
 export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [islands, setIslands] = useState<IslandData[]>(() => {
@@ -84,6 +93,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // Process Island Data
             const updatedIslands = ISLANDS_DATA.map((staticIsland, index) => {
                 const liveData = apiData.find((api) =>
+                    api.id === staticIsland.id ||
                     api.name.toUpperCase() === staticIsland.name.toUpperCase()
                 );
 
@@ -94,16 +104,22 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     const rawStatus = liveData.status ? liveData.status.toUpperCase() : "";
 
                     if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) computedStatus = "SUB ONLY";
-                    else if (liveData.dodo === "GETTIN'" || rawStatus === "REFRESHING") computedStatus = "REFRESHING";
+                    else if (liveData.dodo_code === "GETTIN'" || rawStatus === "REFRESHING") computedStatus = "REFRESHING";
                     else if (rawStatus === "ONLINE") computedStatus = "ONLINE";
 
                     return {
                         ...staticIsland,
                         id: uniqueId,
                         status: computedStatus,
-                        dodoCode: liveData.dodo,
-                        visitors: parseVisitors(liveData.visitors),
-                        mapUrl: staticIsland.mapUrl || getIslandMap(staticIsland.name)
+                        dodoCode: liveData.dodo_code,
+                        visitors: Math.max(0, Math.min(7, liveData.visitors ?? 0)),
+                        cat: toIslandCat(liveData.cat, staticIsland.cat),
+                        description: liveData.description || staticIsland.description,
+                        items: liveData.items?.length ? liveData.items : staticIsland.items,
+                        seasonal: liveData.seasonal || staticIsland.seasonal,
+                        theme: toIslandTheme(liveData.theme, staticIsland.theme),
+                        mapUrl: liveData.map_url || staticIsland.mapUrl || getIslandMap(staticIsland.name),
+                        updatedAt: liveData.updated_at,
                     };
                 }
                 return {
