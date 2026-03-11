@@ -160,7 +160,7 @@ const IslandMaps = () => {
                                             </div>
 
                                             <img
-                                                src={`https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`}
+                                                src={island.mapUrl || `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`}
                                                 alt={island.name}
                                                 className={`map-img ${island.status === 'OFFLINE' ? 'sepia' : ''}`}
                                                 loading="lazy"
