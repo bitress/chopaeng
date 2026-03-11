@@ -17,6 +17,10 @@ interface ApiIsland {
     updated_at: string;
 }
 
+interface ApiIslandsResponse {
+    data: ApiIsland[];
+}
+
 interface VillagerApiResponse {
     timestamp: string;
     total_islands: number;
@@ -84,7 +88,8 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // 1. Fetch Island Status
             const islandRes = await fetch("https://dodo.chopaeng.com/api/islands");
             if (!islandRes.ok) throw new Error("Island API error");
-            const apiData: ApiIsland[] = await islandRes.json();
+            const islandJson: ApiIslandsResponse = await islandRes.json();
+            const apiData: ApiIsland[] = islandJson.data;
 
             // 2. Fetch Villagers List
             const villagerRes = await fetch("https://acnh-finder.chopaeng.com/api/villagers/list");
