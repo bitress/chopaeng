@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import logo from '../assets/logo.webp';
+import { useAuth, getAvatarUrl } from "../context/AuthContext";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { pathname } = useLocation();
+    const { user, login } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -76,6 +78,32 @@ const Navbar = () => {
                             <i className="fa-brands fa-discord"></i>
                         </a>
 
+                        {/* Discord Login / User Avatar */}
+                        {user ? (
+                            <Link
+                                to="/dashboard"
+                                className="d-flex align-items-center gap-2 text-decoration-none btn btn-nook-sm px-3"
+                                title={`Logged in as ${user.global_name ?? user.username}`}
+                            >
+                                <img
+                                    src={getAvatarUrl(user)}
+                                    alt={user.username}
+                                    className="rounded-circle"
+                                    style={{ width: 24, height: 24, objectFit: "cover" }}
+                                />
+                                <span className="d-none d-md-inline fw-black small">Dashboard</span>
+                            </Link>
+                        ) : (
+                            <button
+                                onClick={login}
+                                className="btn btn-nook-sm d-none d-md-flex align-items-center gap-2"
+                                title="Login with Discord"
+                            >
+                                <i className="fa-brands fa-discord"></i>
+                                <span className="fw-black small">Login</span>
+                            </button>
+                        )}
+
                         <button
                             className={`mobile-toggle btn border-0 d-lg-none ${isMobileMenuOpen ? 'open' : ''}`}
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -106,6 +134,18 @@ const Navbar = () => {
                                     </Link>
                                 </div>
                             ))}
+                            {/* Dashboard link in mobile menu */}
+                            <div className="col-6">
+                                <Link
+                                    to="/dashboard"
+                                    className={`mobile-card text-decoration-none p-3 rounded-4 d-flex flex-column align-items-center gap-2 ${pathname === '/dashboard' ? 'active' : ''}`}
+                                >
+                                    <div className="mobile-icon-circle">
+                                        <i className="fa-solid fa-gauge-high"></i>
+                                    </div>
+                                    <span className="fw-black x-small text-uppercase">Dashboard</span>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>

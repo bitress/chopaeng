@@ -16,6 +16,7 @@ import DodoDecryptor from "../pages/DodoDecryptor.tsx";
 import PrivacyPolicy from "../pages/PrivacyPolicy.tsx";
 import TermsOfService from "../pages/TermsOfService.tsx";
 import CookiesPolicy from "../pages/CookiesPolicy.tsx";
+import Dashboard from "../pages/Dashboard.tsx";
 
 const AppRoutes = () => {
     return (
@@ -31,6 +32,7 @@ const AppRoutes = () => {
                 <Route path="/find" element={<FindItems/>}/>
                 <Route path="/contact" element={<Contact/>}/>
                 <Route path="/dodo" element={<DodoDecryptor/>}/>
+                <Route path="/dashboard" element={<Dashboard/>}/>
 
 
                 <Route path="/blog" element={<BlogList />} />
