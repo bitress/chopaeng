@@ -84,13 +84,13 @@ const About = () => {
                 {/* 3. MILESTONES (Stamps) */}
                 <div className="row g-4 mb-5 justify-content-center">
                     {[
-                        { date: "Nov 2020", label: "First Flight", icon: "airplane-engines" },
-                        { date: "Mar 2021", label: "Twitch Partner", icon: "twitch" },
-                        { date: "29k+", label: "Potatoes", icon: "people-fill" }
+                        { date: "Nov 2020", label: "First Flight", icon: "fa-solid fa-plane" },
+                        { date: "Mar 2021", label: "Twitch Partner", icon: "fa-brands fa-twitch" },
+                        { date: "29k+", label: "Potatoes", icon: "fa-solid fa-people-group" }
                     ].map((milestone, i) => (
                         <div key={i} className="col-4 col-md-3">
                             <div className="stamp-circle mx-auto d-flex flex-column align-items-center justify-content-center text-center p-3">
-                                <i className={`bi bi-${milestone.icon} fs-2 text-nook opacity-50 mb-1`}></i>
+                                <i className={`${milestone.icon} fs-2 text-nook opacity-50 mb-1`}></i>
                                 <h6 className="fw-black text-nook mb-0 ac-font">{milestone.date}</h6>
                                 <small className="tiny-text fw-bold text-nook opacity-75 text-uppercase">{milestone.label}</small>
                             </div>
@@ -146,7 +146,7 @@ const About = () => {
                                 <div className="col-md-4">
                                     <div className="ordinance-item text-center p-3 rounded-4 hover-lift">
                                         <div className="icon-bubble bg-warning text-white mx-auto mb-3 shadow-sm">
-                                            <i className="bi bi-heart-fill"></i>
+                                            <i className="fa-solid fa-heart"></i>
                                         </div>
                                         <h5 className="fw-bold text-dark">Bayanihan</h5>
                                         <p className="small text-muted mb-0 fw-bold">Community members helping one another achieve a common goal. We share freely so everyone can enjoy the game.</p>
@@ -155,7 +155,7 @@ const About = () => {
                                 <div className="col-md-4">
                                     <div className="ordinance-item text-center p-3 rounded-4 hover-lift">
                                         <div className="icon-bubble bg-info text-white mx-auto mb-3 shadow-sm">
-                                            <i className="bi bi-globe-americas"></i>
+                                            <i className="fa-solid fa-globe"></i>
                                         </div>
                                         <h5 className="fw-bold text-dark">Inclusivity</h5>
                                         <p className="small text-muted mb-0 fw-bold">No matter who you are or where you're from, you have a home on our islands. Everyone is welcome here.</p>
@@ -164,7 +164,7 @@ const About = () => {
                                 <div className="col-md-4">
                                     <div className="ordinance-item text-center p-3 rounded-4 hover-lift">
                                         <div className="icon-bubble bg-success text-white mx-auto mb-3 shadow-sm">
-                                            <i className="bi bi-clock-fill"></i>
+                                            <i className="fa-solid fa-clock"></i>
                                         </div>
                                         <h5 className="fw-bold text-dark">24/7 Access</h5>
                                         <p className="small text-muted mb-0 fw-bold">Paradise doesn't have a closing time. Our islands are always open whenever you need items or bells.</p>
@@ -183,15 +183,15 @@ const About = () => {
                     </div>
                     <div className="row g-4">
                         {[
-                            { step: "1", icon: "bi-display", title: "Check the Dashboard", desc: "Visit the Treasure Islands page to see which islands are currently online, what they contain, and their visitor count in real time." },
-                            { step: "2", icon: "bi-key-fill", title: "Get a Dodo Code", desc: "Free islands show their Dodo codes publicly. Member islands generate private codes through ChoBot or the members-only dashboard." },
-                            { step: "3", icon: "bi-airplane-fill", title: "Fly & Collect", desc: "Enter the Dodo code at Dodo Airlines in ACNH and fly to the island. All items on the ground are yours to take — no limits." },
-                            { step: "4", icon: "bi-door-open-fill", title: "Exit Properly", desc: "Always leave through the airport terminal. Pressing the minus button causes the island to crash for everyone still visiting." },
+                            { step: "1", icon: "fa-solid fa-display", title: "Check the Dashboard", desc: "Visit the Treasure Islands page to see which islands are currently online, what they contain, and their visitor count in real time." },
+                            { step: "2", icon: "fa-solid fa-key", title: "Get a Dodo Code", desc: "Free islands show their Dodo codes publicly. Member islands generate private codes through ChoBot or the members-only dashboard." },
+                            { step: "3", icon: "fa-solid fa-plane", title: "Fly & Collect", desc: "Enter the Dodo code at Dodo Airlines in ACNH and fly to the island. All items on the ground are yours to take — no limits." },
+                            { step: "4", icon: "fa-solid fa-door-open", title: "Exit Properly", desc: "Always leave through the airport terminal. Pressing the minus button causes the island to crash for everyone still visiting." },
                         ].map((item, i) => (
                             <div key={i} className="col-sm-6 col-lg-3">
                                 <div className="text-center p-3 rounded-4 bg-light h-100">
                                     <div className="d-inline-flex align-items-center justify-content-center bg-white rounded-circle shadow-sm mb-3" style={{ width: 56, height: 56 }}>
-                                        <i className={`bi ${item.icon} fs-3 text-success`}></i>
+                                        <i className={`${item.icon} fs-3 text-success`}></i>
                                     </div>
                                     <span className="badge bg-success rounded-pill mb-2">{item.step}</span>
                                     <h6 className="fw-black text-dark">{item.title}</h6>
@@ -205,10 +205,10 @@ const About = () => {
                 {/* 7. CTA */}
                 <div className="text-center mb-3">
                     <Link to="/islands" className="btn btn-success rounded-pill px-5 py-3 fw-black shadow-sm me-3">
-                        <i className="bi bi-airplane-fill me-2"></i> Browse Islands
+                        <i className="fa-solid fa-plane me-2"></i> Browse Islands
                     </Link>
                     <Link to="/guides" className="btn btn-outline-success rounded-pill px-5 py-3 fw-black">
-                        <i className="bi bi-book-half me-2"></i> Read the Guide
+                        <i className="fa-solid fa-book-open me-2"></i> Read the Guide
                     </Link>
                 </div>
 

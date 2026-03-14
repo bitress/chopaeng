@@ -93,43 +93,43 @@ const Guide = () => {
             title: "Airport Only",
             desc: "NEVER leave quietly (- button). It crashes the island. Don't be that person.",
             type: "danger",
-            icon: "x-octagon-fill"
+            icon: "fa-solid fa-circle-xmark"
         },
         {
             title: "No Littering",
             desc: "Use trash cans for unwanted items. Litter prevents item refreshes.",
             type: "warning",
-            icon: "trash-fill"
+            icon: "fa-solid fa-trash"
         },
         {
             title: "Stable Wi-Fi",
             desc: "NAT Type A or B required.",
             type: "primary",
-            icon: "wifi"
+            icon: "fa-solid fa-wifi"
         },
         {
             title: "Strict Confidentiality",
             desc: "Do NOT share the Dodo Code. One character per membership.",
             type: "danger",
-            icon: "shield-lock-fill"
+            icon: "fa-solid fa-shield-halved"
         },
         {
             title: "Nickname Format",
             desc: "Set to: 'Character Name | Island Name' so we can identify you.",
             type: "info",
-            icon: "person-badge-fill"
+            icon: "fa-solid fa-id-badge"
         },
         {
             title: "Read The Pins",
             desc: "Check pinned messages before asking. Your answer is likely there.",
             type: "secondary",
-            icon: "pin-angle-fill"
+            icon: "fa-solid fa-thumbtack"
         },
         {
             title: "ChoBot Protocol",
             desc: "Only request items when ON the island. Pick up everything you drop.",
             type: "warning",
-            icon: "robot"
+            icon: "fa-solid fa-robot"
         }
     ];
 
@@ -142,7 +142,7 @@ const Guide = () => {
                 <div className="d-flex align-items-center justify-content-between mb-4 px-2">
                     <div className="d-flex align-items-center gap-3">
                         <div className="app-icon bg-success text-white shadow-sm">
-                            <i className="bi bi-book-half fs-4"></i>
+                        <i className="fa-solid fa-book-open fs-4"></i>
                         </div>
                         <div>
                             <h2 className="mb-0 ac-font fw-black text-dark lh-1">Island Guide</h2>
@@ -151,23 +151,23 @@ const Guide = () => {
                     </div>
                     {/* Fake Battery/Time - Optional aesthetic touch */}
                     <div className="d-none d-md-block text-end opacity-50">
-                        <i className="bi bi-battery-full fs-4"></i>
+                        <i className="fa-solid fa-battery-full fs-4"></i>
                     </div>
                 </div>
 
                 {/* 2. NAVIGATION TABS (Pill Style) */}
                 <div className="bg-white p-2 rounded-pill shadow-sm border mb-4 d-flex justify-content-between">
                     {[
-                        { id: 'steps', label: 'How to Join', icon: 'airplane' },
-                        { id: 'rules', label: 'Sub Rules', icon: 'shield-exclamation' },
-                        { id: 'faq', label: 'Help & FAQ', icon: 'chat-dots' }
+                        { id: 'steps', label: 'How to Join', icon: 'fa-solid fa-plane' },
+                        { id: 'rules', label: 'Sub Rules', icon: 'fa-solid fa-shield-halved' },
+                        { id: 'faq', label: 'Help & FAQ', icon: 'fa-solid fa-comment-dots' }
                     ].map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`btn btn-tab rounded-pill flex-grow-1 fw-bold text-uppercase py-2 transition-all ${activeTab === tab.id ? 'active' : ''}`}
                         >
-                            <i className={`bi bi-${tab.icon} me-2 d-none d-sm-inline`}></i>
+                            <i className={`${tab.icon} me-2 d-none d-sm-inline`}></i>
                             {tab.label}
                         </button>
                     ))}
@@ -193,7 +193,7 @@ const Guide = () => {
                             </div>
                             {/* Max Bells Teaser */}
                             <div className="mt-4 p-3 bg-success bg-opacity-10 rounded-4 border border-success border-opacity-25 d-flex align-items-center gap-3">
-                                <i className="bi bi-piggy-bank-fill text-success fs-2"></i>
+                                <i className="fa-solid fa-piggy-bank text-success fs-2"></i>
                                 <div>
                                     <h6 className="fw-black text-success mb-0">Want Max Bells?</h6>
                                     <p className="small text-success mb-0 fw-bold opacity-75">Take turnips from Turnip Island → Sell at Nook's Cranny.</p>
@@ -211,7 +211,7 @@ const Guide = () => {
                                     <div key={i} className="col-12">
                                         <div className={`p-4 rounded-4 bg-${rule.type}-subtle border border-${rule.type} border-opacity-25 d-flex align-items-center gap-3`}>
                                             <div className={`icon-box text-${rule.type} bg-white shadow-sm`}>
-                                                <i className={`bi bi-${rule.icon} fs-4`}></i>
+                                                <i className={`${rule.icon} fs-4`}></i>
                                             </div>
                                             <div>
                                                 <h5 className={`fw-black text-${rule.type} mb-1`}>{rule.title}</h5>
@@ -240,7 +240,7 @@ const Guide = () => {
                                             <span className="badge bg-dark text-white rounded-pill mb-2 px-3">Question</span>
                                             <h6 className="fw-bold text-dark mb-2">{item.q}</h6>
                                             <p className="small text-success fw-bold mb-0 bg-white p-2 rounded-3 border">
-                                                <i className="bi bi-chat-quote-fill me-2"></i>
+                                                <i className="fa-solid fa-quote-left me-2"></i>
                                                 {item.a}
                                             </p>
                                         </div>
