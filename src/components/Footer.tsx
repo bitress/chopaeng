@@ -7,12 +7,12 @@ const Footer = () => {
     const currentYear = new Date().getFullYear();
 
     const socialLinks = [
-        { icon: "bi-discord", url: "https://discord.com/invite/chopaeng", label: "Discord" },
-        { icon: "bi-facebook", url: "https://www.facebook.com/ChoPaengTV", label: "Facebook" },
-        { icon: "bi-tiktok", url: "https://www.tiktok.com/@ChoPaengTV", label: "Tiktok" },
-        { icon: "bi-instagram", url: "https://www.instagram.com/itschopaeng", label: "Instagram" },
-        { icon: "bi-twitch", url: "https://www.twitch.tv/chopaeng", label: "Twitch" },
-        { icon: "bi-youtube", url: "https://www.youtube.com/chopaengtv", label: "YouTube" },
+        { icon: "fa-brands fa-discord", url: "https://discord.com/invite/chopaeng", label: "Discord" },
+        { icon: "fa-brands fa-facebook", url: "https://www.facebook.com/ChoPaengTV", label: "Facebook" },
+        { icon: "fa-brands fa-tiktok", url: "https://www.tiktok.com/@ChoPaengTV", label: "Tiktok" },
+        { icon: "fa-brands fa-instagram", url: "https://www.instagram.com/itschopaeng", label: "Instagram" },
+        { icon: "fa-brands fa-twitch", url: "https://www.twitch.tv/chopaeng", label: "Twitch" },
+        { icon: "fa-brands fa-youtube", url: "https://www.youtube.com/chopaengtv", label: "YouTube" },
     ];
 
     const footerNav = {
@@ -55,7 +55,7 @@ const Footer = () => {
                         <div className="d-flex justify-content-center justify-content-lg-start gap-3 mt-4">
                             {socialLinks.map((social) => (
                                 <a key={social.label} href={social.url} target="_blank" rel="noreferrer" className="social-icon-link text-muted" aria-label={social.label}>
-                                    <i className={`bi ${social.icon} fs-5`}></i>
+                                    <i className={`${social.icon} fs-5`}></i>
                                 </a>
                             ))}
                         </div>

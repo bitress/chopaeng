@@ -43,12 +43,12 @@ const Contact = () => {
                     <div className="col-md-6">
                         <div className="contact-card h-100 bg-white p-4 rounded-4 shadow-sm border border-light position-relative overflow-hidden d-flex flex-column text-center hover-lift transition-all">
                             <div className="card-bg-icon text-primary opacity-10">
-                                <i className="bi bi-discord"></i>
+                                <i className="fa-brands fa-discord"></i>
                             </div>
 
                             <div className="z-1 position-relative">
                                 <div className="icon-squircle bg-primary text-white mx-auto mb-3 shadow-sm">
-                                    <i className="bi bi-chat-dots-fill fs-3"></i>
+                                    <i className="fa-solid fa-comment-dots fs-3"></i>
                                 </div>
                                 <h3 className="fw-black ac-font text-dark mb-2">Community Chat</h3>
                                 <p className="text-muted fw-bold small mb-4 lh-sm px-3">
@@ -65,12 +65,12 @@ const Contact = () => {
                     <div className="col-md-6">
                         <div className="contact-card h-100 bg-white p-4 rounded-4 shadow-sm border border-light position-relative overflow-hidden d-flex flex-column text-center hover-lift transition-all">
                             <div className="card-bg-icon text-success opacity-10">
-                                <i className="bi bi-envelope-paper"></i>
+                                <i className="fa-solid fa-envelope"></i>
                             </div>
 
                             <div className="z-1 position-relative">
                                 <div className="icon-squircle bg-success text-white mx-auto mb-3 shadow-sm">
-                                    <i className="bi bi-mailbox2 fs-3"></i>
+                                    <i className="fa-solid fa-envelope-open fs-3"></i>
                                 </div>
                                 <h3 className="fw-black ac-font text-dark mb-2">Business Mail</h3>
                                 <p className="text-muted fw-bold small mb-4 lh-sm px-3">
@@ -88,7 +88,7 @@ const Contact = () => {
                 <div className="bg-white rounded-4 p-4 border border-light shadow-sm d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
                     <div className="d-flex align-items-center gap-3">
                         <div className="bg-warning bg-opacity-10 text-warning p-2 rounded-circle">
-                            <i className="bi bi-clock-history fs-4"></i>
+                            <i className="fa-solid fa-clock-rotate-left fs-4"></i>
                         </div>
                         <div>
                             <h5 className="fw-black ac-font text-dark mb-0">Operating Hours</h5>

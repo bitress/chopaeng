@@ -28,7 +28,7 @@ const CookiesPolicy = () => {
                     {/* Header */}
                     <div className="text-center mb-5">
                         <div className="d-inline-flex align-items-center justify-content-center bg-white p-3 rounded-4 shadow-sm mb-3 border border-light">
-                            <i className="bi bi-browser-chrome fs-1 text-success"></i>
+                            <i className="fa-brands fa-chrome fa-3x text-success"></i>
                         </div>
                         <h1 className="display-5 fw-black ac-font text-dark mb-1">Cookies Policy</h1>
                         <p className="text-muted fw-bold small">Last updated: March 1, 2025</p>
