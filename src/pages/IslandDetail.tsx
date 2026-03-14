@@ -263,10 +263,11 @@ const IslandDetail = () => {
 
                                 <div className="action-area">
                                     <button
-                                        disabled={!canShowDodo}
-                                        className={`btn-dodo-3d ${canShowDodo ? '' : 'disabled'}`}
+                                        disabled={!canShowDodo && !live?.isSubOnly}
+                                        className={`btn-dodo-3d ${canShowDodo || live?.isSubOnly ? '' : 'disabled'}`}
                                         onClick={() => {
                                             if (canShowDodo && live?.dodo) navigator.clipboard.writeText(live.dodo);
+                                            else if (live?.isSubOnly) window.open('https://discord.gg/chopaeng', '_blank', 'noopener,noreferrer');
                                         }}
                                     >
                                         <div className="content">
