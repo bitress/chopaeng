@@ -3,13 +3,54 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import banner from '../assets/banner.png'
 const API_BASE_URL = "https://blogs.chopaeng.com";
 
+interface PatreonPostAttributes {
+    title: string;
+    published_at: string;
+    is_public: boolean;
+    content: string;
+    image?: { large_url?: string };
+    url: string;
+}
+
+interface PatreonPostItem {
+    id: string;
+    attributes: PatreonPostAttributes;
+}
+
+interface PatreonApiResponse {
+    data: PatreonPostItem[];
+}
+
+interface PatreonSingleResponse {
+    data: PatreonPostItem;
+}
+
+interface FormattedPost {
+    id: string;
+    title: string;
+    date: string;
+    author: string;
+    isLocked: boolean;
+    category: string;
+    image: string;
+    content: string;
+    url: string;
+}
+
+interface RecentPost {
+    id: string;
+    title: string;
+    date: string;
+    image: string;
+}
+
 const BlogPost = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
     // --- STATE ---
-    const [post, setPost] = useState<any>(null);
-    const [recentPosts, setRecentPosts] = useState<any[]>([]);
+    const [post, setPost] = useState<FormattedPost | null>(null);
+    const [recentPosts, setRecentPosts] = useState<RecentPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
@@ -70,13 +111,15 @@ const BlogPost = () => {
 
     // --- FETCH DATA ---
     useEffect(() => {
+        const controller = new AbortController();
+
         const fetchData = async () => {
             setLoading(true);
             try {
                 // 1. Fetch Post
-                const postRes = await fetch(`${API_BASE_URL}/api/patreon/posts/${id}`);
+                const postRes = await fetch(`${API_BASE_URL}/api/patreon/posts/${id}`, { signal: controller.signal });
                 if (!postRes.ok) throw new Error("Post not found");
-                const postJson = await postRes.json();
+                const postJson: PatreonSingleResponse = await postRes.json();
                 const attr = postJson.data.attributes;
 
                 // Format Post
@@ -94,24 +137,26 @@ const BlogPost = () => {
                 });
 
                 // 2. Fetch Sidebar (Optimized: Only needed if we succeed)
-                const listRes = await fetch(`${API_BASE_URL}/api/patreon/posts`);
+                const listRes = await fetch(`${API_BASE_URL}/api/patreon/posts`, { signal: controller.signal });
                 if (listRes.ok) {
-                    const listJson = await listRes.json();
+                    const listJson: PatreonApiResponse = await listRes.json();
                     setRecentPosts(listJson.data
-                        .filter((p: any) => p.id !== id)
+                        .filter((p: PatreonPostItem) => p.id !== id)
                         .slice(0, 3)
-                        .map((p: any) => ({
+                        .map((p: PatreonPostItem) => ({
                             id: p.id,
                             title: p.attributes.title,
                             date: new Date(p.attributes.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-                            image: p.attributes.image?.large_url
+                            image: p.attributes.image?.large_url ?? ""
                         }))
                     );
                 }
 
             } catch (err) {
-                console.error(err);
-                setError(true);
+                if ((err as Error).name !== "AbortError") {
+                    console.error(err);
+                    setError(true);
+                }
             } finally {
                 setLoading(false);
             }
@@ -119,6 +164,8 @@ const BlogPost = () => {
 
         if (id) fetchData();
         window.scrollTo(0, 0);
+
+        return () => controller.abort();
     }, [id]);
 
     if (loading) return <div className="min-vh-100 d-flex justify-content-center align-items-center nook-bg"><i className="fa-solid fa-spinner fa-spin fa-3x text-nook"></i></div>;

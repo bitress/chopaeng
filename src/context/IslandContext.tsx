@@ -186,6 +186,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useIslandData = () => {
     const context = useContext(IslandContext);
     if (context === undefined) {

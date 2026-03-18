@@ -13,8 +13,12 @@ const Navbar = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Auto-close mobile menu on route change
-    useEffect(() => setIsMobileMenuOpen(false), [pathname]);
+    // Auto-close mobile menu on route change (compute during render)
+    const [prevPathname, setPrevPathname] = useState(pathname);
+    if (prevPathname !== pathname) {
+        setPrevPathname(pathname);
+        setIsMobileMenuOpen(false);
+    }
 
     const navLinks = [
         { name: "Home", path: "/", icon: "fa-house" },
@@ -72,7 +76,7 @@ const Navbar = () => {
 
                     {/* Right Side Actions */}
                     <div className="d-flex align-items-center gap-2">
-                        <a href="https://discord.gg/chopaeng" target="_blank" className="btn btn-nook-sm d-none d-md-flex">
+                        <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="btn btn-nook-sm d-none d-md-flex">
                             <i className="fa-brands fa-discord"></i>
                         </a>
 

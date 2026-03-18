@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import banner from '../assets/banner.png'
 import logo from '../assets/logo.webp'
 import StreamEmbed from "../components/StreamEmbed.tsx";
+
 interface BlogPost {
     id: string;
     title: string;
@@ -10,6 +11,24 @@ interface BlogPost {
     category: string;
     image: string;
     excerpt: string;
+}
+
+interface PatreonPostAttributes {
+    title: string;
+    published_at: string;
+    is_public: boolean;
+    content: string;
+    image?: { large_url?: string };
+    embed_data?: { provider?: string };
+}
+
+interface PatreonPostItem {
+    id: string;
+    attributes: PatreonPostAttributes;
+}
+
+interface PatreonApiResponse {
+    data: PatreonPostItem[];
 }
 
 const stripHtml = (html: string) => {
@@ -30,24 +49,26 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const fetchPosts = async () => {
             try {
-                const response = await fetch("https://blogs.chopaeng.com/api/patreon/posts");
+                const response = await fetch("https://blogs.chopaeng.com/api/patreon/posts", { signal: controller.signal });
                 if (!response.ok) throw new Error("Failed to fetch");
 
-                const json = await response.json();
+                const json: PatreonApiResponse = await response.json();
 
                 const transformed: BlogPost[] = [...json.data]
                     .sort(
-                        (a: any, b: any) =>
+                        (a: PatreonPostItem, b: PatreonPostItem) =>
                             new Date(b.attributes.published_at).getTime() -
                             new Date(a.attributes.published_at).getTime()
                     )
                     .slice(0, 3)
-                    .map((item: any) => {
+                    .map((item: PatreonPostItem) => {
                         const attr = item.attributes;
 
-                        let imageUrl = attr.image?.large_url;
+                        let imageUrl: string = attr.image?.large_url ?? "";
                         if (!imageUrl && attr.embed_data?.provider === "YouTube") {
                             imageUrl = banner;
                         }
@@ -73,13 +94,17 @@ const Home = () => {
 
                 setPosts(transformed);
             } catch (error) {
-                console.error("Error loading posts:", error);
+                if ((error as Error).name !== "AbortError") {
+                    console.error("Error loading posts:", error);
+                }
             } finally {
                 setLoading(false);
             }
         };
 
         fetchPosts();
+
+        return () => controller.abort();
     }, []);
 
     return (
