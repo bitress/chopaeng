@@ -22,6 +22,7 @@ const Navbar = () => {
         { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
         // { name: "Membership", path: "/membership", icon: "fa-crown" },
         { name: "Guide", path: "/guides", icon: "fa-book-open" },
+        { name: "ChoBot", path: "/chobot", icon: "fa-robot" },
         { name: "About", path: "/about", icon: "fa-circle-info" },
     ];
 

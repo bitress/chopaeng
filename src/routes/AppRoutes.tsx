@@ -13,6 +13,7 @@ import Chopaeng404 from "../errors/404.tsx";
 import BlogList from "../pages/BlogList.tsx";
 import BlogPost from "../pages/BlogPost.tsx";
 import DodoDecryptor from "../pages/DodoDecryptor.tsx";
+import Chobot from "../pages/Chobot.tsx";
 import PrivacyPolicy from "../pages/PrivacyPolicy.tsx";
 import TermsOfService from "../pages/TermsOfService.tsx";
 import CookiesPolicy from "../pages/CookiesPolicy.tsx";
@@ -31,7 +32,7 @@ const AppRoutes = () => {
                 <Route path="/find" element={<FindItems/>}/>
                 <Route path="/contact" element={<Contact/>}/>
                 <Route path="/dodo" element={<DodoDecryptor/>}/>
-
+                <Route path="/chobot" element={<Chobot/>}/>
 
                 <Route path="/blog" element={<BlogList />} />
                 <Route path="/blog/:id" element={<BlogPost />} />
