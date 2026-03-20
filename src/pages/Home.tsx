@@ -261,6 +261,80 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* EDUCATIONAL SECTION: What is an ACNH Treasure Island? */}
+            <section className="container py-5 position-relative z-2">
+                <div className="bg-white rounded-5 shadow-sm border p-4 p-lg-5">
+                    <div className="text-center mb-5">
+                        <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                            <i className="fa-solid fa-book-open text-success fs-4"></i>
+                            <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Learn More</span>
+                        </div>
+                        <h2 className="display-6 fw-black text-dark ac-font mb-2">What Is an ACNH Treasure Island?</h2>
+                        <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '560px' }}>Everything you need to know about treasure islands in Animal Crossing: New Horizons.</p>
+                    </div>
+
+                    <div className="row g-5">
+                        <div className="col-lg-6">
+                            <h3 className="h5 fw-black text-dark ac-font mb-3">The Short Answer</h3>
+                            <p className="text-muted fw-bold lh-lg">
+                                A <strong>treasure island</strong> is a modded Animal Crossing: New Horizons island that has been loaded with rare furniture sets, seasonal items, crafting materials, DIY recipe cards, Nook Miles Tickets, Star Fragments, and Bells. The host island runs a custom save that keeps item spawning indefinitely, so the ground is always covered with loot.
+                            </p>
+                            <p className="text-muted fw-bold lh-lg">
+                                Players visit using a <strong>Dodo code</strong> — a 5-character code entered at the in-game airport — and are free to take anything they find on the ground, dig up, or fish during their stay. There are no timers, no purchase requirements, and no limits on how many items you can carry out.
+                            </p>
+
+                            <h3 className="h5 fw-black text-dark ac-font mb-3 mt-4">Why Use a Treasure Island?</h3>
+                            <ul className="list-unstyled d-flex flex-column gap-2">
+                                {[
+                                    { icon: "fa-couch", text: "Complete your home furniture catalog without spending years collecting" },
+                                    { icon: "fa-coins", text: "Earn max Bells (999,999,999) in a single trip using the turnip glitch" },
+                                    { icon: "fa-people-group", text: "Invite dream villagers like Raymond or Sasha to your island instantly" },
+                                    { icon: "fa-screwdriver-wrench", text: "Stock up on crafting materials: iron nuggets, wood, clay, and more" },
+                                    { icon: "fa-scroll", text: "Collect rare seasonal DIY recipes you missed during limited-time events" },
+                                ].map((item, i) => (
+                                    <li key={i} className="d-flex align-items-start gap-3">
+                                        <div className="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 36, height: 36 }}>
+                                            <i className={`fa-solid ${item.icon} small`}></i>
+                                        </div>
+                                        <span className="text-muted fw-bold small lh-base mt-1">{item.text}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="col-lg-6">
+                            <h3 className="h5 fw-black text-dark ac-font mb-3">How Chopaeng Is Different</h3>
+                            <p className="text-muted fw-bold lh-lg">
+                                Most treasure island communities operate exclusively through Discord, requiring members to manually request codes and wait in long queues. Chopaeng built a full real-time web dashboard so anyone — member or not — can see at a glance which islands are online, how many visitors are on each one, and what items are available before committing to a visit.
+                            </p>
+                            <p className="text-muted fw-bold lh-lg">
+                                The site is powered by <strong>ChoBot</strong>, a custom Discord integration that generates private, on-demand islands for members in seconds. Instead of waiting for the next public drop, members type a single command with the item or villager name they want and receive a unique Dodo code instantly.
+                            </p>
+
+                            <div className="bg-light rounded-4 p-4 border mt-4">
+                                <h4 className="h6 fw-black text-dark ac-font mb-3">Free vs. Member Islands</h4>
+                                <div className="row g-3">
+                                    <div className="col-6">
+                                        <div className="text-center p-3 bg-white rounded-3 border h-100">
+                                            <i className="fa-solid fa-lock-open text-success fs-3 mb-2"></i>
+                                            <h6 className="fw-black text-dark mb-1 small">Free Islands</h6>
+                                            <p className="text-muted x-small fw-bold mb-0">Open to everyone. Shared public access. Regular furniture, materials, and seasonal drops.</p>
+                                        </div>
+                                    </div>
+                                    <div className="col-6">
+                                        <div className="text-center p-3 bg-white rounded-3 border h-100">
+                                            <i className="fa-solid fa-crown text-warning fs-3 mb-2"></i>
+                                            <h6 className="fw-black text-dark mb-1 small">Member Islands</h6>
+                                            <p className="text-muted x-small fw-bold mb-0">Private access. Villager injection, max Bells, priority ChoBot, and exclusive rare item drops.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section className="container py-5 mt-4 position-relative z-2">
 
                 {/* Section Header */}
@@ -385,24 +459,52 @@ const Home = () => {
                     <div className="d-flex flex-column gap-3">
                         {[
                             {
-                                q: "Is Chopaeng free to use?",
-                                a: "Yes! Free island access is available to everyone. Premium islands with exclusive items and villager injection require a Patreon subscription.",
+                                q: "What is an ACNH Treasure Island?",
+                                a: "An ACNH Treasure Island is a modded Animal Crossing: New Horizons island stocked with rare furniture, DIY recipes, crafting materials, seasonal items, Bells, and Nook Miles Tickets. Visitors fly to the island using a Dodo code and are free to pick up everything on the ground. Treasure islands let players obtain hard-to-find catalog items, complete museum donations, and earn millions of Bells without grinding.",
                             },
                             {
-                                q: "What is a Treasure Island?",
-                                a: "A Treasure Island is an Animal Crossing: New Horizons island loaded with rare items, Bells, DIY recipes, and materials — all free for visitors to take.",
+                                q: "Is Chopaeng free to use?",
+                                a: "Yes! Free public treasure islands are available to every Animal Crossing: New Horizons player at no cost. Visit the Treasure Islands page to see which public islands are currently online, copy the Dodo code, and fly over. Premium member-only islands with exclusive items, villager injection, max Bells, and priority ChoBot access require a paid Patreon, Twitch, or YouTube membership.",
+                            },
+                            {
+                                q: "What is a Dodo code and how do I use it?",
+                                a: "A Dodo code is a 5-character code that lets you fly to another player's island. In Animal Crossing: New Horizons, speak to Orville at Dodo Airlines, select 'I want to fly' → 'Visit someone' → 'Online play' → 'Search via Dodo Code', and enter the code. You will be transported to the treasure island within seconds.",
+                            },
+                            {
+                                q: "What should I do before flying to a treasure island?",
+                                a: "Make sure all 40 of your inventory slots are completely empty before flying. Leave all tools, furniture, and items at home — axes, shovels, and fishing rods are provided on the island. Also ensure you have a stable internet connection (NAT Type A or B) to avoid communication errors.",
                             },
                             {
                                 q: "What is ChoBot and how do I use it?",
-                                a: "ChoBot is our Discord bot. Type a command with the item or villager you want, and it automatically generates a private island just for you with a unique Dodo code.",
+                                a: "ChoBot is Chopaeng's custom Discord bot that automatically generates private on-demand treasure islands for members. After joining the Discord server, type !order [item name] or !villager [villager name] in the correct channel. The bot will spin up a dedicated island and send you a unique private Dodo code, usually within seconds.",
                             },
                             {
                                 q: "How do I get max Bells (999,999,999)?",
-                                a: "Premium members can visit a dedicated Bells island that uses the turnip glitch to give you max Bells in a single trip.",
+                                a: "Premium Chopaeng members can visit the dedicated Bells island, which uses the turnip duplication glitch to grant max Bells in a single trip. Fly to the Bells island, pick up the turnips on the ground, return home, and sell them at Nook's Cranny for the full 999,999,999 Bells. This lets you pay off your entire home loan and fund island development instantly.",
                             },
                             {
                                 q: "Can I request a specific villager?",
-                                a: "Absolutely! Members can request any villager through ChoBot on Discord. The villager will be placed in boxes, ready to move to your island.",
+                                a: "Absolutely! Members can request any Animal Crossing: New Horizons villager through ChoBot on Discord using the !villager [name] command. The bot creates a private island with that villager already placed in boxes, ready to move to your island. Popular villagers like Raymond, Sasha, Marshal, and Judy can all be requested this way.",
+                            },
+                            {
+                                q: "What items can I find on Chopaeng treasure islands?",
+                                a: "Chopaeng treasure islands are regularly stocked with rare seasonal furniture, wall-mounted items, flooring and wallpaper, DIY recipe cards, crafting materials such as iron nuggets and different types of wood, Nook Miles Tickets, Star Fragments, fossils, art pieces, and seasonal event items. Each island has a theme and inventory that is refreshed on a regular schedule.",
+                            },
+                            {
+                                q: "Why do I keep getting a 'Wuh-oh! Interference' error?",
+                                a: "The 'Interference' message appears when someone else is currently flying in or out, or when a visitor has a menu open. It is temporary. Simply keep pressing 'A' to retry — you will be let in once the interference clears, usually within a few seconds.",
+                            },
+                            {
+                                q: "How do I leave a treasure island properly?",
+                                a: "Always leave by walking into the airport terminal and speaking to Orville to fly home. Never press the minus (-) button to quit while visiting. Quitting this way causes a communication error that crashes the island for every other visitor still on it, forcing a full reboot.",
+                            },
+                            {
+                                q: "What membership tiers does Chopaeng offer?",
+                                a: "Chopaeng offers four tiers via Patreon, Twitch, or YouTube: Chotato (entry, $3/mo), ChoColate (standard, $4/mo), ChoFries (most popular with priority ChoBot, $5/mo), and ChoSoup (all-access VIP with every perk, $10/mo). All paid tiers unlock private member islands, unlimited trips, and a Discord role.",
+                            },
+                            {
+                                q: "Is Animal Crossing: New Horizons required to visit?",
+                                a: "Yes. Animal Crossing: New Horizons (ACNH) on Nintendo Switch is required to fly to any treasure island. You need an active Nintendo Switch Online subscription for online play. The Chopaeng website works on any device for browsing maps and Dodo codes, but the actual island visit happens inside the game.",
                             },
                         ].map((faq) => (
                             <details key={faq.q} className="bg-white rounded-4 shadow-sm border p-4 faq-item" style={{ cursor: 'pointer' }}>
