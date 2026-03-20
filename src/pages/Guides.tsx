@@ -12,15 +12,19 @@ const Guide = () => {
             activeTab === "steps"
                 ? "How to Join ACNH Treasure Islands – Step-by-Step Guide | Chopaeng"
                 : activeTab === "rules"
-                    ? "ACNH Treasure Island Rules – Golden Rules for Visitors | Chopaeng"
-                    : "ACNH Treasure Island FAQ – Help & Common Issues | Chopaeng";
+                    ? "ACNH Treasure Island Rules – Sub Rules & Order Bot Rules | Chopaeng"
+                    : activeTab === "chobot"
+                        ? "ChoBot Guide – Drop Items, DIYs, Villagers & Commands | Chopaeng"
+                        : "ACNH Treasure Island FAQ – Help & Common Issues | Chopaeng";
 
         const desc =
             activeTab === "steps"
                 ? "Step-by-step guide on how to join Chopaeng ACNH treasure islands. Learn Dodo code entry, airport tips, and best practices for smooth Animal Crossing: New Horizons island visits."
                 : activeTab === "rules"
-                    ? "Review the golden rules for visiting Chopaeng ACNH treasure islands. Proper airport exits, clean item handling, and stable connections keep treasure islands running smoothly."
-                    : "Find answers to common ACNH treasure island issues on Chopaeng — interference errors, communication errors, how to order items, and how to use the Chopaeng Discord bot.";
+                    ? "Review the sub rules and order bot rules for visiting Chopaeng ACNH treasure islands. Proper airport exits, code confidentiality, and ChoBot etiquette keep the islands running smoothly."
+                    : activeTab === "chobot"
+                        ? "Full ChoBot command guide for Chopaeng members. Learn how to drop items by HEX ID or name, order DIY recipes, customize item colors, inject villagers, get max Bells, and more."
+                        : "Find answers to common ACNH treasure island issues on Chopaeng — interference errors, communication errors, how to order items, and how to use the Chopaeng Discord bot.";
 
         document.title = title;
 
@@ -186,6 +190,7 @@ const Guide = () => {
                     {[
                         { id: 'steps', label: 'How to Join', icon: 'fa-solid fa-plane' },
                         { id: 'rules', label: 'Sub Rules', icon: 'fa-solid fa-shield-halved' },
+                        { id: 'chobot', label: 'ChoBot Guide', icon: 'fa-solid fa-robot' },
                         { id: 'faq', label: 'Help & FAQ', icon: 'fa-solid fa-comment-dots' }
                     ].map((tab) => (
                         <button
@@ -366,9 +371,230 @@ const Guide = () => {
                         </div>
                     )}
 
-                    {/* TAB 3: FAQ / DIALOGUE */}
-                    {activeTab === 'faq' && (
+                    {/* TAB 3: CHOBOT GUIDE */}
+                    {activeTab === 'chobot' && (
                         <div className="animate-fade-in">
+                            <h4 className="ac-font fw-black mb-2 text-center text-dark">
+                                <i className="fa-solid fa-robot text-success me-2"></i>ChoBot Guide
+                            </h4>
+                            <p className="text-muted fw-bold small text-center mb-5">How to use ChoBot on our sub islands. <strong>You must be on the island before running any commands.</strong></p>
+
+                            {/* Before You Start */}
+                            <div className="p-3 bg-success bg-opacity-10 rounded-4 border border-success border-opacity-25 mb-5">
+                                <h6 className="fw-black text-success mb-2"><i className="fa-solid fa-circle-info me-2"></i>Before You Start</h6>
+                                <ul className="mb-0 small fw-bold text-success d-flex flex-column gap-1 ps-3">
+                                    <li>You must be on the island before running any bot commands.</li>
+                                    <li>Do not enter commands while someone is flying in — the bot will not respond.</li>
+                                    <li>Garbage bins are available everywhere. Use them for accidental drops.</li>
+                                    <li>ChoBot supports: Bugs, Fish, Weeds, Flowers, Sea Creatures, Trees, and Wrapping Paper.</li>
+                                    <li>Type <code className="bg-white px-1 rounded">!senddodo</code> in any island channel and the bot will DM you the Dodo Code.</li>
+                                </ul>
+                            </div>
+
+                            {/* Section 1: Drop Items */}
+                            <div className="mb-5">
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="bg-success text-white rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-black" style={{width:32,height:32,fontSize:'0.85rem'}}>1</div>
+                                    <h5 className="fw-black text-dark ac-font mb-0">Drop Items</h5>
+                                </div>
+                                <div className="d-flex flex-column gap-3 ps-2">
+                                    <p className="small fw-bold text-muted mb-0">Find the item's HEX ID using the item list link or by typing <code className="bg-light px-1 rounded border">!lookup [Item Name]</code> in the island channel. Example: <code className="bg-light px-1 rounded border">!lookup lucky gold cat</code></p>
+                                    <div className="bg-dark text-white rounded-3 p-3 small font-monospace">
+                                        <div className="text-success mb-1"># Drop a single item by HEX ID</div>
+                                        <div>!drop 2656</div>
+                                        <div className="text-success mt-2 mb-1"># Drop multiple items (up to 9 in one line)</div>
+                                        <div>!drop 2656 0EE8 1A3F</div>
+                                        <div className="text-success mt-2 mb-1"># Drop by item name (up to 9)</div>
+                                        <div>!drop Pagoda, Golden Axe, Harp</div>
+                                    </div>
+                                    <div className="bg-light rounded-3 p-3 border">
+                                        <p className="small fw-black text-dark mb-2">Stack Prefixes — add before the HEX ID:</p>
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {[
+                                                { label: 'Stack of 10', code: '090000' },
+                                                { label: 'Stack of 30', code: '1D0000' },
+                                                { label: 'Stack of 50', code: '310000' },
+                                            ].map(s => (
+                                                <div key={s.code} className="bg-white rounded-3 border px-3 py-2 text-center">
+                                                    <div className="small fw-black text-dark">{s.label}</div>
+                                                    <code className="text-success small">{s.code}</code>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="bg-dark text-white rounded-3 p-2 mt-2 small font-monospace">
+                                            <span className="text-success"># Stack of 30 stones</span><br/>
+                                            !drop 1D000009C6
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 2: DIY Recipes */}
+                            <div className="mb-5">
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="bg-warning text-white rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-black" style={{width:32,height:32,fontSize:'0.85rem'}}>2</div>
+                                    <h5 className="fw-black text-dark ac-font mb-0">Drop DIY Recipes</h5>
+                                </div>
+                                <div className="d-flex flex-column gap-3 ps-2">
+                                    <p className="small fw-bold text-muted mb-0">First look up the recipe code, then drop it using the recipe order code.</p>
+                                    <div className="bg-dark text-white rounded-3 p-3 small font-monospace">
+                                        <div className="text-success mb-1"># Step 1: Look up the recipe code</div>
+                                        <div>!recipe Golden Axe</div>
+                                        <div className="text-warning mt-1 mb-1"># Bot responds with:</div>
+                                        <div className="opacity-75">2591 golden axe: Recipe order code: 297000016A2</div>
+                                        <div className="text-success mt-2 mb-1"># Step 2: Drop the recipe</div>
+                                        <div>!drop 297000016A2</div>
+                                        <div className="text-success mt-2 mb-1"># Multiple DIYs (up to 9 in one line)</div>
+                                        <div>!drop 297000016A2 297000016A2 297000016A2</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Customized Items */}
+                            <div className="mb-5">
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="bg-info text-white rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-black" style={{width:32,height:32,fontSize:'0.85rem'}}>3</div>
+                                    <h5 className="fw-black text-dark ac-font mb-0">Drop Customized Items</h5>
+                                </div>
+                                <div className="d-flex flex-column gap-3 ps-2">
+                                    <p className="small fw-bold text-muted mb-0">Use <code className="bg-light px-1 rounded border">!item [HEX ID]</code> to see available color options, then <code className="bg-light px-1 rounded border">!customize</code> to generate the drop code.</p>
+                                    <div className="bg-dark text-white rounded-3 p-3 small font-monospace">
+                                        <div className="text-success mb-1"># Step 1: View available colors</div>
+                                        <div>!item 0EE8</div>
+                                        <div className="text-warning mt-1 mb-1"># Bot responds:</div>
+                                        <div className="opacity-75">streetlamp:<br/>0=Green  1=Brown  2=White  3=Black</div>
+                                        <div className="text-success mt-2 mb-1"># Step 2: Get the drop code for White (2)</div>
+                                        <div>!customize 0EE8 2</div>
+                                        <div className="text-warning mt-1 mb-1"># Bot responds:</div>
+                                        <div className="opacity-75">streetlamp: 0000000200000EE8</div>
+                                        <div className="text-success mt-2 mb-1"># Step 3: Drop the item</div>
+                                        <div>!drop 0000000200000EE8</div>
+                                    </div>
+                                    <div className="bg-light rounded-3 p-3 border">
+                                        <p className="small fw-black text-dark mb-1">Items with both Color + Design options:</p>
+                                        <p className="small fw-bold text-muted mb-2">Add both codes together. Example — Pink (5) + Square Logo (32) = <strong>37</strong></p>
+                                        <div className="bg-dark text-white rounded-3 p-2 small font-monospace">
+                                            !customize 074E 37<br/>
+                                            !drop 000000250000074E
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 4: Villager Injection */}
+                            <div className="mb-5">
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="bg-danger text-white rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-black" style={{width:32,height:32,fontSize:'0.85rem'}}>4</div>
+                                    <h5 className="fw-black text-dark ac-font mb-0">Inject a Villager</h5>
+                                </div>
+                                <div className="d-flex flex-column gap-3 ps-2">
+                                    <div className="p-2 bg-warning bg-opacity-10 rounded-3 border border-warning border-opacity-25">
+                                        <p className="small fw-black text-warning mb-0"><i className="fa-solid fa-triangle-exclamation me-1"></i>Make sure you are NOT on the island yet before injecting.</p>
+                                    </div>
+                                    <p className="small fw-bold text-muted mb-0">Use <code className="bg-light px-1 rounded border">!injectvillager [House #] [Villager Name]</code>. House numbers run from 0 (1st house) to 9 (10th house).</p>
+                                    <div className="bg-dark text-white rounded-3 p-3 small font-monospace">
+                                        <div className="text-success mb-1"># Inject Bianca into house slot 3 (4th house)</div>
+                                        <div>!injectvillager 3 Bianca</div>
+                                        <div className="text-success mt-2 mb-1"># Inject multiple villagers at once</div>
+                                        <div>!mvi Judy Marshal Raymond</div>
+                                    </div>
+                                    <p className="small fw-bold text-muted mb-0">Wait for the bot to confirm: <span className="text-dark">"Villager has been injected at Index 3. Please go talk to them!"</span> — then fly in.</p>
+
+                                    <div className="bg-light rounded-3 p-3 border">
+                                        <p className="small fw-black text-dark mb-2">Sanrio Villager Swap (to get the villager to your island):</p>
+                                        <ol className="mb-0 small fw-bold text-muted d-flex flex-column gap-1 ps-3">
+                                            <li>Land on the island and check the first house — villager should be in boxes.</li>
+                                            <li>Exit the house, then inject a Sanrio villager in place of the "in boxes" villager: <code className="bg-white px-1 rounded border">!injectvillager Marty</code></li>
+                                            <li>Enter the home and invite the villager. The previous villager will still appear on the island.</li>
+                                            <li>Leave the island. You will have an empty plot with the Sanrio villager's name.</li>
+                                            <li>Time travel one day forward to ensure the villager fully moves in.</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 5: Max Bells */}
+                            <div className="mb-5">
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="bg-success text-white rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-black" style={{width:32,height:32,fontSize:'0.85rem'}}>5</div>
+                                    <h5 className="fw-black text-dark ac-font mb-0">Get Max Bells</h5>
+                                </div>
+                                <div className="d-flex flex-column gap-3 ps-2">
+                                    <ol className="mb-0 small fw-bold text-muted d-flex flex-column gap-2 ps-3">
+                                        <li>Obtain 1 stack of turnips on one of the Chopaeng islands.</li>
+                                        <li>Sell the stack to Nook's Cranny on the same island.</li>
+                                        <li>The sell price will show <strong>-64,000,000</strong> — proceed with the sale.</li>
+                                        <li>Check your ABD (Automatic Bell Dispenser) on your own island afterward.</li>
+                                    </ol>
+                                    <div className="p-2 bg-warning bg-opacity-10 rounded-3 border border-warning border-opacity-25">
+                                        <p className="small fw-bold text-warning mb-0"><i className="fa-solid fa-clock me-1"></i>Nook's Cranny is open <strong>8 AM – 10 PM</strong> only. Use <code className="bg-white px-1 rounded">!gt</code> to check the island's current time. If it's within hours but the shop is closed, contact a moderator.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 6: Villager Wake Times */}
+                            <div className="mb-5">
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="bg-secondary text-white rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-black" style={{width:32,height:32,fontSize:'0.85rem'}}>6</div>
+                                    <h5 className="fw-black text-dark ac-font mb-0">Villager Wake Times</h5>
+                                </div>
+                                <p className="small fw-bold text-muted mb-3 ps-2">Use <code className="bg-light px-1 rounded border">!gt</code> in the island channel to check the current game time, then compare with the schedule below to ensure your villager is awake.</p>
+                                <div className="row g-2 ps-2">
+                                    {[
+                                        { type: 'Snooty', hours: '8:30 AM – 2:30 AM', color: 'danger' },
+                                        { type: 'Smug', hours: '7:00 AM – 2:00 AM', color: 'primary' },
+                                        { type: 'Sisterly', hours: '9:30 AM – 3:00 AM', color: 'info' },
+                                        { type: 'Normal', hours: '6:00 AM – 12:00 AM', color: 'success' },
+                                        { type: 'Peppy', hours: '7:00 AM – 1:20 AM', color: 'warning' },
+                                        { type: 'Cranky', hours: '9:00 AM – 3:30 AM', color: 'secondary' },
+                                        { type: 'Lazy', hours: '8:00 AM – 11:00 PM', color: 'success' },
+                                        { type: 'Jock', hours: '6:30 AM – 12:30 AM', color: 'primary' },
+                                    ].map(v => (
+                                        <div key={v.type} className="col-sm-6 col-md-3">
+                                            <div className={`bg-${v.color}-subtle border border-${v.color} border-opacity-25 rounded-3 p-2 text-center`}>
+                                                <div className={`fw-black small text-${v.color}`}>{v.type}</div>
+                                                <div className="x-small fw-bold text-dark opacity-75">{v.hours}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="small fw-bold text-muted mt-3 ps-2">Not sure of a villager's personality? Go to <span className="text-success fw-black">🍄 villager-check</span> and type <code className="bg-light px-1 rounded border">ac!lookup villager [name]</code>. Example: <code className="bg-light px-1 rounded border">ac!lookup villager bianca</code></p>
+                            </div>
+
+                            {/* Section 7: Command Reference */}
+                            <div>
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="bg-dark text-white rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-black" style={{width:32,height:32,fontSize:'0.85rem'}}>7</div>
+                                    <h5 className="fw-black text-dark ac-font mb-0">Command Reference</h5>
+                                </div>
+                                <div className="row g-2 ps-2">
+                                    {[
+                                        { cmd: '!villagers', desc: 'List all villagers on the island' },
+                                        { cmd: '!visitors', desc: 'Check who is currently visiting' },
+                                        { cmd: '!senddodo', desc: 'Receive the Dodo Code via DM' },
+                                        { cmd: '!gt', desc: "Check the island's current game time" },
+                                        { cmd: '!lookup / !li', desc: 'Find the HEX ID of an item or DIY' },
+                                        { cmd: '!item [HEX]', desc: 'List color/variant options for an item' },
+                                        { cmd: '!drop [HEX/name]', desc: 'Drop an item (up to 9 per line)' },
+                                        { cmd: '!recipe [name]', desc: 'Get the recipe order code for a DIY' },
+                                        { cmd: '!customize [HEX] [code]', desc: 'Get a customized item drop code' },
+                                        { cmd: '!injectvillager [#] [name]', desc: 'Inject a villager into a house slot' },
+                                        { cmd: '!mvi [name] [name] ...', desc: 'Inject multiple villagers at once' },
+                                    ].map(c => (
+                                        <div key={c.cmd} className="col-12">
+                                            <div className="d-flex align-items-center gap-3 bg-light rounded-3 px-3 py-2 border">
+                                                <code className="text-success fw-black small flex-shrink-0" style={{minWidth:'200px'}}>{c.cmd}</code>
+                                                <span className="small fw-bold text-muted">{c.desc}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB 4: FAQ / DIALOGUE */}
+                    {activeTab === 'faq' && (                        <div className="animate-fade-in">
                             <h4 className="ac-font fw-black mb-4 text-center text-dark">Troubleshooting & Help</h4>
 
                             <div className="d-flex flex-column gap-3">
