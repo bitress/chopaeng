@@ -291,56 +291,56 @@ const Guide = () => {
                             <div className="row g-3">
                                 {[
                                     {
-                                        num: "C1",
+                                        num: "OB1",
                                         title: "Set Your Nickname First",
                                         desc: "You MUST change your server nickname to Your ACNH Character Name | Your ACNH Island Name before placing any order. Update it in the 👑 set-nick channel.",
                                         type: "info",
                                         icon: "fa-solid fa-id-badge"
                                     },
                                     {
-                                        num: "C2",
+                                        num: "OB2",
                                         title: "No Code Sharing",
                                         desc: "DO NOT share your order code with anyone else. Only the person who placed the order may visit that island. Sharing a code may result in a permanent bot ban.",
                                         type: "danger",
                                         icon: "fa-solid fa-shield-halved"
                                     },
                                     {
-                                        num: "C3",
+                                        num: "OB3",
                                         title: "No Littering",
                                         desc: "DO NOT litter on the island. Pick up only what you ordered and leave the island clean for the next person.",
                                         type: "warning",
                                         icon: "fa-solid fa-trash"
                                     },
                                     {
-                                        num: "C4",
+                                        num: "OB4",
                                         title: "Order Only What You Need",
                                         desc: "Do not spam or place excessive orders. Order only the items you genuinely need to keep the queue fair for all members.",
                                         type: "secondary",
                                         icon: "fa-solid fa-list-check"
                                     },
                                     {
-                                        num: "C5",
+                                        num: "OB5",
                                         title: "Good Internet Required",
                                         desc: "You MUST have a stable internet connection of at least 15–25 Mbps before placing an order to avoid disconnection errors mid-visit.",
                                         type: "primary",
                                         icon: "fa-solid fa-wifi"
                                     },
                                     {
-                                        num: "C6",
+                                        num: "OB6",
                                         title: "Read the Bot Guide First",
                                         desc: "Read everything in the 🌲 chorder-bot-how channel before placing any orders. This prevents wrong commands and avoids unnecessary questions in the order channel.",
                                         type: "success",
                                         icon: "fa-solid fa-book-open"
                                     },
                                     {
-                                        num: "C7",
+                                        num: "OB7",
                                         title: "Order Channel is for Orders Only",
                                         desc: "DO NOT chat or look up items in the 🌲 chorder-bot channel — that channel is strictly for placing orders. Use the 🌲 chorder-bot-help channel for questions.",
                                         type: "danger",
                                         icon: "fa-solid fa-comment-slash"
                                     },
                                     {
-                                        num: "C8",
+                                        num: "OB8",
                                         title: "Item Lookup Channel is for Lookups Only",
                                         desc: "DO NOT place orders or chat in the 🌲 chorder-item-lookup channel. That channel is exclusively for looking up the code for an item or DIY recipe.",
                                         type: "warning",
