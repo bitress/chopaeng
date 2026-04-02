@@ -4,6 +4,33 @@ import banner from '../assets/banner.png';
 // --- CONFIGURATION ---
 const API_URL = "https://blogs.chopaeng.com/api/patreon/posts";
 
+interface PatreonPostAttributes {
+    title: string;
+    published_at: string;
+    is_public: boolean;
+    content: string;
+    image?: { large_url?: string };
+    embed_data?: { provider?: string };
+}
+
+interface PatreonPostItem {
+    id: string;
+    attributes: PatreonPostAttributes;
+}
+
+interface PatreonApiResponse {
+    data: PatreonPostItem[];
+}
+
+interface BlogPost {
+    id: string;
+    title: string;
+    date: string;
+    category: string;
+    image: string;
+    excerpt: string;
+}
+
 const stripHtml = (html: string) => {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     return doc.body.textContent || "";
@@ -18,28 +45,30 @@ const formatDate = (isoString: string) => {
 const CATEGORIES = ["All", "Announcement", "Members Only"];
 
 const BlogList = () => {
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("All");
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const fetchPosts = async () => {
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(API_URL, { signal: controller.signal });
                 if (!response.ok) throw new Error("Failed to fetch");
 
-                const json = await response.json();
+                const json: PatreonApiResponse = await response.json();
 
                 const transformed = [...json.data]
                     .sort(
-                        (a: any, b: any) =>
+                        (a: PatreonPostItem, b: PatreonPostItem) =>
                             new Date(b.attributes.published_at).getTime() -
                             new Date(a.attributes.published_at).getTime()
                     )
-                    .map((item: any) => {
+                    .map((item: PatreonPostItem) => {
                         const attr = item.attributes;
 
-                        let imageUrl = attr.image?.large_url;
+                        let imageUrl: string = attr.image?.large_url ?? "";
                         if (!imageUrl && attr.embed_data?.provider === "YouTube") {
                             imageUrl = banner;
                         }
@@ -61,13 +90,17 @@ const BlogList = () => {
 
                 setPosts(transformed);
             } catch (error) {
-                console.error("Error fetching posts:", error);
+                if ((error as Error).name !== "AbortError") {
+                    console.error("Error fetching posts:", error);
+                }
             } finally {
                 setLoading(false);
             }
         };
 
         fetchPosts();
+
+        return () => controller.abort();
     }, []);
 
 

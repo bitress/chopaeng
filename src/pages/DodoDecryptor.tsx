@@ -10,7 +10,10 @@ const DodoDecryptor: React.FC = () => {
     // Check if hash exists in URL initially
     const hasHashInUrl = !!searchParams.get("hash");
 
-    const [hashInput, setHashInput] = useState("");
+    const [hashInput, setHashInput] = useState(() => {
+        const hsh = searchParams.get("hash");
+        return hsh ? hsh.replace(/_/g, '/').replace(/-/g, '+') : "";
+    });
     const [passInput, setPassInput] = useState("");
     const [resultCode, setResultCode] = useState<string | null>(null);
     const [isDeciphered, setIsDeciphered] = useState(false);
@@ -23,13 +26,6 @@ const DodoDecryptor: React.FC = () => {
         if (index === -1) return msg;
         return msg.substring(index + lookup.length).split(" ")[0];
     };
-
-    useEffect(() => {
-        const hsh = searchParams.get("hash");
-        if (hsh) {
-            setHashInput(hsh.replace(/_/g, '/').replace(/-/g, '+'));
-        }
-    }, [searchParams]);
 
     const handleDecrypt = () => {
         const cleanHash = extractHash(hashInput);

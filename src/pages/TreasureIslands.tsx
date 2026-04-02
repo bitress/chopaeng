@@ -461,7 +461,7 @@ const TreasureIslands = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    hasCode && onCopyCode(island, island.dodoCode!);
+                                                    if (hasCode) onCopyCode(island, island.dodoCode!);
                                                 }}
                                                 disabled={statusMeta.btn.disabled}
                                                 className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : statusMeta.btn.className}`}

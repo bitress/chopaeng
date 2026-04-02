@@ -4,6 +4,7 @@ import logo from "../assets/logo.webp";
 
 const Footer = () => {
     const [email, setEmail] = useState("");
+    const [subscribeStatus, setSubscribeStatus] = useState<"idle" | "success" | "error">("idle");
     const currentYear = new Date().getFullYear();
 
     const socialLinks = [
@@ -32,6 +33,11 @@ const Footer = () => {
 
     const handleSubscribe = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
+        if (!email) return;
+        // Redirect to Discord for newsletter updates
+        setSubscribeStatus("success");
+        setEmail("");
+        setTimeout(() => setSubscribeStatus("idle"), 4000);
     };
 
     return (
@@ -88,22 +94,29 @@ const Footer = () => {
                         <div className="p-4 rounded-4 bg-light border-0 shadow-sm">
                             <h6 className="fw-bold text-dark mb-2">Island Newsletter</h6>
                             <p className="small text-muted mb-3">Get notified about the latest drops.</p>
-                            <form onSubmit={handleSubscribe}>
-                                <div className="input-group">
-                                    <input
-                                        type="email"
-                                        className="form-control border-0 shadow-none px-3"
-                                        placeholder="Email address"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        style={{ borderRadius: "8px 0 0 8px", fontSize: "0.9rem" }}
-                                    />
-                                    <button type="submit" className="btn btn-success px-3" style={{ borderRadius: "0 8px 8px 0" }}>
-                                        Join
-                                    </button>
+                            {subscribeStatus === "success" ? (
+                                <div className="alert alert-success small fw-bold py-2 px-3 rounded-3 mb-0">
+                                    <i className="fa-solid fa-check-circle me-2"></i>
+                                    Thanks! Join our <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="alert-link">Discord</a> for real-time updates.
                                 </div>
-                            </form>
+                            ) : (
+                                <form onSubmit={handleSubscribe}>
+                                    <div className="input-group">
+                                        <input
+                                            type="email"
+                                            className="form-control border-0 shadow-none px-3"
+                                            placeholder="Email address"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            style={{ borderRadius: "8px 0 0 8px", fontSize: "0.9rem" }}
+                                        />
+                                        <button type="submit" className="btn btn-success px-3" style={{ borderRadius: "0 8px 8px 0" }}>
+                                            Join
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
