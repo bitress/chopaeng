@@ -1,7 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { type IslandData, type IslandCategory, type IslandStatus } from "../data/islands";
-import { useIslandData } from "../context/IslandContext";
+import { useIslandData } from "../context/useIslandData";
+import { useAuth } from "../context/useAuth";
+import { getAuthToken } from "../context/authToken";
+import { ACNH_FINDER_API_BASE, DODO_API_BASE } from "../config/api";
 
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
 type FilterKey = "ALL" | IslandCategory;
@@ -80,10 +83,12 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
 const TreasureIslands = () => {
     const navigate = useNavigate();
     const { islands, loading } = useIslandData();
+    const { user, login, canAccessIsland } = useAuth();
 
     const [filter, setFilter] = useState<FilterKey>("ALL");
-
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [revealedCodes, setRevealedCodes] = useState<Record<string, string>>({});
+    const [revealingId, setRevealingId] = useState<string | null>(null);
     const [selectedMap, setSelectedMap] = useState<IslandData | null>(null);
 
     const [search, setSearch] = useState<string>("");
@@ -109,7 +114,7 @@ const TreasureIslands = () => {
 
         try {
             const endpoint = searchMode === 'ITEM' ? 'find' : 'villager';
-            const response = await fetch(`https://acnh-finder.chopaeng.com/api/${endpoint}?q=${encodeURIComponent(search)}`);
+            const response = await fetch(`${ACNH_FINDER_API_BASE}/api/${endpoint}?q=${encodeURIComponent(search)}`);
             if (!response.ok) throw new Error("Search failed");
 
             const data: FinderResponse = await response.json();
@@ -161,6 +166,54 @@ const TreasureIslands = () => {
         navigator.clipboard.writeText(code);
         setCopiedId(island.name);
         setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const onRevealCode = async (island: IslandData) => {
+        // Free islands do not require reveal/auth; copy the live code directly.
+        if ((island.requiredRoles?.length ?? 0) === 0) {
+            if (island.dodoCode) onCopyCode(island, island.dodoCode);
+            return;
+        }
+        // Already revealed — just copy
+        if (revealedCodes[island.id]) {
+            onCopyCode(island, revealedCodes[island.id]);
+            return;
+        }
+        // Not logged in — send to Discord OAuth
+        if (!user) {
+            login();
+            return;
+        }
+        // No access — redirect to membership
+        if (!canAccessIsland(island.requiredRoles)) {
+            navigate("/membership");
+            return;
+        }
+        // Fetch dodo code from backend
+        setRevealingId(island.id);
+        try {
+            const token = getAuthToken();
+            const resp = await fetch(`${DODO_API_BASE}/api/islands/${encodeURIComponent(island.name)}/dodo`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                credentials: "include",
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                if (resp.status === 403) { navigate("/membership"); return; }
+                console.error("Dodo reveal failed:", err);
+                return;
+            }
+            const data = await resp.json();
+            setRevealedCodes(prev => ({ ...prev, [island.id]: data.dodo_code }));
+            navigator.clipboard.writeText(data.dodo_code);
+            setCopiedId(island.name);
+            setTimeout(() => setCopiedId(null), 2000);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setRevealingId(null);
+        }
     };
 
     const handleModeSwitch = (mode: SearchMode) => {
@@ -361,8 +414,50 @@ const TreasureIslands = () => {
                     {filteredData.map((island) => {
                         const statusMeta = STATUS_CONFIG[island.status] || STATUS_CONFIG["OFFLINE"];
                         const isMatch = finderResults && finderResults.includes(island.name.toUpperCase());
-                        const hasCode = island.status === "ONLINE" && island.dodoCode && island.dodoCode.length === 5;
-                        const btnText = hasCode ? island.dodoCode : statusMeta.btn.text;
+                        const revealedCode = revealedCodes[island.id];
+                        const liveCode = island.status === "ONLINE" && island.dodoCode && island.dodoCode.length === 5
+                            ? island.dodoCode
+                            : null;
+                        const isFreeIsland = (island.requiredRoles?.length ?? 0) === 0;
+                        const hasInstantCode = isFreeIsland && !!liveCode;
+                        const isRevealing = revealingId === island.id;
+                        const needsAuth = !isFreeIsland && island.requiredRoles.length > 0 && !canAccessIsland(island.requiredRoles);
+                        // Button state
+                        let btnText: string;
+                        let btnClass: string;
+                        let btnDisabled: boolean;
+                        let btnIcon: string | null = statusMeta.btn.icon;
+                        if (revealedCode) {
+                            btnText = revealedCode;
+                            btnClass = "btn-nook";
+                            btnDisabled = false;
+                            btnIcon = "fa-copy";
+                        } else if (hasInstantCode) {
+                            btnText = liveCode as string;
+                            btnClass = "btn-nook";
+                            btnDisabled = false;
+                            btnIcon = "fa-copy";
+                        } else if (island.status === "ONLINE" && needsAuth && !user) {
+                            btnText = "LOGIN TO REVEAL";
+                            btnClass = "btn-sub";
+                            btnDisabled = false;
+                            btnIcon = "fa-right-to-bracket";
+                        } else if (island.status === "ONLINE" && needsAuth) {
+                            btnText = "SUB REQUIRED";
+                            btnClass = "btn-sub";
+                            btnDisabled = false;
+                            btnIcon = "fa-lock";
+                        } else if (island.status === "ONLINE") {
+                            btnText = isRevealing ? "LOADING..." : "REVEAL CODE";
+                            btnClass = "btn-nook";
+                            btnDisabled = isRevealing;
+                            btnIcon = "fa-eye";
+                        } else {
+                            btnText = statusMeta.btn.text;
+                            btnClass = statusMeta.btn.className;
+                            btnDisabled = statusMeta.btn.disabled;
+                            btnIcon = statusMeta.btn.icon;
+                        }
                         const isCopied = copiedId === island.name;
                         const pct = (island.visitors / 7) * 100;
                         const isFull = island.visitors >= 7;
@@ -461,21 +556,31 @@ const TreasureIslands = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    hasCode && onCopyCode(island, island.dodoCode!);
+                                                    if (island.status === "ONLINE") {
+                                                        if (hasInstantCode) onCopyCode(island, liveCode as string);
+                                                        else onRevealCode(island);
+                                                    }
                                                 }}
-                                                disabled={statusMeta.btn.disabled}
-                                                className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : statusMeta.btn.className}`}
+                                                disabled={btnDisabled}
+                                                className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : btnClass}`}
                                             >
                                                 <div className="d-flex align-items-center justify-content-center gap-2">
                                                     {isCopied ? (
                                                         <>
                                                             <i className="fa-solid fa-check"></i> COPIED!
                                                         </>
+                                                    ) : isRevealing ? (
+                                                        <><i className="fa-solid fa-circle-notch fa-spin"></i> LOADING...</>
+                                                    ) : revealedCode ? (
+                                                        <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{revealedCode}</span></>
+                                                    ) : hasInstantCode ? (
+                                                        <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{liveCode}</span></>
+                                                    ) : island.status === "ONLINE" && !needsAuth ? (
+                                                        <><i className="fa-solid fa-eye opacity-70"></i> REVEAL CODE</>
                                                     ) : (
                                                         <>
-                                                            {hasCode && <i className="fa-regular fa-copy opacity-50"></i>}
-                                                            {!hasCode && statusMeta.btn.icon && <i className={`fa-solid ${statusMeta.btn.icon}`}></i>}
-                                                            <span className={hasCode ? "dodo-text" : ""}>{btnText}</span>
+                                                            {btnIcon && <i className={`fa-solid ${btnIcon}`}></i>}
+                                                            <span>{btnText}</span>
                                                         </>
                                                     )}
                                                 </div>

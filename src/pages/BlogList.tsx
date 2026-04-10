@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import banner from '../assets/banner.png';
+import { BLOGS_API_BASE } from "../config/api";
 // --- CONFIGURATION ---
-const API_URL = "https://blogs.chopaeng.com/api/patreon/posts";
+const API_URL = `${BLOGS_API_BASE}/api/patreon/posts`;
 
 const stripHtml = (html: string) => {
     const doc = new DOMParser().parseFromString(html, 'text/html');

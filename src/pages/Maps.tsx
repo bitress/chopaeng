@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useIslandData } from "../context/IslandContext";
+import { useIslandData } from "../context/useIslandData";
 
 const IslandMaps = () => {
     const navigate = useNavigate();

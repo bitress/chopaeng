@@ -18,4 +18,5 @@ export interface IslandData {
     visitors: number;
     mapUrl?: string;
     updatedAt?: string;
+    requiredRoles: string[];
 }

@@ -1,5 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { type IslandData, type IslandStatus } from "../data/islands";
+import { ACNH_FINDER_API_BASE, DODO_API_BASE } from "../config/api";
+import { IslandContext } from "./islandContextShared";
+import { getAuthToken } from "./authToken";
 
 interface ApiIsland {
     id: string;
@@ -16,6 +19,7 @@ interface ApiIsland {
     theme: string;
     type: string;
     updated_at: string;
+    required_roles: string[];
 }
 
 interface ApiIslandsResponse {
@@ -27,16 +31,6 @@ interface VillagerApiResponse {
     total_islands: number;
     islands: Record<string, string[]>;
 }
-
-interface IslandContextType {
-    islands: IslandData[];
-    villagersMap: Record<string, string[]>;
-    loading: boolean;
-    lastUpdated: number | null;
-    refreshData: () => Promise<void>;
-}
-
-const IslandContext = createContext<IslandContextType | undefined>(undefined);
 
 const STORAGE_KEY_ISLANDS = "chopaeng_islands_cache";
 const STORAGE_KEY_VILLAGERS = "chopaeng_villagers_cache";
@@ -87,13 +81,18 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const refreshData = useCallback(async () => {
         try {
             // 1. Fetch Island Status
-            const islandRes = await fetch("https://dodo.chopaeng.com/api/islands");
+            const token = getAuthToken();
+            const islandHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+            const islandRes = await fetch(`${DODO_API_BASE}/api/islands`, {
+                headers: islandHeaders,
+                credentials: "include",
+            });
             if (!islandRes.ok) throw new Error("Island API error");
             const islandJson: ApiIslandsResponse = await islandRes.json();
             const apiData: ApiIsland[] = islandJson.data;
 
             // 2. Fetch Villagers List
-            const villagerRes = await fetch("https://acnh-finder.chopaeng.com/api/villagers/list");
+            const villagerRes = await fetch(`${ACNH_FINDER_API_BASE}/api/villagers/list`);
             const villagerData: VillagerApiResponse = villagerRes.ok ? await villagerRes.json() : { islands: {} };
 
             // Process Island Data
@@ -120,6 +119,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     visitors: Math.max(0, Math.min(7, liveData.visitors ?? 0)),
                     mapUrl: liveData.map_url || getIslandMap(liveData.name),
                     updatedAt: liveData.updated_at,
+                    requiredRoles: liveData.required_roles || [],
                 };
             });
 
@@ -184,12 +184,4 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             {children}
         </IslandContext.Provider>
     );
-};
-
-export const useIslandData = () => {
-    const context = useContext(IslandContext);
-    if (context === undefined) {
-        throw new Error("useIslandData must be used within an IslandProvider");
-    }
-    return context;
 };

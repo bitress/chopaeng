@@ -1,5 +1,6 @@
 import {useEffect, useState} from "react";
 import { Link } from "react-router-dom"; // Import Link
+import { ACNH_FINDER_API_BASE } from "../config/api";
 
 interface SearchResult {
     found: boolean;
@@ -31,7 +32,7 @@ const FindItems = () => {
         try {
             const endpoint = searchMode === 'item' ? 'find' : 'villager';
 
-            const response = await fetch(`https://acnh-finder.chopaeng.com/api/${endpoint}?q=${encodeURIComponent(term)}`);
+            const response = await fetch(`${ACNH_FINDER_API_BASE}/api/${endpoint}?q=${encodeURIComponent(term)}`);
 
             if (!response.ok) throw new Error("Server error");
 

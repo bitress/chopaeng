@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import logo from '../assets/logo.webp';
+import { useAuth } from "../context/useAuth";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { pathname } = useLocation();
+    const { user, login, logout } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -72,6 +74,28 @@ const Navbar = () => {
 
                     {/* Right Side Actions */}
                     <div className="d-flex align-items-center gap-2">
+                        {user ? (
+                            <button
+                                type="button"
+                                onClick={() => void logout()}
+                                className="btn btn-light border fw-bold d-flex align-items-center gap-2"
+                                title="Logout"
+                            >
+                                <i className="fa-solid fa-right-from-bracket"></i>
+                                Logout
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={login}
+                                className="btn btn-nook-sm d-flex align-items-center gap-2"
+                                title="Login"
+                            >
+                                <i className="fa-solid fa-right-to-bracket"></i>
+                                Login
+                            </button>
+                        )}
+
                         <a href="https://discord.gg/chopaeng" target="_blank" className="btn btn-nook-sm d-none d-md-flex">
                             <i className="fa-brands fa-discord"></i>
                         </a>
@@ -106,6 +130,27 @@ const Navbar = () => {
                                     </Link>
                                 </div>
                             ))}
+                            <div className="col-12 mt-2">
+                                {user ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => void logout()}
+                                        className="mobile-card text-decoration-none p-3 rounded-4 d-flex align-items-center justify-content-center gap-2 w-100 border-0"
+                                    >
+                                        <i className="fa-solid fa-right-from-bracket"></i>
+                                        <span className="fw-black x-small text-uppercase">Logout</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={login}
+                                        className="mobile-card text-decoration-none p-3 rounded-4 d-flex align-items-center justify-content-center gap-2 w-100 border-0"
+                                    >
+                                        <i className="fa-solid fa-right-to-bracket"></i>
+                                        <span className="fw-black x-small text-uppercase">Login</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
