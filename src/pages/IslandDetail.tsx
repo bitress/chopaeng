@@ -44,12 +44,14 @@ const IslandDetail = () => {
     );
 
     const live = island.live;
-    const isFreeIsland = (island.requiredRoles?.length ?? 0) === 0;
+    const isSubIsland = island.cat === "member" || live?.access === "SUB ONLY";
+    const isFreeIsland = !isSubIsland;
+    const isRevealableState = live?.status !== "OFFLINE" && live?.dodo !== "GETTIN'";
     const freeLiveCode = isFreeIsland && live?.dodo && !["GETTIN'", "FULL", "SUB ONLY"].includes(live.dodo)
         ? live.dodo
         : null;
     const needsAuth = !isFreeIsland && island.requiredRoles.length > 0 && !canAccessIsland(island.requiredRoles);
-    const canShowDodo = isFreeIsland ? !!freeLiveCode : !!(live?.isOnline && !needsAuth);
+    const canShowDodo = isFreeIsland ? !!freeLiveCode : !!(isRevealableState && !needsAuth);
     const mapImageSrc = island.mapUrl || `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
 
     const onRevealCode = async () => {
@@ -328,7 +330,7 @@ const IslandDetail = () => {
                                                     (isFreeIsland && freeLiveCode) ? 'fa-copy' :
                                                     revealedCode ? 'fa-copy' :
                                                     isRevealing ? 'fa-spinner fa-spin' :
-                                                    live?.isOnline && !needsAuth ? 'fa-eye' :
+                                                    isRevealableState && !needsAuth ? 'fa-eye' :
                                                     needsAuth ? 'fa-lock' :
                                                     'fa-power-off'
                                                 }`}></i>
@@ -339,7 +341,7 @@ const IslandDetail = () => {
                                                      (isFreeIsland && freeLiveCode) ? 'Copy Dodo Code™' :
                                                      revealedCode ? 'Copy Code' :
                                                      isRevealing ? 'Loading...' :
-                                                     live?.isOnline && !needsAuth ? 'Reveal Code' :
+                                                     isRevealableState && !needsAuth ? 'Reveal Code' :
                                                      !user ? 'Login to Access' :
                                                      needsAuth ? 'Subscribers Only' :
                                                      'Gate Closed'}
@@ -349,7 +351,7 @@ const IslandDetail = () => {
                                                      (isFreeIsland && freeLiveCode) ? freeLiveCode :
                                                      revealedCode ? revealedCode :
                                                      isRevealing ? '...' :
-                                                     live?.isOnline && !needsAuth ? 'Tap to Reveal' :
+                                                     isRevealableState && !needsAuth ? 'Tap to Reveal' :
                                                      !user ? 'Login' :
                                                      needsAuth ? 'Join Discord' :
                                                      'Offline'}
@@ -358,7 +360,7 @@ const IslandDetail = () => {
                                         </div>
                                     </button>
 
-                                    {(needsAuth && live?.isOnline) && (
+                                    {(needsAuth && isRevealableState) && (
                                         <a
                                             href={user ? "https://www.patreon.com/cw/chopaeng/membership" : "#"}
                                             onClick={(e) => !user && (e.preventDefault(), login())}
