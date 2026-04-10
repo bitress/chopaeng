@@ -15,6 +15,7 @@ const IslandDetail = () => {
     const [revealedCode, setRevealedCode] = useState<string | null>(null);
     const [isRevealing, setIsRevealing] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [revealError, setRevealError] = useState<string | null>(null);
 
     const island = useMemo(() => {
         const found = islands.find((i) => i.id === id);
@@ -55,12 +56,15 @@ const IslandDetail = () => {
     const mapImageSrc = island.mapUrl || `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
 
     const onRevealCode = async () => {
+        setRevealError(null);
         // Free islands do not require reveal/auth; copy the live code directly.
         if (isFreeIsland) {
             if (freeLiveCode) {
                 navigator.clipboard.writeText(freeLiveCode);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
+            } else {
+                setRevealError("No live dodo code available right now.");
             }
             return;
         }
@@ -81,7 +85,20 @@ const IslandDetail = () => {
                 credentials: "include",
             });
             if (!resp.ok) {
-                if (resp.status === 403) { navigate("/membership"); return; }
+                const err = await resp.json().catch(() => ({}));
+                if (resp.status === 401) {
+                    setRevealError("Your login expired. Please login again.");
+                    return;
+                }
+                if (resp.status === 403) {
+                    setRevealError(err.error || "You do not have access to this island's dodo code.");
+                    return;
+                }
+                if (resp.status === 404) {
+                    setRevealError("Dodo code is not available right now. Please try again shortly.");
+                    return;
+                }
+                setRevealError(err.error || "Unable to reveal dodo code right now.");
                 return;
             }
             const data = await resp.json();
@@ -89,18 +106,22 @@ const IslandDetail = () => {
             navigator.clipboard.writeText(data.dodo_code);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
+            setRevealError(null);
         } catch (e) {
             console.error(e);
+            setRevealError("Network error while revealing dodo code. Please try again.");
         } finally {
             setIsRevealing(false);
         }
     };
 
-    // Try to find villagers by exact name, or fallback to case-insensitive match
-    const currentVillagers = villagersMap[island.name] ||
-        Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase())
-        ? villagersMap[Object.keys(villagersMap).find(key => key.toLowerCase() === island.name.toLowerCase()) as string]
-        : [];
+    // Try exact key first, then case-insensitive key fallback.
+    const villagerKey = villagersMap[island.name]
+        ? island.name
+        : Object.keys(villagersMap).find(
+            key => key.toLowerCase() === island.name.toLowerCase()
+        );
+    const currentVillagers = villagerKey ? (villagersMap[villagerKey] ?? []) : [];
 
     const capitalizeFirstLetter = (string: string) => {
         if (!string) return string;
@@ -371,6 +392,13 @@ const IslandDetail = () => {
                                             <i className={`fa-solid ${user ? 'fa-crown' : 'fa-right-to-bracket'} me-2`}></i>
                                             {user ? "Subscribe to Join Queue" : "Login"}
                                         </a>
+                                    )}
+
+                                    {revealError && (
+                                        <div className="alert alert-danger mt-3 py-2 px-3 small mb-0" role="alert">
+                                            <i className="fa-solid fa-triangle-exclamation me-2"></i>
+                                            {revealError}
+                                        </div>
                                     )}
                                 </div>
                             </div>

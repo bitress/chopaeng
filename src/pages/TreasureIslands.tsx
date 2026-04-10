@@ -89,6 +89,7 @@ const TreasureIslands = () => {
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [revealedCodes, setRevealedCodes] = useState<Record<string, string>>({});
     const [revealingId, setRevealingId] = useState<string | null>(null);
+    const [revealErrors, setRevealErrors] = useState<Record<string, string>>({});
     const [selectedMap, setSelectedMap] = useState<IslandData | null>(null);
 
     const [search, setSearch] = useState<string>("");
@@ -169,9 +170,21 @@ const TreasureIslands = () => {
     };
 
     const onRevealCode = async (island: IslandData) => {
+        setRevealErrors(prev => {
+            if (!prev[island.id]) return prev;
+            const next = { ...prev };
+            delete next[island.id];
+            return next;
+        });
         // Free islands do not require reveal/auth; copy the live code directly.
         if ((island.requiredRoles?.length ?? 0) === 0) {
             if (island.dodoCode) onCopyCode(island, island.dodoCode);
+            else {
+                setRevealErrors(prev => ({
+                    ...prev,
+                    [island.id]: "No live dodo code available right now.",
+                }));
+            }
             return;
         }
         // Already revealed — just copy
@@ -200,7 +213,31 @@ const TreasureIslands = () => {
             });
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({}));
-                if (resp.status === 403) { navigate("/membership"); return; }
+                if (resp.status === 401) {
+                    setRevealErrors(prev => ({
+                        ...prev,
+                        [island.id]: "Your login expired. Please login again.",
+                    }));
+                    return;
+                }
+                if (resp.status === 403) {
+                    setRevealErrors(prev => ({
+                        ...prev,
+                        [island.id]: err.error || "You do not have access to this island's dodo code.",
+                    }));
+                    return;
+                }
+                if (resp.status === 404) {
+                    setRevealErrors(prev => ({
+                        ...prev,
+                        [island.id]: "Dodo code is not available right now. Please try again shortly.",
+                    }));
+                    return;
+                }
+                setRevealErrors(prev => ({
+                    ...prev,
+                    [island.id]: err.error || "Unable to reveal dodo code right now.",
+                }));
                 console.error("Dodo reveal failed:", err);
                 return;
             }
@@ -209,8 +246,18 @@ const TreasureIslands = () => {
             navigator.clipboard.writeText(data.dodo_code);
             setCopiedId(island.name);
             setTimeout(() => setCopiedId(null), 2000);
+            setRevealErrors(prev => {
+                if (!prev[island.id]) return prev;
+                const next = { ...prev };
+                delete next[island.id];
+                return next;
+            });
         } catch (e) {
             console.error(e);
+            setRevealErrors(prev => ({
+                ...prev,
+                [island.id]: "Network error while revealing dodo code. Please try again.",
+            }));
         } finally {
             setRevealingId(null);
         }
@@ -421,6 +468,7 @@ const TreasureIslands = () => {
                         const isFreeIsland = (island.requiredRoles?.length ?? 0) === 0;
                         const hasInstantCode = isFreeIsland && !!liveCode;
                         const isRevealing = revealingId === island.id;
+                        const revealError = revealErrors[island.id];
                         const needsAuth = !isFreeIsland && island.requiredRoles.length > 0 && !canAccessIsland(island.requiredRoles);
                         // Button state
                         let btnText: string;
@@ -585,6 +633,13 @@ const TreasureIslands = () => {
                                                     )}
                                                 </div>
                                             </button>
+
+                                            {revealError && (
+                                                <div className="alert alert-danger py-2 px-3 small mb-0" role="alert">
+                                                    <i className="fa-solid fa-triangle-exclamation me-2"></i>
+                                                    {revealError}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
