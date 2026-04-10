@@ -217,12 +217,9 @@ const TreasureIslands = () => {
                 }
                 if (resp.status === 403) {
                     const backendMessage = String(err.error || "");
-                    const islandAccessHint = backendMessage.toLowerCase().includes("island access role")
-                        ? " You are subscribed, but still need the Island Access role in Discord."
-                        : "";
                     setRevealErrors(prev => ({
                         ...prev,
-                        [island.id]: (backendMessage || "You do not have access to this island's dodo code.") + islandAccessHint,
+                        [island.id]: backendMessage || "You do not have access to this island's dodo code.",
                     }));
                     return;
                 }
