@@ -465,6 +465,7 @@ const TreasureIslands = () => {
                             ? island.dodoCode
                             : null;
                         const isFreeIsland = (island.requiredRoles?.length ?? 0) === 0;
+                        const isRevealableStatus = island.status === "ONLINE" || island.status === "SUB ONLY";
                         const hasInstantCode = isFreeIsland && !!liveCode;
                         const isRevealing = revealingId === island.id;
                         const revealError = revealErrors[island.id];
@@ -484,12 +485,12 @@ const TreasureIslands = () => {
                             btnClass = "btn-nook";
                             btnDisabled = false;
                             btnIcon = "fa-copy";
-                        } else if (island.status === "ONLINE" && needsAuth) {
+                        } else if (isRevealableStatus && needsAuth) {
                             btnText = "LOGIN TO REVEAL";
                             btnClass = "btn-sub";
                             btnDisabled = false;
                             btnIcon = "fa-right-to-bracket";
-                        } else if (island.status === "ONLINE") {
+                        } else if (isRevealableStatus) {
                             btnText = isRevealing ? "LOADING..." : "REVEAL CODE";
                             btnClass = "btn-nook";
                             btnDisabled = isRevealing;
@@ -598,7 +599,7 @@ const TreasureIslands = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (island.status === "ONLINE") {
+                                                    if (isRevealableStatus) {
                                                         if (hasInstantCode) onCopyCode(island, liveCode as string);
                                                         else onRevealCode(island);
                                                     }
@@ -617,7 +618,7 @@ const TreasureIslands = () => {
                                                         <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{revealedCode}</span></>
                                                     ) : hasInstantCode ? (
                                                         <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{liveCode}</span></>
-                                                    ) : island.status === "ONLINE" && !needsAuth ? (
+                                                    ) : isRevealableStatus && !needsAuth ? (
                                                         <><i className="fa-solid fa-eye opacity-70"></i> REVEAL CODE</>
                                                     ) : (
                                                         <>
