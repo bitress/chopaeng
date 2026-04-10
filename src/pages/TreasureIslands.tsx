@@ -83,7 +83,7 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
 const TreasureIslands = () => {
     const navigate = useNavigate();
     const { islands, loading } = useIslandData();
-    const { user, login, canAccessIsland } = useAuth();
+    const { user, login } = useAuth();
 
     const [filter, setFilter] = useState<FilterKey>("ALL");
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -197,11 +197,6 @@ const TreasureIslands = () => {
             login();
             return;
         }
-        // No access — redirect to membership
-        if (!canAccessIsland(island.requiredRoles)) {
-            navigate("/membership");
-            return;
-        }
         // Fetch dodo code from backend
         setRevealingId(island.id);
         try {
@@ -221,9 +216,13 @@ const TreasureIslands = () => {
                     return;
                 }
                 if (resp.status === 403) {
+                    const backendMessage = String(err.error || "");
+                    const islandAccessHint = backendMessage.toLowerCase().includes("island access role")
+                        ? " You are subscribed, but still need the Island Access role in Discord."
+                        : "";
                     setRevealErrors(prev => ({
                         ...prev,
-                        [island.id]: err.error || "You do not have access to this island's dodo code.",
+                        [island.id]: (backendMessage || "You do not have access to this island's dodo code.") + islandAccessHint,
                     }));
                     return;
                 }
@@ -469,7 +468,7 @@ const TreasureIslands = () => {
                         const hasInstantCode = isFreeIsland && !!liveCode;
                         const isRevealing = revealingId === island.id;
                         const revealError = revealErrors[island.id];
-                        const needsAuth = !isFreeIsland && island.requiredRoles.length > 0 && !canAccessIsland(island.requiredRoles);
+                        const needsAuth = !isFreeIsland && !user;
                         // Button state
                         let btnText: string;
                         let btnClass: string;
@@ -485,16 +484,11 @@ const TreasureIslands = () => {
                             btnClass = "btn-nook";
                             btnDisabled = false;
                             btnIcon = "fa-copy";
-                        } else if (island.status === "ONLINE" && needsAuth && !user) {
+                        } else if (island.status === "ONLINE" && needsAuth) {
                             btnText = "LOGIN TO REVEAL";
                             btnClass = "btn-sub";
                             btnDisabled = false;
                             btnIcon = "fa-right-to-bracket";
-                        } else if (island.status === "ONLINE" && needsAuth) {
-                            btnText = "SUB REQUIRED";
-                            btnClass = "btn-sub";
-                            btnDisabled = false;
-                            btnIcon = "fa-lock";
                         } else if (island.status === "ONLINE") {
                             btnText = isRevealing ? "LOADING..." : "REVEAL CODE";
                             btnClass = "btn-nook";
