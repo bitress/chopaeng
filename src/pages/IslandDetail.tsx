@@ -1,13 +1,20 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useIslandData } from "../context/IslandContext";
+import { useIslandData } from "../context/useIslandData";
+import { useAuth } from "../context/useAuth";
+import { getAuthToken } from "../context/authToken";
+import { DODO_API_BASE } from "../config/api";
 
 const IslandDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { islands, villagersMap, loading } = useIslandData();
+    const { user, login, canAccessIsland } = useAuth();
 
     const [showImageModal, setShowImageModal] = useState(false);
+    const [revealedCode, setRevealedCode] = useState<string | null>(null);
+    const [isRevealing, setIsRevealing] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const island = useMemo(() => {
         const found = islands.find((i) => i.id === id);
@@ -37,8 +44,55 @@ const IslandDetail = () => {
     );
 
     const live = island.live;
-    const canShowDodo = live?.isOnline && !live?.isSubOnly && live?.dodo && !["GETTIN'", "FULL"].includes(live.dodo);
+    const isFreeIsland = (island.requiredRoles?.length ?? 0) === 0;
+    const freeLiveCode = isFreeIsland && live?.dodo && !["GETTIN'", "FULL", "SUB ONLY"].includes(live.dodo)
+        ? live.dodo
+        : null;
+    const needsAuth = !isFreeIsland && island.requiredRoles.length > 0 && !canAccessIsland(island.requiredRoles);
+    const canShowDodo = isFreeIsland ? !!freeLiveCode : !!(live?.isOnline && !needsAuth);
     const mapImageSrc = island.mapUrl || `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
+
+    const onRevealCode = async () => {
+        // Free islands do not require reveal/auth; copy the live code directly.
+        if (isFreeIsland) {
+            if (freeLiveCode) {
+                navigator.clipboard.writeText(freeLiveCode);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+            return;
+        }
+        if (revealedCode) {
+            navigator.clipboard.writeText(revealedCode);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+            return;
+        }
+        if (!user) { login(); return; }
+        if (needsAuth) { navigate("/membership"); return; }
+        setIsRevealing(true);
+        try {
+            const token = getAuthToken();
+            const resp = await fetch(`${DODO_API_BASE}/api/islands/${encodeURIComponent(island.name)}/dodo`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                credentials: "include",
+            });
+            if (!resp.ok) {
+                if (resp.status === 403) { navigate("/membership"); return; }
+                return;
+            }
+            const data = await resp.json();
+            setRevealedCode(data.dodo_code);
+            navigator.clipboard.writeText(data.dodo_code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsRevealing(false);
+        }
+    };
 
     // Try to find villagers by exact name, or fallback to case-insensitive match
     const currentVillagers = villagersMap[island.name] ||
@@ -263,37 +317,57 @@ const IslandDetail = () => {
 
                                 <div className="action-area">
                                     <button
-                                        disabled={!canShowDodo && !live?.isSubOnly}
-                                        className={`btn-dodo-3d ${canShowDodo || live?.isSubOnly ? '' : 'disabled'}`}
-                                        onClick={() => {
-                                            if (canShowDodo && live?.dodo) navigator.clipboard.writeText(live.dodo);
-                                            else if (live?.isSubOnly) window.open('https://discord.gg/chopaeng', '_blank', 'noopener,noreferrer');
-                                        }}
+                                        disabled={!canShowDodo && !needsAuth}
+                                        className={`btn-dodo-3d ${(canShowDodo || needsAuth) ? '' : 'disabled'}`}
+                                        onClick={onRevealCode}
                                     >
                                         <div className="content">
                                             <div className="icon-box">
-                                                <i className={`fa-solid ${canShowDodo ? 'fa-plane-departure' : live?.isSubOnly ? 'fa-brands fa-discord' : 'fa-lock'}`}></i>
+                                                <i className={`fa-solid ${
+                                                    copied ? 'fa-check' :
+                                                    (isFreeIsland && freeLiveCode) ? 'fa-copy' :
+                                                    revealedCode ? 'fa-copy' :
+                                                    isRevealing ? 'fa-spinner fa-spin' :
+                                                    live?.isOnline && !needsAuth ? 'fa-eye' :
+                                                    needsAuth ? 'fa-lock' :
+                                                    'fa-power-off'
+                                                }`}></i>
                                             </div>
                                             <div className="text-group">
                                                 <span className="action-label">
-                                                    {canShowDodo ? 'Copy Dodo Code™' : live?.isSubOnly ? 'Subscribers Only' : 'Gate Closed'}
+                                                    {copied ? 'Copied!' :
+                                                     (isFreeIsland && freeLiveCode) ? 'Copy Dodo Code™' :
+                                                     revealedCode ? 'Copy Code' :
+                                                     isRevealing ? 'Loading...' :
+                                                     live?.isOnline && !needsAuth ? 'Reveal Code' :
+                                                     !user ? 'Login to Access' :
+                                                     needsAuth ? 'Subscribers Only' :
+                                                     'Gate Closed'}
                                                 </span>
                                                 <span className="action-code">
-                                                    {canShowDodo ? live?.dodo : live?.isSubOnly ? 'Join Discord' : 'Offline'}
+                                                    {copied ? '✓ Copied' :
+                                                     (isFreeIsland && freeLiveCode) ? freeLiveCode :
+                                                     revealedCode ? revealedCode :
+                                                     isRevealing ? '...' :
+                                                     live?.isOnline && !needsAuth ? 'Tap to Reveal' :
+                                                     !user ? 'Login' :
+                                                     needsAuth ? 'Join Discord' :
+                                                     'Offline'}
                                                 </span>
                                             </div>
                                         </div>
                                     </button>
 
-                                    {live?.isSubOnly && (
+                                    {(needsAuth && live?.isOnline) && (
                                         <a
-                                            href="https://www.patreon.com/cw/chopaeng/membership"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                            href={user ? "https://www.patreon.com/cw/chopaeng/membership" : "#"}
+                                            onClick={(e) => !user && (e.preventDefault(), login())}
+                                            target={user ? "_blank" : undefined}
+                                            rel={user ? "noopener noreferrer" : undefined}
                                             className="patreon-link"
                                         >
-                                            <i className="fa-brands fa-patreon me-2"></i>
-                                            Subscribe to Join Queue
+                                            <i className={`fa-solid ${user ? 'fa-crown' : 'fa-right-to-bracket'} me-2`}></i>
+                                            {user ? "Subscribe to Join Queue" : "Login"}
                                         </a>
                                     )}
                                 </div>

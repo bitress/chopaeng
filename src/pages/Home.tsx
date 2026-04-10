@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import banner from '../assets/banner.png'
 import logo from '../assets/logo.webp'
 import StreamEmbed from "../components/StreamEmbed.tsx";
+import { BLOGS_API_BASE } from "../config/api";
 interface BlogPost {
     id: string;
     title: string;
@@ -32,7 +33,7 @@ const Home = () => {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                const response = await fetch("https://blogs.chopaeng.com/api/patreon/posts");
+                const response = await fetch(`${BLOGS_API_BASE}/api/patreon/posts`);
                 if (!response.ok) throw new Error("Failed to fetch");
 
                 const json = await response.json();

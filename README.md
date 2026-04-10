@@ -26,6 +26,17 @@ This project is a static website built to support the Chopaeng streaming communi
 
 ## Usage
 
+## Environment Variables
+
+This project reads the API base URL from a Vite environment variable.
+
+1.  Copy `.env.example` to `.env`.
+2.  Set the values as needed for your environment.
+
+```bash
+VITE_API_BASE=https://dodo.chopaeng.com
+```
+
 ### Development Server
 Start the local development server with Hot Module Replacement (HMR):
     

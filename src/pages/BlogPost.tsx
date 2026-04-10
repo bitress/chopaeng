@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import banner from '../assets/banner.png'
-const API_BASE_URL = "https://blogs.chopaeng.com";
+import { BLOGS_API_BASE } from "../config/api";
 
 const BlogPost = () => {
     const { id } = useParams();
@@ -74,7 +74,7 @@ const BlogPost = () => {
             setLoading(true);
             try {
                 // 1. Fetch Post
-                const postRes = await fetch(`${API_BASE_URL}/api/patreon/posts/${id}`);
+                const postRes = await fetch(`${BLOGS_API_BASE}/api/patreon/posts/${id}`);
                 if (!postRes.ok) throw new Error("Post not found");
                 const postJson = await postRes.json();
                 const attr = postJson.data.attributes;
@@ -94,7 +94,7 @@ const BlogPost = () => {
                 });
 
                 // 2. Fetch Sidebar (Optimized: Only needed if we succeed)
-                const listRes = await fetch(`${API_BASE_URL}/api/patreon/posts`);
+                const listRes = await fetch(`${BLOGS_API_BASE}/api/patreon/posts`);
                 if (listRes.ok) {
                     const listJson = await listRes.json();
                     setRecentPosts(listJson.data
