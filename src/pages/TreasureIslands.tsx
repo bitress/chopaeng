@@ -492,12 +492,12 @@ const TreasureIslands = () => {
                             btnDisabled = false;
                             btnIcon = "fa-copy";
                         } else if (isRevealableStatus && needsAuth) {
-                            btnText = "LOGIN TO REVEAL";
+                            btnText = "Sub Only";
                             btnClass = "btn-sub";
                             btnDisabled = false;
-                            btnIcon = "fa-right-to-bracket";
+                            btnIcon = "fa-lock";
                         } else if (isRevealableStatus) {
-                            btnText = isRevealing ? "LOADING..." : "REVEAL CODE";
+                            btnText = isRevealing ? "LOADING..." : "Show Dodo";
                             btnClass = "btn-nook";
                             btnDisabled = isRevealing;
                             btnIcon = "fa-eye";
