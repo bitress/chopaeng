@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { type IslandData, type IslandCategory, type IslandStatus } from "../data/islands";
 import { useIslandData } from "../context/useIslandData";
@@ -91,6 +91,7 @@ const TreasureIslands = () => {
     const [revealingId, setRevealingId] = useState<string | null>(null);
     const [revealErrors, setRevealErrors] = useState<Record<string, string>>({});
     const [selectedMap, setSelectedMap] = useState<IslandData | null>(null);
+    const revealingIdsRef = useRef<Set<string>>(new Set());
 
     const [search, setSearch] = useState<string>("");
     const [searchMode, setSearchMode] = useState<SearchMode>("FILTER");
@@ -197,7 +198,10 @@ const TreasureIslands = () => {
             login();
             return;
         }
+        if (revealingIdsRef.current.size > 0) return;
+
         // Fetch dodo code from backend
+        revealingIdsRef.current.add(island.id);
         setRevealingId(island.id);
         try {
             const token = getAuthToken();
@@ -238,8 +242,10 @@ const TreasureIslands = () => {
                 return;
             }
             const data = await resp.json();
-            setRevealedCodes(prev => ({ ...prev, [island.id]: data.dodo_code }));
-            navigator.clipboard.writeText(data.dodo_code);
+            const rawCode = String(data.dodo_code || "");
+            const code = rawCode.split(": ").pop() || rawCode;
+            setRevealedCodes(prev => ({ ...prev, [island.id]: code }));
+            navigator.clipboard.writeText(code);
             setCopiedId(island.name);
             setTimeout(() => setCopiedId(null), 2000);
             setRevealErrors(prev => {
@@ -255,7 +261,8 @@ const TreasureIslands = () => {
                 [island.id]: "Network error while revealing dodo code. Please try again.",
             }));
         } finally {
-            setRevealingId(null);
+            revealingIdsRef.current.delete(island.id);
+            setRevealingId(prev => prev === island.id ? null : prev);
         }
     };
 

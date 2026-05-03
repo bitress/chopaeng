@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
@@ -16,6 +16,7 @@ const IslandDetail = () => {
     const [isRevealing, setIsRevealing] = useState(false);
     const [copied, setCopied] = useState(false);
     const [revealError, setRevealError] = useState<string | null>(null);
+    const revealInFlightRef = useRef(false);
 
     const island = useMemo(() => {
         const found = islands.find((i) => i.id === id);
@@ -76,6 +77,9 @@ const IslandDetail = () => {
         }
         if (!user) { login(); return; }
         if (needsAuth) { navigate("/membership"); return; }
+        if (revealInFlightRef.current) return;
+
+        revealInFlightRef.current = true;
         setIsRevealing(true);
         try {
             const token = getAuthToken();
@@ -102,8 +106,11 @@ const IslandDetail = () => {
                 return;
             }
             const data = await resp.json();
-            setRevealedCode(data.dodo_code);
-            navigator.clipboard.writeText(data.dodo_code);
+            const rawCode = String(data.dodo_code || "");
+            const code = rawCode.split(": ").pop() || rawCode;
+            setRevealedCode(code);
+            navigator.clipboard.writeText(code);
+
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
             setRevealError(null);
@@ -111,6 +118,7 @@ const IslandDetail = () => {
             console.error(e);
             setRevealError("Network error while revealing dodo code. Please try again.");
         } finally {
+            revealInFlightRef.current = false;
             setIsRevealing(false);
         }
     };
