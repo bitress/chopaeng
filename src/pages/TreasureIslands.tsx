@@ -332,20 +332,22 @@ const TreasureIslands = () => {
 
     return (
         <div className="nook-bg min-vh-100 font-nunito pb-5">
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "ItemList",
-                "name": "ACNH Treasure Islands on Chopaeng",
-                "description": "Browse all Animal Crossing: New Horizons treasure islands on Chopaeng with live Dodo codes, items, DIYs, Bells, and villagers.",
-                "url": "https://www.chopaeng.com/islands",
-                "numberOfItems": islands.length,
-                "itemListElement": islands.map((island, index) => ({
-                    "@type": "ListItem",
-                    "position": index + 1,
-                    "name": `${island.name} ACNH Treasure Island`,
-                    "url": `https://www.chopaeng.com/island/${island.id}`
-                }))
-            }) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "ItemList",
+                    "name": "ACNH Treasure Islands on Chopaeng",
+                    "description": "Browse all Animal Crossing: New Horizons treasure islands on Chopaeng with live Dodo codes, items, DIYs, Bells, and villagers.",
+                    "url": "https://www.chopaeng.com/islands",
+                    "numberOfItems": islands.length,
+                    "itemListElement": islands.map((island, index) => ({
+                        "@type": "ListItem",
+                        "position": index + 1,
+                        "name": `${island.name} ACNH Treasure Island`,
+                        "url": `https://www.chopaeng.com/island/${island.id}`
+                    }))
+                })
+            }} />
             {/* --- DASHBOARD HEADER --- */}
             <div className="bg-white shadow-sm border-bottom position-relative z-3">
                 <div className="container py-4">
@@ -524,10 +526,10 @@ const TreasureIslands = () => {
                                         <div className="d-flex justify-content-between align-items-start mb-3">
                                             <div className="d-flex flex-column gap-1">
 
-                                                    <div className={`badge rounded-pill border px-3 py-2 d-flex align-items-center gap-2 ${island.discordBotOnline ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'}`}>
-                                                        <span className={`status-dot ${island.discordBotOnline ? 'bg-success pulse-ring' : 'bg-danger'}`}></span>
-                                                        <span className="fw-bold x-small tracking-wide">{island.discordBotOnline ? "ONLINE" : "OFFLINE"}</span>
-                                                    </div>
+                                                <div className={`badge rounded-pill border px-3 py-2 d-flex align-items-center gap-2 ${island.discordBotOnline ? 'bg-success-subtle text-success border-success-subtle' : 'bg-danger-subtle text-danger border-danger-subtle'}`}>
+                                                    <span className={`status-dot ${island.discordBotOnline ? 'bg-success pulse-ring' : 'bg-danger'}`}></span>
+                                                    <span className="fw-bold x-small tracking-wide">{island.discordBotOnline ? "ONLINE" : "OFFLINE"}</span>
+                                                </div>
                                             </div>
 
                                             <div className="d-flex gap-2">

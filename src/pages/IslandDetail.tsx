@@ -159,15 +159,17 @@ const IslandDetail = () => {
             <meta name="twitter:image" content={seoImage} />
 
             {/* Breadcrumb + Island structured data */}
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "BreadcrumbList",
-                "itemListElement": [
-                    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.chopaeng.com/" },
-                    { "@type": "ListItem", "position": 2, "name": "Islands", "item": "https://www.chopaeng.com/islands" },
-                    { "@type": "ListItem", "position": 3, "name": `${capitalizeFirstLetter(island.name)} Island` }
-                ]
-            }) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.chopaeng.com/" },
+                        { "@type": "ListItem", "position": 2, "name": "Islands", "item": "https://www.chopaeng.com/islands" },
+                        { "@type": "ListItem", "position": 3, "name": `${capitalizeFirstLetter(island.name)} Island` }
+                    ]
+                })
+            }} />
 
             <div className="container" style={{ maxWidth: "1050px" }}>
 
@@ -346,36 +348,35 @@ const IslandDetail = () => {
                                     >
                                         <div className="content">
                                             <div className="icon-box">
-                                                <i className={`fa-solid ${
-                                                    copied ? 'fa-check' :
+                                                <i className={`fa-solid ${copied ? 'fa-check' :
                                                     (isFreeIsland && freeLiveCode) ? 'fa-copy' :
-                                                    revealedCode ? 'fa-copy' :
-                                                    isRevealing ? 'fa-spinner fa-spin' :
-                                                    isRevealableState && !needsAuth ? 'fa-eye' :
-                                                    needsAuth ? 'fa-lock' :
-                                                    'fa-power-off'
-                                                }`}></i>
+                                                        revealedCode ? 'fa-copy' :
+                                                            isRevealing ? 'fa-spinner fa-spin' :
+                                                                isRevealableState && !needsAuth ? 'fa-eye' :
+                                                                    needsAuth ? 'fa-lock' :
+                                                                        'fa-power-off'
+                                                    }`}></i>
                                             </div>
                                             <div className="text-group">
                                                 <span className="action-label">
                                                     {copied ? 'Copied!' :
-                                                     (isFreeIsland && freeLiveCode) ? 'Copy Dodo Code™' :
-                                                     revealedCode ? 'Copy Code' :
-                                                     isRevealing ? 'Loading...' :
-                                                     isRevealableState && !needsAuth ? 'Reveal Code' :
-                                                     !user ? 'Login to Access' :
-                                                     needsAuth ? 'Subscribers Only' :
-                                                     'Gate Closed'}
+                                                        (isFreeIsland && freeLiveCode) ? 'Copy Dodo Code™' :
+                                                            revealedCode ? 'Copy Code' :
+                                                                isRevealing ? 'Loading...' :
+                                                                    isRevealableState && !needsAuth ? 'Reveal Code' :
+                                                                        !user ? 'Subscribers Only' :
+                                                                            needsAuth ? 'Subscribers Only' :
+                                                                                'Gate Closed'}
                                                 </span>
                                                 <span className="action-code">
                                                     {copied ? '✓ Copied' :
-                                                     (isFreeIsland && freeLiveCode) ? freeLiveCode :
-                                                     revealedCode ? revealedCode :
-                                                     isRevealing ? '...' :
-                                                     isRevealableState && !needsAuth ? 'Tap to Reveal' :
-                                                     !user ? 'Login' :
-                                                     needsAuth ? 'Join Discord' :
-                                                     'Offline'}
+                                                        (isFreeIsland && freeLiveCode) ? freeLiveCode :
+                                                            revealedCode ? revealedCode :
+                                                                isRevealing ? '...' :
+                                                                    isRevealableState && !needsAuth ? 'Tap to Reveal' :
+                                                                        !user ? 'Login to Access' :
+                                                                            needsAuth ? 'Join Discord' :
+                                                                                'Offline'}
                                                 </span>
                                             </div>
                                         </div>
