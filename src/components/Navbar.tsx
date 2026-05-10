@@ -31,6 +31,7 @@ const Navbar = () => {
         { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
         { name: "Guide", path: "/guides", icon: "fa-book-open" },
         { name: "About", path: "/about", icon: "fa-circle-info" },
+        ...(user ? [{ name: "Profile", path: "/profile", icon: "fa-user" }] : []),
     ];
 
     return (
@@ -76,15 +77,29 @@ const Navbar = () => {
 
                     <div className="d-flex align-items-center gap-2">
                         {user ? (
-                            <button
-                                type="button"
-                                onClick={handleLogout}
-                                className="btn btn-light border fw-bold d-flex align-items-center gap-2"
-                                title="Logout"
-                            >
-                                <i className="fa-solid fa-right-from-bracket"></i>
-                                Logout
-                            </button>
+                            <>
+                                <Link
+                                    to="/profile"
+                                    className="btn btn-light border fw-bold d-none d-sm-flex align-items-center gap-2"
+                                    title="Profile"
+                                >
+                                    {user.avatar ? (
+                                        <img src={user.avatar} alt="" className="rounded-circle" style={{ width: 24, height: 24, objectFit: "cover" }} />
+                                    ) : (
+                                        <i className="fa-solid fa-user"></i>
+                                    )}
+                                    Profile
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="btn btn-light border fw-bold d-flex align-items-center gap-2"
+                                    title="Logout"
+                                >
+                                    <i className="fa-solid fa-right-from-bracket"></i>
+                                    <span className="d-none d-sm-inline">Logout</span>
+                                </button>
+                            </>
                         ) : (
                             <button
                                 type="button"
