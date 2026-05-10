@@ -19,13 +19,20 @@ interface ProfileUser {
 }
 
 interface ProfileSubscriptions {
-    discord_role_ids?: string[];
     role_ids?: string[];
-    roles?: string[];
+    role_names?: string[];
+    roles?: ProfileRole[];
     matched_subscription_role_ids?: string[];
+    matched_subscription_role_names?: string[];
+    matched_subscription_roles?: ProfileRole[];
     subscription_role_ids?: string[];
     accessible_member_islands?: ProfileIslandAccess[];
     island_alert_subscriptions?: ProfileIslandAlert[];
+}
+
+interface ProfileRole {
+    id: string;
+    name: string;
 }
 
 interface ProfileIslandAccess {
@@ -73,6 +80,10 @@ interface ProfileResponse {
 }
 
 const asArray = <T,>(value: T[] | undefined): T[] => Array.isArray(value) ? value : [];
+
+const uniqueValues = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
+
+const roleNamesFrom = (roles?: ProfileRole[]) => asArray(roles).map((role) => role.name || role.id);
 
 const formatDate = (value?: string | number | null) => {
     if (!value) return "Not available";
@@ -136,14 +147,25 @@ const Profile = () => {
         };
     }, [authLoading]);
 
-    const roleIds = useMemo(() => {
+    const subscriptionRoleNames = useMemo(() => {
         const subscriptions = profile?.subscriptions;
-        return subscriptions?.discord_role_ids ?? subscriptions?.role_ids ?? subscriptions?.roles ?? [];
-    }, [profile]);
+        const preferredNames = uniqueValues([
+            ...asArray(subscriptions?.matched_subscription_role_names),
+            ...roleNamesFrom(subscriptions?.matched_subscription_roles),
+        ]);
+        if (preferredNames.length > 0) return preferredNames;
 
-    const matchedRoleIds = useMemo(() => {
-        const subscriptions = profile?.subscriptions;
-        return subscriptions?.matched_subscription_role_ids ?? subscriptions?.subscription_role_ids ?? [];
+        const roleNames = uniqueValues([
+            ...asArray(subscriptions?.role_names),
+            ...roleNamesFrom(subscriptions?.roles),
+        ]);
+        if (roleNames.length > 0) return roleNames;
+
+        return uniqueValues([
+            ...asArray(subscriptions?.role_ids),
+            ...asArray(subscriptions?.matched_subscription_role_ids),
+            ...asArray(subscriptions?.subscription_role_ids),
+        ]);
     }, [profile]);
 
     const islandTypeVisits = profile?.visits.by_island_type ?? profile?.visits.visits_by_island_type ?? {};
@@ -252,8 +274,7 @@ const Profile = () => {
                     <div className="col-lg-8">
                         <ProfileCard title="Subscriptions & Access" icon="fa-crown">
                             <div className="row g-3 mb-4">
-                                <PillList title="Discord roles" items={roleIds} emptyText="No Discord roles reported." />
-                                <PillList title="Matched subscription roles" items={matchedRoleIds} emptyText="No subscription roles matched yet." tone="warning" />
+                                <PillList title="Subscription roles" items={subscriptionRoleNames} emptyText="No subscription roles matched yet." tone="warning" />
                             </div>
 
                             <h3 className="h6 fw-black text-uppercase text-muted mb-3">Accessible member islands</h3>
@@ -413,7 +434,7 @@ interface PillListProps {
 }
 
 const PillList = ({ title, items, emptyText, tone = "success" }: PillListProps) => (
-    <div className="col-md-6">
+    <div className="col-12">
         <h3 className="h6 fw-black text-uppercase text-muted mb-3">{title}</h3>
         {items.length > 0 ? (
             <div className="d-flex flex-wrap gap-2">
@@ -446,7 +467,7 @@ const IslandVisitList = ({ visits, emptyText, showDate = false }: IslandVisitLis
                         <div className="fw-black text-dark">{visit.island_name ?? visit.name ?? visit.island_id ?? "Island"}</div>
                         <div className="small text-muted fw-bold">
                             {visit.type ?? "Treasure island"}
-                            {showDate && ` · ${formatDate(visit.visited_at ?? visit.last_visit)}`}
+                            {showDate && ` - ${formatDate(visit.visited_at ?? visit.last_visit)}`}
                         </div>
                     </div>
                     <span className={`badge rounded-pill ${visit.authorized === false ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"} border px-3 py-2`}>
