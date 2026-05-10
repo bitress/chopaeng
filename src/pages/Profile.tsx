@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { DataTable } from "simple-datatables";
+import "simple-datatables/dist/style.css";
 import { DODO_API_BASE } from "../config/api";
 import { getAuthToken } from "../context/authToken";
 import { useAuth } from "../context/useAuth";
@@ -84,6 +86,13 @@ const asArray = <T,>(value: T[] | undefined): T[] => Array.isArray(value) ? valu
 const uniqueValues = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
 
 const roleNamesFrom = (roles?: ProfileRole[]) => asArray(roles).map((role) => role.name || role.id);
+
+const compactRoleList = (roles?: string[]) => {
+    const values = asArray(roles);
+    if (values.length === 0) return "Any subscription role";
+    if (values.length <= 2) return values.join(", ");
+    return `${values.slice(0, 2).join(", ")} +${values.length - 2}`;
+};
 
 const formatDate = (value?: string | number | null) => {
     if (!value) return "Not available";
@@ -279,30 +288,28 @@ const Profile = () => {
 
                             <h3 className="h6 fw-black text-uppercase text-muted mb-3">Accessible member islands</h3>
                             {accessibleIslands.length > 0 ? (
-                                <div className="row g-2 mb-4">
-                                    {accessibleIslands.map((island, index) => (
-                                        <div className="col-md-6" key={`${island.id ?? island.name ?? "island"}-${index}`}>
-                                            <div className="bg-light rounded-3 border p-3 h-100">
-                                                <div className="fw-black text-dark">{island.name ?? island.id ?? "Member island"}</div>
-                                                {island.type && <div className="small text-muted fw-bold">{island.type}</div>}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <PaginatedTable
+                                    columns={["Island", "Type", "Required Roles"]}
+                                    rows={accessibleIslands.map((island) => [
+                                        island.name ?? island.id ?? "Member island",
+                                        island.type ?? "Member",
+                                        compactRoleList(island.required_roles),
+                                    ])}
+                                />
                             ) : (
                                 <EmptyLine text="No member islands unlocked yet." />
                             )}
 
                             <h3 className="h6 fw-black text-uppercase text-muted mb-3">Island alerts</h3>
                             {alertSubscriptions.length > 0 ? (
-                                <div className="d-flex flex-wrap gap-2">
-                                    {alertSubscriptions.map((alert, index) => (
-                                        <span className="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2" key={`${alert.island_id ?? alert.name ?? "alert"}-${index}`}>
-                                            <i className="fa-solid fa-bell me-2"></i>
-                                            {alert.island_name ?? alert.name ?? alert.island_id ?? "Island alert"}
-                                        </span>
-                                    ))}
-                                </div>
+                                <PaginatedTable
+                                    columns={["Island", "Type", "Subscribed"]}
+                                    rows={alertSubscriptions.map((alert) => [
+                                        alert.island_name ?? alert.name ?? alert.island_id ?? "Island alert",
+                                        alert.type ?? "Alert",
+                                        formatDate(alert.created_at),
+                                    ])}
+                                />
                             ) : (
                                 <EmptyLine text="No island alerts subscribed." />
                             )}
@@ -333,31 +340,33 @@ const Profile = () => {
 
                     <div className="col-lg-7">
                         <ProfileCard title="Most Visited Islands" icon="fa-location-dot">
-                            <IslandVisitList visits={mostVisited} emptyText="No favorite islands yet." />
+                            <IslandVisitTable visits={mostVisited} emptyText="No favorite islands yet." />
                         </ProfileCard>
                     </div>
 
                     <div className="col-lg-8">
                         <ProfileCard title="Recent Visits" icon="fa-clock-rotate-left">
-                            <IslandVisitList visits={recentVisits} emptyText="No recent visits recorded." showDate />
+                            <IslandVisitTable visits={recentVisits} emptyText="No recent visits recorded." showDate />
                         </ProfileCard>
                     </div>
 
                     <div className="col-lg-4">
                         <ProfileCard title="Warnings" icon="fa-shield-heart">
                             {Array.isArray(warningSummary) && warningSummary.length > 0 ? (
-                                <div className="d-flex flex-column gap-2">
-                                    {warningSummary.map((warning) => <div className="alert alert-warning mb-0 py-2" key={warning}>{warning}</div>)}
-                                </div>
+                                <PaginatedTable
+                                    columns={["Warning"]}
+                                    rows={warningSummary.map((warning) => [warning])}
+                                    searchable={false}
+                                />
                             ) : warningSummary && !Array.isArray(warningSummary) && Object.keys(warningSummary).length > 0 ? (
-                                <div className="d-flex flex-column gap-2">
-                                    {Object.entries(warningSummary).map(([label, count]) => (
-                                        <div className="d-flex justify-content-between align-items-center bg-light border rounded-3 p-3" key={label}>
-                                            <span className="fw-bold text-capitalize">{label.replaceAll("_", " ")}</span>
-                                            <span className="badge bg-warning text-dark rounded-pill">{count}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                <PaginatedTable
+                                    columns={["Warning", "Count"]}
+                                    rows={Object.entries(warningSummary).map(([label, count]) => [
+                                        label.replaceAll("_", " "),
+                                        formatNumber(count),
+                                    ])}
+                                    searchable={false}
+                                />
                             ) : (
                                 <div className="text-center py-4">
                                     <i className="fa-solid fa-circle-check text-success display-6 mb-3"></i>
@@ -450,33 +459,83 @@ const PillList = ({ title, items, emptyText, tone = "success" }: PillListProps) 
     </div>
 );
 
-interface IslandVisitListProps {
+interface PaginatedTableProps {
+    columns: string[];
+    rows: string[][];
+    searchable?: boolean;
+    perPage?: number;
+}
+
+const PaginatedTable = ({ columns, rows, searchable = true, perPage = 5 }: PaginatedTableProps) => {
+    const tableRef = useRef<HTMLTableElement | null>(null);
+    const tableKey = useMemo(() => JSON.stringify({ columns, rows }), [columns, rows]);
+
+    useEffect(() => {
+        if (!tableRef.current || rows.length === 0) return;
+
+        const dataTable = new DataTable(tableRef.current, {
+            searchable,
+            perPage,
+            perPageSelect: [5, 10, 25],
+            fixedHeight: false,
+            labels: {
+                placeholder: "Search...",
+                perPage: "rows per page",
+                noRows: "No rows found",
+                info: "Showing {start} to {end} of {rows} rows",
+            },
+        });
+
+        return () => dataTable.destroy();
+    }, [tableKey, searchable, perPage, rows.length]);
+
+    return (
+        <div className="profile-table-wrap mb-4">
+            <table ref={tableRef} className="table table-hover align-middle mb-0 profile-table">
+                <thead>
+                    <tr>
+                        {columns.map((column) => (
+                            <th key={column} scope="col">{column}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((row, rowIndex) => (
+                        <tr key={`${row.join("-")}-${rowIndex}`}>
+                            {row.map((cell, cellIndex) => (
+                                <td key={`${cell}-${cellIndex}`}>{cell || "Not available"}</td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+interface IslandVisitTableProps {
     visits: VisitIsland[];
     emptyText: string;
     showDate?: boolean;
 }
 
-const IslandVisitList = ({ visits, emptyText, showDate = false }: IslandVisitListProps) => {
+const IslandVisitTable = ({ visits, emptyText, showDate = false }: IslandVisitTableProps) => {
     if (visits.length === 0) return <EmptyLine text={emptyText} />;
 
-    return (
-        <div className="list-group list-group-flush">
-            {visits.map((visit, index) => (
-                <div className="list-group-item px-0 d-flex align-items-center justify-content-between gap-3" key={`${visit.island_id ?? visit.island_name ?? visit.name ?? "visit"}-${index}`}>
-                    <div>
-                        <div className="fw-black text-dark">{visit.island_name ?? visit.name ?? visit.island_id ?? "Island"}</div>
-                        <div className="small text-muted fw-bold">
-                            {visit.type ?? "Treasure island"}
-                            {showDate && ` - ${formatDate(visit.visited_at ?? visit.last_visit)}`}
-                        </div>
-                    </div>
-                    <span className={`badge rounded-pill ${visit.authorized === false ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"} border px-3 py-2`}>
-                        {formatNumber(visit.visits ?? visit.count ?? 1)}
-                    </span>
-                </div>
-            ))}
-        </div>
-    );
+    const columns = showDate ? ["Island", "Type", "Status", "Visited", "Visits"] : ["Island", "Type", "Status", "Visits"];
+    const rows = visits.map((visit) => {
+        const base = [
+            visit.island_name ?? visit.name ?? visit.island_id ?? "Island",
+            visit.type ?? "Treasure island",
+            visit.authorized === false ? "Denied" : "Authorized",
+        ];
+
+        return showDate
+            ? [...base, formatDate(visit.visited_at ?? visit.last_visit), formatNumber(visit.visits ?? visit.count ?? 1)]
+            : [...base, formatNumber(visit.visits ?? visit.count ?? 1)];
+    });
+
+    return <PaginatedTable columns={columns} rows={rows} />;
 };
 
 const EmptyLine = ({ text }: { text: string }) => (

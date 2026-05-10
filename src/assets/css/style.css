@@ -639,6 +639,97 @@ body {
 .hover-lift { transition: transform 0.2s; }
 .hover-lift:hover { transform: translateY(-5px); }
 
+/* ---------------------------
+   Profile data tables
+---------------------------- */
+.profile-table-wrap {
+    overflow-x: auto;
+}
+
+.profile-table-wrap .datatable-wrapper {
+    color: var(--text);
+}
+
+.profile-table-wrap .datatable-top,
+.profile-table-wrap .datatable-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 14px;
+}
+
+.profile-table-wrap .datatable-bottom {
+    padding: 14px 0 0;
+}
+
+.profile-table-wrap .datatable-input,
+.profile-table-wrap .datatable-selector {
+    border: 1px solid #e1e6d3;
+    border-radius: 999px;
+    color: #5e564d;
+    font-weight: 800;
+    outline: none;
+    padding: 7px 14px;
+}
+
+.profile-table-wrap .datatable-input:focus,
+.profile-table-wrap .datatable-selector:focus {
+    border-color: var(--nook-green);
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.12);
+}
+
+.profile-table-wrap .datatable-info {
+    color: #8b8377;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.profile-table-wrap .datatable-pagination-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.profile-table-wrap .datatable-pagination a {
+    border: 1px solid #e1e6d3;
+    border-radius: 999px;
+    color: #5e564d;
+    display: inline-flex;
+    font-weight: 900;
+    min-width: 34px;
+    justify-content: center;
+    padding: 6px 10px;
+    text-decoration: none;
+}
+
+.profile-table-wrap .datatable-active a,
+.profile-table-wrap .datatable-pagination a:hover {
+    background: var(--nook-green);
+    border-color: var(--nook-green);
+    color: #fff;
+}
+
+.profile-table {
+    min-width: 560px;
+}
+
+.profile-table th {
+    color: #8b8377;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.profile-table td {
+    color: #5e564d;
+    font-weight: 800;
+}
+
 .dal-bg {
     background-color: #f0f4e4;
     background-image: linear-gradient(30deg, #e6ebd6 12%, transparent 12.5%, transparent 87%, #e6ebd6 87.5%, #e6ebd6),
