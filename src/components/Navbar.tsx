@@ -45,9 +45,9 @@ const Navbar = () => {
                     zIndex: 1050
                 }}
             >
-                <div className="container d-flex justify-content-between align-items-center">
+                <div className="container d-flex flex-nowrap justify-content-between align-items-center gap-3">
 
-                    <Link to="/" className="d-flex align-items-center gap-2 text-decoration-none brand-group">
+                    <Link to="/" className="d-flex align-items-center gap-2 text-decoration-none brand-group flex-shrink-0">
                         <div className="logo-box shadow-sm">
                             <img src={logo} alt="Logo" className="logo-img" />
                         </div>
@@ -57,14 +57,14 @@ const Navbar = () => {
                         </div>
                     </Link>
 
-                    <div className="d-none d-lg-flex align-items-center nav-pill-container p-1 rounded-pill bg-white bg-opacity-50 border border-white shadow-sm">
+                    <div className="d-none d-lg-flex align-items-center nav-pill-container p-1 rounded-pill bg-white bg-opacity-50 border border-white shadow-sm flex-shrink-1">
                         {navLinks.map((link) => (
                             <NavLink
                                 key={link.name}
                                 to={link.path}
                                 end={link.path === "/"}
                                 className={({ isActive }) =>
-                                    `nav-pill-link rounded-pill px-3 py-2 text-decoration-none fw-black small text-uppercase transition-all ${isActive ? "active" : ""}`
+                                    `nav-pill-link rounded-pill px-2 px-xl-3 py-2 text-decoration-none fw-black small text-uppercase transition-all ${isActive ? "active" : ""}`
                                 }
                             >
                                 <span className="d-flex align-items-center gap-2">
@@ -75,31 +75,17 @@ const Navbar = () => {
                         ))}
                     </div>
 
-                    <div className="d-flex align-items-center gap-2">
+                    <div className="d-flex align-items-center gap-2 flex-shrink-0">
                         {user ? (
-                            <>
-                                <Link
-                                    to="/profile"
-                                    className="btn btn-light border fw-bold d-none d-sm-flex align-items-center gap-2"
-                                    title="Profile"
-                                >
-                                    {user.avatar ? (
-                                        <img src={user.avatar} alt="" className="rounded-circle" style={{ width: 24, height: 24, objectFit: "cover" }} />
-                                    ) : (
-                                        <i className="fa-solid fa-user"></i>
-                                    )}
-                                    Profile
-                                </Link>
-                                <button
-                                    type="button"
-                                    onClick={handleLogout}
-                                    className="btn btn-light border fw-bold d-flex align-items-center gap-2"
-                                    title="Logout"
-                                >
-                                    <i className="fa-solid fa-right-from-bracket"></i>
-                                    <span className="d-none d-sm-inline">Logout</span>
-                                </button>
-                            </>
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="btn btn-light border fw-bold d-flex align-items-center gap-2"
+                                title="Logout"
+                            >
+                                <i className="fa-solid fa-right-from-bracket"></i>
+                                <span className="d-none d-xl-inline">Logout</span>
+                            </button>
                         ) : (
                             <button
                                 type="button"
