@@ -87,7 +87,14 @@ export const dashboardRequest = async <T>(path: string, init: RequestInit = {}):
   const payload = contentType.includes("application/json") ? await resp.json().catch(() => null) : null;
 
   if (!resp.ok) {
-    throw new DashboardApiError(resp.status, payload?.error || `Request failed (${resp.status})`);
+    const message = String(payload?.error || `Request failed (${resp.status})`);
+    if (message.includes("DASHBOARD_SECRET")) {
+      throw new DashboardApiError(
+        resp.status,
+        "The backend dashboard API is still using the old secret-only auth. Deploy the updated chobot backend first.",
+      );
+    }
+    throw new DashboardApiError(resp.status, message);
   }
 
   return payload as T;
