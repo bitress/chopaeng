@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+﻿import { Routes, Route } from 'react-router-dom';
 import Home from "../pages/Home.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
 import About from "../pages/About.tsx";
@@ -18,6 +18,16 @@ import TermsOfService from "../pages/TermsOfService.tsx";
 import CookiesPolicy from "../pages/CookiesPolicy.tsx";
 import AuthCallback from "../pages/AuthCallback.tsx";
 import Profile from "../pages/Profile.tsx";
+import RequireMod from "../components/RequireMod.tsx";
+import DashboardLayout from "../layouts/DashboardLayout.tsx";
+import DashboardHome from "../pages/dashboard/DashboardHome.tsx";
+import DashboardIslands from "../pages/dashboard/DashboardIslands.tsx";
+import DashboardIslandDetail from "../pages/dashboard/DashboardIslandDetail.tsx";
+import DashboardLogs from "../pages/dashboard/DashboardLogs.tsx";
+import DashboardStatus from "../pages/dashboard/DashboardStatus.tsx";
+import DashboardAnalytics from "../pages/dashboard/DashboardAnalytics.tsx";
+import DashboardDatabase from "../pages/dashboard/DashboardDatabase.tsx";
+import DashboardForbidden from "../pages/dashboard/DashboardForbidden.tsx";
 
 const AppRoutes = () => {
     return (
@@ -43,6 +53,19 @@ const AppRoutes = () => {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/cookies" element={<CookiesPolicy />} />
             </Route>
+
+            <Route element={<RequireMod />}>
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<DashboardHome />} />
+                    <Route path="islands" element={<DashboardIslands />} />
+                    <Route path="islands/:id" element={<DashboardIslandDetail />} />
+                    <Route path="logs" element={<DashboardLogs />} />
+                    <Route path="status" element={<DashboardStatus />} />
+                    <Route path="analytics" element={<DashboardAnalytics />} />
+                    <Route path="database" element={<DashboardDatabase />} />
+                </Route>
+            </Route>
+            <Route path="/dashboard/forbidden" element={<DashboardForbidden />} />
             <Route path="*" element={<Chopaeng404 />} />
         </Routes>
 

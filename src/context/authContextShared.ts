@@ -1,4 +1,4 @@
-import { createContext } from "react";
+﻿import { createContext } from "react";
 
 export interface AuthUser {
     user_id: string;
@@ -6,6 +6,7 @@ export interface AuthUser {
     avatar: string;
     roles: string[];
     is_mod: boolean;
+    is_admin?: boolean;
 }
 
 export interface AuthContextType {

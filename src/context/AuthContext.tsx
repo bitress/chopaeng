@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { DODO_API_BASE } from "../config/api";
 import { AuthContext, type AuthUser } from "./authContextShared";
 import { clearAuthToken, getAuthToken } from "./authToken";
@@ -22,11 +22,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     avatar:   data.avatar,
                     roles:    data.roles ?? [],
                     is_mod:   data.is_mod ?? false,
+                    is_admin: data.is_admin ?? false,
                 });
                 return true;
             }
         } catch {
-            // network error — treat as not logged in
+            // network error â€” treat as not logged in
         }
         return false;
     }, []);
