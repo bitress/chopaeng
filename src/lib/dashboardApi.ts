@@ -17,6 +17,15 @@ export type DashboardIsland = {
   updated_at?: string | null;
   required_roles: string[];
   discord_bot_online?: boolean;
+  fs_path?: string | null;
+  fs_type?: string | null;
+  fs_dodo?: string | null;
+  fs_visitors?: number | null;
+  allowed_categories?: string[];
+  allowed_themes?: string[];
+  allowed_statuses?: string[];
+  r2_configured?: boolean;
+  sparkline_7d?: Array<{ day: string; count: number }>;
 };
 
 export type DashboardOverview = {
@@ -70,7 +79,7 @@ export class DashboardApiError extends Error {
   }
 }
 
-const dashboardUrl = (path: string) => `${API_BASE}/dashboard/api${path}`;
+export const dashboardUrl = (path: string) => `${API_BASE}/dashboard/api${path}`;
 
 export const dashboardRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const token = getAuthToken();
@@ -118,12 +127,14 @@ export const dashboardApi = {
       body: form,
     });
   },
+  syncMaps: () => dashboardRequest<{ synced: number; skipped: number; errors: string[] }>("/islands/sync-maps", { method: "POST" }),
   logs: (params = "") => dashboardRequest<DashboardLogs>(`/logs${params ? `?${params}` : ""}`),
-  analytics: () => dashboardRequest<DashboardAnalytics>("/analytics"),
+  analytics: (islandType = "") => dashboardRequest<DashboardAnalytics>(`/analytics${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
+  analyticsExportUrl: (islandType = "") => dashboardUrl(`/analytics/export.csv${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
   migrationStatus: () => dashboardRequest<MigrationStatus>("/mariadb-migration/status"),
-  runMigration: (dryRun = true) =>
+  runMigration: (dryRun = true, truncateBeforeImport = false) =>
     dashboardRequest<MigrationStatus>("/mariadb-migration", {
       method: "POST",
-      body: JSON.stringify({ dry_run: dryRun }),
+      body: JSON.stringify({ dry_run: dryRun, truncate_before_import: truncateBeforeImport }),
     }),
 };

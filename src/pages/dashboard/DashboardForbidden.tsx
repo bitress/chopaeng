@@ -1,13 +1,16 @@
-﻿import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const DashboardForbidden = () => (
-  <main className="min-vh-100 d-flex align-items-center justify-content-center nook-bg p-3">
-    <div className="bg-white border rounded-5 shadow-lg p-5 text-center" style={{ maxWidth: 480 }}>
-      <i className="fa-solid fa-lock fa-3x text-danger mb-3" />
-      <h1 className="h3 fw-black">Moderator Access Required</h1>
-      <p className="text-muted fw-bold">Your Discord account is logged in, but it does not have dashboard access.</p>
+  <main className="login-wrap p-3">
+    <section className="login-card text-center dashboard-forbidden-card">
+      <div className="logo-box mx-auto mb-3">
+        <img src="https://cdn.chopaeng.com/logo.webp" alt="ChoBot" className="dashboard-logo" />
+      </div>
+      <div className="dashboard-lock-icon mb-3"><i className="fa-solid fa-lock" /></div>
+      <h1 className="h3 fw-black text-nook-green mb-2">Moderator Access Required</h1>
+      <p className="text-muted fw-bold mb-4">Your Discord account is logged in, but it does not have dashboard access.</p>
       <Link to="/" className="btn btn-success rounded-pill fw-bold px-4">Back Home</Link>
-    </div>
+    </section>
   </main>
 );
 

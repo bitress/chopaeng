@@ -12,11 +12,15 @@ const RequireMod = () => {
 
   if (loading || !user) {
     return (
-      <main className="min-vh-100 d-flex align-items-center justify-content-center nook-bg">
-        <div className="text-center">
+      <main className="login-wrap p-3">
+        <section className="login-card text-center dashboard-auth-card">
+          <div className="logo-box mx-auto mb-3">
+            <img src="https://cdn.chopaeng.com/logo.webp" alt="ChoBot" className="dashboard-logo" />
+          </div>
           <div className="spinner-border text-success mb-3" role="status" />
-          <p className="fw-bold text-muted">Checking moderator access...</p>
-        </div>
+          <h1 className="h4 fw-black text-nook-green mb-2">Checking Access</h1>
+          <p className="fw-bold text-muted mb-0">Connecting your Discord account to the moderator dashboard.</p>
+        </section>
       </main>
     );
   }
