@@ -4,6 +4,7 @@ import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
 import { DODO_API_BASE } from "../config/api";
+import RevealErrorPopup from "../components/RevealErrorPopup";
 
 const IslandDetail = () => {
     const { id } = useParams();
@@ -408,12 +409,6 @@ const IslandDetail = () => {
                                         </a>
                                     )}
 
-                                    {revealError && (
-                                        <div className="alert alert-danger mt-3 py-2 px-3 small mb-0" role="alert">
-                                            <i className="fa-solid fa-triangle-exclamation me-2"></i>
-                                            {revealError}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -440,6 +435,10 @@ const IslandDetail = () => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {revealError && (
+                <RevealErrorPopup message={revealError} onClose={() => setRevealError(null)} />
             )}
         </div>
     );

@@ -5,6 +5,7 @@ import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
 import { ACNH_FINDER_API_BASE, DODO_API_BASE } from "../config/api";
+import RevealErrorPopup from "../components/RevealErrorPopup";
 
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
 type FilterKey = "ALL" | IslandCategory;
@@ -92,7 +93,7 @@ const TreasureIslands = () => {
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [revealedCodes, setRevealedCodes] = useState<Record<string, string>>({});
     const [revealingId, setRevealingId] = useState<string | null>(null);
-    const [revealErrors, setRevealErrors] = useState<Record<string, string>>({});
+    const [revealError, setRevealError] = useState<string | null>(null);
     const [selectedMap, setSelectedMap] = useState<IslandData | null>(null);
     const revealingIdsRef = useRef<Set<string>>(new Set());
 
@@ -174,21 +175,11 @@ const TreasureIslands = () => {
     };
 
     const onRevealCode = async (island: IslandData) => {
-        setRevealErrors(prev => {
-            if (!prev[island.id]) return prev;
-            const next = { ...prev };
-            delete next[island.id];
-            return next;
-        });
+        setRevealError(null);
         // Free islands do not require reveal/auth; copy the live code directly.
         if (isPublicIsland(island)) {
             if (island.dodoCode) onCopyCode(island, island.dodoCode);
-            else {
-                setRevealErrors(prev => ({
-                    ...prev,
-                    [island.id]: "No live dodo code available right now.",
-                }));
-            }
+            else setRevealError("No live dodo code available right now.");
             return;
         }
         // Already revealed — just copy
@@ -216,31 +207,19 @@ const TreasureIslands = () => {
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({}));
                 if (resp.status === 401) {
-                    setRevealErrors(prev => ({
-                        ...prev,
-                        [island.id]: "Your login expired. Please login again.",
-                    }));
+                    setRevealError("Your login expired. Please login again.");
                     return;
                 }
                 if (resp.status === 403) {
                     const backendMessage = String(err.error || "");
-                    setRevealErrors(prev => ({
-                        ...prev,
-                        [island.id]: backendMessage || "You do not have access to this island's dodo code.",
-                    }));
+                    setRevealError(backendMessage || "You do not have access to this island's dodo code.");
                     return;
                 }
                 if (resp.status === 404) {
-                    setRevealErrors(prev => ({
-                        ...prev,
-                        [island.id]: "Dodo code is not available right now. Please try again shortly.",
-                    }));
+                    setRevealError("Dodo code is not available right now. Please try again shortly.");
                     return;
                 }
-                setRevealErrors(prev => ({
-                    ...prev,
-                    [island.id]: err.error || "Unable to reveal dodo code right now.",
-                }));
+                setRevealError(err.error || "Unable to reveal dodo code right now.");
                 console.error("Dodo reveal failed:", err);
                 return;
             }
@@ -251,18 +230,10 @@ const TreasureIslands = () => {
             navigator.clipboard.writeText(code);
             setCopiedId(island.name);
             setTimeout(() => setCopiedId(null), 2000);
-            setRevealErrors(prev => {
-                if (!prev[island.id]) return prev;
-                const next = { ...prev };
-                delete next[island.id];
-                return next;
-            });
+            setRevealError(null);
         } catch (e) {
             console.error(e);
-            setRevealErrors(prev => ({
-                ...prev,
-                [island.id]: "Network error while revealing dodo code. Please try again.",
-            }));
+            setRevealError("Network error while revealing dodo code. Please try again.");
         } finally {
             revealingIdsRef.current.delete(island.id);
             setRevealingId(prev => prev === island.id ? null : prev);
@@ -482,7 +453,6 @@ const TreasureIslands = () => {
                         const isRevealableStatus = island.status === "ONLINE" || island.status === "SUB ONLY";
                         const hasInstantCode = isFreeIsland && !!liveCode;
                         const isRevealing = revealingId === island.id;
-                        const revealError = revealErrors[island.id];
                         const needsAuth = !isFreeIsland && !user;
                         const lacksAccess = !isFreeIsland && !!user && !hasMemberAccess;
                         // Button state
@@ -649,12 +619,6 @@ const TreasureIslands = () => {
                                                 </div>
                                             </button>
 
-                                            {revealError && (
-                                                <div className="alert alert-danger py-2 px-3 small mb-0" role="alert">
-                                                    <i className="fa-solid fa-triangle-exclamation me-2"></i>
-                                                    {revealError}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -698,6 +662,10 @@ const TreasureIslands = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {revealError && (
+                <RevealErrorPopup message={revealError} onClose={() => setRevealError(null)} />
             )}
         </div>
     );
