@@ -80,10 +80,13 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
     },
 };
 
+const isPublicIsland = (island: IslandData) =>
+    island.cat !== "member" && (island.requiredRoles?.length ?? 0) === 0;
+
 const TreasureIslands = () => {
     const navigate = useNavigate();
     const { islands, loading } = useIslandData();
-    const { user, login } = useAuth();
+    const { user, login, canAccessIsland } = useAuth();
 
     const [filter, setFilter] = useState<FilterKey>("ALL");
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -178,7 +181,7 @@ const TreasureIslands = () => {
             return next;
         });
         // Free islands do not require reveal/auth; copy the live code directly.
-        if ((island.requiredRoles?.length ?? 0) === 0) {
+        if (isPublicIsland(island)) {
             if (island.dodoCode) onCopyCode(island, island.dodoCode);
             else {
                 setRevealErrors(prev => ({
@@ -470,12 +473,18 @@ const TreasureIslands = () => {
                         const liveCode = island.status === "ONLINE" && island.dodoCode && island.dodoCode.length === 5
                             ? island.dodoCode
                             : null;
-                        const isFreeIsland = (island.requiredRoles?.length ?? 0) === 0;
+                        const isFreeIsland = isPublicIsland(island);
+                        const hasMemberAccess = isFreeIsland
+                            ? true
+                            : island.accessible ?? island.viewerHasAccess ?? (
+                                (island.requiredRoles?.length ?? 0) > 0 && canAccessIsland(island.requiredRoles)
+                            );
                         const isRevealableStatus = island.status === "ONLINE" || island.status === "SUB ONLY";
                         const hasInstantCode = isFreeIsland && !!liveCode;
                         const isRevealing = revealingId === island.id;
                         const revealError = revealErrors[island.id];
                         const needsAuth = !isFreeIsland && !user;
+                        const lacksAccess = !isFreeIsland && !!user && !hasMemberAccess;
                         // Button state
                         let btnText: string;
                         let btnClass: string;
@@ -493,6 +502,11 @@ const TreasureIslands = () => {
                             btnIcon = "fa-copy";
                         } else if (isRevealableStatus && needsAuth) {
                             btnText = "Sub Only";
+                            btnClass = "btn-sub";
+                            btnDisabled = false;
+                            btnIcon = "fa-lock";
+                        } else if (isRevealableStatus && lacksAccess) {
+                            btnText = "Members Only";
                             btnClass = "btn-sub";
                             btnDisabled = false;
                             btnIcon = "fa-lock";

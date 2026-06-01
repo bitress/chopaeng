@@ -19,4 +19,6 @@ export interface IslandData {
     mapUrl?: string;
     updatedAt?: string;
     requiredRoles: string[];
+    accessible?: boolean;
+    viewerHasAccess?: boolean;
 }

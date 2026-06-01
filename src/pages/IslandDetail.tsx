@@ -52,7 +52,12 @@ const IslandDetail = () => {
     const freeLiveCode = isFreeIsland && live?.dodo && !["GETTIN'", "FULL", "SUB ONLY"].includes(live.dodo)
         ? live.dodo
         : null;
-    const needsAuth = !isFreeIsland && island.requiredRoles.length > 0 && !canAccessIsland(island.requiredRoles);
+    const hasMemberAccess = isFreeIsland
+        ? true
+        : island.accessible ?? island.viewerHasAccess ?? (
+            island.requiredRoles.length > 0 && canAccessIsland(island.requiredRoles)
+        );
+    const needsAuth = !isFreeIsland && !hasMemberAccess;
     const canShowDodo = isFreeIsland ? !!freeLiveCode : !!(isRevealableState && !needsAuth);
     const mapImageSrc = island.mapUrl || `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
 

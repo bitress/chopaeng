@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const hasRole = (roleIds: string[]): boolean => {
         if (!user) return false;
-        if (user.is_mod) return true;
+        if (user.is_mod || user.is_admin) return true;
         return roleIds.some(id => user.roles.includes(id));
     };
 

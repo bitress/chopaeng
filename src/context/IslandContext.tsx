@@ -20,6 +20,8 @@ interface ApiIsland {
     type: string;
     updated_at: string;
     required_roles: string[];
+    accessible?: boolean;
+    viewer_has_access?: boolean;
 }
 
 interface ApiIslandsResponse {
@@ -35,6 +37,7 @@ interface VillagerApiResponse {
 const STORAGE_KEY_ISLANDS = "chopaeng_islands_cache";
 const STORAGE_KEY_VILLAGERS = "chopaeng_villagers_cache";
 const STORAGE_KEY_TIMESTAMP = "chopaeng_cache_timestamp";
+const STORAGE_KEY_AUTH_SCOPE = "chopaeng_cache_auth_scope";
 
 const getIslandMap = (islandName: string) => `https://cdn.chopaeng.com/maps/${islandName.toLowerCase()}.png`;
 
@@ -47,8 +50,13 @@ const toIslandCat = (value: string, fallback: IslandData["cat"]): IslandData["ca
 const toIslandTheme = (value: string, fallback: IslandData["theme"]): IslandData["theme"] =>
     (VALID_THEMES as readonly string[]).includes(value) ? (value as IslandData["theme"]) : fallback;
 
+const getCacheAuthScope = () => getAuthToken() || "anon";
+
+const isCurrentCacheScope = () => sessionStorage.getItem(STORAGE_KEY_AUTH_SCOPE) === getCacheAuthScope();
+
 export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [islands, setIslands] = useState<IslandData[]>(() => {
+        if (!isCurrentCacheScope()) return [];
         const cached = sessionStorage.getItem(STORAGE_KEY_ISLANDS);
         if (cached) {
             try {
@@ -61,6 +69,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     const [villagersMap, setVillagersMap] = useState<Record<string, string[]>>(() => {
+        if (!isCurrentCacheScope()) return {};
         const cached = sessionStorage.getItem(STORAGE_KEY_VILLAGERS);
         if (cached) {
             try {
@@ -74,6 +83,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<number | null>(() => {
+        if (!isCurrentCacheScope()) return null;
         const cached = sessionStorage.getItem(STORAGE_KEY_TIMESTAMP);
         return cached ? parseInt(cached, 10) : null;
     });
@@ -99,6 +109,8 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const updatedIslands: IslandData[] = apiData.map((liveData, index) => {
                 let computedStatus: IslandStatus = "OFFLINE";
                 const rawStatus = liveData.status ? liveData.status.toUpperCase() : "";
+                const requiredRoles = liveData.required_roles || [];
+                const accessible = liveData.accessible ?? liveData.viewer_has_access ?? (requiredRoles.length === 0);
 
                 if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) computedStatus = "SUB ONLY";
                 else if (liveData.dodo_code === "GETTIN'") computedStatus = "REFRESHING";
@@ -119,7 +131,9 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     visitors: Math.max(0, Math.min(7, liveData.visitors ?? 0)),
                     mapUrl: liveData.map_url || getIslandMap(liveData.name),
                     updatedAt: liveData.updated_at,
-                    requiredRoles: liveData.required_roles || [],
+                    requiredRoles,
+                    accessible,
+                    viewerHasAccess: accessible,
                 };
             });
 
@@ -133,6 +147,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sessionStorage.setItem(STORAGE_KEY_ISLANDS, JSON.stringify(updatedIslands));
             sessionStorage.setItem(STORAGE_KEY_VILLAGERS, JSON.stringify(villagerData.islands));
             sessionStorage.setItem(STORAGE_KEY_TIMESTAMP, now.toString());
+            sessionStorage.setItem(STORAGE_KEY_AUTH_SCOPE, getCacheAuthScope());
 
         } catch (error) {
             console.error("Failed to refresh island data:", error);

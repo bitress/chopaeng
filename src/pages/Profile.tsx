@@ -28,7 +28,9 @@ interface ProfileSubscriptions {
     matched_subscription_role_names?: string[];
     matched_subscription_roles?: ProfileRole[];
     subscription_role_ids?: string[];
+    accessible_islands?: ProfileIslandAccess[];
     accessible_member_islands?: ProfileIslandAccess[];
+    alert_subscriptions?: ProfileIslandAlert[];
     island_alert_subscriptions?: ProfileIslandAlert[];
 }
 
@@ -41,7 +43,10 @@ interface ProfileIslandAccess {
     id?: string;
     name?: string;
     type?: string;
-    required_roles?: string[];
+    channel_id?: string;
+    access_source?: string;
+    required_roles?: Array<string | ProfileRole>;
+    matched_roles?: Array<string | ProfileRole>;
 }
 
 interface ProfileIslandAlert {
@@ -87,11 +92,14 @@ const uniqueValues = (items: string[]) => Array.from(new Set(items.filter(Boolea
 
 const roleNamesFrom = (roles?: ProfileRole[]) => asArray(roles).map((role) => role.name || role.id);
 
-const compactRoleList = (roles?: string[]) => {
+const roleLabel = (role: string | ProfileRole) => typeof role === "string" ? role : role.name || role.id;
+
+const compactRoleList = (roles?: Array<string | ProfileRole>) => {
     const values = asArray(roles);
     if (values.length === 0) return "Any subscription role";
-    if (values.length <= 2) return values.join(", ");
-    return `${values.slice(0, 2).join(", ")} +${values.length - 2}`;
+    const labels = values.map(roleLabel);
+    if (labels.length <= 2) return labels.join(", ");
+    return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
 };
 
 const formatDate = (value?: string | number | null) => {
@@ -178,8 +186,12 @@ const Profile = () => {
     }, [profile]);
 
     const islandTypeVisits = profile?.visits.by_island_type ?? profile?.visits.visits_by_island_type ?? {};
-    const accessibleIslands = asArray(profile?.subscriptions.accessible_member_islands);
-    const alertSubscriptions = asArray(profile?.subscriptions.island_alert_subscriptions);
+    const accessibleIslands = asArray(
+        profile?.subscriptions.accessible_member_islands ?? profile?.subscriptions.accessible_islands
+    );
+    const alertSubscriptions = asArray(
+        profile?.subscriptions.island_alert_subscriptions ?? profile?.subscriptions.alert_subscriptions
+    );
     const mostVisited = asArray(profile?.visits.most_visited_islands);
     const recentVisits = asArray(profile?.visits.recent_visits);
     const warningSummary = profile?.visits.warning_summary;
