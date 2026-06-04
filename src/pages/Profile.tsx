@@ -30,8 +30,6 @@ interface ProfileSubscriptions {
     subscription_role_ids?: string[];
     accessible_islands?: ProfileIslandAccess[];
     accessible_member_islands?: ProfileIslandAccess[];
-    alert_subscriptions?: ProfileIslandAlert[];
-    island_alert_subscriptions?: ProfileIslandAlert[];
 }
 
 interface ProfileRole {
@@ -47,14 +45,6 @@ interface ProfileIslandAccess {
     access_source?: string;
     required_roles?: Array<string | ProfileRole>;
     matched_roles?: Array<string | ProfileRole>;
-}
-
-interface ProfileIslandAlert {
-    island_id?: string;
-    island_name?: string;
-    name?: string;
-    type?: string;
-    created_at?: string;
 }
 
 interface VisitIsland {
@@ -91,16 +81,6 @@ const asArray = <T,>(value: T[] | undefined): T[] => Array.isArray(value) ? valu
 const uniqueValues = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
 
 const roleNamesFrom = (roles?: ProfileRole[]) => asArray(roles).map((role) => role.name || role.id);
-
-const roleLabel = (role: string | ProfileRole) => typeof role === "string" ? role : role.name || role.id;
-
-const compactRoleList = (roles?: Array<string | ProfileRole>) => {
-    const values = asArray(roles);
-    if (values.length === 0) return "Any subscription role";
-    const labels = values.map(roleLabel);
-    if (labels.length <= 2) return labels.join(", ");
-    return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
-};
 
 const formatDate = (value?: string | number | null) => {
     if (!value) return "Not available";
@@ -189,9 +169,6 @@ const Profile = () => {
     const accessibleIslands = asArray(
         profile?.subscriptions.accessible_member_islands ?? profile?.subscriptions.accessible_islands
     );
-    const alertSubscriptions = asArray(
-        profile?.subscriptions.island_alert_subscriptions ?? profile?.subscriptions.alert_subscriptions
-    );
     const mostVisited = asArray(profile?.visits.most_visited_islands);
     const recentVisits = asArray(profile?.visits.recent_visits);
     const warningSummary = profile?.visits.warning_summary;
@@ -217,7 +194,7 @@ const Profile = () => {
                         <i className="fa-brands fa-discord fa-2x"></i>
                     </div>
                     <h1 className="ac-font h2 text-dark mb-3">Member Profile</h1>
-                    <p className="text-muted fw-bold mb-4">Login with Discord to see your island access, visit history, alerts, and server profile.</p>
+                    <p className="text-muted fw-bold mb-4">Login with Discord to see your island access, visit history, and server profile.</p>
                     <button type="button" onClick={login} className="btn btn-success rounded-pill fw-black px-4 py-3">
                         <i className="fa-solid fa-right-to-bracket me-2"></i>
                         Login with Discord
@@ -300,30 +277,29 @@ const Profile = () => {
 
                             <h3 className="h6 fw-black text-uppercase text-muted mb-3">Accessible member islands</h3>
                             {accessibleIslands.length > 0 ? (
-                                <PaginatedTable
-                                    columns={["Island", "Type", "Required Roles"]}
-                                    rows={accessibleIslands.map((island) => [
-                                        island.name ?? island.id ?? "Member island",
-                                        island.type ?? "Member",
-                                        compactRoleList(island.required_roles),
-                                    ])}
-                                />
+                                <div className="d-flex flex-wrap gap-2 mb-4">
+                                    {accessibleIslands.map((island, index) => {
+                                        const label = island.name ?? island.id ?? "Member island";
+                                        const type = island.type ?? "Member";
+                                        const islandPath = island.id ?? island.name ?? "";
+
+                                        return (
+                                            <Link
+                                                key={`${islandPath || label}-${index}`}
+                                                to={`/island/${encodeURIComponent(islandPath)}`}
+                                                className="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2 text-decoration-none fw-bold"
+                                            >
+                                                <i className="fa-solid fa-crown text-warning"></i>
+                                                <span>{label}</span>
+                                                <span className="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                                    {type}
+                                                </span>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
                             ) : (
                                 <EmptyLine text="No member islands unlocked yet." />
-                            )}
-
-                            <h3 className="h6 fw-black text-uppercase text-muted mb-3">Island alerts</h3>
-                            {alertSubscriptions.length > 0 ? (
-                                <PaginatedTable
-                                    columns={["Island", "Type", "Subscribed"]}
-                                    rows={alertSubscriptions.map((alert) => [
-                                        alert.island_name ?? alert.name ?? alert.island_id ?? "Island alert",
-                                        alert.type ?? "Alert",
-                                        formatDate(alert.created_at),
-                                    ])}
-                                />
-                            ) : (
-                                <EmptyLine text="No island alerts subscribed." />
                             )}
                         </ProfileCard>
                     </div>
