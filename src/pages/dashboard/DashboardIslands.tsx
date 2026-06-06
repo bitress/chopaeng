@@ -144,8 +144,16 @@ const DashboardIslands = () => {
                     </td>
                     <td>
                       <Link to={`/dashboard/islands/${island.id}`} className="fw-bold text-decoration-none ac-font text-nook-green">
-                        {island.name}
+                        {island.display_name || island.name}
                       </Link>
+                      {island.display_name && (
+                        <div className="x-small text-muted fw-bold">Canonical: {island.name}</div>
+                      )}
+                      <div className="mt-1">
+                        <span className={`badge rounded-pill ${island.is_visible === false ? "bg-secondary" : "badge-auth"}`}>
+                          {island.is_visible === false ? "Hidden from website" : "Shown on website"}
+                        </span>
+                      </div>
                     </td>
                     <td className="dashboard-muted-cell">{island.type || "-"}</td>
                     <td><span className={`badge rounded-pill ${island.cat === "member" ? "dashboard-member-badge" : "badge-auth"}`}>{island.cat}</span></td>

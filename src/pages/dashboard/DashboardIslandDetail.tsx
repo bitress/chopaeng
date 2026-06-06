@@ -55,7 +55,7 @@ const DashboardIslandDetail = () => {
   const itemPayload = useMemo(() => [...new Set([...tags, ...splitItems(itemsText)])], [itemsText, tags]);
   const maxSparkline = useMemo(() => Math.max(...(island?.sparkline_7d || []).map((row) => row.count), 1), [island]);
 
-  const updateField = (key: keyof DashboardIsland, value: string | number) => {
+  const updateField = (key: keyof DashboardIsland, value: string | number | boolean | null) => {
     setIsland((prev) => prev ? { ...prev, [key]: value } : prev);
   };
 
@@ -169,6 +169,30 @@ const DashboardIslandDetail = () => {
             <form className="p-4" onSubmit={save}>
               {message && <div className="alert alert-success fw-bold">{message}</div>}
               {error && <div className="alert alert-danger fw-bold">{error}</div>}
+
+              <div className="row g-3 mb-3">
+                <div className="col-sm-8">
+                  <label className="db-label">Website Display Name</label>
+                  <input
+                    className="db-input"
+                    placeholder={island.name}
+                    value={island.display_name || ""}
+                    onChange={(e) => updateField("display_name", e.target.value)}
+                  />
+                </div>
+                <div className="col-sm-4">
+                  <label className="db-label">Website Visibility</label>
+                  <label className="db-input d-flex align-items-center gap-2 mb-0 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="form-check-input mt-0"
+                      checked={island.is_visible !== false}
+                      onChange={(e) => updateField("is_visible", e.target.checked)}
+                    />
+                    <span className="fw-bold">{island.is_visible === false ? "Hidden" : "Shown"}</span>
+                  </label>
+                </div>
+              </div>
 
               <div className="row g-3 mb-3">
                 <div className="col-sm-6">

@@ -4,6 +4,8 @@ import { getAuthToken } from "../context/authToken";
 export type DashboardIsland = {
   id: string;
   name: string;
+  display_name?: string | null;
+  is_visible?: boolean;
   type: string;
   items: string[];
   theme: string;

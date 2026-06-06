@@ -5,6 +5,7 @@ export type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
 export interface IslandData {
     id: string;
     name: string;
+    canonicalName?: string;
     type: string;
     items: string[];
     theme: IslandTheme;
