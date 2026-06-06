@@ -26,14 +26,20 @@ const DashboardIslandDetail = () => {
   const [mapFile, setMapFile] = useState<File | null>(null);
   const [mapPreview, setMapPreview] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [syncingRoles, setSyncingRoles] = useState(false);
   const [copyLabel, setCopyLabel] = useState("Copy");
 
-  useEffect(() => {
+  const loadIsland = () => {
     dashboardApi.island(id).then((data) => {
       setIsland(data);
       setTags(data.items || []);
       setItemsText("");
     }).catch((err) => setError(err.message));
+  };
+
+  useEffect(() => {
+    loadIsland();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -111,6 +117,21 @@ const DashboardIslandDetail = () => {
     } catch {
       setCopyLabel("Copy failed");
       window.setTimeout(() => setCopyLabel("Copy"), 1600);
+    }
+  };
+
+  const syncRoles = async () => {
+    setMessage("");
+    setError("");
+    setSyncingRoles(true);
+    try {
+      const result = await dashboardApi.syncRoles();
+      setMessage(`Synced ${result.synced} island role set(s), skipped ${result.skipped}.`);
+      loadIsland();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Role sync failed");
+    } finally {
+      setSyncingRoles(false);
     }
   };
 
@@ -215,15 +236,50 @@ const DashboardIslandDetail = () => {
               <div className="mb-4">
                 <label className="db-label">Required Subscription Roles <span className="text-lowercase dashboard-label-note">(managed automatically via Discord channel overwrites)</span></label>
                 <div className="dashboard-roles-box">
-                  {island.required_roles?.length
-                    ? `${island.required_roles.length} role(s) configured via Discord channel permissions.`
-                    : "No roles configured or channel overwrites not synced yet."}
+                  <div className="d-flex flex-wrap gap-2 mb-2">
+                    <span className="badge rounded-pill bg-light text-muted border">
+                      Source: {island.access_source || island.access_status?.access_source || "database"}
+                    </span>
+                    {island.channel_id || island.access_status?.channel_id ? (
+                      <span className="badge rounded-pill badge-auth">Channel {island.channel_id || island.access_status?.channel_id}</span>
+                    ) : (
+                      <span className="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">Missing channel</span>
+                    )}
+                  </div>
+                  {island.access_status?.required_roles?.length ? (
+                    <div className="d-flex flex-wrap gap-2">
+                      {island.access_status.required_roles.map((role) => (
+                        <span key={role.id} className="badge rounded-pill dashboard-member-badge">
+                          {role.name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : island.required_roles?.length ? (
+                    <div className="d-flex flex-wrap gap-2">
+                      {island.required_roles.map((roleId) => (
+                        <span key={roleId} className="badge rounded-pill dashboard-member-badge">
+                          {roleId}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span>No roles configured or channel overwrites not synced yet.</span>
+                  )}
+                  {!!island.access_status?.warnings?.length && (
+                    <div className="x-small fw-bold text-warning mt-2">
+                      {island.access_status.warnings.map((warning) => warning.replaceAll("_", " ")).join(", ")}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="d-flex align-items-center gap-3 flex-wrap">
                 <button type="submit" className="btn btn-nook-primary px-4 py-2 rounded-3 fw-bold">
                   <i className="fa-solid fa-circle-check me-2" />Save Changes
+                </button>
+                <button type="button" className="btn dashboard-sync-btn fw-bold px-4 py-2 rounded-3" disabled={syncingRoles} onClick={syncRoles}>
+                  {syncingRoles ? <span className="spinner-border spinner-border-sm me-2" /> : <i className="fa-solid fa-shield-halved me-2" />}
+                  {syncingRoles ? "Syncing" : "Sync Roles"}
                 </button>
                 <Link to="/dashboard/islands" className="btn dashboard-cancel-btn fw-bold px-4 py-2 rounded-3">Cancel</Link>
               </div>

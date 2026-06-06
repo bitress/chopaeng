@@ -16,6 +16,9 @@ export type DashboardIsland = {
   map_url?: string | null;
   updated_at?: string | null;
   required_roles: string[];
+  channel_id?: string | null;
+  access_source?: string | null;
+  access_status?: DashboardIslandRoleStatus;
   discord_bot_online?: boolean;
   fs_path?: string | null;
   fs_type?: string | null;
@@ -26,6 +29,70 @@ export type DashboardIsland = {
   allowed_statuses?: string[];
   r2_configured?: boolean;
   sparkline_7d?: Array<{ day: string; count: number }>;
+};
+
+export type DashboardRole = {
+  id: string;
+  name: string;
+};
+
+export type DashboardIslandRoleStatus = {
+  id: string;
+  name: string;
+  cat: string;
+  type: string;
+  is_member: boolean;
+  channel_id?: string | null;
+  access_source: string;
+  required_roles: DashboardRole[];
+  required_role_ids: string[];
+  role_count: number;
+  warnings: string[];
+  ok: boolean;
+};
+
+export type DashboardRoleStatus = {
+  timestamp: string;
+  discord_configured: boolean;
+  category_id: string;
+  total: number;
+  member_islands: number;
+  problem_count: number;
+  items: DashboardIslandRoleStatus[];
+};
+
+export type DashboardRoleSyncResult = {
+  timestamp?: string;
+  discord_configured?: boolean;
+  synced: number;
+  skipped: number;
+  errors: Array<string | Record<string, unknown>>;
+  items?: Array<{
+    id: string;
+    name: string;
+    channel_id?: string | null;
+    required_roles: string[];
+    role_count: number;
+    access_source: string;
+  }>;
+};
+
+export type DashboardAccessTestResult = {
+  user_id?: string | null;
+  roles: DashboardRole[];
+  is_mod: boolean;
+  accessible_count: number;
+  items: Array<{
+    id: string;
+    name: string;
+    cat: string;
+    type: string;
+    channel_id?: string | null;
+    access_source: string;
+    accessible: boolean;
+    required_roles: DashboardRole[];
+    matched_roles: DashboardRole[];
+  }>;
 };
 
 export type DashboardOverview = {
@@ -54,7 +121,15 @@ export type DashboardStatusSummary = {
   online_pct: number;
   refreshing_pct: number;
   off_pct: number;
-  islands: Array<{ id: string; name: string; status: string }>;
+  access_problem_count?: number;
+  islands: Array<{
+    id: string;
+    name: string;
+    status: string;
+    access_source?: string;
+    role_count?: number;
+    access_warnings?: string[];
+  }>;
 };
 
 export type DashboardLogs = {
@@ -128,6 +203,13 @@ export const dashboardApi = {
     });
   },
   syncMaps: () => dashboardRequest<{ synced: number; skipped: number; errors: string[] }>("/islands/sync-maps", { method: "POST" }),
+  roleStatus: (refresh = false) => dashboardRequest<DashboardRoleStatus>(`/islands/role-status${refresh ? "?refresh=1" : ""}`),
+  syncRoles: () => dashboardRequest<DashboardRoleSyncResult>("/islands/sync-roles", { method: "POST" }),
+  testAccess: (payload: { user_id?: string; roles?: string[]; is_mod?: boolean; is_admin?: boolean }) =>
+    dashboardRequest<DashboardAccessTestResult>("/islands/test-access", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   logs: (params = "") => dashboardRequest<DashboardLogs>(`/logs${params ? `?${params}` : ""}`),
   analytics: (islandType = "") => dashboardRequest<DashboardAnalytics>(`/analytics${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
   analyticsExportUrl: (islandType = "") => dashboardUrl(`/analytics/export.csv${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),

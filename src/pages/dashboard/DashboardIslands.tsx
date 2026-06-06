@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardPagination from "../../components/dashboard/DashboardPagination";
-import { dashboardApi, type DashboardIsland } from "../../lib/dashboardApi";
+import { dashboardApi, type DashboardIsland, type DashboardIslandRoleStatus } from "../../lib/dashboardApi";
 
 const statusClass = (status: string) => {
   const normalized = status.toLowerCase();
@@ -16,11 +16,18 @@ const DashboardIslands = () => {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const [syncingRoles, setSyncingRoles] = useState(false);
+  const [roleStatus, setRoleStatus] = useState<Record<string, DashboardIslandRoleStatus>>({});
   const [page, setPage] = useState(1);
   const perPage = 15;
 
   const load = useCallback(() => {
-    dashboardApi.islands().then(setIslands).catch((err) => setError(err.message));
+    Promise.all([dashboardApi.islands(), dashboardApi.roleStatus()])
+      .then(([islandRows, rolePayload]) => {
+        setIslands(islandRows);
+        setRoleStatus(Object.fromEntries(rolePayload.items.map((item) => [item.id, item])));
+      })
+      .catch((err) => setError(err.message));
   }, []);
 
   useEffect(() => {
@@ -60,6 +67,21 @@ const DashboardIslands = () => {
     }
   };
 
+  const syncRoles = async () => {
+    setSyncingRoles(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await dashboardApi.syncRoles();
+      setNotice(`Synced ${result.synced} island role set(s), skipped ${result.skipped}${result.errors?.length ? `, ${result.errors.length} warning(s)` : ""}.`);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Role sync failed");
+    } finally {
+      setSyncingRoles(false);
+    }
+  };
+
   if (error && islands.length === 0) return <div className="alert alert-danger fw-bold">{error}</div>;
 
   return (
@@ -70,10 +92,16 @@ const DashboardIslands = () => {
           <span className="badge rounded-pill badge-auth">{counts.public} public</span>
           <span className="badge rounded-pill dashboard-member-badge">{counts.member} member</span>
         </div>
-        <button type="button" className="btn btn-sm dashboard-sync-btn" disabled={syncing} onClick={syncMaps}>
-          {syncing ? <span className="spinner-border spinner-border-sm me-1" /> : <i className="fa-solid fa-cloud-arrow-down me-1" />}
-          {syncing ? "Syncing" : "Sync Maps"}
-        </button>
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          <button type="button" className="btn btn-sm dashboard-sync-btn" disabled={syncingRoles} onClick={syncRoles}>
+            {syncingRoles ? <span className="spinner-border spinner-border-sm me-1" /> : <i className="fa-solid fa-shield-halved me-1" />}
+            {syncingRoles ? "Syncing" : "Sync Roles"}
+          </button>
+          <button type="button" className="btn btn-sm dashboard-sync-btn" disabled={syncing} onClick={syncMaps}>
+            {syncing ? <span className="spinner-border spinner-border-sm me-1" /> : <i className="fa-solid fa-cloud-arrow-down me-1" />}
+            {syncing ? "Syncing" : "Sync Maps"}
+          </button>
+        </div>
       </div>
 
       {notice && <div className="alert alert-success dashboard-alert">{notice}</div>}
@@ -94,13 +122,18 @@ const DashboardIslands = () => {
                   <th>Name</th>
                   <th>Type</th>
                   <th>Category</th>
+                  <th>Access</th>
                   <th>Status</th>
                   <th className="text-center">Visitors</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
-                {pagedIslands.map((island) => (
+                {pagedIslands.map((island) => {
+                  const access = roleStatus[island.id];
+                  const warnings = access?.warnings || [];
+                  const roleCount = access?.role_count ?? island.required_roles?.length ?? 0;
+                  return (
                   <tr key={island.id}>
                     <td>
                       {island.map_url ? (
@@ -116,6 +149,21 @@ const DashboardIslands = () => {
                     </td>
                     <td className="dashboard-muted-cell">{island.type || "-"}</td>
                     <td><span className={`badge rounded-pill ${island.cat === "member" ? "dashboard-member-badge" : "badge-auth"}`}>{island.cat}</span></td>
+                    <td>
+                      <div className="d-flex flex-wrap gap-1">
+                        <span className={`badge rounded-pill ${warnings.length ? "bg-warning-subtle text-warning-emphasis border border-warning-subtle" : "badge-auth"}`}>
+                          {roleCount} role{roleCount === 1 ? "" : "s"}
+                        </span>
+                        <span className="badge rounded-pill bg-light text-muted border">
+                          {access?.access_source || island.access_source || "database"}
+                        </span>
+                      </div>
+                      {warnings.length > 0 && (
+                        <div className="x-small text-warning fw-bold mt-1">
+                          {warnings.map((warning) => warning.replaceAll("_", " ")).join(", ")}
+                        </div>
+                      )}
+                    </td>
                     <td><span className={`status-pill ${statusClass(island.status)} dashboard-static-pill`}>{island.status}</span></td>
                     <td className="text-center dashboard-muted-cell">{island.visitors || "-"}</td>
                     <td className="text-end">
@@ -124,7 +172,8 @@ const DashboardIslands = () => {
                       </Link>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
