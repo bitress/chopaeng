@@ -28,7 +28,7 @@ const IslandDetail = () => {
             live: {
                 dodo: found.dodoCode,
                 status: found.status,
-                access: found.cat === "member" ? "SUB ONLY" : "PUBLIC",
+                access: found.cat === "member" ? "SUB ONLY" : found.cat === "order" ? "ORDER BOT" : "PUBLIC",
                 visitors: found.visitors?.toString() || "0",
                 isSubOnly: found.cat === "member",
                 isOnline: found.discordBotOnline === true,
@@ -47,8 +47,9 @@ const IslandDetail = () => {
     );
 
     const live = island.live;
+    const isOrderIsland = island.cat === "order";
     const isSubIsland = island.cat === "member" || live?.access === "SUB ONLY";
-    const isFreeIsland = !isSubIsland;
+    const isFreeIsland = !isSubIsland && !isOrderIsland;
     const isRevealableState = live?.status !== "OFFLINE" && live?.dodo !== "GETTIN'";
     const freeLiveCode = isFreeIsland && live?.dodo && !["GETTIN'", "FULL", "SUB ONLY"].includes(live.dodo)
         ? live.dodo
@@ -59,11 +60,15 @@ const IslandDetail = () => {
             island.requiredRoles.length > 0 && canAccessIsland(island.requiredRoles)
         );
     const needsAuth = !isFreeIsland && !hasMemberAccess;
-    const canShowDodo = isFreeIsland ? !!freeLiveCode : !!(isRevealableState && !needsAuth);
+    const canShowDodo = isOrderIsland ? false : isFreeIsland ? !!freeLiveCode : !!(isRevealableState && !needsAuth);
     const mapImageSrc = island.mapUrl || `https://cdn.chopaeng.com/maps/${island.name.toLowerCase()}.png`;
 
     const onRevealCode = async () => {
         setRevealError(null);
+        if (isOrderIsland) {
+            setRevealError("Sinta is an order-bot island. Use the configured Discord or Twitch order channel for Dodo access.");
+            return;
+        }
         // Free islands do not require reveal/auth; copy the live code directly.
         if (isFreeIsland) {
             if (freeLiveCode) {

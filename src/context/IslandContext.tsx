@@ -41,7 +41,7 @@ const STORAGE_KEY_AUTH_SCOPE = "chopaeng_cache_auth_scope";
 
 const getIslandMap = (islandName: string) => `https://cdn.chopaeng.com/maps/${islandName.toLowerCase()}.png`;
 
-const VALID_CATS = ["public", "member"] as const;
+const VALID_CATS = ["public", "member", "order"] as const;
 const VALID_THEMES = ["pink", "teal", "purple", "gold"] as const;
 
 const toIslandCat = (value: string, fallback: IslandData["cat"]): IslandData["cat"] =>

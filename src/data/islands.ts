@@ -1,4 +1,4 @@
-export type IslandCategory = "public" | "member";
+export type IslandCategory = "public" | "member" | "order";
 export type IslandTheme = "pink" | "teal" | "purple" | "gold";
 export type IslandStatus = "ONLINE" | "SUB ONLY" | "REFRESHING" | "OFFLINE";
 

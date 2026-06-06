@@ -16,6 +16,7 @@ interface FinderResponse {
     results?: {
         free: string[];
         sub: string[];
+        order?: string[];
     };
 }
 
@@ -44,6 +45,7 @@ const FILTERS: FilterTab[] = [
     { key: "ALL", label: "All Islands", icon: "fa-globe" },
     { key: "public", label: "Free Access", icon: "fa-lock-open" },
     { key: "member", label: "VIP Only", icon: "fa-crown" },
+    { key: "order", label: "Order Bot", icon: "fa-box-open" },
 ];
 
 const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
@@ -82,7 +84,9 @@ const STATUS_CONFIG: Record<IslandStatus, StatusMeta> = {
 };
 
 const isPublicIsland = (island: IslandData) =>
-    island.cat !== "member" && (island.requiredRoles?.length ?? 0) === 0;
+    island.cat === "public" && (island.requiredRoles?.length ?? 0) === 0;
+
+const isOrderIsland = (island: IslandData) => island.cat === "order";
 
 const TreasureIslands = () => {
     const navigate = useNavigate();
@@ -126,7 +130,7 @@ const TreasureIslands = () => {
             const data: FinderResponse = await response.json();
 
             if (data.found && data.results) {
-                const allFound = [...(data.results.free || []), ...(data.results.sub || [])].map(n => n.toUpperCase());
+                const allFound = [...(data.results.free || []), ...(data.results.sub || []), ...(data.results.order || [])].map(n => n.toUpperCase());
                 setFinderResults(allFound);
             } else {
                 setFinderResults([]);
@@ -444,6 +448,7 @@ const TreasureIslands = () => {
                         const liveCode = island.status === "ONLINE" && island.dodoCode && island.dodoCode.length === 5
                             ? island.dodoCode
                             : null;
+                        const isOrder = isOrderIsland(island);
                         const isFreeIsland = isPublicIsland(island);
                         const hasMemberAccess = isFreeIsland
                             ? true
@@ -460,7 +465,12 @@ const TreasureIslands = () => {
                         let btnClass: string;
                         let btnDisabled: boolean;
                         let btnIcon: string | null = statusMeta.btn.icon;
-                        if (revealedCode) {
+                        if (isOrder) {
+                            btnText = island.status === "ONLINE" ? "Order Bot" : statusMeta.btn.text;
+                            btnClass = island.status === "ONLINE" ? "btn-sub" : statusMeta.btn.className;
+                            btnDisabled = true;
+                            btnIcon = island.status === "ONLINE" ? "fa-box-open" : statusMeta.btn.icon;
+                        } else if (revealedCode) {
                             btnText = revealedCode;
                             btnClass = "btn-nook";
                             btnDisabled = false;
