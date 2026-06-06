@@ -147,6 +147,42 @@ export type DashboardLogs = {
 export type DashboardAnalytics = Record<string, unknown>;
 export type MigrationStatus = Record<string, unknown>;
 
+export type WebsiteLoginEvent = {
+  id: number;
+  user_id: string;
+  username?: string;
+  discord_name?: string;
+  global_name?: string;
+  account_name?: string;
+  nickname?: string;
+  avatar?: string;
+  roles: string[];
+  role_count: number;
+  is_admin: boolean;
+  is_mod: boolean;
+  ip_address?: string;
+  user_agent?: string;
+  return_to?: string;
+  discord_message_id?: string | null;
+  discord_channel_id?: string | null;
+  discord_guild_id?: string | null;
+  created_at: string;
+};
+
+export type WebsiteLoginEvents = {
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+  entries: WebsiteLoginEvent[];
+  filters: Record<string, string>;
+  summary: {
+    total: number;
+    mod_count: number;
+    admin_count: number;
+  };
+};
+
 export class DashboardApiError extends Error {
   status: number;
 
@@ -213,6 +249,7 @@ export const dashboardApi = {
       body: JSON.stringify(payload),
     }),
   logs: (params = "") => dashboardRequest<DashboardLogs>(`/logs${params ? `?${params}` : ""}`),
+  websiteLogins: (params = "") => dashboardRequest<WebsiteLoginEvents>(`/website-logins${params ? `?${params}` : ""}`),
   analytics: (islandType = "") => dashboardRequest<DashboardAnalytics>(`/analytics${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
   analyticsExportUrl: (islandType = "") => dashboardUrl(`/analytics/export.csv${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
   migrationStatus: () => dashboardRequest<MigrationStatus>("/mariadb-migration/status"),

@@ -24,6 +24,7 @@ import DashboardHome from "../pages/dashboard/DashboardHome.tsx";
 import DashboardIslands from "../pages/dashboard/DashboardIslands.tsx";
 import DashboardIslandDetail from "../pages/dashboard/DashboardIslandDetail.tsx";
 import DashboardLogs from "../pages/dashboard/DashboardLogs.tsx";
+import DashboardWebsiteLogins from "../pages/dashboard/DashboardWebsiteLogins.tsx";
 import DashboardStatus from "../pages/dashboard/DashboardStatus.tsx";
 import DashboardAnalytics from "../pages/dashboard/DashboardAnalytics.tsx";
 import DashboardDatabase from "../pages/dashboard/DashboardDatabase.tsx";
@@ -60,6 +61,7 @@ const AppRoutes = () => {
                     <Route path="islands" element={<DashboardIslands />} />
                     <Route path="islands/:id" element={<DashboardIslandDetail />} />
                     <Route path="logs" element={<DashboardLogs />} />
+                    <Route path="auth-log" element={<DashboardWebsiteLogins />} />
                     <Route path="status" element={<DashboardStatus />} />
                     <Route path="analytics" element={<DashboardAnalytics />} />
                     <Route path="database" element={<DashboardDatabase />} />

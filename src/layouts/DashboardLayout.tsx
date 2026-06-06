@@ -9,6 +9,7 @@ const links = [
   { to: "/dashboard/islands", label: "Islands", icon: "fa-location-dot" },
   { to: "/dashboard/status", label: "Island Status", icon: "fa-signal" },
   { to: "/dashboard/logs", label: "XLog Reports", icon: "fa-clipboard-list" },
+  { to: "/dashboard/auth-log", label: "Website Logins", icon: "fa-user-check" },
   { to: "/dashboard/analytics", label: "Analytics", icon: "fa-chart-line" },
   { to: "/dashboard/database", label: "Database", icon: "fa-database" },
 ];
@@ -17,6 +18,7 @@ const apiLinks = [
   { href: `${API_BASE}/dashboard/api/islands`, label: "/api/islands" },
   { href: `${API_BASE}/dashboard/api/analytics`, label: "/api/analytics" },
   { href: `${API_BASE}/dashboard/api/logs`, label: "/api/logs" },
+  { href: `${API_BASE}/dashboard/api/website-logins`, label: "/api/website-logins" },
 ];
 
 const DashboardLayout = () => {
