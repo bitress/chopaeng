@@ -47,6 +47,7 @@ const DashboardIslands = () => {
   const counts = useMemo(() => ({
     public: islands.filter((island) => island.cat === "public").length,
     member: islands.filter((island) => island.cat === "member").length,
+    order: islands.filter((island) => island.cat === "order").length,
   }), [islands]);
   const totalPages = Math.max(1, Math.ceil(islands.length / perPage));
   const safePage = Math.min(page, totalPages);
@@ -91,6 +92,7 @@ const DashboardIslands = () => {
           <span className="fw-black dashboard-table-count">{islands.length} islands</span>
           <span className="badge rounded-pill badge-auth">{counts.public} public</span>
           <span className="badge rounded-pill dashboard-member-badge">{counts.member} member</span>
+          <span className="badge rounded-pill bg-info-subtle text-info-emphasis border border-info-subtle">{counts.order} order</span>
         </div>
         <div className="d-flex align-items-center gap-2 flex-wrap">
           <button type="button" className="btn btn-sm dashboard-sync-btn" disabled={syncingRoles} onClick={syncRoles}>

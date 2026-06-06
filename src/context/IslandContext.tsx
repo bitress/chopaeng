@@ -112,10 +112,11 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 const rawStatus = liveData.status ? liveData.status.toUpperCase() : "";
                 const requiredRoles = liveData.required_roles || [];
                 const accessible = liveData.accessible ?? liveData.viewer_has_access ?? (requiredRoles.length === 0);
+                const botOnline = liveData.discord_bot_online ?? rawStatus.includes("ONLINE");
 
                 if (["SUB ONLY", "PATREON"].some(k => rawStatus.includes(k))) computedStatus = "SUB ONLY";
-                else if (liveData.dodo_code === "GETTIN'") computedStatus = "REFRESHING";
-                else if (liveData.discord_bot_online) computedStatus = "ONLINE";
+                else if (liveData.dodo_code === "GETTIN'" || rawStatus.includes("REFRESH")) computedStatus = "REFRESHING";
+                else if (botOnline) computedStatus = "ONLINE";
 
                 return {
                     id: liveData.id || `island-${index}`,
@@ -128,7 +129,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     description: liveData.description || "",
                     seasonal: liveData.seasonal || "Year-Round",
                     status: computedStatus,
-                    discordBotOnline: liveData.discord_bot_online ?? false,
+                    discordBotOnline: botOnline,
                     dodoCode: liveData.dodo_code,
                     visitors: Math.max(0, Math.min(7, liveData.visitors ?? 0)),
                     mapUrl: liveData.map_url || getIslandMap(liveData.canonical_name || liveData.name),
