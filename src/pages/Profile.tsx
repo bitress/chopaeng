@@ -275,12 +275,11 @@ const Profile = () => {
                                 <PillList title="Subscription roles" items={subscriptionRoleNames} emptyText="No subscription roles matched yet." tone="warning" />
                             </div>
 
-                            <h3 className="h6 fw-black text-uppercase text-muted mb-3">Accessible member islands</h3>
+                            <h3 className="h6 fw-black text-uppercase text-muted mb-3">Sub Islands</h3>
                             {accessibleIslands.length > 0 ? (
                                 <div className="d-flex flex-wrap gap-2 mb-4">
                                     {accessibleIslands.map((island, index) => {
-                                        const label = island.name ?? island.id ?? "Member island";
-                                        const type = island.type ?? "Member";
+                                        const label = island.name ?? island.id ?? "Sub Island";
                                         const islandPath = island.id ?? island.name ?? "";
 
                                         return (
@@ -289,17 +288,13 @@ const Profile = () => {
                                                 to={`/island/${encodeURIComponent(islandPath)}`}
                                                 className="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2 text-decoration-none fw-bold"
                                             >
-                                                <i className="fa-solid fa-crown text-warning"></i>
                                                 <span>{label}</span>
-                                                <span className="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">
-                                                    {type}
-                                                </span>
                                             </Link>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <EmptyLine text="No member islands unlocked yet." />
+                                <EmptyLine text="No sub islands yet." />
                             )}
                         </ProfileCard>
                     </div>
