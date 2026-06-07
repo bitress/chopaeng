@@ -1,4 +1,4 @@
-﻿import { API_BASE } from "../config/api";
+import { API_BASE } from "../config/api";
 import { getAuthToken } from "../context/authToken";
 
 export type DashboardIsland = {
@@ -183,6 +183,14 @@ export type WebsiteLoginEvents = {
   };
 };
 
+export type DashboardOpsStatus = {
+  db_type: string;
+  sqlite_counts: Record<string, number>;
+};
+
+export type DashboardIncident = Record<string, unknown>;
+export type DashboardUserTrust = Record<string, unknown>;
+
 export class DashboardApiError extends Error {
   status: number;
 
@@ -258,4 +266,10 @@ export const dashboardApi = {
       method: "POST",
       body: JSON.stringify({ dry_run: dryRun, truncate_before_import: truncateBeforeImport }),
     }),
+  runtimeStatus: () => dashboardRequest<DashboardOpsStatus>("/runtime-status"),
+  backups: () => dashboardRequest<unknown>("/backups"),
+  maintenanceMode: (payload: { mode: string }) => dashboardRequest<unknown>("/maintenance-mode", { method: "POST", body: JSON.stringify(payload) }),
+  incidents: () => dashboardRequest<{ incidents: DashboardIncident[] }>("/incidents"),
+  dodoQueue: () => dashboardRequest<{ queue: unknown[] }>("/dodo-queue"),
+  userTrustProfile: (userId: string) => dashboardRequest<DashboardUserTrust>(`/user-trust-profile?user_id=${encodeURIComponent(userId)}`),
 };

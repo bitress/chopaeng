@@ -9,8 +9,11 @@ const links = [
   { to: "/dashboard/islands", label: "Islands", icon: "fa-location-dot" },
   { to: "/dashboard/status", label: "Island Status", icon: "fa-signal" },
   { to: "/dashboard/logs", label: "XLog Reports", icon: "fa-clipboard-list" },
-  { to: "/dashboard/auth-log", label: "Website Logins", icon: "fa-user-check" },
   { to: "/dashboard/analytics", label: "Analytics", icon: "fa-chart-line" },
+  { to: "/dashboard/incidents", label: "Incidents", icon: "fa-triangle-exclamation" },
+  { to: "/dashboard/trust", label: "Trust Profile", icon: "fa-id-card" },
+  { to: "/dashboard/ops", label: "Ops", icon: "fa-server" },
+  { to: "/dashboard/auth-log", label: "Website Logins", icon: "fa-user-check" },
   { to: "/dashboard/database", label: "Database", icon: "fa-database" },
 ];
 

@@ -1,4 +1,4 @@
-﻿import { Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Home from "../pages/Home.tsx";
 import {IndexLayout} from "../layouts/IndexLayout.tsx";
 import About from "../pages/About.tsx";
@@ -29,6 +29,9 @@ import DashboardStatus from "../pages/dashboard/DashboardStatus.tsx";
 import DashboardAnalytics from "../pages/dashboard/DashboardAnalytics.tsx";
 import DashboardDatabase from "../pages/dashboard/DashboardDatabase.tsx";
 import DashboardForbidden from "../pages/dashboard/DashboardForbidden.tsx";
+import DashboardOps from "../pages/dashboard/DashboardOps.tsx";
+import DashboardIncidents from "../pages/dashboard/DashboardIncidents.tsx";
+import DashboardTrust from "../pages/dashboard/DashboardTrust.tsx";
 
 const AppRoutes = () => {
     return (
@@ -65,6 +68,9 @@ const AppRoutes = () => {
                     <Route path="status" element={<DashboardStatus />} />
                     <Route path="analytics" element={<DashboardAnalytics />} />
                     <Route path="database" element={<DashboardDatabase />} />
+                    <Route path="ops" element={<DashboardOps />} />
+                    <Route path="incidents" element={<DashboardIncidents />} />
+                    <Route path="trust" element={<DashboardTrust />} />
                 </Route>
             </Route>
             <Route path="/dashboard/forbidden" element={<DashboardForbidden />} />
