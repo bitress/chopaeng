@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAuthToken } from "../../context/authToken";
-import { dashboardApi, type DashboardAnalytics as AnalyticsPayload } from "../../lib/dashboardApi";
+import { dashboardApi, type DashboardAnalytics as AnalyticsPayload, type DashboardCommandAnalytics } from "../../lib/dashboardApi";
 
 type Row = Record<string, unknown>;
 type IslandFilter = "" | "free" | "sub";
@@ -20,9 +20,11 @@ const fmt = (value: unknown) => typeof value === "number" ? value.toLocaleString
 const pct = (value: number, max: number) => `${max > 0 ? Math.max(4, Math.round((value / max) * 100)) : 0}%`;
 const nameFor = (row: Row) => String(row.destination ?? row.ign ?? row.user_name ?? row.label ?? row.name ?? "Unknown");
 const countFor = (row: Row, key = "visit_count") => asNumber(row[key] ?? row.count);
+const queryNameFor = (row: Row) => String(row.normalized_query ?? row.query ?? row.command ?? "Unknown");
 
 const DashboardAnalytics = () => {
   const [data, setData] = useState<AnalyticsPayload | null>(null);
+  const [commandData, setCommandData] = useState<DashboardCommandAnalytics | null>(null);
   const [filter, setFilter] = useState<IslandFilter>("");
   const [trendDays, setTrendDays] = useState<7 | 30>(7);
   const [nrDays, setNrDays] = useState<7 | 30>(7);
@@ -32,6 +34,7 @@ const DashboardAnalytics = () => {
   const load = useCallback(() => {
     setError("");
     dashboardApi.analytics(filter).then(setData).catch((err) => setError(err.message));
+    dashboardApi.commandAnalytics(30, 15).then(setCommandData).catch((err) => console.error("[command analytics]", err));
   }, [filter]);
 
   useEffect(() => {
@@ -58,6 +61,8 @@ const DashboardAnalytics = () => {
   const topKicked = rows(data, "top_kicked");
   const topBanned = rows(data, "top_banned");
   const topNoted = rows(data, "top_noted");
+  const topQueries = commandData?.top_queries || [];
+  const failedQueries = commandData?.failed_queries || [];
   const weekDelta = asNumber(data?.visits_week) - asNumber(data?.visits_prev_week);
 
   const maxes = useMemo(() => ({
@@ -119,6 +124,20 @@ const DashboardAnalytics = () => {
         </div>
       );
     }) : <div className="dashboard-empty">No data yet.</div>;
+  };
+
+  const renderQueryRows = (items: Row[], colorClass: string) => {
+    const max = Math.max(...items.map((row) => countFor(row, "count")), 1);
+    return items.length ? items.slice(0, 8).map((row, index) => {
+      const count = countFor(row, "count");
+      return (
+        <div className={`dashboard-bar-row ${colorClass}`} key={`${queryNameFor(row)}-${index}`}>
+          <div className="dashboard-row-title"><span>{String(row.command || "find")}</span>{queryNameFor(row)}</div>
+          <div className="dashboard-row-bar"><span style={{ width: pct(count, max) }} /></div>
+          <strong>{fmt(count)}</strong>
+        </div>
+      );
+    }) : <div className="dashboard-empty">No command data yet.</div>;
   };
 
   return (
@@ -260,6 +279,27 @@ const DashboardAnalytics = () => {
           <div className="col-md-3 p-3">{renderBarRows(topKicked, "dashboard-yellow-bars", "kick_count")}</div>
           <div className="col-md-3 p-3">{renderBarRows(topBanned, "dashboard-red-bars", "ban_count")}</div>
           <div className="col-md-3 p-3">{renderBarRows(topNoted, "dashboard-blue-bars", "note_count")}</div>
+        </div>
+      </section>
+
+      <section className="section-card mt-4">
+        <div className="section-card-header">
+          <span><i className="fa-solid fa-magnifying-glass-chart me-2 dashboard-blue" />Command Search Analytics</span>
+          {commandData && (
+            <span className="dashboard-peak-badge">
+              {fmt(commandData.summary.total_searches)} searches · {commandData.summary.success_rate_pct == null ? "n/a" : `${commandData.summary.success_rate_pct}%`} success
+            </span>
+          )}
+        </div>
+        <div className="row g-0">
+          <div className="col-12 col-lg-6 p-3">
+            <div className="db-label mb-2">Top Searches</div>
+            {renderQueryRows(topQueries, "dashboard-blue-bars")}
+          </div>
+          <div className="col-12 col-lg-6 p-3">
+            <div className="db-label mb-2">Failed Searches</div>
+            {renderQueryRows(failedQueries, "dashboard-yellow-bars")}
+          </div>
         </div>
       </section>
     </div>

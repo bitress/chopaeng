@@ -9,6 +9,8 @@ const fmt = (value: number | string | null | undefined) => {
 };
 
 const pct = (value: number, max: number) => `${max > 0 ? Math.max(4, Math.round((value / max) * 100)) : 0}%`;
+const authLabel = (value: unknown) => value === true ? "authorized" : value === false ? "unknown" : String(value || "unknown");
+const authBadge = (value: unknown) => value === true || value === "authorized" ? "badge-auth" : "badge-unkn";
 
 const DashboardHome = () => {
   const [data, setData] = useState<DashboardOverview | null>(null);
@@ -154,7 +156,7 @@ const DashboardHome = () => {
                   <td className="fw-bold">{String(row.ign || "Unknown")}</td>
                   <td>{String(row.destination || "Unknown")}</td>
                   <td className="text-muted small">{String(row.timestamp || "")}</td>
-                  <td>{row.auth_status ? <span className="badge badge-auth">{String(row.auth_status)}</span> : <span className="badge badge-unkn">unknown</span>}</td>
+                  <td><span className={`badge ${authBadge(row.auth_status ?? row.authorized)}`}>{authLabel(row.auth_status ?? row.authorized)}</span></td>
                 </tr>
               ))}
             </tbody>

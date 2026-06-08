@@ -145,6 +145,20 @@ export type DashboardLogs = {
 };
 
 export type DashboardAnalytics = Record<string, unknown>;
+export type DashboardCommandAnalytics = {
+  ok: boolean;
+  days: number;
+  summary: {
+    total_searches: number;
+    failed_searches: number;
+    success_rate_pct: number | null;
+  };
+  top_queries: Array<Record<string, unknown>>;
+  failed_queries: Array<Record<string, unknown>>;
+  top_channels: Array<Record<string, unknown>>;
+  busiest_islands: Array<Record<string, unknown>>;
+  peak_hours: Array<Record<string, unknown>>;
+};
 export type MigrationStatus = Record<string, unknown>;
 
 export type WebsiteLoginEvent = {
@@ -346,6 +360,8 @@ export const dashboardApi = {
   logs: (params = "") => dashboardRequest<DashboardLogs>(`/logs${params ? `?${params}` : ""}`),
   websiteLogins: (params = "") => dashboardRequest<WebsiteLoginEvents>(`/website-logins${params ? `?${params}` : ""}`),
   analytics: (islandType = "") => dashboardRequest<DashboardAnalytics>(`/analytics${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
+  commandAnalytics: (days = 30, limit = 15) =>
+    dashboardRequest<DashboardCommandAnalytics>(`/command-analytics?days=${encodeURIComponent(days)}&limit=${encodeURIComponent(limit)}`),
   analyticsExportUrl: (islandType = "") => dashboardUrl(`/analytics/export.csv${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
   migrationStatus: () => dashboardRequest<MigrationStatus>("/mariadb-migration/status"),
   runMigration: (dryRun = true, truncateBeforeImport = false) =>
