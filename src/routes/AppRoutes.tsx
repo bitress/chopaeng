@@ -61,6 +61,7 @@ const AppRoutes = () => {
             <Route element={<RequireMod />}>
                 <Route path="/dashboard" element={<DashboardLayout />}>
                     <Route index element={<DashboardHome />} />
+                    <Route path="login" element={<DashboardHome />} />
                     <Route path="islands" element={<DashboardIslands />} />
                     <Route path="islands/:id" element={<DashboardIslandDetail />} />
                     <Route path="logs" element={<DashboardLogs />} />

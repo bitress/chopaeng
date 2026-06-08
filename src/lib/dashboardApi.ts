@@ -184,12 +184,99 @@ export type WebsiteLoginEvents = {
 };
 
 export type DashboardOpsStatus = {
-  db_type: string;
-  sqlite_counts: Record<string, number>;
+  status: string;
+  timestamp: string;
+  uptime_seconds?: number;
+  reasons?: string[];
+  database?: {
+    status?: string;
+    backend?: string;
+    latency_ms?: number;
+  };
+  cache?: {
+    items?: number;
+    age_seconds?: number;
+    last_refresh_status?: string;
+    last_refresh_error?: string | null;
+  };
+  maintenance?: Record<string, unknown>;
+  services?: Record<string, {
+    status?: string;
+    mode?: string;
+    last_heartbeat?: string;
+    last_error?: string | null;
+  }>;
+  integrations?: Record<string, boolean>;
+  db_type?: string;
+  sqlite_counts?: Record<string, number>;
 };
 
-export type DashboardIncident = Record<string, unknown>;
-export type DashboardUserTrust = Record<string, unknown>;
+export type DashboardBackupList = {
+  backup_dir?: string;
+  backend?: string;
+  entries?: Array<{ file: string; created_at?: string; size_bytes?: number }>;
+};
+
+export type DashboardIncidentEvent = {
+  kind: string;
+  source_id: string;
+  severity: string;
+  title: string;
+  timestamp: string;
+  user_id?: string | number | null;
+  trust_profile_url?: string | null;
+  status?: string;
+  assigned_to?: string;
+  note?: string;
+  workflow?: Record<string, unknown> | null;
+  payload?: Record<string, unknown>;
+};
+
+export type DashboardIncidentsPayload = {
+  ok: boolean;
+  summary: Record<string, number>;
+  events: DashboardIncidentEvent[];
+  open_queue?: DashboardDodoQueueEntry[];
+  workflow?: Array<Record<string, unknown>>;
+};
+
+export type DashboardDodoQueueEntry = {
+  id: number;
+  island_name: string;
+  island_clean: string;
+  user_id: string;
+  username?: string;
+  status: string;
+  note?: string;
+  created_at: number | string;
+  updated_at: number | string;
+};
+
+export type DashboardTrustTimelineItem = {
+  type: string;
+  label: string;
+  title: string;
+  timestamp: string;
+  severity: string;
+  payload?: Record<string, unknown>;
+};
+
+export type DashboardUserTrust = {
+  ok: boolean;
+  user_id: string;
+  user_name?: string;
+  risk_score: number;
+  trust_state: string;
+  status_label: string;
+  risk_flags: string[];
+  summary: Record<string, unknown>;
+  known_igns: Array<Record<string, unknown>>;
+  recent_visits: Array<Record<string, unknown>>;
+  recent_actions: Array<Record<string, unknown>>;
+  recent_dodo_reveals: Array<Record<string, unknown>>;
+  recent_identity_events: Array<Record<string, unknown>>;
+  timeline: DashboardTrustTimelineItem[];
+};
 
 export class DashboardApiError extends Error {
   status: number;
@@ -267,9 +354,20 @@ export const dashboardApi = {
       body: JSON.stringify({ dry_run: dryRun, truncate_before_import: truncateBeforeImport }),
     }),
   runtimeStatus: () => dashboardRequest<DashboardOpsStatus>("/runtime-status"),
-  backups: () => dashboardRequest<unknown>("/backups"),
-  maintenanceMode: (payload: { mode: string }) => dashboardRequest<unknown>("/maintenance-mode", { method: "POST", body: JSON.stringify(payload) }),
-  incidents: () => dashboardRequest<{ incidents: DashboardIncident[] }>("/incidents"),
-  dodoQueue: () => dashboardRequest<{ queue: unknown[] }>("/dodo-queue"),
+  backups: () => dashboardRequest<DashboardBackupList>("/backups"),
+  maintenanceMode: (payload: Record<string, unknown>) => dashboardRequest<unknown>("/maintenance-mode", { method: "POST", body: JSON.stringify(payload) }),
+  incidents: (limit = 50) => dashboardRequest<DashboardIncidentsPayload>(`/incidents?limit=${encodeURIComponent(limit)}`),
+  updateIncident: (payload: Partial<DashboardIncidentEvent> & { kind: string; source_id: string }) =>
+    dashboardRequest<{ ok: boolean; incident: Record<string, unknown> | null }>("/incidents", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  dodoQueue: (status = "waiting,called,investigating") =>
+    dashboardRequest<{ ok: boolean; items: DashboardDodoQueueEntry[] }>(`/dodo-queue?status=${encodeURIComponent(status)}`),
+  updateDodoQueue: (id: number | string, status: string, note = "") =>
+    dashboardRequest<{ ok: boolean; updated: number }>("/dodo-queue", {
+      method: "PATCH",
+      body: JSON.stringify({ id, status, note }),
+    }),
   userTrustProfile: (userId: string) => dashboardRequest<DashboardUserTrust>(`/user-trust-profile?user_id=${encodeURIComponent(userId)}`),
 };
