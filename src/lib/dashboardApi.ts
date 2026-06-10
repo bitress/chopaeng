@@ -305,15 +305,16 @@ export const dashboardUrl = (path: string) => `${API_BASE}/dashboard/api${path}`
 
 export const dashboardRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const token = getAuthToken();
-  if (!token) throw new DashboardApiError(401, "Missing auth token");
 
   const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${token}`);
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
   if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  const resp = await fetch(dashboardUrl(path), { ...init, headers });
+  const resp = await fetch(dashboardUrl(path), { credentials: "include", ...init, headers });
   const contentType = resp.headers.get("Content-Type") || "";
   const payload = contentType.includes("application/json") ? await resp.json().catch(() => null) : null;
 
@@ -326,6 +327,10 @@ export const dashboardRequest = async <T>(path: string, init: RequestInit = {}):
       );
     }
     throw new DashboardApiError(resp.status, message);
+  }
+
+  if (payload && typeof payload === "object" && "ok" in payload && payload.ok === false) {
+    throw new DashboardApiError(resp.status, String(payload.error || "Dashboard API returned an error"));
   }
 
   return payload as T;
