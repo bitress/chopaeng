@@ -112,12 +112,41 @@ const Footer = () => {
 
                 {/* Bottom Bar */}
                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                    <p className="small text-muted mb-0">
-                        &copy; {currentYear} <strong>CHOPAENG</strong>.
-                    </p>
+                    <div>
+                        <p className="small text-muted mb-1">
+                            &copy; {currentYear} <strong>CHOPAENG</strong>. All rights reserved.
+                        </p>
+                        <p className="small text-muted mb-0" style={{ maxWidth: "700px" }}>
+                            ChoPaeng Treasure Islands is
+                            not affiliated with, endorsed by, sponsored by, or approved by
+                            Nintendo. Animal Crossing and all related trademarks, characters,
+                            and assets are the property of Nintendo.
+                        </p>
+                    </div>
+
                     <div className="d-flex gap-4">
-                        <Link to="/privacy" className="text-decoration-none small text-muted hover-success">Privacy</Link>
-                        <Link to="/cookies" className="text-decoration-none small text-muted hover-success">Cookies</Link>
+                        <Link
+                            to="/privacy"
+                            className="text-decoration-none small text-muted hover-success"
+                        >
+                            Privacy
+                        </Link>
+
+                        <Link
+                            to="/cookies"
+                            className="text-decoration-none small text-muted hover-success"
+                        >
+                            Cookies
+                        </Link>
+
+                        <a
+                            href="https://creativecommons.org/licenses/by-sa/4.0/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-decoration-none small text-muted hover-success"
+                        >
+                            CC BY-SA 4.0
+                        </a>
                     </div>
                 </div>
             </div>

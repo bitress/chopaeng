@@ -29,7 +29,7 @@ const PrivacyPolicy = () => {
                             <i className="fa-solid fa-shield-halved fa-3x text-success"></i>
                         </div>
                         <h1 className="display-5 fw-black ac-font text-dark mb-1">Privacy Policy</h1>
-                        <p className="text-muted fw-bold small">Last updated: March 1, 2025</p>
+                        <p className="text-muted fw-bold small">Last updated: June 14, 2026</p>
                     </div>
 
                     <div className="bg-white rounded-4 shadow-sm border p-4 p-md-5">
