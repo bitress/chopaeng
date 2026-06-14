@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect x="2" y="14" width="60" height="36" rx="4" fill="#fff2c6" stroke="#f59e0b" stroke-width="2"/>
+  <rect x="8" y="20" width="22" height="12" rx="2" fill="#fff"/>
+  <path d="M34 26h18v8H34z" fill="#ffe8a8"/>
+  <text x="12" y="30" font-family="Arial, sans-serif" font-size="8" fill="#b45309">NMT</text>
+</svg>
