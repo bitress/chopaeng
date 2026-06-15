@@ -122,39 +122,40 @@ const CatalogDetail = () => {
     return (
         <div className="bg-pattern font-nunito min-vh-100 pb-5">
             <section className="container py-5">
-                <div className="mb-4">
-                    <Link to="/command-builder" className="text-decoration-none text-muted small fw-bold">
-                        <i className="fa-solid fa-arrow-left me-2"></i>Back to catalog
+                <div className="mb-5">
+                    <Link to="/command-builder" className="text-decoration-none text-nook small fw-bold transition-all" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-solid fa-arrow-left"></i>
+                        <span>Back to catalog</span>
                     </Link>
                 </div>
 
                 <div className="row gy-4">
                     <div className="col-lg-8">
-                        <div className="mb-4">
-                            <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-black text-uppercase x-small">
-                                {entry.entityType === 'item' ? 'Item details' : 'Villager details'}
+                        <div className="mb-3">
+                            <span className="badge bg-nook-green text-white rounded-pill px-2 py-2 fw-black text-uppercase x-small" style={{ boxShadow: '0 3px 8px rgba(40, 167, 69, 0.2)' }}>
+                                {entry.entityType === 'item' ? 'Item Details' : 'Villager Details'}
                             </span>
-                            <h1 className="display-6 fw-black mt-3 mb-2 text-dark">{detailTitle}</h1>
-                            <p className="text-muted small mb-0">
+                            <h1 className="ac-font fw-black mt-2 mb-2 text-nook" style={{ fontSize: '2.2rem', letterSpacing: '0.5px' }}>{detailTitle}</h1>
+                            <p className="text-muted small mb-0" style={{ fontSize: '0.95rem' }}>
                                 {entry.entityType === 'item'
                                     ? 'Choose a variation and add this item to your pockets.'
                                     : 'Request this villager for your command.'}
                             </p>
                         </div>
 
-                        <div className="bg-white rounded-5 border shadow-sm overflow-hidden">
-                            <div className="ratio ratio-4x3">
-                                <img src={detailImage} alt={detailTitle} className="w-100 h-100 object-fit-contain bg-light p-4" />
+                        <div className="bg-cream rounded-4 border-0 shadow overflow-hidden" style={{ borderTop: '4px solid #28a745' }}>
+                            <div className="ratio ratio-4x3 bg-light p-4">
+                                <img src={detailImage} alt={detailTitle} className="w-100 h-100 object-fit-contain" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} />
                             </div>
                             <div className="p-4">
-                                <p className="text-muted mb-4">{entry.description}</p>
+                                <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>{entry.description}</p>
 
                                 {entry.entityType === 'item' && entry.variations && entry.variations.length > 0 && (
-                                    <div className="mb-4">
-                                        <label className="form-label fw-black small text-dark mb-3">
-                                            <i className="fa-solid fa-palette me-2 text-success"></i>Choose a variation
+                                    <div className="mb-5 p-4 rounded-4 bg-light-green border-2" style={{ borderColor: '#88e0a0' }}>
+                                        <label className="fw-black small text-nook mb-3 d-block" style={{ fontSize: '0.95rem' }}>
+                                            <i className="fa-solid fa-palette me-2"></i>Choose a variation
                                         </label>
-                                        <div className="d-flex flex-wrap gap-2">
+                                        <div className="d-flex flex-wrap gap-3">
                                             {(entry.variations || []).map((variant) => {
                                                 const variantId = variant.id || 'NA';
                                                 const variantText = getVariantLabel(variant) || 'Default';
@@ -183,7 +184,8 @@ const CatalogDetail = () => {
                                                         key={variantId}
                                                         type="button"
                                                         onClick={() => handleVariantSelect(variantId)}
-                                                        className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${isSelected ? 'btn-nook-primary text-white shadow-sm' : 'btn-outline-secondary text-dark'}`}
+                                                        className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${isSelected ? 'bg-nook-green text-white border-0' : 'btn-outline-secondary text-dark border-2'}`}
+                                                        style={isSelected ? { boxShadow: '0 3px 8px rgba(40, 167, 69, 0.3)' } : {}}
                                                     >
                                                         {variantText}
                                                     </button>
@@ -193,56 +195,83 @@ const CatalogDetail = () => {
                                     </div>
                                 )}
 
-                                <div className="row g-3 mb-4">
+                                <div className="row g-3 mb-5">
                                     <div className="col-6">
-                                        <div className="bg-light rounded-4 p-3 h-100">
-                                            <span className="text-uppercase x-small fw-bold text-muted">Category</span>
-                                            <div className="fw-black mt-2">{entry.category}</div>
+                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Category</span>
+                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.category}</div>
                                         </div>
                                     </div>
                                     <div className="col-6">
-                                        <div className="bg-light rounded-4 p-3 h-100">
-                                            <span className="text-uppercase x-small fw-bold text-muted">Theme</span>
-                                            <div className="fw-black mt-2">{entry.theme}</div>
+                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Theme</span>
+                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.theme}</div>
                                         </div>
                                     </div>
                                     <div className="col-6">
-                                        <div className="bg-light rounded-4 p-3 h-100">
-                                            <span className="text-uppercase x-small fw-bold text-muted">Series</span>
-                                            <div className="fw-black mt-2">{entry.series}</div>
+                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Series</span>
+                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.series}</div>
                                         </div>
                                     </div>
                                     <div className="col-6">
-                                        <div className="bg-light rounded-4 p-3 h-100">
-                                            <span className="text-uppercase x-small fw-bold text-muted">Colour</span>
-                                            <div className="fw-black mt-2">{entry.colour}</div>
+                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Colour</span>
+                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.colour}</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {inPocketQty > 0 && entry.entityType === 'item' && (
-                                    <div className="alert alert-light border border-success-subtle rounded-4 py-2 px-3 mb-3 small" role="status">
-                                        <i className="fa-solid fa-basket-shopping text-success me-2"></i>
-                                        In pockets: <strong>{inPocketQty}</strong>
+                                    <div className="alert rounded-4 py-3 px-4 mb-4 small border-2" style={{ background: '#f0fdf4', borderColor: '#88e0a0', color: '#1e7e34' }} role="status">
+                                        <i className="fa-solid fa-basket-shopping me-2 fw-black"></i>
+                                        In pockets: <strong>{inPocketQty} × {entry.name}</strong>
                                     </div>
                                 )}
 
                                 <button
                                     type="button"
                                     onClick={addToCommandBuilder}
-                                    className="btn btn-nook-primary rounded-pill px-4 py-3 fw-black w-100"
+                                    className="btn rounded-pill px-4 py-3 fw-black w-100 transition-all"
                                     disabled={entry.entityType === 'item' && totalItemsCount >= 40}
+                                    style={{
+                                        background: entry.entityType === 'item' && totalItemsCount >= 40 
+                                            ? '#f8f9fa' 
+                                            : 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+                                        color: entry.entityType === 'item' && totalItemsCount >= 40 ? '#adb5bd' : 'white',
+                                        border: 'none',
+                                        boxShadow: entry.entityType === 'item' && totalItemsCount >= 40 
+                                            ? 'none' 
+                                            : '0 4px 12px rgba(40, 167, 69, 0.3)',
+                                        cursor: entry.entityType === 'item' && totalItemsCount >= 40 ? 'not-allowed' : 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (!(entry.entityType === 'item' && totalItemsCount >= 40)) {
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                            e.currentTarget.style.boxShadow = '0 6px 16px rgba(40, 167, 69, 0.4)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!(entry.entityType === 'item' && totalItemsCount >= 40)) {
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)';
+                                        }
+                                    }}
                                 >
+                                    <i className={`fa-solid ${entry.entityType === 'item' ? 'fa-plus' : 'fa-heart'} me-2`}></i>
                                     {entry.entityType === 'item' ? 'Add to Pockets' : 'Request Villager'}
                                 </button>
 
                                 {entry.entityType === 'item' && totalItemsCount >= 40 && (
-                                    <p className="text-muted small text-center mt-2 mb-0">Your pockets are full (40/40). Remove an item from the sidebar first.</p>
+                                    <p className="text-muted small text-center mt-3 mb-0" style={{ fontSize: '0.9rem' }}>
+                                        <i className="fa-solid fa-circle-info me-1"></i>Your pockets are full (40/40). Remove an item first.
+                                    </p>
                                 )}
 
                                 {detailStatus && (
-                                    <div className="alert alert-success rounded-4 py-3 px-4 mt-3 mb-0 small" role="alert">
-                                        <i className="fa-solid fa-check text-success me-2 fw-black"></i>{detailStatus}
+                                    <div className="alert rounded-4 py-3 px-4 mt-4 mb-0 small border-2" style={{ background: '#f0fdf4', borderColor: '#88e0a0', color: '#1e7e34' }} role="alert">
+                                        <i className="fa-solid fa-circle-check me-2 fw-black"></i>{detailStatus}
                                     </div>
                                 )}
                             </div>
