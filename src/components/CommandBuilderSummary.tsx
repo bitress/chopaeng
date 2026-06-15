@@ -214,7 +214,7 @@ const CommandBuilderSummary = ({
                                 onMouseLeave={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 0 #6dbd83')}
                             >
                                 <i className="fa-solid fa-ticket"></i>
-                                <span>Fill with Nook Miles Tickets</span>
+                                <span> Nook Miles Tickets</span>
                             </button>
                         )}
                         {onFillCrowns && (
@@ -228,7 +228,7 @@ const CommandBuilderSummary = ({
                                 onMouseLeave={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 0 #6dbd83')}
                             >
                                 <i className="fa-solid fa-crown"></i>
-                                <span>Fill with Royal Crowns</span>
+                                <span> Royal Crowns</span>
                             </button>
                         )}
                         {onFillBells && (
@@ -242,7 +242,7 @@ const CommandBuilderSummary = ({
                                 onMouseLeave={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 0 #6dbd83')}
                             >
                                 <i className="fa-solid fa-money-bill-wave"></i>
-                                <span>Fill with 99,000 Bells</span>
+                                <span> 99,000 Bells</span>
                             </button>
                         )}
                     </div>
