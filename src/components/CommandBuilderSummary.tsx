@@ -18,6 +18,8 @@ type CommandBuilderSummaryProps = {
     onDecreaseQuantity?: (itemId: string) => void;
     onIncreaseQuantity?: (itemId: string) => void;
     onRemoveItem?: (itemId: string) => void;
+    onRemoveVillager?: () => void;
+    onClearPockets?: () => void;
     canIncrease?: boolean;
     onFillTickets?: () => void;
     onFillCrowns?: () => void;
@@ -37,6 +39,8 @@ const CommandBuilderSummary = ({
     onDecreaseQuantity,
     onIncreaseQuantity,
     onRemoveItem,
+    onRemoveVillager,
+    onClearPockets,
     canIncrease = true,
     onFillTickets,
     onFillCrowns,
@@ -58,6 +62,9 @@ const CommandBuilderSummary = ({
                     <span className={`badge rounded-pill x-small ${villagerCount ? 'bg-info text-dark' : 'bg-light text-dark border'}`}>
                         Villager {villagerCount} / 1
                     </span>
+                    {onClearPockets && savedPockets.length > 0 && (
+                        <button type="button" onClick={onClearPockets} className="btn btn-sm btn-outline-danger rounded-pill ms-2">Clear pockets</button>
+                    )}
                 </div>
             </div>
             <div className="mb-4">
@@ -122,6 +129,16 @@ const CommandBuilderSummary = ({
                                     <strong className="d-block text-dark small">{savedVillager.name}</strong>
                                     <span className="tiny-text text-info">Villager selected</span>
                                 </div>
+                                {onRemoveVillager && (
+                                    <button
+                                        type="button"
+                                        onClick={onRemoveVillager}
+                                        className="btn btn-sm btn-link text-danger p-0 ms-auto"
+                                        title="Remove villager"
+                                    >
+                                        <i className="fa-solid fa-trash-can"></i>
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -163,7 +180,7 @@ const CommandBuilderSummary = ({
                             <button
                                 type="button"
                                 onClick={onFillTickets}
-                                className="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-2"
+                                className="btn btn-sm btn-nook-primary rounded-pill d-flex align-items-center gap-2"
                             >
                                 <i className="fa-solid fa-ticket"></i>
                                 Fill with Nook Miles Tickets
@@ -173,7 +190,7 @@ const CommandBuilderSummary = ({
                             <button
                                 type="button"
                                 onClick={onFillCrowns}
-                                className="btn btn-sm btn-outline-warning rounded-pill d-flex align-items-center gap-2"
+                                className="btn btn-sm btn-nook-primary rounded-pill d-flex align-items-center gap-2"
                                 disabled={!canIncrease}
                             >
                                 <i className="fa-solid fa-crown"></i>
@@ -184,7 +201,7 @@ const CommandBuilderSummary = ({
                             <button
                                 type="button"
                                 onClick={onFillBells}
-                                className="btn btn-sm btn-outline-success rounded-pill d-flex align-items-center gap-2"
+                                className="btn btn-sm btn-nook-primary rounded-pill d-flex align-items-center gap-2"
                                 disabled={!canIncrease}
                             >
                                 <i className="fa-solid fa-money-bill-wave"></i>

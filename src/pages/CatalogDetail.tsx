@@ -29,6 +29,7 @@ const CatalogDetail = () => {
 
     const {
         selectedItems,
+        setSelectedItems,
         totalItemsCount,
         canIncrease,
         decreaseQuantity,
@@ -47,7 +48,10 @@ const CatalogDetail = () => {
         handleCopyOrder,
         handleCopyDrop,
         getPocketQuantity,
+        setVillagerId,
     } = useCommandBuilderPockets();
+
+
 
     useEffect(() => {
         if (entry?.entityType !== 'item') {
@@ -259,6 +263,8 @@ const CatalogDetail = () => {
                                 onDecreaseQuantity={decreaseQuantity}
                                 onIncreaseQuantity={increaseQuantity}
                                 onRemoveItem={removeItem}
+                                onRemoveVillager={() => setVillagerId('')}
+                                onClearPockets={() => setSelectedItems([])}
                                 canIncrease={canIncrease}
                                 onFillTickets={handleFillTickets}
                                 onFillCrowns={handleFillCrowns}

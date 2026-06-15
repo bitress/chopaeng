@@ -32,7 +32,9 @@ const CommandBuilder = () => {
 
     const {
         selectedItems,
+        setSelectedItems,
         villagerId,
+        setVillagerId,
         totalItemsCount,
         canIncrease,
         decreaseQuantity,
@@ -290,8 +292,8 @@ const CommandBuilder = () => {
                                                             <div className="mb-2">
                                                                 <span className="badge bg-light text-muted rounded-pill px-2 py-1 x-small fw-bold border">{isVillager ? 'Villager' : item.category}</span>
                                                             </div>
-                                                            <h3 className="h6 fw-black mb-1 text-truncate" title={item.name}>{item.name}</h3>
-                                                            <p className="tiny-text text-muted mb-0 text-truncate">{item.theme} · {item.colour}</p>
+                                                            <h3 className="h6 fw-black mb-1 text-truncate text-uppercase" title={item.name}>{item.name}</h3>
+                                                            <p className="text-muted mb-0 text-truncate text-uppercase">{item.theme} · {item.colour}</p>
                                                         </div>
                                                         <div className="mt-3">
                                                             <button
@@ -351,6 +353,8 @@ const CommandBuilder = () => {
                                     onDecreaseQuantity={decreaseQuantity}
                                     onIncreaseQuantity={increaseQuantity}
                                     onRemoveItem={removeItem}
+                                    onRemoveVillager={() => setVillagerId('')}
+                                    onClearPockets={() => setSelectedItems([])}
                                     canIncrease={canIncrease}
                                     onFillTickets={handleFillTickets}
                                     onFillCrowns={handleFillCrowns}
