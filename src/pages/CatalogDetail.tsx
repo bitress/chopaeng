@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { loadExplorerItems } from "../data/explorerDataLoader";
 import { loadVillagers } from "../data/villagerDataLoader";
 import type { CatalogEntity } from "../data/commandBuilderData";
@@ -26,6 +26,7 @@ const CatalogDetail = () => {
 
     const [detailStatus, setDetailStatus] = useState('');
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+    const detailStatusRef = useRef<HTMLDivElement | null>(null);
 
     const {
         selectedItems,
@@ -112,10 +113,18 @@ const CatalogDetail = () => {
             };
             const result = addItemToPockets(itemToSave);
             setDetailStatus(result.message);
+            // focus the status for screen readers
+            setTimeout(() => {
+                detailStatusRef.current?.focus();
+            }, 50);
         } else {
             const result = requestVillager(entry);
             setDetailStatus(result.message);
+            setTimeout(() => {
+                detailStatusRef.current?.focus();
+            }, 50);
         }
+        // clear status after a short delay
         setTimeout(() => setDetailStatus(''), 2800);
     };
 
@@ -132,7 +141,7 @@ const CatalogDetail = () => {
                 <div className="row gy-4">
                     <div className="col-lg-8">
                         <div className="mb-3">
-                            <span className="badge bg-nook-green text-white rounded-pill px-2 py-2 fw-black text-uppercase x-small" style={{ boxShadow: '0 3px 8px rgba(40, 167, 69, 0.2)' }}>
+                            <span className="badge bg-nook-green text-white rounded-pill px-2 py-2 fw-black x-small" style={{ boxShadow: '0 3px 8px rgba(40, 167, 69, 0.2)' }}>
                                 {entry.entityType === 'item' ? 'Item Details' : 'Villager Details'}
                             </span>
                             <h1 className="ac-font fw-black mt-2 mb-2 text-nook" style={{ fontSize: '2.2rem', letterSpacing: '0.5px' }}>{detailTitle}</h1>
@@ -169,7 +178,10 @@ const CatalogDetail = () => {
                                                             type="button"
                                                             onClick={() => handleVariantSelect(variantId)}
                                                             className={`variant-thumb-btn btn p-2 rounded-4 d-flex flex-column align-items-center gap-1 ${isSelected ? 'variant-thumb-btn--selected' : 'btn-outline-secondary'}`}
-                                                            title={variantText}
+                                                                        title={variantText}
+                                                                        aria-pressed={isSelected}
+                                                                        aria-label={`Select variation ${variantText}`}
+                                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantId); } }}
                                                         >
                                                             <div className="ratio ratio-1x1" style={{ width: '48px' }}>
                                                                 <img src={thumbUrl} alt={variantText} className="w-100 h-100 object-fit-contain rounded-3" />
@@ -185,6 +197,8 @@ const CatalogDetail = () => {
                                                         type="button"
                                                         onClick={() => handleVariantSelect(variantId)}
                                                         className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${isSelected ? 'bg-nook-green text-white border-0' : 'btn-outline-secondary text-dark border-2'}`}
+                                                        aria-pressed={isSelected}
+                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantId); } }}
                                                         style={isSelected ? { boxShadow: '0 3px 8px rgba(40, 167, 69, 0.3)' } : {}}
                                                     >
                                                         {variantText}
@@ -198,25 +212,25 @@ const CatalogDetail = () => {
                                 <div className="row g-3 mb-5">
                                     <div className="col-6">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Category</span>
+                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Category</span>
                                             <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.category}</div>
                                         </div>
                                     </div>
                                     <div className="col-6">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Theme</span>
+                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Theme</span>
                                             <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.theme}</div>
                                         </div>
                                     </div>
                                     <div className="col-6">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Series</span>
+                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Series</span>
                                             <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.series}</div>
                                         </div>
                                     </div>
                                     <div className="col-6">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="text-uppercase x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Colour</span>
+                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Colour</span>
                                             <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.colour}</div>
                                         </div>
                                     </div>
@@ -259,8 +273,8 @@ const CatalogDetail = () => {
                                         }
                                     }}
                                 >
-                                    <i className={`fa-solid ${entry.entityType === 'item' ? 'fa-plus' : 'fa-heart'} me-2`}></i>
-                                    {entry.entityType === 'item' ? 'Add to Pockets' : 'Request Villager'}
+                                    <i className={`fa-solid me-2 ${entry.entityType === 'item' ? (inPocketQty > 0 ? 'fa-check' : 'fa-plus') : 'fa-heart'}`}></i>
+                                    {entry.entityType === 'item' ? (inPocketQty > 0 ? `In pockets (${inPocketQty})` : 'Add to Pockets') : 'Request Villager'}
                                 </button>
 
                                 {entry.entityType === 'item' && totalItemsCount >= 40 && (
@@ -270,7 +284,7 @@ const CatalogDetail = () => {
                                 )}
 
                                 {detailStatus && (
-                                    <div className="alert rounded-4 py-3 px-4 mt-4 mb-0 small border-2" style={{ background: '#f0fdf4', borderColor: '#88e0a0', color: '#1e7e34' }} role="alert">
+                                    <div ref={detailStatusRef} tabIndex={-1} aria-live="polite" className="alert rounded-4 py-3 px-4 mt-4 mb-0 small border-2" style={{ background: '#f0fdf4', borderColor: '#88e0a0', color: '#1e7e34' }} role="alert">
                                         <i className="fa-solid fa-circle-check me-2 fw-black"></i>{detailStatus}
                                     </div>
                                 )}

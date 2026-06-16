@@ -43,6 +43,8 @@ const CommandBuilder = () => {
         handleFillTickets,
         handleFillCrowns,
         handleFillBells,
+        addItemToPockets,
+        requestVillager,
         selectedVillager,
         orderCommandText,
         dropCommandText,
@@ -264,7 +266,15 @@ const CommandBuilder = () => {
                                         const cardSelected = isVillager ? villagerId === item.id : quantity > 0;
                                         return (
                                             <div className="col-6 col-md-4 col-lg-3" key={item.id}>
-                                                <div className={`cb-item-card bg-white rounded-4 shadow-sm h-100 d-flex flex-column overflow-hidden position-relative cursor-pointer ${cardSelected ? 'border-success border-2' : ''}`} onClick={() => openDetail(item)}>
+                                                <div
+                                                    className={`cb-item-card bg-white rounded-4 shadow-sm h-100 d-flex flex-column overflow-hidden position-relative cursor-pointer ${cardSelected ? 'border-success border-2' : ''}`}
+                                                    onClick={() => openDetail(item)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-pressed={cardSelected}
+                                                    aria-label={`${isVillager ? 'Villager' : item.category} ${item.name}${item.variantLabel ? ` ${item.variantLabel}` : ''}`}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item); } }}
+                                                >
                                                     {cardSelected && (
                                                         <div className="position-absolute top-0 end-0 m-2 z-index-2">
                                                             <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow" style={{ width: '26px', height: '26px' }}>
@@ -292,18 +302,28 @@ const CommandBuilder = () => {
                                                             <div className="mb-2">
                                                                 <span className="badge bg-light text-muted rounded-pill px-2 py-1 x-small fw-bold border">{isVillager ? 'Villager' : item.category}</span>
                                                             </div>
-                                                            <h3 className="h6 fw-black mb-1 text-truncate text-uppercase" title={item.name}>{item.name}</h3>
-                                                            <p className="text-muted mb-0 text-truncate text-uppercase">{item.theme} · {item.colour}</p>
+                                                            <h3 className="h6 fw-black mb-1 text-truncate" title={item.name}>{item.name}</h3>
+                                                            <p className="text-muted mb-0 text-truncate">{item.theme} · {item.colour}</p>
                                                         </div>
-                                                        <div className="mt-3">
-                                                            <button
-                                                                type="button"
-                                                                className={`btn btn-sm w-100 rounded-pill fw-bold transition-transform ${cardSelected ? 'btn-outline-success border-2' : isVillager ? 'btn-outline-primary text-dark' : 'btn-nook-primary text-white'}`}
-                                                                onClick={(e) => { e.stopPropagation(); openDetail(item); }}
-                                                                disabled={isVillager ? false : totalItemsCount >= 40}
-                                                            >
-                                                                {isVillager ? (cardSelected ? '✓ Selected' : 'View Villager') : (quantity > 0 ? 'View Item' : 'View Item')}
-                                                            </button>
+                                                        <div className="mt-3 d-flex gap-2 align-items-center">
+                                                            {!isVillager ? (
+                                                                <>
+                                                                    {quantity > 0 ? (
+                                                                        <div className="d-flex align-items-center gap-2 w-100">
+                                                                            <button type="button" className="btn btn-sm btn-outline-success rounded-pill px-3" onClick={(e) => { e.stopPropagation(); decreaseQuantity(item.id); }} aria-label={`Decrease ${item.name}`}>-</button>
+                                                                            <div className="text-center fw-bold" style={{ minWidth: '36px' }}>{quantity}</div>
+                                                                            <button type="button" className="btn btn-sm btn-nook-primary text-white rounded-pill px-3" onClick={(e) => { e.stopPropagation(); increaseQuantity(item.id); }} aria-label={`Increase ${item.name}`} disabled={!canIncrease}>+</button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <button type="button" className="btn btn-sm btn-nook-primary text-white rounded-pill w-100 fw-bold" onClick={(e) => { e.stopPropagation(); addItemToPockets(item as ItemData); }} disabled={totalItemsCount >= 40} aria-label={`Add ${item.name} to pockets`}>Add</button>
+                                                                    )}
+                                                                    <button type="button" className="btn btn-sm btn-white text-dark rounded-pill px-3" onClick={(e) => { e.stopPropagation(); openDetail(item); }} aria-label={`View ${item.name}`}>View</button>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <button type="button" className={`btn btn-sm w-100 rounded-pill fw-bold ${cardSelected ? 'btn-outline-success border-2' : 'btn-outline-primary text-dark'}`} onClick={(e) => { e.stopPropagation(); requestVillager(item); }} aria-pressed={cardSelected}>{cardSelected ? '✓ Selected' : 'Request Villager'}</button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

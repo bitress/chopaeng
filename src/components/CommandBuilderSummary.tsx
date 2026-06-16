@@ -42,9 +42,6 @@ const CommandBuilderSummary = ({
     onRemoveVillager,
     onClearPockets,
     canIncrease = true,
-    onFillTickets,
-    onFillCrowns,
-    onFillBells,
     showTerminal = false,
 }: CommandBuilderSummaryProps) => {
     const itemCount = savedPockets.reduce((sum, pocket) => sum + pocket.quantity, 0);
@@ -194,60 +191,7 @@ const CommandBuilderSummary = ({
                     </div>
                 </div>
             )}
-            {(onFillTickets || onFillCrowns || onFillBells) && (
-                <div className="bg-light-green rounded-4 p-4 mb-4 border-2" style={{ borderColor: '#88e0a0' }}>
-                    <div className="d-flex align-items-start justify-content-between mb-3">
-                        <div>
-                            <h3 className="h6 fw-black mb-1 ac-font text-nook">⚡ Quick Fill</h3>
-                            <p className="small text-muted mb-0">Common buffer items for fast pocket filling.</p>
-                        </div>
-                    </div>
-                    <div className="d-grid gap-2">
-                        {onFillTickets && (
-                            <button
-                                type="button"
-                                onClick={onFillTickets}
-                                className="btn btn-nook-primary rounded-pill d-flex align-items-center gap-2 transition-all fw-bold py-2"
-                                disabled={!canIncrease}
-                                style={{ boxShadow: !canIncrease ? 'none' : '0 4px 0 #6dbd83', opacity: !canIncrease ? 0.6 : 1, pointerEvents: !canIncrease ? 'none' : 'auto' }}
-                                onMouseEnter={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 6px 0 #6dbd83')}
-                                onMouseLeave={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 0 #6dbd83')}
-                            >
-                                <i className="fa-solid fa-ticket"></i>
-                                <span> Nook Miles Tickets</span>
-                            </button>
-                        )}
-                        {onFillCrowns && (
-                            <button
-                                type="button"
-                                onClick={onFillCrowns}
-                                className="btn btn-nook-primary rounded-pill d-flex align-items-center gap-2 transition-all fw-bold py-2"
-                                disabled={!canIncrease}
-                                style={{ boxShadow: !canIncrease ? 'none' : '0 4px 0 #6dbd83', opacity: !canIncrease ? 0.6 : 1 }}
-                                onMouseEnter={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 6px 0 #6dbd83')}
-                                onMouseLeave={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 0 #6dbd83')}
-                            >
-                                <i className="fa-solid fa-crown"></i>
-                                <span> Royal Crowns</span>
-                            </button>
-                        )}
-                        {onFillBells && (
-                            <button
-                                type="button"
-                                onClick={onFillBells}
-                                className="btn btn-nook-primary rounded-pill d-flex align-items-center gap-2 transition-all fw-bold py-2"
-                                disabled={!canIncrease}
-                                style={{ boxShadow: !canIncrease ? 'none' : '0 4px 0 #6dbd83', opacity: !canIncrease ? 0.6 : 1 }}
-                                onMouseEnter={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 6px 0 #6dbd83')}
-                                onMouseLeave={(e) => !canIncrease ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 0 #6dbd83')}
-                            >
-                                <i className="fa-solid fa-money-bill-wave"></i>
-                                <span> 99,000 Bells</span>
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
+            {/* Quick Fill removed per request */}
             {showTerminal && (
                 <div className="terminal-window shadow-lg rounded-4" style={{ overflow: 'hidden', border: '2px solid #1e7e34' }}>
                     <div className="terminal-header" style={{ background: 'linear-gradient(135deg, #1e7e34 0%, #28a745 100%)', padding: '12px 16px' }}>

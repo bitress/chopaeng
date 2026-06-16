@@ -40,6 +40,27 @@ body {
     scroll-behavior: smooth;
 }
 
+/* Typography resets & improvements */
+/* Override utility that forces uppercase (from frameworks) — prefer natural casing */
+.text-uppercase { text-transform: none !important; }
+/* Use when uppercase is intentionally desired */
+.force-uppercase { text-transform: uppercase; letter-spacing: 1px; }
+
+/* Improve base readability */
+html { font-size: 16px; }
+body { line-height: 1.55; color: var(--text); }
+
+/* Headings: strong, but not forced uppercase */
+h1, h2, h3, h4, h5, h6 { margin: 0 0 0.35rem 0; line-height: 1.2; text-transform: none; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.25rem; }
+.h4 { font-size: 1rem; }
+
+/* Reduce aggressive letter-spacing on heavy weights */
+.fw-black { letter-spacing: 0px; }
+
+
 .ac-font { font-family: "Fredoka One", cursive; letter-spacing: 0.5px; }
 .font-nunito { font-family: "Nunito", sans-serif; }
 .fw-black { font-weight: 900; }
@@ -2646,6 +2667,48 @@ button:disabled {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Card visual improvements */
+.cb-item-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfff9 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.cb-item-card .ratio {
+    background: linear-gradient(180deg, rgba(240,248,243,0.6), rgba(255,255,255,0.6));
+}
+
+.cb-item-card .cb-item-image { padding: 18px; }
+
+.cb-item-card .cb-item-meta {
+    padding: 14px 14px 8px 14px;
+}
+
+.cb-item-card .cb-item-footer {
+    padding: 12px 14px 16px 14px;
+    border-top: 1px solid #f0f6f0;
+}
+
+.cb-item-card .badge {
+    background: rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.03);
+    color: #6b6b6b;
+    font-weight: 800;
+}
+
+.cb-item-card .text-truncate { color: #2b2b2b; }
+
+/* Add subtle lift for selected state */
+.cb-item-card.border-success {
+    box-shadow: 0 22px 40px rgba(40,167,69,0.14) !important;
+}
+
+/* Footer layout */
+.cb-item-card .btn + .btn { margin-left: 6px; }
+
+
 .cb-item-card .btn:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 8px 18px rgba(40, 167, 69, 0.15);
@@ -2709,3 +2772,54 @@ button:disabled {
     box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
     background: #f8fff9;
 }
+
+/* ---------------------------
+   Accessibility & UX refinements
+---------------------------- */
+/* Clear focus styles for keyboard users */
+button:focus-visible, .btn:focus-visible, .form-control:focus-visible, .form-select:focus-visible, .page-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(40,167,69,0.18);
+    border-color: var(--nook-green);
+}
+
+/* Make interactive cards announceable and visibly focusable */
+.cb-item-card:focus {
+    outline: none;
+    border-color: rgba(40,167,69,0.5);
+    box-shadow: 0 18px 36px rgba(40,167,69,0.08) !important;
+    transform: translateY(-6px) scale(1.01);
+}
+
+/* Subtle reduction of shadow on small screens to reduce visual noise */
+@media (max-width: 768px) {
+    .cb-item-card, .app-card, .ticket-card { box-shadow: 0 6px 18px rgba(0,0,0,0.06) !important; }
+}
+
+/* Improve contrast for tip / helper banners */
+.command-builder-tip {
+    background: linear-gradient(180deg, rgba(237,252,240,0.98), rgba(225,249,237,0.98));
+    border: 1px solid rgba(34,197,94,0.08);
+    color: #0f5132;
+}
+
+/* Slightly smoother motion and prefer-reduced-motion support */
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}
+
+/* Improve image scaling fallback inside cards */
+.cb-item-image { object-fit: contain !important; }
+
+/* Improve clickable affordance on primary action buttons */
+.btn-nook-primary, .btn-nook, .btn-nook-sm { cursor: pointer; will-change: transform; }
+
+/* Slight spacing improvement for filter controls on narrow screens */
+@media (max-width: 420px) {
+    .glass-filter .form-label { font-size: 0.75rem; }
+    .glass-filter .form-control, .glass-filter .form-select { padding: 10px 12px; }
+}
+
+/* Ensure badges and counts are readable on all backgrounds */
+.badge, .badge-count { color: #13311f; font-weight: 900; }
+
