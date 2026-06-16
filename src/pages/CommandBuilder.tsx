@@ -27,8 +27,12 @@ const CommandBuilder = () => {
     const [series, setSeries] = useState("All");
     const [interactivity, setInteractivity] = useState("All");
     const [colour, setColour] = useState("All");
-    const [hideVariants, setHideVariants] = useState(false);
+    // auto-hide variants by default to declutter the list
+    const [hideVariants, setHideVariants] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [kindFilter, setKindFilter] = useState("All"); // All | Items | Recipes | Villagers
+    const [villagerType, setVillagerType] = useState("All");
+    const [compactMode, setCompactMode] = useState(true);
 
     const {
         selectedItems,
@@ -56,6 +60,7 @@ const CommandBuilder = () => {
 
     const expandedCatalogItems = useMemo(() => {
         return catalogEntities.flatMap((item) => {
+            // auto-hide variants for non-items or when hiding is requested or there are no meaningful variations
             if (item.entityType !== 'item' || !item.variations || hideVariants || item.variations.length === 0) {
                 return [item as ItemData];
             }
@@ -69,7 +74,10 @@ const CommandBuilder = () => {
                 image: variant.imageUrl || item.image,
             }));
         });
-    }, [hideVariants]);
+    }, [hideVariants, catalogEntities]);
+
+    const itemCategories = useMemo(() => uniqueValues(explorerItems.filter(i => i.entityType === 'item'), 'category'), []);
+    const villagerTypes = useMemo(() => uniqueValues(villagerEntities, 'category'), []);
 
     const filteredItems = useMemo(() => {
         return expandedCatalogItems.filter((item) => {
@@ -80,12 +88,14 @@ const CommandBuilder = () => {
             const matchesSeries = series === "All" || item.series === series;
             const matchesInteractivity = interactivity === "All" || item.interactivity === interactivity;
             const matchesColour = colour === "All" || item.colour === colour;
-            return matchesSearch && matchesCategory && matchesTheme && matchesSeries && matchesInteractivity && matchesColour;
+            const matchesKind = kindFilter === 'All' || (kindFilter === 'Items' && item.entityType === 'item' && item.category !== 'Recipes') || (kindFilter === 'Recipes' && item.entityType === 'item' && item.category === 'Recipes') || (kindFilter === 'Villagers' && item.entityType === 'villager');
+            const matchesVillagerType = villagerType === 'All' || item.entityType !== 'villager' || item.category === villagerType;
+            return matchesSearch && matchesCategory && matchesTheme && matchesSeries && matchesInteractivity && matchesColour && matchesKind && matchesVillagerType;
         });
-    }, [expandedCatalogItems, category, theme, series, interactivity, colour, searchTerm]);
+    }, [expandedCatalogItems, category, theme, series, interactivity, colour, searchTerm, kindFilter, villagerType]);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 12;
+    const itemsPerPage = compactMode ? 50 : 26;
     const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
     const pagedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -106,6 +116,10 @@ const CommandBuilder = () => {
         setInteractivity("All");
         setColour("All");
         setSearchTerm("");
+        setKindFilter("All");
+        setVillagerType("All");
+        setCompactMode(false);
+        setHideVariants(true);
     };
 
     return (
@@ -136,17 +150,42 @@ const CommandBuilder = () => {
                                                 />
                                             </div>
                                             <div className="col-12 col-sm-6 col-md-4">
-                                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-layer-group me-1 text-muted"></i> Category</label>
-                                                <select
-                                                    className="form-select bg-white rounded-pill border-0 shadow-sm px-4 cursor-pointer"
-                                                    value={category}
-                                                    onChange={(event) => setCategory(event.target.value)}
-                                                >
-                                                    {uniqueValues(catalogEntities, 'category').map((value) => (
-                                                        <option key={value} value={value}>{value}</option>
-                                                    ))}
-                                                </select>
+                                                    <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-layer-group me-1 text-muted"></i> Type</label>
+                                                    <select
+                                                        className="form-select bg-white rounded-pill border-0 shadow-sm px-4 cursor-pointer"
+                                                        value={kindFilter}
+                                                        onChange={(event) => setKindFilter(event.target.value)}
+                                                    >
+                                                        <option value="All">All</option>
+                                                        <option value="Items">Items</option>
+                                                        <option value="Recipes">Recipes</option>
+                                                        <option value="Villagers">Villagers</option>
+                                                    </select>
                                             </div>
+                                                <div className="col-12 col-sm-6 col-md-4">
+                                                    <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-tags me-1 text-muted"></i> Category</label>
+                                                    <select
+                                                        className="form-select bg-white rounded-pill border-0 shadow-sm px-4 cursor-pointer"
+                                                        value={category}
+                                                        onChange={(event) => setCategory(event.target.value)}
+                                                    >
+                                                        {itemCategories.map((value) => (
+                                                            <option key={value} value={value}>{value}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="col-12 col-sm-6 col-md-4">
+                                                    <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-user-astronaut me-1 text-muted"></i> Villager Type</label>
+                                                    <select
+                                                        className="form-select bg-white rounded-pill border-0 shadow-sm px-4 cursor-pointer"
+                                                        value={villagerType}
+                                                        onChange={(event) => setVillagerType(event.target.value)}
+                                                    >
+                                                        {villagerTypes.map((value) => (
+                                                            <option key={value} value={value}>{value}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             <div className="col-12 col-sm-6 col-md-4">
                                                 <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-palette me-1 text-muted"></i> Theme</label>
                                                 <select
@@ -196,17 +235,31 @@ const CommandBuilder = () => {
                                                 </select>
                                             </div>
                                             <div className="col-12 col-sm-6 col-md-4 d-flex align-items-center">
-                                                <div className="form-check form-switch w-100">
-                                                    <input
-                                                        className="form-check-input"
-                                                        type="checkbox"
-                                                        id="hideVariants"
-                                                        checked={hideVariants}
-                                                        onChange={(event) => setHideVariants(event.target.checked)}
-                                                    />
-                                                    <label className="form-check-label small text-dark" htmlFor="hideVariants">
-                                                        Hide variants
-                                                    </label>
+                                                <div className="d-flex w-100 gap-3 align-items-center">
+                                                    <div className="form-check form-switch flex-grow-1">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="hideVariants"
+                                                            checked={hideVariants}
+                                                            onChange={(event) => setHideVariants(event.target.checked)}
+                                                        />
+                                                        <label className="form-check-label small text-dark" htmlFor="hideVariants">
+                                                            Hide variants
+                                                        </label>
+                                                    </div>
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="compactMode"
+                                                            checked={compactMode}
+                                                            onChange={(e) => setCompactMode(e.target.checked)}
+                                                        />
+                                                        <label className="form-check-label small text-dark" htmlFor="compactMode">
+                                                            Compact
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -287,13 +340,13 @@ const CommandBuilder = () => {
                                                             <img
                                                                 src={(item as any).image || `https://www.pange.ca/itemsearch/villagers/${item.id}.png`}
                                                                 alt={item.name}
-                                                                className={`cb-item-image w-100 h-100 object-fit-contain p-3 ${cardSelected ? 'opacity-75' : ''}`}
+                                                                className={`cb-item-image w-100 h-100 object-fit-contain ${compactMode ? 'p-1' : 'p-3'} ${cardSelected ? 'opacity-75' : ''}`}
                                                             />
                                                         ) : (
                                                             <img
                                                                 src={item.image}
                                                                 alt={item.name}
-                                                                className={`cb-item-image w-100 h-100 object-fit-cover p-3 ${quantity > 0 ? 'opacity-75' : ''}`}
+                                                                className={`cb-item-image w-100 h-100 object-fit-cover ${compactMode ? 'p-1' : 'p-3'} ${quantity > 0 ? 'opacity-75' : ''}`}
                                                             />
                                                         )}
                                                     </div>
