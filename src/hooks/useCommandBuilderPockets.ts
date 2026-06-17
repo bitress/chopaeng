@@ -60,6 +60,7 @@ export const useCommandBuilderPockets = () => {
     const [villagerId, setVillagerId] = useState(parseSavedVillagerId);
     const [copyOrderStatus, setCopyOrderStatus] = useState('Copy order');
     const [copyDropStatus, setCopyDropStatus] = useState('Copy drop');
+    const [copyInjectVillagerStatus, setCopyInjectVillagerStatus] = useState('Copy inject');
 
     useEffect(() => {
         localStorage.setItem('command_builder_selected_items', JSON.stringify(selectedItems));
@@ -168,10 +169,12 @@ export const useCommandBuilderPockets = () => {
 
     const dropCommandText = useMemo(() => {
         const itemsList = selectedItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
-        const villagerPart = selectedVillager ? `villager:${selectedVillager.id}` : '';
-        const commandParts = [itemsList, villagerPart].filter(Boolean).join(' ');
-        return commandParts ? `!drop ${commandParts}` : '';
-    }, [selectedItems, selectedVillager]);
+        return itemsList ? `!drop ${itemsList}` : '';
+    }, [selectedItems]);
+
+    const injectVillagerCommandText = useMemo(() => {
+        return selectedVillager ? `!injectvillager ${selectedVillager.name}` : '';
+    }, [selectedVillager]);
 
     const handleCopyOrder = useCallback(async () => {
         if (!orderCommandText) return;
@@ -199,6 +202,19 @@ export const useCommandBuilderPockets = () => {
         }
     }, [dropCommandText]);
 
+    const handleCopyInjectVillager = useCallback(async () => {
+        if (!injectVillagerCommandText) return;
+        try {
+            await navigator.clipboard.writeText(injectVillagerCommandText);
+            setCopyInjectVillagerStatus('Copied!');
+            setTimeout(() => setCopyInjectVillagerStatus('Copy inject'), 1300);
+        } catch (error) {
+            console.error(error);
+            setCopyInjectVillagerStatus('Error');
+            setTimeout(() => setCopyInjectVillagerStatus('Copy inject'), 1300);
+        }
+    }, [injectVillagerCommandText]);
+
     const getPocketQuantity = useCallback((itemId: string) => {
         const entry = selectedItems.find((p) => p.item.id === itemId);
         return entry?.quantity ?? 0;
@@ -224,8 +240,11 @@ export const useCommandBuilderPockets = () => {
         dropCommandText,
         copyOrderStatus,
         copyDropStatus,
+        copyInjectVillagerStatus,
         handleCopyOrder,
         handleCopyDrop,
+        handleCopyInjectVillager,
+        injectVillagerCommandText,
         getPocketQuantity,
     };
 };

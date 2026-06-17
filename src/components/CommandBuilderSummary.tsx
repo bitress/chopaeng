@@ -11,10 +11,13 @@ type CommandBuilderSummaryProps = {
     savedVillager: CatalogEntity | null;
     orderCommandText: string;
     dropCommandText: string;
+    injectVillagerCommandText: string;
     copyOrderStatus: string;
     copyDropStatus: string;
+    copyInjectVillagerStatus: string;
     onCopyOrder: () => void;
     onCopyDrop: () => void;
+    onCopyInjectVillager: () => void;
     onDecreaseQuantity?: (itemId: string) => void;
     onIncreaseQuantity?: (itemId: string) => void;
     onRemoveItem?: (itemId: string) => void;
@@ -32,10 +35,13 @@ const CommandBuilderSummary = ({
     savedVillager,
     orderCommandText,
     dropCommandText,
+    injectVillagerCommandText,
     copyOrderStatus,
     copyDropStatus,
+    copyInjectVillagerStatus,
     onCopyOrder,
     onCopyDrop,
+    onCopyInjectVillager,
     onDecreaseQuantity,
     onIncreaseQuantity,
     onRemoveItem,
@@ -132,7 +138,7 @@ const CommandBuilderSummary = ({
                                 </div>
                                 <div>
                                     <strong className="d-block text-dark small" style={{ fontFamily: '"Quicksand", sans-serif' }}>{savedVillager.name}</strong>
-                                    <span className="tiny-text fw-bold" style={{ color: '#88e0a0' }}>🌿 Villager Selected</span>
+                                    <span className="tiny-text fw-bold" style={{ color: '#88e0a0' }}>Villager Selected</span>
                                 </div>
                                 {onRemoveVillager && (
                                     <button
@@ -160,7 +166,7 @@ const CommandBuilderSummary = ({
                             className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
                             disabled={!orderCommandText}
                             style={{
-                                background: 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+                                background: '#28a745',
                                 color: 'white',
                                 border: 'none',
                                 boxShadow: orderCommandText ? '0 4px 12px rgba(40, 167, 69, 0.3)' : 'none'
@@ -169,7 +175,7 @@ const CommandBuilderSummary = ({
                             onMouseLeave={(e) => !orderCommandText ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)')}
                         >
                             <i className={`fa-solid ${copyOrderStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                            {copyOrderStatus === 'Copied!' ? '✓ Order Command Copied!' : 'Copy Order Command'}
+                            {copyOrderStatus === 'Copied!' ? 'Order Command Copied!' : 'Copy Order Command'}
                         </button>
                         <button
                             type="button"
@@ -177,7 +183,7 @@ const CommandBuilderSummary = ({
                             className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
                             disabled={!dropCommandText}
                             style={{
-                                background: 'linear-gradient(135deg, #5bc0de 0%, #46a5ad 100%)',
+                                background: '#5bc0de',
                                 color: 'white',
                                 border: 'none',
                                 boxShadow: dropCommandText ? '0 4px 12px rgba(91, 192, 222, 0.3)' : 'none'
@@ -186,15 +192,40 @@ const CommandBuilderSummary = ({
                             onMouseLeave={(e) => !dropCommandText ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 12px rgba(91, 192, 222, 0.3)')}
                         >
                             <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                            {copyDropStatus === 'Copied!' ? '✓ Drop Command Copied!' : 'Copy Drop Command'}
+                            {copyDropStatus === 'Copied!' ? 'Drop Command Copied!' : 'Copy Drop Command'}
                         </button>
+                        {savedVillager && (
+                            <div className="p-3 rounded-4 bg-dark text-info font-monospace small" style={{ border: '1px solid #333', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(34, 211, 238, 0.15)' }}>
+                                <div className="mb-2 d-flex align-items-center justify-content-between">
+                                    <span className="badge bg-warning text-dark rounded-pill fw-bold">👤 Inject Bot</span>
+                                </div>
+                                {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villager...</span>}
+                            </div>
+                        )}
+                        {savedVillager && (
+                            <button
+                                type="button"
+                                onClick={onCopyInjectVillager}
+                                className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
+                                disabled={!injectVillagerCommandText}
+                                style={{
+                                    background: '#ffc107',
+                                    color: 'white',
+                                    border: 'none',
+                                    boxShadow: injectVillagerCommandText ? '0 4px 12px rgba(255, 193, 7, 0.3)' : 'none'
+                                }}
+                            >
+                                <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
+                                {copyInjectVillagerStatus === 'Copied!' ? 'Inject Command Copied!' : 'Copy Inject Command'}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
             {/* Quick Fill removed per request */}
             {showTerminal && (
                 <div className="terminal-window shadow-lg rounded-4" style={{ overflow: 'hidden', border: '2px solid #1e7e34' }}>
-                    <div className="terminal-header" style={{ background: 'linear-gradient(135deg, #1e7e34 0%, #28a745 100%)', padding: '12px 16px' }}>
+                    <div className="terminal-header" style={{ background: '#1e7e34', padding: '12px 16px' }}>
                         <div className="terminal-dot r"></div>
                         <div className="terminal-dot y"></div>
                         <div className="terminal-dot g"></div>
@@ -203,7 +234,7 @@ const CommandBuilderSummary = ({
                     <div className="p-4" style={{ background: '#0a0e0a' }}>
                         <div className="mb-4">
                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                <span className="badge bg-success text-white rounded-pill fw-bold font-monospace" style={{ boxShadow: '0 3px 8px rgba(40, 167, 69, 0.3)' }}>📦 Order Bot</span>
+                                <span className="badge bg-success text-white rounded-pill fw-bold font-monospace" style={{ boxShadow: '0 3px 8px rgba(40, 167, 69, 0.3)' }}>Order Bot</span>
                             </div>
                             <div className="bg-dark rounded-3 p-3 mb-3 font-monospace small text-success transition-all" style={{ minHeight: '70px', border: '1px solid #333', whiteSpace: 'pre-wrap', color: '#4ade80', textShadow: '0 0 8px rgba(74, 222, 128, 0.3)' }}>
                                 {orderCommandText || <span className="opacity-50">&gt; Waiting for items or villager...</span>}
@@ -214,20 +245,20 @@ const CommandBuilderSummary = ({
                                 onClick={onCopyOrder}
                                 disabled={!orderCommandText}
                                 style={{
-                                    background: 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+                                    background: '#28a745',
                                     color: 'white',
                                     border: 'none',
                                     boxShadow: orderCommandText ? '0 4px 12px rgba(40, 167, 69, 0.3)' : 'none'
                                 }}
                             >
                                 <i className={`fa-solid ${copyOrderStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                                {copyOrderStatus === 'Copied!' ? '✓ Copied!' : 'Copy Order'}
+                                {copyOrderStatus === 'Copied!' ? 'Copied!' : 'Copy Order'}
                             </button>
                         </div>
 
                         <div className="border-top border-secondary pt-4">
                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                <span className="badge bg-info text-dark rounded-pill fw-bold font-monospace" style={{ boxShadow: '0 3px 8px rgba(91, 192, 222, 0.3)' }}>🗑️ Drop Bot</span>
+                                <span className="badge bg-info text-dark rounded-pill fw-bold font-monospace" style={{ boxShadow: '0 3px 8px rgba(91, 192, 222, 0.3)' }}>Drop Bot</span>
                             </div>
                             <div className="bg-dark rounded-3 p-3 mb-3 font-monospace small text-info transition-all" style={{ minHeight: '70px', border: '1px solid #333', whiteSpace: 'pre-wrap', color: '#22d3ee', textShadow: '0 0 8px rgba(34, 211, 238, 0.3)' }}>
                                 {dropCommandText || <span className="opacity-50">&gt; Waiting for items or villager...</span>}
@@ -238,15 +269,40 @@ const CommandBuilderSummary = ({
                                 onClick={onCopyDrop}
                                 disabled={!dropCommandText}
                                 style={{
-                                    background: 'linear-gradient(135deg, #5bc0de 0%, #46a5ad 100%)',
+                                    background: '#5bc0de',
                                     color: 'white',
                                     border: 'none',
                                     boxShadow: dropCommandText ? '0 4px 12px rgba(91, 192, 222, 0.3)' : 'none'
                                 }}
                             >
                                 <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                                {copyDropStatus === 'Copied!' ? '✓ Copied!' : 'Copy Drop'}
+                                {copyDropStatus === 'Copied!' ? 'Copied!' : 'Copy Drop'}
                             </button>
+                            {savedVillager && (
+                                <div className="bg-dark rounded-3 p-3 mt-3 font-monospace small text-warning" style={{ border: '1px solid #665200', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(255, 193, 7, 0.15)' }}>
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <span className="badge bg-warning text-dark rounded-pill fw-bold">Inject Bot</span>
+                                    </div>
+                                    {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villager...</span>}
+                                </div>
+                            )}
+                            {savedVillager && (
+                                <button
+                                    type="button"
+                                    className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all mt-2"
+                                    onClick={onCopyInjectVillager}
+                                    disabled={!injectVillagerCommandText}
+                                    style={{
+                                        background: '#ffc107',
+                                        color: 'white',
+                                        border: 'none',
+                                        boxShadow: injectVillagerCommandText ? '0 4px 12px rgba(255, 193, 7, 0.3)' : 'none'
+                                    }}
+                                >
+                                    <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
+                                    {copyInjectVillagerStatus === 'Copied!' ? 'Copy Inject' : 'Copy Inject'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

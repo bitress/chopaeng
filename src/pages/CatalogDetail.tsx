@@ -44,10 +44,13 @@ const CatalogDetail = () => {
         selectedVillager,
         orderCommandText,
         dropCommandText,
+        injectVillagerCommandText,
         copyOrderStatus,
         copyDropStatus,
+        copyInjectVillagerStatus,
         handleCopyOrder,
         handleCopyDrop,
+        handleCopyInjectVillager,
         getPocketQuantity,
         setVillagerId,
     } = useCommandBuilderPockets();
@@ -299,10 +302,13 @@ const CatalogDetail = () => {
                                 savedVillager={selectedVillager}
                                 orderCommandText={orderCommandText}
                                 dropCommandText={dropCommandText}
+                                injectVillagerCommandText={injectVillagerCommandText}
                                 copyOrderStatus={copyOrderStatus}
                                 copyDropStatus={copyDropStatus}
+                                copyInjectVillagerStatus={copyInjectVillagerStatus}
                                 onCopyOrder={handleCopyOrder}
                                 onCopyDrop={handleCopyDrop}
+                                onCopyInjectVillager={handleCopyInjectVillager}
                                 onDecreaseQuantity={decreaseQuantity}
                                 onIncreaseQuantity={increaseQuantity}
                                 onRemoveItem={removeItem}
