@@ -38,16 +38,23 @@ const parseSavedPockets = (): PocketEntry[] => {
     }
 };
 
-const parseSavedVillagerId = (): string => {
+const parseSavedVillagerIds = (): string[] => {
     try {
         const saved = localStorage.getItem('command_builder_villager');
-        if (!saved) return '';
-        const matchById = villagerEntities.find((v) => v.id === saved);
-        if (matchById) return saved;
-        const matchByName = villagerEntities.find((v) => v.name.toLowerCase() === saved.toLowerCase());
-        return matchByName ? matchByName.id : '';
+        if (!saved) return [];
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+            return parsed.filter((entry) => typeof entry === 'string' && villagerEntities.some((v) => v.id === entry));
+        }
+        if (typeof parsed === 'string') {
+            const matchById = villagerEntities.find((v) => v.id === parsed);
+            if (matchById) return [parsed];
+            const matchByName = villagerEntities.find((v) => v.name.toLowerCase() === parsed.toLowerCase());
+            return matchByName ? [matchByName.id] : [];
+        }
+        return [];
     } catch {
-        return '';
+        return [];
     }
 };
 
@@ -57,7 +64,7 @@ const getItemCommandId = (item: PocketItem) => {
 
 export const useCommandBuilderPockets = () => {
     const [selectedItems, setSelectedItems] = useState<PocketEntry[]>(parseSavedPockets);
-    const [villagerId, setVillagerId] = useState(parseSavedVillagerId);
+    const [villagerIds, setVillagerIds] = useState<string[]>(parseSavedVillagerIds);
     const [copyOrderStatus, setCopyOrderStatus] = useState('Copy order');
     const [copyDropStatus, setCopyDropStatus] = useState('Copy drop');
     const [copyInjectVillagerStatus, setCopyInjectVillagerStatus] = useState('Copy inject');
@@ -67,8 +74,8 @@ export const useCommandBuilderPockets = () => {
     }, [selectedItems]);
 
     useEffect(() => {
-        localStorage.setItem('command_builder_villager', villagerId);
-    }, [villagerId]);
+        localStorage.setItem('command_builder_villager', JSON.stringify(villagerIds));
+    }, [villagerIds]);
 
     const totalItemsCount = selectedItems.reduce((acc, curr) => acc + curr.quantity, 0);
     const canIncrease = totalItemsCount < 40;
@@ -151,21 +158,27 @@ export const useCommandBuilderPockets = () => {
     }, [totalItemsCount]);
 
     const requestVillager = useCallback((villager: CatalogEntity): { success: boolean; message: string } => {
-        setVillagerId(villager.id);
-        return { success: true, message: `${villager.name} has been requested as your villager.` };
+        setVillagerIds((prev) => prev.includes(villager.id) ? prev : [...prev, villager.id]);
+        return { success: true, message: `${villager.name} has been requested as a villager.` };
     }, []);
 
-    const selectedVillager = useMemo(
-        () => villagerEntities.find((v) => v.id === villagerId) || null,
-        [villagerId]
+    const removeVillager = useCallback((villagerIdToRemove: string) => {
+        setVillagerIds((prev) => prev.filter((id) => id !== villagerIdToRemove));
+    }, []);
+
+    const clearVillagers = useCallback(() => setVillagerIds([]), []);
+
+    const selectedVillagers = useMemo(
+        () => villagerEntities.filter((v) => villagerIds.includes(v.id)),
+        [villagerIds]
     );
 
     const orderCommandText = useMemo(() => {
         const itemsList = selectedItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
-        const villagerPart = selectedVillager ? `villager:${selectedVillager.id}` : '';
+        const villagerPart = selectedVillagers.length === 1 ? `villager:${selectedVillagers[0].id}` : '';
         const commandParts = [itemsList, villagerPart].filter(Boolean).join(' ');
         return commandParts ? `!order ${commandParts}` : '';
-    }, [selectedItems, selectedVillager]);
+    }, [selectedItems, selectedVillagers]);
 
     const dropCommandText = useMemo(() => {
         const itemsList = selectedItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
@@ -173,8 +186,10 @@ export const useCommandBuilderPockets = () => {
     }, [selectedItems]);
 
     const injectVillagerCommandText = useMemo(() => {
-        return selectedVillager ? `!injectvillager ${selectedVillager.name}` : '';
-    }, [selectedVillager]);
+        if (selectedVillagers.length === 0) return '';
+        if (selectedVillagers.length === 1) return `!injectvillager ${selectedVillagers[0].name}`;
+        return `!mvi ${selectedVillagers.map((villager) => villager.name).join(' ')}`;
+    }, [selectedVillagers]);
 
     const handleCopyOrder = useCallback(async () => {
         if (!orderCommandText) return;
@@ -223,8 +238,8 @@ export const useCommandBuilderPockets = () => {
     return {
         selectedItems,
         setSelectedItems,
-        villagerId,
-        setVillagerId,
+        villagerIds,
+        setVillagerIds,
         totalItemsCount,
         canIncrease,
         decreaseQuantity,
@@ -235,7 +250,9 @@ export const useCommandBuilderPockets = () => {
         handleFillBells,
         addItemToPockets,
         requestVillager,
-        selectedVillager,
+        removeVillager,
+        clearVillagers,
+        selectedVillagers,
         orderCommandText,
         dropCommandText,
         copyOrderStatus,

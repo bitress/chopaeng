@@ -41,7 +41,7 @@ const CatalogDetail = () => {
         handleFillBells,
         addItemToPockets,
         requestVillager,
-        selectedVillager,
+        selectedVillagers,
         orderCommandText,
         dropCommandText,
         injectVillagerCommandText,
@@ -52,7 +52,8 @@ const CatalogDetail = () => {
         handleCopyDrop,
         handleCopyInjectVillager,
         getPocketQuantity,
-        setVillagerId,
+        removeVillager,
+        clearVillagers,
     } = useCommandBuilderPockets();
 
 
@@ -299,7 +300,7 @@ const CatalogDetail = () => {
                         <div className="sticky-top" style={{ top: '90px' }}>
                             <CommandBuilderSummary
                                 savedPockets={selectedItems}
-                                savedVillager={selectedVillager}
+                                savedVillagers={selectedVillagers}
                                 orderCommandText={orderCommandText}
                                 dropCommandText={dropCommandText}
                                 injectVillagerCommandText={injectVillagerCommandText}
@@ -312,8 +313,9 @@ const CatalogDetail = () => {
                                 onDecreaseQuantity={decreaseQuantity}
                                 onIncreaseQuantity={increaseQuantity}
                                 onRemoveItem={removeItem}
-                                onRemoveVillager={() => setVillagerId('')}
+                                onRemoveVillager={removeVillager}
                                 onClearPockets={() => setSelectedItems([])}
+                                onClearVillagers={clearVillagers}
                                 canIncrease={canIncrease}
                                 onFillTickets={handleFillTickets}
                                 onFillCrowns={handleFillCrowns}

@@ -8,7 +8,7 @@ type PocketItem = CatalogEntity & {
 
 type CommandBuilderSummaryProps = {
     savedPockets: Array<{ item: PocketItem; quantity: number }>;
-    savedVillager: CatalogEntity | null;
+    savedVillagers: CatalogEntity[];
     orderCommandText: string;
     dropCommandText: string;
     injectVillagerCommandText: string;
@@ -21,8 +21,9 @@ type CommandBuilderSummaryProps = {
     onDecreaseQuantity?: (itemId: string) => void;
     onIncreaseQuantity?: (itemId: string) => void;
     onRemoveItem?: (itemId: string) => void;
-    onRemoveVillager?: () => void;
+    onRemoveVillager?: (villagerId: string) => void;
     onClearPockets?: () => void;
+    onClearVillagers?: () => void;
     canIncrease?: boolean;
     onFillTickets?: () => void;
     onFillCrowns?: () => void;
@@ -32,7 +33,7 @@ type CommandBuilderSummaryProps = {
 
 const CommandBuilderSummary = ({
     savedPockets,
-    savedVillager,
+    savedVillagers,
     orderCommandText,
     dropCommandText,
     injectVillagerCommandText,
@@ -47,11 +48,12 @@ const CommandBuilderSummary = ({
     onRemoveItem,
     onRemoveVillager,
     onClearPockets,
+    onClearVillagers,
     canIncrease = true,
     showTerminal = false,
 }: CommandBuilderSummaryProps) => {
     const itemCount = savedPockets.reduce((sum, pocket) => sum + pocket.quantity, 0);
-    const villagerCount = savedVillager ? 1 : 0;
+    const villagerCount = savedVillagers.length;
 
     return (
         <div className="bg-cream rounded-4 border-0 shadow p-4" style={{ borderTop: '4px solid #28a745' }}>
@@ -63,20 +65,25 @@ const CommandBuilderSummary = ({
                 <div className="d-flex gap-2 flex-wrap align-items-center">
                     <span className="badge rounded-pill bg-nook-green text-white fw-bold x-small" style={{ boxShadow: '0 3px 8px rgba(40, 167, 69, 0.2)' }}>Items {itemCount} / 40</span>
                     <span className={`badge rounded-pill fw-bold x-small transition-all ${villagerCount ? 'bg-info text-dark' : 'bg-light text-dark border'}`} style={{ boxShadow: villagerCount ? '0 3px 8px rgba(88, 101, 242, 0.2)' : 'none' }}>
-                        Villager {villagerCount} / 1
+                        Villagers {villagerCount}
                     </span>
                     {onClearPockets && savedPockets.length > 0 && (
                         <button type="button" onClick={onClearPockets} className="btn btn-sm btn-outline-danger rounded-pill ms-sm-2 transition-all" style={{ fontSize: '0.75rem' }}>
                             <i className="fa-solid fa-trash-can me-1"></i>Clear
                         </button>
                     )}
+                    {onClearVillagers && villagerCount > 0 && (
+                        <button type="button" onClick={onClearVillagers} className="btn btn-sm btn-outline-warning rounded-pill ms-sm-2 transition-all" style={{ fontSize: '0.75rem' }}>
+                            <i className="fa-solid fa-trash-can-arrow-up me-1"></i>Clear Villagers
+                        </button>
+                    )}
                 </div>
             </div>
             <div className="mb-4">
-                {savedPockets.length === 0 && !savedVillager ? (
+                {savedPockets.length === 0 && savedVillagers.length === 0 ? (
                     <div className="text-center py-4 rounded-4 bg-light-green border-2 border-success border-opacity-25" style={{ borderStyle: 'dashed' }}>
                         <i className="fa-solid fa-inbox text-muted mb-2" style={{ fontSize: '2rem', opacity: 0.3 }}></i>
-                        <p className="small text-muted mb-0">Your pockets are empty. Add items from the catalog or request a villager to build a command.</p>
+                        <p className="small text-muted mb-0">Your pockets are empty. Add items from the catalog or request villagers to build a command.</p>
                     </div>
                 ) : (
                     <div className="d-flex flex-column gap-2">
@@ -131,19 +138,19 @@ const CommandBuilderSummary = ({
                                 </div>
                             </div>
                         ))}
-                        {savedVillager && (
-                            <div className="d-flex align-items-center gap-3 rounded-4 border-2 p-3 bg-white transition-all" style={{ borderColor: '#88e0a0', boxShadow: '0 2px 6px rgba(136, 224, 160, 0.15)' }}>
+                        {savedVillagers.length > 0 && savedVillagers.map((villager) => (
+                            <div key={villager.id} className="d-flex align-items-center gap-3 rounded-4 border-2 p-3 bg-white transition-all" style={{ borderColor: '#88e0a0', boxShadow: '0 2px 6px rgba(136, 224, 160, 0.15)' }}>
                                 <div className="ratio ratio-1x1" style={{ width: '52px', minWidth: '52px', borderRadius: '12px', overflow: 'hidden', border: '2px solid #e0f7fa', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                    <img src={savedVillager.image} alt={savedVillager.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
+                                    <img src={villager.image} alt={villager.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
                                 </div>
                                 <div>
-                                    <strong className="d-block text-dark small" style={{ fontFamily: '"Quicksand", sans-serif' }}>{savedVillager.name}</strong>
+                                    <strong className="d-block text-dark small" style={{ fontFamily: '"Quicksand", sans-serif' }}>{villager.name}</strong>
                                     <span className="tiny-text fw-bold" style={{ color: '#88e0a0' }}>Villager Selected</span>
                                 </div>
                                 {onRemoveVillager && (
                                     <button
                                         type="button"
-                                        onClick={onRemoveVillager}
+                                        onClick={() => onRemoveVillager(villager.id)}
                                         className="btn btn-link text-danger p-0 ms-auto transition-all"
                                         title="Remove villager"
                                         style={{ fontSize: '1rem' }}
@@ -152,7 +159,7 @@ const CommandBuilderSummary = ({
                                     </button>
                                 )}
                             </div>
-                        )}
+                        ))}
                     </div>
                 )}
             </div>
@@ -194,15 +201,18 @@ const CommandBuilderSummary = ({
                             <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                             {copyDropStatus === 'Copied!' ? 'Drop Command Copied!' : 'Copy Drop Command'}
                         </button>
-                        {savedVillager && (
+                        {savedVillagers.length > 0 && (
                             <div className="p-3 rounded-4 bg-dark text-info font-monospace small" style={{ border: '1px solid #333', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(34, 211, 238, 0.15)' }}>
                                 <div className="mb-2 d-flex align-items-center justify-content-between">
-                                    <span className="badge bg-warning text-dark rounded-pill fw-bold">👤 Inject Bot</span>
+                                    <span className="badge bg-warning text-dark rounded-pill fw-bold">👤 Inject Villager</span>
                                 </div>
-                                {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villager...</span>}
+                                {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villagers...</span>}
+                                <div className="text-muted mt-2 small" style={{ color: '#cbd5e1' }}>
+                                    Supported: <code>!injectvillager [internalName]</code>, <code>!iv [internalName]</code>, or <code>!mvi [name] [name] ...</code>
+                                </div>
                             </div>
                         )}
-                        {savedVillager && (
+                        {savedVillagers.length > 0 && (
                             <button
                                 type="button"
                                 onClick={onCopyInjectVillager}
@@ -278,15 +288,15 @@ const CommandBuilderSummary = ({
                                 <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                                 {copyDropStatus === 'Copied!' ? 'Copied!' : 'Copy Drop'}
                             </button>
-                            {savedVillager && (
+                            {savedVillagers.length > 0 && (
                                 <div className="bg-dark rounded-3 p-3 mt-3 font-monospace small text-warning" style={{ border: '1px solid #665200', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(255, 193, 7, 0.15)' }}>
                                     <div className="d-flex justify-content-between align-items-center mb-2">
                                         <span className="badge bg-warning text-dark rounded-pill fw-bold">Inject Bot</span>
                                     </div>
-                                    {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villager...</span>}
+                                    {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villagers...</span>}
                                 </div>
                             )}
-                            {savedVillager && (
+                            {savedVillagers.length > 0 && (
                                 <button
                                     type="button"
                                     className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all mt-2"

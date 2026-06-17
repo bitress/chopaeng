@@ -37,8 +37,8 @@ const CommandBuilder = () => {
     const {
         selectedItems,
         setSelectedItems,
-        villagerId,
-        setVillagerId,
+        villagerIds,
+        setVillagerIds,
         totalItemsCount,
         canIncrease,
         decreaseQuantity,
@@ -49,7 +49,9 @@ const CommandBuilder = () => {
         handleFillBells,
         addItemToPockets,
         requestVillager,
-        selectedVillager,
+        removeVillager,
+        clearVillagers,
+        selectedVillagers,
         orderCommandText,
         dropCommandText,
         injectVillagerCommandText,
@@ -319,7 +321,7 @@ const CommandBuilder = () => {
                                         const isVillager = item.entityType === 'villager';
                                         const selection = selectedItems.find((selected) => selected.item.id === item.id);
                                         const quantity = selection ? selection.quantity : 0;
-                                        const cardSelected = isVillager ? villagerId === item.id : quantity > 0;
+                                        const cardSelected = isVillager ? villagerIds.includes(item.id) : quantity > 0;
                                         return (
                                             <div className="col-6 col-md-4 col-lg-3" key={item.id}>
                                                 <div
@@ -419,7 +421,7 @@ const CommandBuilder = () => {
                             <div className="sticky-top" style={{ top: '90px' }}>
                                 <CommandBuilderSummary
                                     savedPockets={selectedItems}
-                                    savedVillager={selectedVillager}
+                                    savedVillagers={selectedVillagers}
                                     orderCommandText={orderCommandText}
                                     dropCommandText={dropCommandText}
                                     injectVillagerCommandText={injectVillagerCommandText}
@@ -432,8 +434,9 @@ const CommandBuilder = () => {
                                     onDecreaseQuantity={decreaseQuantity}
                                     onIncreaseQuantity={increaseQuantity}
                                     onRemoveItem={removeItem}
-                                    onRemoveVillager={() => setVillagerId('')}
+                                    onRemoveVillager={removeVillager}
                                     onClearPockets={() => setSelectedItems([])}
+                                    onClearVillagers={clearVillagers}
                                     canIncrease={canIncrease}
                                     onFillTickets={handleFillTickets}
                                     onFillCrowns={handleFillCrowns}
