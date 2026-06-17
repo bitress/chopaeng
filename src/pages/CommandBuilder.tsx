@@ -38,7 +38,6 @@ const CommandBuilder = () => {
         selectedItems,
         setSelectedItems,
         villagerIds,
-        setVillagerIds,
         totalItemsCount,
         canIncrease,
         decreaseQuantity,
