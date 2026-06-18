@@ -35,18 +35,26 @@ const CommandBuilder = () => {
     const [compactMode, setCompactMode] = useState(true);
 
     const {
-        selectedItems,
-        setSelectedItems,
+        orderItems,
+        setOrderItems,
+        dropItems,
+        setDropItems,
         villagerIds,
-        totalItemsCount,
-        canIncrease,
-        decreaseQuantity,
-        increaseQuantity,
-        removeItem,
+        totalOrderCount,
+        totalDropCount,
+        canIncreaseOrder,
+        canIncreaseDrop,
+        decreaseOrderQuantity,
+        increaseOrderQuantity,
+        removeOrderItem,
+        decreaseDropQuantity,
+        increaseDropQuantity,
+        removeDropItem,
         handleFillTickets,
         handleFillCrowns,
         handleFillBells,
-        addItemToPockets,
+        addItemToOrderPockets,
+        addItemToDropPockets,
         requestVillager,
         removeVillager,
         clearVillagers,
@@ -300,7 +308,7 @@ const CommandBuilder = () => {
                             <div className="command-builder-tip bg-light border border-success rounded-4 p-3 mb-4 d-flex align-items-center gap-3">
                                 <i className="fa-solid fa-hand-pointer text-success fs-4"></i>
                                 <div className="small text-muted mb-0">
-                                    Click an item to add it to your pockets, and select a villager to request them in your command. You can add up to 40 items, and your command builds automatically.
+                                    Use <strong>Add to Order</strong> (max 40) or <strong>Add to Drop</strong> (max 9) on each item. Select a villager to include them in your order command.
                                 </div>
                             </div>
 
@@ -318,9 +326,11 @@ const CommandBuilder = () => {
                                 ) : (
                                     pagedItems.map((item) => {
                                         const isVillager = item.entityType === 'villager';
-                                        const selection = selectedItems.find((selected) => selected.item.id === item.id);
-                                        const quantity = selection ? selection.quantity : 0;
-                                        const cardSelected = isVillager ? villagerIds.includes(item.id) : quantity > 0;
+                                        const orderEntry = orderItems.find((s) => s.item.id === item.id);
+                                        const dropEntry = dropItems.find((s) => s.item.id === item.id);
+                                        const orderQty = orderEntry?.quantity ?? 0;
+                                        const dropQty = dropEntry?.quantity ?? 0;
+                                        const cardSelected = isVillager ? villagerIds.includes(item.id) : (orderQty > 0 || dropQty > 0);
                                         return (
                                             <div className="col-6 col-md-4 col-lg-3" key={item.id}>
                                                 <div
@@ -333,10 +343,22 @@ const CommandBuilder = () => {
                                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item); } }}
                                                 >
                                                     {cardSelected && (
-                                                        <div className="position-absolute top-0 end-0 m-2 z-index-2">
-                                                            <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow" style={{ width: '26px', height: '26px' }}>
-                                                                {isVillager ? <i className="fa-solid fa-check x-small"></i> : <span className="x-small fw-bold">{quantity}</span>}
-                                                            </div>
+                                                        <div className="position-absolute top-0 end-0 m-2 z-index-2 d-flex flex-column gap-1">
+                                                            {orderQty > 0 && (
+                                                                <div className="bg-success text-white rounded-pill d-flex align-items-center justify-content-center shadow px-2" style={{ fontSize: '0.65rem', fontWeight: 700, height: '20px' }}>
+                                                                    O:{orderQty}
+                                                                </div>
+                                                            )}
+                                                            {dropQty > 0 && (
+                                                                <div className="bg-info text-dark rounded-pill d-flex align-items-center justify-content-center shadow px-2" style={{ fontSize: '0.65rem', fontWeight: 700, height: '20px' }}>
+                                                                    D:{dropQty}
+                                                                </div>
+                                                            )}
+                                                            {isVillager && cardSelected && (
+                                                                <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow" style={{ width: '22px', height: '22px' }}>
+                                                                    <i className="fa-solid fa-check" style={{ fontSize: '0.6rem' }}></i>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                     <div className="ratio ratio-1x1 overflow-hidden bg-light d-flex align-items-center justify-content-center">
@@ -350,7 +372,7 @@ const CommandBuilder = () => {
                                                             <img
                                                                 src={item.image}
                                                                 alt={item.name}
-                                                                className={`cb-item-image w-100 h-100 object-fit-cover ${compactMode ? 'p-1' : 'p-3'} ${quantity > 0 ? 'opacity-75' : ''}`}
+                                                                className={`cb-item-image w-100 h-100 object-fit-cover ${compactMode ? 'p-1' : 'p-3'} ${cardSelected ? 'opacity-75' : ''}`}
                                                             />
                                                         )}
                                                     </div>
@@ -360,26 +382,59 @@ const CommandBuilder = () => {
                                                                 <span className="badge bg-light text-muted rounded-pill px-2 py-1 x-small fw-bold border">{isVillager ? 'Villager' : item.category}</span>
                                                             </div>
                                                             <h3 className="h6 fw-black mb-1 text-truncate" title={item.name}>{item.name}</h3>
-                                                            <p className="text-muted mb-0 text-truncate">{item.theme} · {item.colour}</p>
+                                                            <p className="text-muted mb-0 text-truncate" style={{ fontSize: '0.75rem' }}>{item.theme} · {item.colour}</p>
                                                         </div>
-                                                        <div className="mt-3 d-flex gap-2 align-items-center">
+                                                        <div className="mt-3 d-flex flex-column gap-1" onClick={(e) => e.stopPropagation()}>
                                                             {!isVillager ? (
                                                                 <>
-                                                                    {quantity > 0 ? (
-                                                                        <div className="d-flex align-items-center gap-2 w-100">
-                                                                            <button type="button" className="btn btn-sm btn-outline-success rounded-pill px-3" onClick={(e) => { e.stopPropagation(); decreaseQuantity(item.id); }} aria-label={`Decrease ${item.name}`}>-</button>
-                                                                            <div className="text-center fw-bold" style={{ minWidth: '36px' }}>{quantity}</div>
-                                                                            <button type="button" className="btn btn-sm btn-nook-primary text-white rounded-pill px-3" onClick={(e) => { e.stopPropagation(); increaseQuantity(item.id); }} aria-label={`Increase ${item.name}`} disabled={!canIncrease}>+</button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <button type="button" className="btn btn-sm btn-nook-primary text-white rounded-pill w-100 fw-bold" onClick={(e) => { e.stopPropagation(); addItemToPockets(item as ItemData); }} disabled={totalItemsCount >= 40} aria-label={`Add ${item.name} to pockets`}>Add</button>
-                                                                    )}
-                                                                    <button type="button" className="btn btn-sm btn-white text-dark rounded-pill px-3" onClick={(e) => { e.stopPropagation(); openDetail(item); }} aria-label={`View ${item.name}`}>View</button>
+                                                                    {/* Order row */}
+                                                                    <div className="d-flex align-items-center gap-1">
+                                                                        {orderQty > 0 ? (
+                                                                            <>
+                                                                                <button type="button" className="btn btn-outline-success rounded-circle d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px', padding: 0, fontSize: '0.7rem' }} onClick={() => decreaseOrderQuantity(item.id)} aria-label="Decrease order">−</button>
+                                                                                <span className="badge bg-success text-white rounded-pill fw-bold" style={{ fontSize: '0.7rem', minWidth: '28px' }}>{orderQty}</span>
+                                                                                <button type="button" className="btn btn-success rounded-circle d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px', padding: 0, fontSize: '0.7rem' }} onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder} aria-label="Increase order">+</button>
+                                                                            </>
+                                                                        ) : (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn btn-sm btn-outline-success rounded-pill fw-bold flex-grow-1"
+                                                                                style={{ fontSize: '0.7rem', padding: '3px 8px' }}
+                                                                                onClick={() => addItemToOrderPockets(item as ItemData)}
+                                                                                disabled={totalOrderCount >= 40}
+                                                                                aria-label={`Add ${item.name} to Order`}
+                                                                            >
+                                                                                <i className="fa-solid fa-basket-shopping me-1" style={{ fontSize: '0.65rem' }}></i>Order
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    {/* Drop row */}
+                                                                    <div className="d-flex align-items-center gap-1">
+                                                                        {dropQty > 0 ? (
+                                                                            <>
+                                                                                <button type="button" className="btn btn-outline-info rounded-circle d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px', padding: 0, fontSize: '0.7rem' }} onClick={() => decreaseDropQuantity(item.id)} aria-label="Decrease drop">−</button>
+                                                                                <span className="badge bg-info text-dark rounded-pill fw-bold" style={{ fontSize: '0.7rem', minWidth: '28px' }}>{dropQty}</span>
+                                                                                <button type="button" className="btn btn-info text-dark rounded-circle d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px', padding: 0, fontSize: '0.7rem' }} onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label="Increase drop">+</button>
+                                                                            </>
+                                                                        ) : (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn btn-sm btn-outline-info rounded-pill fw-bold flex-grow-1"
+                                                                                style={{ fontSize: '0.7rem', padding: '3px 8px' }}
+                                                                                onClick={() => addItemToDropPockets(item as ItemData)}
+                                                                                disabled={totalDropCount >= 9}
+                                                                                aria-label={`Add ${item.name} to Drop`}
+                                                                            >
+                                                                                <i className="fa-solid fa-box-open me-1" style={{ fontSize: '0.65rem' }}></i>Drop
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    <button type="button" className="btn btn-sm btn-white text-dark rounded-pill fw-bold border" style={{ fontSize: '0.7rem', padding: '3px 8px' }} onClick={() => openDetail(item)} aria-label={`View ${item.name}`}>
+                                                                        <i className="fa-solid fa-eye me-1" style={{ fontSize: '0.65rem' }}></i>View
+                                                                    </button>
                                                                 </>
                                                             ) : (
-                                                                <>
-                                                                    <button type="button" className={`btn btn-sm w-100 rounded-pill fw-bold ${cardSelected ? 'btn-outline-success border-2' : 'btn-outline-primary text-dark'}`} onClick={(e) => { e.stopPropagation(); requestVillager(item); }} aria-pressed={cardSelected}>{cardSelected ? '✓ Selected' : 'Request Villager'}</button>
-                                                                </>
+                                                                <button type="button" className={`btn btn-sm w-100 rounded-pill fw-bold ${cardSelected ? 'btn-outline-success border-2' : 'btn-outline-primary text-dark'}`} onClick={() => requestVillager(item)} aria-pressed={cardSelected}>{cardSelected ? '✓ Selected' : 'Request Villager'}</button>
                                                             )}
                                                         </div>
                                                     </div>
@@ -419,7 +474,8 @@ const CommandBuilder = () => {
                         <aside className="col-lg-4">
                             <div className="sticky-top" style={{ top: '90px' }}>
                                 <CommandBuilderSummary
-                                    savedPockets={selectedItems}
+                                    orderPockets={orderItems}
+                                    dropPockets={dropItems}
                                     savedVillagers={selectedVillagers}
                                     orderCommandText={orderCommandText}
                                     dropCommandText={dropCommandText}
@@ -430,13 +486,18 @@ const CommandBuilder = () => {
                                     onCopyOrder={handleCopyOrder}
                                     onCopyDrop={handleCopyDrop}
                                     onCopyInjectVillager={handleCopyInjectVillager}
-                                    onDecreaseQuantity={decreaseQuantity}
-                                    onIncreaseQuantity={increaseQuantity}
-                                    onRemoveItem={removeItem}
+                                    onDecreaseOrderQuantity={decreaseOrderQuantity}
+                                    onIncreaseOrderQuantity={increaseOrderQuantity}
+                                    onRemoveOrderItem={removeOrderItem}
+                                    onDecreaseDropQuantity={decreaseDropQuantity}
+                                    onIncreaseDropQuantity={increaseDropQuantity}
+                                    onRemoveDropItem={removeDropItem}
                                     onRemoveVillager={removeVillager}
-                                    onClearPockets={() => setSelectedItems([])}
+                                    onClearOrderPockets={() => setOrderItems([])}
+                                    onClearDropPockets={() => setDropItems([])}
                                     onClearVillagers={clearVillagers}
-                                    canIncrease={canIncrease}
+                                    canIncreaseOrder={canIncreaseOrder}
+                                    canIncreaseDrop={canIncreaseDrop}
                                     onFillTickets={handleFillTickets}
                                     onFillCrowns={handleFillCrowns}
                                     onFillBells={handleFillBells}

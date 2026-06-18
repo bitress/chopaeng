@@ -12,6 +12,9 @@ export type PocketItem = CatalogEntity & {
 
 export type PocketEntry = { item: PocketItem; quantity: number };
 
+const ORDER_BOT_MAX = 40;
+const DROP_BOT_MAX = 9;
+
 const BUFFER_OPTIONS = {
     '16DB': { id: '16DB', name: 'Nook Miles Ticket', icon: 'https://dodo.ac/np/images/4/43/Nook_Miles_Ticket_NH_Inv_Icon.png' },
     '14BB': { id: '14BB', name: 'Royal Crown', icon: 'https://dodo.ac/np/images/c/c7/Royal_Crown_NH_Storage_Icon.png' },
@@ -20,9 +23,9 @@ const BUFFER_OPTIONS = {
 
 const villagerEntities = loadVillagers();
 
-const parseSavedPockets = (): PocketEntry[] => {
+const parsePocketEntries = (key: string): PocketEntry[] => {
     try {
-        const saved = localStorage.getItem('command_builder_selected_items');
+        const saved = localStorage.getItem(key);
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         if (!Array.isArray(parsed)) return [];
@@ -33,6 +36,21 @@ const parseSavedPockets = (): PocketEntry[] => {
             item: entry.item,
             quantity: typeof entry.quantity === 'number' ? entry.quantity : 1,
         }));
+    } catch {
+        return [];
+    }
+};
+
+// One-time migration: move old combined pocket data into order pockets
+const migrateOldPockets = (): PocketEntry[] => {
+    try {
+        const legacy = localStorage.getItem('command_builder_selected_items');
+        const alreadyMigrated = localStorage.getItem('command_builder_migrated_v2');
+        if (!legacy || alreadyMigrated) return [];
+        const entries = parsePocketEntries('command_builder_selected_items');
+        localStorage.setItem('command_builder_migrated_v2', '1');
+        localStorage.removeItem('command_builder_selected_items');
+        return entries;
     } catch {
         return [];
     }
@@ -63,35 +81,55 @@ const getItemCommandId = (item: PocketItem) => {
 };
 
 export const useCommandBuilderPockets = () => {
-    const [selectedItems, setSelectedItems] = useState<PocketEntry[]>(parseSavedPockets);
+    // Separate order and drop pocket lists — with one-time migration from old combined key
+    const [orderItems, setOrderItems] = useState<PocketEntry[]>(() => {
+        const migrated = migrateOldPockets();
+        if (migrated.length > 0) return migrated;
+        return parsePocketEntries('command_builder_order_items');
+    });
+    const [dropItems, setDropItems] = useState<PocketEntry[]>(() =>
+        parsePocketEntries('command_builder_drop_items')
+    );
     const [villagerIds, setVillagerIds] = useState<string[]>(parseSavedVillagerIds);
     const [copyOrderStatus, setCopyOrderStatus] = useState('Copy order');
     const [copyDropStatus, setCopyDropStatus] = useState('Copy drop');
     const [copyInjectVillagerStatus, setCopyInjectVillagerStatus] = useState('Copy inject');
 
+    // Persist to localStorage
     useEffect(() => {
-        localStorage.setItem('command_builder_selected_items', JSON.stringify(selectedItems));
-    }, [selectedItems]);
+        localStorage.setItem('command_builder_order_items', JSON.stringify(orderItems));
+    }, [orderItems]);
+
+    useEffect(() => {
+        localStorage.setItem('command_builder_drop_items', JSON.stringify(dropItems));
+    }, [dropItems]);
 
     useEffect(() => {
         localStorage.setItem('command_builder_villager', JSON.stringify(villagerIds));
     }, [villagerIds]);
 
-    const totalItemsCount = selectedItems.reduce((acc, curr) => acc + curr.quantity, 0);
-    const canIncrease = totalItemsCount < 40;
+    // Counts
+    const totalOrderCount = orderItems.reduce((acc, curr) => acc + curr.quantity, 0);
+    const totalDropCount = dropItems.reduce((acc, curr) => acc + curr.quantity, 0);
+    // Keep legacy alias for components that use totalItemsCount
+    const totalItemsCount = totalOrderCount;
 
-    const decreaseQuantity = useCallback((id: string) => {
-        setSelectedItems((prev) => prev.map((pocket) => {
+    const canIncrease = totalOrderCount < ORDER_BOT_MAX;
+    const canIncreaseOrder = totalOrderCount < ORDER_BOT_MAX;
+    const canIncreaseDrop = totalDropCount < DROP_BOT_MAX;
+
+    // ── Order pocket operations ────────────────────────────────────────────
+    const decreaseOrderQuantity = useCallback((id: string) => {
+        setOrderItems((prev) => prev.map((pocket) => {
             if (pocket.item.id !== id) return pocket;
-            const nextQuantity = Math.max(1, pocket.quantity - 1);
-            return { ...pocket, quantity: nextQuantity };
+            return { ...pocket, quantity: Math.max(1, pocket.quantity - 1) };
         }));
     }, []);
 
-    const increaseQuantity = useCallback((id: string) => {
-        setSelectedItems((prev) => {
+    const increaseOrderQuantity = useCallback((id: string) => {
+        setOrderItems((prev) => {
             const count = prev.reduce((acc, curr) => acc + curr.quantity, 0);
-            if (count >= 40) return prev;
+            if (count >= ORDER_BOT_MAX) return prev;
             return prev.map((pocket) => {
                 if (pocket.item.id !== id) return pocket;
                 return { ...pocket, quantity: pocket.quantity + 1 };
@@ -99,14 +137,79 @@ export const useCommandBuilderPockets = () => {
         });
     }, []);
 
-    const removeItem = useCallback((id: string) => {
-        setSelectedItems((prev) => prev.filter((pocket) => pocket.item.id !== id));
+    const removeOrderItem = useCallback((id: string) => {
+        setOrderItems((prev) => prev.filter((pocket) => pocket.item.id !== id));
     }, []);
 
-    const fillWithItemName = useCallback((name: string) => {
-        setSelectedItems((prev) => {
+    // ── Drop pocket operations ─────────────────────────────────────────────
+    const decreaseDropQuantity = useCallback((id: string) => {
+        setDropItems((prev) => prev.map((pocket) => {
+            if (pocket.item.id !== id) return pocket;
+            return { ...pocket, quantity: Math.max(1, pocket.quantity - 1) };
+        }));
+    }, []);
+
+    const increaseDropQuantity = useCallback((id: string) => {
+        setDropItems((prev) => {
             const count = prev.reduce((acc, curr) => acc + curr.quantity, 0);
-            const remaining = 40 - count;
+            if (count >= DROP_BOT_MAX) return prev; // silently block; UI disables the button
+            const pocket = prev.find((p) => p.item.id === id);
+            if (!pocket) return prev;
+            // guard: adding 1 more would exceed cap
+            if (count + 1 > DROP_BOT_MAX) return prev;
+            return prev.map((p) => {
+                if (p.item.id !== id) return p;
+                return { ...p, quantity: p.quantity + 1 };
+            });
+        });
+    }, []);
+
+    const removeDropItem = useCallback((id: string) => {
+        setDropItems((prev) => prev.filter((pocket) => pocket.item.id !== id));
+    }, []);
+
+    // ── Legacy aliases (used by some pages still referencing old API) ──────
+    const decreaseQuantity = decreaseOrderQuantity;
+    const increaseQuantity = increaseOrderQuantity;
+    const removeItem = removeOrderItem;
+
+    // ── Add to pockets ─────────────────────────────────────────────────────
+    const addItemToOrderPockets = useCallback((item: PocketItem): { success: boolean; message: string } => {
+        if (totalOrderCount >= ORDER_BOT_MAX) {
+            return { success: false, message: `Order pockets are full (${ORDER_BOT_MAX} items). Remove an item first.` };
+        }
+        setOrderItems((prev) => {
+            const existing = prev.find((p) => p.item.id === item.id);
+            if (existing) {
+                return prev.map((p) => p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p);
+            }
+            return [...prev, { item, quantity: 1 }];
+        });
+        return { success: true, message: 'Added to Order pockets!' };
+    }, [totalOrderCount]);
+
+    const addItemToDropPockets = useCallback((item: PocketItem): { success: boolean; message: string } => {
+        if (totalDropCount >= DROP_BOT_MAX) {
+            return { success: false, message: `Drop pockets are full (${DROP_BOT_MAX} items). Remove an item first.` };
+        }
+        setDropItems((prev) => {
+            const existing = prev.find((p) => p.item.id === item.id);
+            if (existing) {
+                return prev.map((p) => p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p);
+            }
+            return [...prev, { item, quantity: 1 }];
+        });
+        return { success: true, message: 'Added to Drop pockets!' };
+    }, [totalDropCount]);
+
+    // Legacy alias — adds to order by default
+    const addItemToPockets = addItemToOrderPockets;
+
+    // ── Fill helpers (order only) ──────────────────────────────────────────
+    const fillWithItemName = useCallback((name: string) => {
+        setOrderItems((prev) => {
+            const count = prev.reduce((acc, curr) => acc + curr.quantity, 0);
+            const remaining = ORDER_BOT_MAX - count;
             if (remaining <= 0) return prev;
 
             const bufferOption = Object.values(BUFFER_OPTIONS).find((buffer) => buffer.name === name);
@@ -143,20 +246,7 @@ export const useCommandBuilderPockets = () => {
     const handleFillCrowns = useCallback(() => fillWithItemName('Royal Crown'), [fillWithItemName]);
     const handleFillBells = useCallback(() => fillWithItemName('99,000 Bells'), [fillWithItemName]);
 
-    const addItemToPockets = useCallback((item: PocketItem): { success: boolean; message: string } => {
-        if (totalItemsCount >= 40) {
-            return { success: false, message: 'Your pockets are full (40 items). Remove an item first.' };
-        }
-        setSelectedItems((prev) => {
-            const existing = prev.find((p) => p.item.id === item.id);
-            if (existing) {
-                return prev.map((p) => p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p);
-            }
-            return [...prev, { item, quantity: 1 }];
-        });
-        return { success: true, message: 'Added to your pockets!' };
-    }, [totalItemsCount]);
-
+    // ── Villager operations ────────────────────────────────────────────────
     const requestVillager = useCallback((villager: CatalogEntity): { success: boolean; message: string } => {
         setVillagerIds((prev) => prev.includes(villager.id) ? prev : [...prev, villager.id]);
         return { success: true, message: `${villager.name} has been requested as a villager.` };
@@ -173,17 +263,18 @@ export const useCommandBuilderPockets = () => {
         [villagerIds]
     );
 
+    // ── Command text ───────────────────────────────────────────────────────
     const orderCommandText = useMemo(() => {
-        const itemsList = selectedItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
+        const itemsList = orderItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
         const villagerPart = selectedVillagers.length === 1 ? `villager:${selectedVillagers[0].id}` : '';
         const commandParts = [itemsList, villagerPart].filter(Boolean).join(' ');
         return commandParts ? `!order ${commandParts}` : '';
-    }, [selectedItems, selectedVillagers]);
+    }, [orderItems, selectedVillagers]);
 
     const dropCommandText = useMemo(() => {
-        const itemsList = selectedItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
+        const itemsList = dropItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
         return itemsList ? `!drop ${itemsList}` : '';
-    }, [selectedItems]);
+    }, [dropItems]);
 
     const injectVillagerCommandText = useMemo(() => {
         if (selectedVillagers.length === 0) return '';
@@ -191,6 +282,7 @@ export const useCommandBuilderPockets = () => {
         return `!mvi ${selectedVillagers.map((villager) => villager.name).join(' ')}`;
     }, [selectedVillagers]);
 
+    // ── Copy handlers ──────────────────────────────────────────────────────
     const handleCopyOrder = useCallback(async () => {
         if (!orderCommandText) return;
         try {
@@ -230,38 +322,89 @@ export const useCommandBuilderPockets = () => {
         }
     }, [injectVillagerCommandText]);
 
-    const getPocketQuantity = useCallback((itemId: string) => {
-        const entry = selectedItems.find((p) => p.item.id === itemId);
-        return entry?.quantity ?? 0;
-    }, [selectedItems]);
+    // ── Quantity lookup ────────────────────────────────────────────────────
+    const getOrderPocketQuantity = useCallback((itemId: string) => {
+        return orderItems.find((p) => p.item.id === itemId)?.quantity ?? 0;
+    }, [orderItems]);
+
+    const getDropPocketQuantity = useCallback((itemId: string) => {
+        return dropItems.find((p) => p.item.id === itemId)?.quantity ?? 0;
+    }, [dropItems]);
+
+    // Legacy alias
+    const getPocketQuantity = getOrderPocketQuantity;
 
     return {
-        selectedItems,
-        setSelectedItems,
+        // State
+        orderItems,
+        setOrderItems,
+        dropItems,
+        setDropItems,
         villagerIds,
         setVillagerIds,
+        // Legacy alias for pages that haven't been updated
+        selectedItems: orderItems,
+        setSelectedItems: setOrderItems,
+
+        // Counts
+        totalOrderCount,
+        totalDropCount,
         totalItemsCount,
+
+        // Can-increase flags
         canIncrease,
+        canIncreaseOrder,
+        canIncreaseDrop,
+
+        // Order operations
+        decreaseOrderQuantity,
+        increaseOrderQuantity,
+        removeOrderItem,
+
+        // Drop operations
+        decreaseDropQuantity,
+        increaseDropQuantity,
+        removeDropItem,
+
+        // Legacy aliases
         decreaseQuantity,
         increaseQuantity,
         removeItem,
+
+        // Add to pocket
+        addItemToOrderPockets,
+        addItemToDropPockets,
+        addItemToPockets,
+
+        // Fill helpers
         handleFillTickets,
         handleFillCrowns,
         handleFillBells,
-        addItemToPockets,
+
+        // Villagers
         requestVillager,
         removeVillager,
         clearVillagers,
         selectedVillagers,
+
+        // Commands
         orderCommandText,
         dropCommandText,
+        injectVillagerCommandText,
+
+        // Copy status
         copyOrderStatus,
         copyDropStatus,
         copyInjectVillagerStatus,
+
+        // Copy handlers
         handleCopyOrder,
         handleCopyDrop,
         handleCopyInjectVillager,
-        injectVillagerCommandText,
+
+        // Lookup
         getPocketQuantity,
+        getOrderPocketQuantity,
+        getDropPocketQuantity,
     };
 };

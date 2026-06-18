@@ -29,17 +29,16 @@ const CatalogDetail = () => {
     const detailStatusRef = useRef<HTMLDivElement | null>(null);
 
     const {
-        selectedItems,
-        setSelectedItems,
-        totalItemsCount,
-        canIncrease,
-        decreaseQuantity,
-        increaseQuantity,
-        removeItem,
-        handleFillTickets,
-        handleFillCrowns,
-        handleFillBells,
-        addItemToPockets,
+        orderItems,
+        setOrderItems,
+        dropItems,
+        setDropItems,
+        totalOrderCount,
+        totalDropCount,
+        canIncreaseOrder,
+        canIncreaseDrop,
+        addItemToOrderPockets,
+        addItemToDropPockets,
         requestVillager,
         selectedVillagers,
         orderCommandText,
@@ -51,9 +50,16 @@ const CatalogDetail = () => {
         handleCopyOrder,
         handleCopyDrop,
         handleCopyInjectVillager,
-        getPocketQuantity,
+        getOrderPocketQuantity,
+        getDropPocketQuantity,
         removeVillager,
         clearVillagers,
+        decreaseOrderQuantity,
+        increaseOrderQuantity,
+        removeOrderItem,
+        decreaseDropQuantity,
+        increaseDropQuantity,
+        removeDropItem,
     } = useCommandBuilderPockets();
 
 
@@ -96,7 +102,8 @@ const CatalogDetail = () => {
     const pocketItemId = entry.entityType === 'item'
         ? (selectedVariant ? `${entry.id}:${selectedVariant.id || 'NA'}` : entry.id)
         : entry.id;
-    const inPocketQty = getPocketQuantity(pocketItemId);
+    const inOrderQty = getOrderPocketQuantity(pocketItemId);
+    const inDropQty = getDropPocketQuantity(pocketItemId);
 
     const handleVariantSelect = (variantId: string) => {
         setSelectedVariantId(variantId);
@@ -105,7 +112,7 @@ const CatalogDetail = () => {
         navigate(`${basePath}${query}`, { replace: true });
     };
 
-    const addToCommandBuilder = () => {
+    const addToOrder = () => {
         if (entry.entityType === 'item') {
             const itemToSave = {
                 ...entry,
@@ -115,20 +122,33 @@ const CatalogDetail = () => {
                 variantLabel,
                 image: detailImage,
             };
-            const result = addItemToPockets(itemToSave);
+            const result = addItemToOrderPockets(itemToSave);
             setDetailStatus(result.message);
-            // focus the status for screen readers
-            setTimeout(() => {
-                detailStatusRef.current?.focus();
-            }, 50);
         } else {
             const result = requestVillager(entry);
             setDetailStatus(result.message);
-            setTimeout(() => {
-                detailStatusRef.current?.focus();
-            }, 50);
         }
-        // clear status after a short delay
+        setTimeout(() => {
+            detailStatusRef.current?.focus();
+        }, 50);
+        setTimeout(() => setDetailStatus(''), 2800);
+    };
+
+    const addToDrop = () => {
+        if (entry.entityType !== 'item') return;
+        const itemToSave = {
+            ...entry,
+            id: pocketItemId,
+            baseId: entry.id,
+            variantId: selectedVariant?.id || 'NA',
+            variantLabel,
+            image: detailImage,
+        };
+        const result = addItemToDropPockets(itemToSave);
+        setDetailStatus(result.message);
+        setTimeout(() => {
+            detailStatusRef.current?.focus();
+        }, 50);
         setTimeout(() => setDetailStatus(''), 2800);
     };
 
@@ -240,51 +260,88 @@ const CatalogDetail = () => {
                                     </div>
                                 </div>
 
-                                {inPocketQty > 0 && entry.entityType === 'item' && (
+                                {entry.entityType === 'item' && (inOrderQty > 0 || inDropQty > 0) && (
                                     <div className="alert rounded-4 py-3 px-4 mb-4 small border-2" style={{ background: '#f0fdf4', borderColor: '#88e0a0', color: '#1e7e34' }} role="status">
                                         <i className="fa-solid fa-basket-shopping me-2 fw-black"></i>
-                                        In pockets: <strong>{inPocketQty} × {entry.name}</strong>
+                                        {inOrderQty > 0 && <span>Order: <strong>{inOrderQty} × {entry.name}</strong>{inDropQty > 0 ? '  ·  ' : ''}</span>}
+                                        {inDropQty > 0 && <span>Drop: <strong>{inDropQty} × {entry.name}</strong></span>}
                                     </div>
                                 )}
 
-                                <button
-                                    type="button"
-                                    onClick={addToCommandBuilder}
-                                    className="btn rounded-pill px-4 py-3 fw-black w-100 transition-all"
-                                    disabled={entry.entityType === 'item' && totalItemsCount >= 40}
-                                    style={{
-                                        background: entry.entityType === 'item' && totalItemsCount >= 40 
-                                            ? '#f8f9fa' 
-                                            : 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
-                                        color: entry.entityType === 'item' && totalItemsCount >= 40 ? '#adb5bd' : 'white',
-                                        border: 'none',
-                                        boxShadow: entry.entityType === 'item' && totalItemsCount >= 40 
-                                            ? 'none' 
-                                            : '0 4px 12px rgba(40, 167, 69, 0.3)',
-                                        cursor: entry.entityType === 'item' && totalItemsCount >= 40 ? 'not-allowed' : 'pointer',
-                                        fontSize: '1rem'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (!(entry.entityType === 'item' && totalItemsCount >= 40)) {
-                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                            e.currentTarget.style.boxShadow = '0 6px 16px rgba(40, 167, 69, 0.4)';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (!(entry.entityType === 'item' && totalItemsCount >= 40)) {
-                                            e.currentTarget.style.transform = 'translateY(0)';
-                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)';
-                                        }
-                                    }}
-                                >
-                                    <i className={`fa-solid me-2 ${entry.entityType === 'item' ? (inPocketQty > 0 ? 'fa-check' : 'fa-plus') : 'fa-heart'}`}></i>
-                                    {entry.entityType === 'item' ? (inPocketQty > 0 ? `In pockets (${inPocketQty})` : 'Add to Pockets') : 'Request Villager'}
-                                </button>
-
-                                {entry.entityType === 'item' && totalItemsCount >= 40 && (
-                                    <p className="text-muted small text-center mt-3 mb-0" style={{ fontSize: '0.9rem' }}>
-                                        <i className="fa-solid fa-circle-info me-1"></i>Your pockets are full (40/40). Remove an item first.
-                                    </p>
+                                {entry.entityType === 'item' ? (
+                                    <div className="d-flex flex-column gap-2">
+                                        {/* Add to Order */}
+                                        <button
+                                            type="button"
+                                            onClick={addToOrder}
+                                            className="btn rounded-pill px-4 py-3 fw-black w-100 transition-all"
+                                            disabled={totalOrderCount >= 40}
+                                            style={{
+                                                background: totalOrderCount >= 40
+                                                    ? '#f8f9fa'
+                                                    : 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+                                                color: totalOrderCount >= 40 ? '#adb5bd' : 'white',
+                                                border: 'none',
+                                                boxShadow: totalOrderCount >= 40 ? 'none' : '0 4px 12px rgba(40,167,69,0.3)',
+                                                cursor: totalOrderCount >= 40 ? 'not-allowed' : 'pointer',
+                                                fontSize: '1rem'
+                                            }}
+                                            onMouseEnter={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(40,167,69,0.4)'; } }}
+                                            onMouseLeave={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.3)'; } }}
+                                        >
+                                            <i className="fa-solid fa-basket-shopping me-2"></i>
+                                            {totalOrderCount >= 40 ? 'Order Full (40/40)' : `Add to Order${inOrderQty > 0 ? ` (${inOrderQty})` : ''}`}
+                                        </button>
+                                        {/* Add to Drop */}
+                                        <button
+                                            type="button"
+                                            onClick={addToDrop}
+                                            className="btn rounded-pill px-4 py-3 fw-black w-100 transition-all"
+                                            disabled={totalDropCount >= 9}
+                                            style={{
+                                                background: totalDropCount >= 9
+                                                    ? '#f8f9fa'
+                                                    : 'linear-gradient(135deg, #5bc0de 0%, #31b0d5 100%)',
+                                                color: totalDropCount >= 9 ? '#adb5bd' : 'white',
+                                                border: 'none',
+                                                boxShadow: totalDropCount >= 9 ? 'none' : '0 4px 12px rgba(91,192,222,0.3)',
+                                                cursor: totalDropCount >= 9 ? 'not-allowed' : 'pointer',
+                                                fontSize: '1rem'
+                                            }}
+                                            onMouseEnter={(e) => { if (totalDropCount < 9) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(91,192,222,0.4)'; } }}
+                                            onMouseLeave={(e) => { if (totalDropCount < 9) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(91,192,222,0.3)'; } }}
+                                        >
+                                            <i className="fa-solid fa-box-open me-2"></i>
+                                            {totalDropCount >= 9 ? 'Drop Full (9/9)' : `Add to Drop${inDropQty > 0 ? ` (${inDropQty})` : ''}`}
+                                        </button>
+                                        {(totalOrderCount >= 40 || totalDropCount >= 9) && (
+                                            <p className="text-muted small text-center mt-1 mb-0" style={{ fontSize: '0.85rem' }}>
+                                                <i className="fa-solid fa-circle-info me-1"></i>
+                                                {totalOrderCount >= 40 && totalDropCount >= 9
+                                                    ? 'Both bots are full. Remove items to add more.'
+                                                    : totalOrderCount >= 40
+                                                    ? 'Order bot is full (40/40).'
+                                                    : 'Drop bot is full (9/9).'}
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={addToOrder}
+                                        className="btn rounded-pill px-4 py-3 fw-black w-100 transition-all"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            boxShadow: '0 4px 12px rgba(40,167,69,0.3)',
+                                            fontSize: '1rem'
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(40,167,69,0.4)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.3)'; }}
+                                    >
+                                        <i className="fa-solid fa-heart me-2"></i>Request Villager
+                                    </button>
                                 )}
 
                                 {detailStatus && (
@@ -299,7 +356,8 @@ const CatalogDetail = () => {
                     <aside className="col-lg-4">
                         <div className="sticky-top" style={{ top: '90px' }}>
                             <CommandBuilderSummary
-                                savedPockets={selectedItems}
+                                orderPockets={orderItems}
+                                dropPockets={dropItems}
                                 savedVillagers={selectedVillagers}
                                 orderCommandText={orderCommandText}
                                 dropCommandText={dropCommandText}
@@ -310,16 +368,18 @@ const CatalogDetail = () => {
                                 onCopyOrder={handleCopyOrder}
                                 onCopyDrop={handleCopyDrop}
                                 onCopyInjectVillager={handleCopyInjectVillager}
-                                onDecreaseQuantity={decreaseQuantity}
-                                onIncreaseQuantity={increaseQuantity}
-                                onRemoveItem={removeItem}
+                                onDecreaseOrderQuantity={decreaseOrderQuantity}
+                                onIncreaseOrderQuantity={increaseOrderQuantity}
+                                onRemoveOrderItem={removeOrderItem}
+                                onDecreaseDropQuantity={decreaseDropQuantity}
+                                onIncreaseDropQuantity={increaseDropQuantity}
+                                onRemoveDropItem={removeDropItem}
                                 onRemoveVillager={removeVillager}
-                                onClearPockets={() => setSelectedItems([])}
+                                onClearOrderPockets={() => setOrderItems([])}
+                                onClearDropPockets={() => setDropItems([])}
                                 onClearVillagers={clearVillagers}
-                                canIncrease={canIncrease}
-                                onFillTickets={handleFillTickets}
-                                onFillCrowns={handleFillCrowns}
-                                onFillBells={handleFillBells}
+                                canIncreaseOrder={canIncreaseOrder}
+                                canIncreaseDrop={canIncreaseDrop}
                                 showTerminal={true}
                             />
                         </div>
