@@ -334,7 +334,7 @@ const CommandBuilder = () => {
                                         return (
                                             <div className="col-6 col-md-4 col-lg-3" key={item.id}>
                                                 <div
-                                                    className={`cb-item-card bg-white rounded-4 shadow-sm h-100 d-flex flex-column overflow-hidden position-relative cursor-pointer ${cardSelected ? 'border-success border-2' : ''}`}
+                                                    className={`cb-item-card bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative cursor-pointer ${cardSelected ? 'border-success border-2' : ''}`}
                                                     onClick={() => openDetail(item)}
                                                     role="button"
                                                     tabIndex={0}
@@ -376,15 +376,15 @@ const CommandBuilder = () => {
                                                             />
                                                         )}
                                                     </div>
-                                                    <div className="p-3 d-flex flex-column justify-content-between h-100 text-dark border-top border-light">
+                                                    <div className="p-2 d-flex flex-column justify-content-between h-100 text-dark border-top border-light">
                                                         <div>
-                                                            <div className="mb-2">
-                                                                <span className="badge bg-light text-muted rounded-pill px-2 py-1 x-small fw-bold border">{isVillager ? 'Villager' : item.category}</span>
+                                                            <div className="mb-1">
+                                                                <span className="badge bg-light text-muted rounded-pill px-1 py-1 x-small fw-bold border">{isVillager ? 'Villager' : item.category}</span>
                                                             </div>
                                                             <h3 className="h6 fw-black mb-1 text-truncate" title={item.name}>{item.name}</h3>
                                                             <p className="text-muted mb-0 text-truncate" style={{ fontSize: '0.75rem' }}>{item.theme} · {item.colour}</p>
                                                         </div>
-                                                        <div className="mt-3 d-flex flex-column gap-1" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="d-flex flex-column gap-1" onClick={(e) => e.stopPropagation()}>
                                                             {!isVillager ? (
                                                                 <>
                                                                     {/* Order row */}

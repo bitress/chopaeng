@@ -2564,11 +2564,14 @@ button:disabled {
 }
 
 .cb-item-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     border: 2px solid transparent;
 }
 .cb-item-card:hover {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-4px) scale(1.01);
     border-color: rgba(40, 167, 69, 0.3);
     box-shadow: 0 15px 30px rgba(40, 167, 69, 0.15) !important;
     z-index: 10;
@@ -2578,6 +2581,15 @@ button:disabled {
 }
 .cb-item-card:hover .cb-item-image {
     transform: scale(1.1);
+}
+.cb-item-card .ratio {
+    flex-shrink: 0;
+}
+.cb-item-card .cb-item-meta {
+    flex: 1 1 auto;
+}
+.cb-item-card .cb-item-footer {
+    margin-top: auto;
 }
 
 .pocket-slot {
