@@ -72,7 +72,7 @@ const IslandAvailabilityCard = ({ island, name, group }: { island?: IslandData; 
                     <div className="fw-black text-dark text-truncate">{island?.name || name}</div>
                     <div className="tiny-text text-muted text-truncate">{island?.type || "Island match"}</div>
                 </div>
-                <span className={`badge rounded-pill border ${meta.className}`} title={meta.label}>
+                <span className={`badge rounded-pill border flex-shrink-0 ${meta.className}`} title={meta.label}>
                     <i className={`fa-solid ${meta.icon}`}></i>
                     <span className="visually-hidden">{meta.label}</span>
                 </span>
@@ -163,31 +163,32 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
     const foundCount = groupedResults.reduce((sum, group) => sum + group.islands.length, 0);
 
     return (
-        <section className="bg-white rounded-4 border shadow-sm p-4">
+        <section className="bg-white rounded-4 border shadow-sm p-3 p-sm-4">
 
             <div className="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
-                <div>
+                <div className="min-w-0">
                     <div className="d-inline-flex align-items-center bg-nook-green text-white rounded-pill px-3 py-1 mb-3 fw-black small shadow-sm">
                         <i className="fa-solid fa-satellite-dish me-2"></i> Live Island Finder
                     </div>
-                    <h2 className="ac-font mb-1 text-dark" style={{ fontSize: '1.8rem' }}>Availability Check</h2>
+                    <h2 className="ac-font mb-1 text-dark" style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)' }}>Availability Check</h2>
                     <p className="text-muted fw-bold mb-0">Searching for <span className="text-nook">{mode === "item" ? "items" : "villagers"}</span> across the network.</p>
                 </div>
-                <div className="d-flex flex-wrap gap-2">
-                    <button type="button" className="btn btn-white border rounded-pill fw-black px-4 shadow-sm hover-nook" onClick={() => runLookup(lookupQuery, true)} disabled={loading}>
+                <div className="d-flex flex-wrap gap-2 w-100 w-lg-auto">
+                    <button type="button" className="btn btn-white border rounded-pill fw-black px-3 px-sm-4 shadow-sm hover-nook flex-fill flex-sm-grow-0" onClick={() => runLookup(lookupQuery, true)} disabled={loading}>
                         <i className={`fa-solid ${loading ? "fa-spinner fa-spin" : "fa-rotate-right"} me-2`}></i> Retry
                     </button>
-                    <Link to="/islands" className="btn btn-nook rounded-pill fw-black px-4">
+                    <Link to="/islands" className="btn btn-nook rounded-pill fw-black px-3 px-sm-4 flex-fill flex-sm-grow-0 text-center">
                         View Network <i className="fa-solid fa-arrow-up-right-from-square ms-2 small"></i>
                     </Link>
                 </div>
             </div>
 
             <div className="search-wrapper mb-5 w-100 justify-content-start">
-                <div className="search-box w-100 max-w-100 shadow-sm focus-within-green transition-all m-0" style={{ maxWidth: '100%' }}>
+                <div className="search-box w-100 max-w-100 shadow-sm focus-within-green transition-all m-0 flex-wrap gap-2" style={{ maxWidth: '100%' }}>
                     <i className="fa-solid fa-magnifying-glass search-icon"></i>
                     <input
-                        className="font-nunito fw-bold"
+                        className="font-nunito fw-bold flex-grow-1"
+                        style={{ minWidth: 0 }}
                         value={lookupQuery}
                         onChange={(e) => setLookupQuery(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") runLookup(lookupQuery, true); }}
@@ -195,7 +196,7 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                         aria-label="Availability search"
                     />
                     <button
-                        className="btn btn-nook-primary rounded-pill px-4 fw-black border-0 py-2"
+                        className="btn btn-nook-primary rounded-pill px-3 px-sm-4 fw-black border-0 py-2 flex-shrink-0"
                         type="button"
                         onClick={() => runLookup(lookupQuery, true)}
                         disabled={loading || !lookupQuery.trim()}
@@ -203,7 +204,7 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                         {loading ? (
                             <>
                                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Searching
+                                <span className="d-none d-sm-inline">Searching</span>
                             </>
                         ) : (
                             "Search"
@@ -215,10 +216,10 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
             <div aria-live="polite" aria-busy={loading || islandsLoading}>
 
                 {(loading || islandsLoading) && (
-                    <div className="rounded-4 bg-cream p-5 text-center border shadow-sm animate-fade-in" role="status">
+                    <div className="rounded-4 bg-cream p-4 p-sm-5 text-center border shadow-sm animate-fade-in" role="status">
                         <i className="fa-solid fa-plane-departure fa-bounce fa-2x mb-3 text-nook-green"></i>
                         <div className="ac-font fs-5 text-dark">Contacting Orville...</div>
-                        <div className="small text-muted fw-bold mt-1">Scanning the skies for {lookupQuery || "matches"}</div>
+                        <div className="small text-muted fw-bold mt-1 text-truncate px-2">Scanning the skies for {lookupQuery || "matches"}</div>
                         <div className="progress mt-3 mx-auto rounded-pill" style={{ maxWidth: '220px', height: '6px' }}>
                             <div
                                 className="progress-bar progress-bar-striped progress-bar-animated bg-nook-green rounded-pill"
@@ -233,17 +234,19 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                 )}
 
                 {!loading && state.error && (
-                    <div className="alert bg-danger-subtle border-danger rounded-4 d-flex align-items-center shadow-sm animate-fade-in mb-0" role="alert">
-                        <div className="icon-circle bg-white text-danger me-3 shadow-sm flex-shrink-0">
-                            <i className="fa-solid fa-triangle-exclamation fs-4"></i>
-                        </div>
-                        <div className="flex-grow-1">
-                            <strong className="d-block text-danger fw-black fs-6">Communication Error</strong>
-                            <span className="small text-danger fw-bold">{state.error}</span>
+                    <div className="alert bg-danger-subtle border-danger rounded-4 d-flex flex-column flex-sm-row align-items-sm-center shadow-sm animate-fade-in mb-0 gap-3" role="alert">
+                        <div className="d-flex align-items-center gap-3 flex-grow-1 min-w-0">
+                            <div className="icon-circle bg-white text-danger shadow-sm flex-shrink-0">
+                                <i className="fa-solid fa-triangle-exclamation fs-4"></i>
+                            </div>
+                            <div className="min-w-0">
+                                <strong className="d-block text-danger fw-black fs-6">Communication Error</strong>
+                                <span className="small text-danger fw-bold">{state.error}</span>
+                            </div>
                         </div>
                         <button
                             type="button"
-                            className="btn btn-sm btn-outline-danger rounded-pill fw-black px-3 ms-3 flex-shrink-0"
+                            className="btn btn-sm btn-outline-danger rounded-pill fw-black px-3 flex-shrink-0 w-100 w-sm-auto"
                             onClick={() => runLookup(lookupQuery, true)}
                         >
                             <i className="fa-solid fa-rotate-right me-1"></i> Retry
@@ -252,7 +255,7 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                 )}
 
                 {!loading && !state.error && state.data && !state.data.found && (
-                    <div className="map-polaroid mx-auto mt-4 max-w-100" style={{ maxWidth: '400px' }}>
+                    <div className="map-polaroid mx-auto mt-4 w-100" style={{ maxWidth: '400px' }}>
                         <div className="tape-strip"></div>
                         <div className="bg-light p-4 rounded-3 text-center border-2 border-dashed border-secondary-subtle">
                             <i className="fa-regular fa-face-frown-open fa-3x text-muted mb-3 opacity-50"></i>
@@ -263,7 +266,7 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                 )}
 
                 {!loading && !state.error && (state.data?.suggestions?.length ?? 0) > 0 && (
-                    <div className="mt-4 p-4 bg-cream rounded-4 border shadow-sm animate-fade-in">
+                    <div className="mt-4 p-3 p-sm-4 bg-cream rounded-4 border shadow-sm animate-fade-in">
                         <div className="small fw-black text-uppercase tracking-wide text-muted mb-3">
                             <i className="fa-solid fa-lightbulb text-warning me-2"></i> Did you mean?
                         </div>
@@ -289,10 +292,10 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                 {!loading && !state.error && state.data?.found && (
                     <div className="d-flex flex-column gap-4">
                         <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                            <div className="small fw-bold text-muted">
+                            <div className="small fw-bold text-muted text-truncate">
                                 Found <span className="text-success">{state.data.query}</span> on {foundCount} island{foundCount === 1 ? "" : "s"}.
                             </div>
-                            <span className="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                            <span className="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2 flex-shrink-0">
                                 <i className="fa-solid fa-check me-1"></i> Match found
                             </span>
                         </div>
@@ -305,7 +308,7 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                                     <span className="tiny-text text-muted fw-bold">{group.islands.length}</span>
                                 </div>
                                 {group.islands.length > 0 ? (
-                                    <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+                                    <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
                                         {group.islands.map(({ name, island }) => (
                                             <div className="col" key={`${group.key}-${name}`}>
                                                 <IslandAvailabilityCard name={name} island={island} group={group.key} />
