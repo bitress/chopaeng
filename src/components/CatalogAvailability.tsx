@@ -308,10 +308,14 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
                                     <span className="tiny-text text-muted fw-bold">{group.islands.length}</span>
                                 </div>
                                 {group.islands.length > 0 ? (
-                                    <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
+                                    <div className="row g-3">
                                         {group.islands.map(({ name, island }) => (
-                                            <div className="col" key={`${group.key}-${name}`}>
-                                                <IslandAvailabilityCard name={name} island={island} group={group.key} />
+                                            <div className="col-12 col-sm-6 col-lg-4" key={`${group.key}-${name}`}>
+                                                <IslandAvailabilityCard
+                                                    name={name}
+                                                    island={island}
+                                                    group={group.key}
+                                                />
                                             </div>
                                         ))}
                                     </div>
