@@ -47,12 +47,6 @@ const FindItems = () => {
         }
     };
 
-    const copyCommand = (name: string) => {
-        const cmd = searchMode === 'item' ? `!order ${name}` : `!villager ${name}`;
-        navigator.clipboard.writeText(cmd);
-        // Optional: Add toast notification here
-    };
-
     useEffect(() => {
         const site = window.location.origin;
         const url = `${site}/finder`;
@@ -115,7 +109,7 @@ const FindItems = () => {
         <div className="nook-catalog min-vh-100 font-nunito bg-pattern d-flex flex-column align-items-center">
 
             {/* 1. HEADER & SEARCH */}
-            <header className="w-100 bg-nook-green pt-5 pb-5 position-relative shadow-sm rounded-bottom-5 mb-5">
+            <header className="w-100 bg-nook-green pt-4 pb-4 py-sm-5 position-relative shadow-sm rounded-bottom-5 mb-5 overflow-hidden">
                 <div className="container position-relative z-1 text-center">
                     <span className="badge bg-white text-nook-green rounded-pill mb-3 px-3 py-2 fw-black text-uppercase tracking-wide shadow-sm">
                         <i className="fa-solid fa-wifi me-2"></i> Connected to ChoBot
@@ -125,16 +119,18 @@ const FindItems = () => {
                     </h1>
 
                     {/* MODE TOGGLE */}
-                    <div className="d-flex justify-content-center gap-3 mb-4">
+                    <div className="d-flex flex-wrap justify-content-center gap-2 gap-sm-3 mb-4">
                         <button
                             onClick={() => setSearchMode('item')}
-                            className={`btn rounded-pill px-4 py-2 fw-bold transition-all ${searchMode === 'item' ? 'bg-white text-nook-green shadow' : 'bg-success-dark text-white opacity-75'}`}
+                            className={`btn rounded-pill px-3 px-sm-4 py-2 fw-bold transition-all ${searchMode === 'item' ? 'bg-white text-nook-green shadow' : 'bg-success-dark text-white opacity-75'}`}
+                            aria-pressed={searchMode === 'item'}
                         >
                             <i className="fa-solid fa-couch me-2"></i> Items
                         </button>
                         <button
                             onClick={() => setSearchMode('villager')}
-                            className={`btn rounded-pill px-4 py-2 fw-bold transition-all ${searchMode === 'villager' ? 'bg-white text-nook-green shadow' : 'bg-success-dark text-white opacity-75'}`}
+                            className={`btn rounded-pill px-3 px-sm-4 py-2 fw-bold transition-all ${searchMode === 'villager' ? 'bg-white text-nook-green shadow' : 'bg-success-dark text-white opacity-75'}`}
+                            aria-pressed={searchMode === 'villager'}
                         >
                             <i className="fa-solid fa-user-tag me-2"></i> Villagers
                         </button>
@@ -142,7 +138,7 @@ const FindItems = () => {
 
                     {/* SEARCH INPUT */}
                     <div className="row justify-content-center">
-                        <div className="col-lg-6 col-md-8">
+                        <div className="col-12 col-lg-6 col-md-8">
                             <div className="input-group input-group-lg shadow-lg rounded-pill bg-white p-2">
                                 <input
                                     type="text"
@@ -151,11 +147,13 @@ const FindItems = () => {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                    aria-label={searchMode === 'item' ? 'Search for an item' : 'Search for a villager'}
                                 />
                                 <button
                                     className="btn btn-nook-primary rounded-pill px-4 fw-bold m-1"
                                     onClick={() => handleSearch()}
                                     disabled={loading}
+                                    aria-label="Search"
                                 >
                                     {loading ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-magnifying-glass"></i>}
                                 </button>
@@ -165,24 +163,24 @@ const FindItems = () => {
                 </div>
 
                 {/* Decoration */}
-                <div className="position-absolute bottom-0 start-0 opacity-10 ms-n5 mb-n5 text-white">
+                <div className="position-absolute bottom-0 start-0 opacity-10 ms-n5 mb-n5 text-white d-none d-sm-block" aria-hidden="true">
                     <i className="fa-solid fa-leaf" style={{ fontSize: '15rem', transform: 'rotate(-20deg)' }}></i>
                 </div>
             </header>
 
             {/* 2. RESULTS SECTION */}
-            <section className="container" style={{ maxWidth: '800px' }}>
+            <section className="container px-3" style={{ maxWidth: '800px' }}>
 
                 {/* ERROR STATE */}
                 {error && (
-                    <div className="alert alert-danger rounded-4 border-0 shadow-sm text-center fw-bold">
+                    <div className="alert alert-danger rounded-4 border-0 shadow-sm text-center fw-bold" role="alert">
                         <i className="fa-solid fa-triangle-exclamation me-2"></i> {error}
                     </div>
                 )}
 
                 {/* SUGGESTIONS STATE (Did you mean?) */}
                 {data && !data.found && data.suggestions && data.suggestions.length > 0 && (
-                    <div className="text-center py-4 bg-white rounded-5 shadow-sm border border-warning">
+                    <div className="text-center py-4 px-3 bg-white rounded-5 shadow-sm border border-warning">
                         <h3 className="h5 fw-bold text-muted mb-3">
                             <i className="fa-solid fa-circle-question text-warning me-2"></i>
                             Not found. Did you mean?
@@ -214,26 +212,23 @@ const FindItems = () => {
                 {data && data.found && data.results && (
                     <div className="card border-0 rounded-5 overflow-hidden mb-5 bg-white shadow-lg animate-up">
                         {/* Result Header */}
-                        <div className="card-header bg-cream border-bottom border-light p-4 text-center">
+                        <div className="card-header bg-cream border-bottom border-light p-3 p-sm-4 text-center">
                             <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
                                 {searchMode === 'item' ? 'Item Found' : 'Villager Found'}
                             </span>
-                            <h2 className="display-6 fw-black text-dark m-0 text-capitalize mb-3">
+                            <h2 className="display-6 fw-black text-dark m-0 text-capitalize text-break">
                                 {data.query}
                             </h2>
-                            <button
-                                onClick={() => copyCommand(data.query)}
-                                className="d-none btn btn-outline-dark rounded-pill px-4 py-2 fw-bold hover-nook"
-                            >
-                                <i className="fa-regular fa-copy me-2"></i> Copy {searchMode === 'item' ? 'Order' : 'Villager'} Command
-                            </button>
+                            <p className="text-muted small fw-bold mt-2 mb-0">
+                                Available on {data.results.free.length + data.results.sub.length} island{(data.results.free.length + data.results.sub.length) === 1 ? '' : 's'} below.
+                            </p>
                         </div>
 
                         <div className="card-body p-0">
                             <div className="row g-0">
                                 {/* FREE ISLANDS COL */}
-                                <div className="col-md-6 border-end border-light">
-                                    <div className="p-4 h-100">
+                                <div className="col-12 col-md-6 border-bottom border-md-bottom-0 border-end-0 border-md-end border-light">
+                                    <div className="p-3 p-sm-4 h-100">
                                         <div className="d-flex align-items-center gap-2 mb-4 text-success">
                                             <div className="bg-success-subtle p-2 rounded-circle">
                                                 <i className="fa-solid fa-unlock"></i>
@@ -262,8 +257,8 @@ const FindItems = () => {
                                 </div>
 
                                 {/* MEMBER ISLANDS COL */}
-                                <div className="col-md-6">
-                                    <div className="p-4 h-100 bg-sub-pattern">
+                                <div className="col-12 col-md-6">
+                                    <div className="p-3 p-sm-4 h-100 bg-sub-pattern">
                                         <div className="d-flex align-items-center gap-2 mb-4 text-warning-emphasis">
                                             <div className="bg-warning-subtle p-2 rounded-circle">
                                                 <i className="fa-solid fa-crown"></i>
@@ -291,6 +286,15 @@ const FindItems = () => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div className="card-footer bg-white border-top border-light p-3 p-sm-4 text-center">
+                            <Link
+                                to="/command-builder"
+                                className="btn btn-nook-primary rounded-pill px-4 py-2 fw-bold hover-nook"
+                            >
+                                <i className="fa-solid fa-list-check me-2"></i>
+                                Build a Full Order in Command Builder
+                            </Link>
                         </div>
                     </div>
                 )}
