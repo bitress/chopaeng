@@ -107,7 +107,6 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
         setLookupQuery(query);
     }, [query]);
 
-    const cacheKey = `${mode}:${lookupQuery.trim().toLowerCase()}`;
     const endpoint = mode === "item" ? "find" : "villager";
 
     const runLookup = useCallback(async (nextQuery: string, force = false) => {
