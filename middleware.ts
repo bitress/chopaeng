@@ -77,8 +77,7 @@ export default async function middleware(req: Request) {
     const postId = decodeURIComponent(blogMatch[1]);
 
     try {
-      // NOTE: Replace this URL with your actual API endpoint for fetching posts
-      const res = await fetch("https://console.chopaeng.com/api/posts", {
+      const res = await fetch("https://console.chopaeng.com/api/patreon/posts", {
         headers: { Accept: "application/json" },
       });
 
