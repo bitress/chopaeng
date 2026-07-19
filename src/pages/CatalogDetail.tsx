@@ -3,9 +3,10 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { loadExplorerItems } from "../data/explorerDataLoader";
 import { loadVillagers } from "../data/villagerDataLoader";
 import type { CatalogEntity } from "../data/commandBuilderData";
-import { getVariantLabel } from "../utils/commandBuilderHex";
+import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets } from "../hooks/useCommandBuilderPockets";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
+import CatalogAvailability from "../components/CatalogAvailability";
 
 const CatalogDetail = () => {
     const { entityType, id } = useParams<{ entityType?: string; id?: string }>();
@@ -25,7 +26,7 @@ const CatalogDetail = () => {
     }, [id, type, items, villagers]);
 
     const [detailStatus, setDetailStatus] = useState('');
-    const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+    const [selectedVariantKey, setSelectedVariantKey] = useState<string | null>(null);
     const detailStatusRef = useRef<HTMLDivElement | null>(null);
 
     const {
@@ -66,17 +67,17 @@ const CatalogDetail = () => {
 
     useEffect(() => {
         if (entry?.entityType !== 'item') {
-            setSelectedVariantId(null);
+            setSelectedVariantKey(null);
             return;
         }
 
-        const validIds = entry.variations?.map((variant) => variant.id || 'NA') || [];
-        if (variantIdParam && validIds.includes(variantIdParam)) {
-            setSelectedVariantId(variantIdParam);
+        const validKeys = entry.variations?.map((variant) => getVariantKey(variant)) || [];
+        if (variantIdParam && validKeys.includes(variantIdParam)) {
+            setSelectedVariantKey(variantIdParam);
             return;
         }
 
-        setSelectedVariantId(validIds[0] || null);
+        setSelectedVariantKey(validKeys[0] || null);
     }, [entry, variantIdParam]);
 
     if (!entry) {
@@ -92,23 +93,27 @@ const CatalogDetail = () => {
     }
 
     const selectedVariant = entry.entityType === 'item'
-        ? entry.variations?.find((variant) => (variant.id || 'NA') === selectedVariantId) || null
+        ? entry.variations?.find((variant) => getVariantKey(variant) === selectedVariantKey) || null
         : null;
 
     const variantLabel = getVariantLabel(selectedVariant);
     const detailImage = selectedVariant?.imageUrl || entry.image;
     const detailTitle = entry.entityType === 'item' && variantLabel ? `${entry.name} (${variantLabel})` : entry.name;
+    const selectedVariantCommandParts = entry.entityType === 'item'
+        ? getVariantCommandParts(entry.id, selectedVariant)
+        : null;
+    const selectedVariantPocketKey = selectedVariant ? getVariantKey(selectedVariant) : 'NA';
 
     const pocketItemId = entry.entityType === 'item'
-        ? (selectedVariant ? `${entry.id}:${selectedVariant.id || 'NA'}` : entry.id)
+        ? (selectedVariant ? `${entry.id}:${selectedVariantPocketKey}` : entry.id)
         : entry.id;
     const inOrderQty = getOrderPocketQuantity(pocketItemId);
     const inDropQty = getDropPocketQuantity(pocketItemId);
 
-    const handleVariantSelect = (variantId: string) => {
-        setSelectedVariantId(variantId);
+    const handleVariantSelect = (variantKey: string) => {
+        setSelectedVariantKey(variantKey);
         const basePath = `/command-builder/${entry.entityType}/${entry.id}`;
-        const query = variantId && variantId !== 'NA' ? `?variantId=${encodeURIComponent(variantId)}` : '';
+        const query = variantKey && variantKey !== 'NA' ? `?variantId=${encodeURIComponent(variantKey)}` : '';
         navigate(`${basePath}${query}`, { replace: true });
     };
 
@@ -117,8 +122,8 @@ const CatalogDetail = () => {
             const itemToSave = {
                 ...entry,
                 id: pocketItemId,
-                baseId: entry.id,
-                variantId: selectedVariant?.id || 'NA',
+                baseId: selectedVariantCommandParts?.baseId || entry.id,
+                variantId: selectedVariantCommandParts?.variantId || 'NA',
                 variantLabel,
                 image: detailImage,
             };
@@ -139,8 +144,8 @@ const CatalogDetail = () => {
         const itemToSave = {
             ...entry,
             id: pocketItemId,
-            baseId: entry.id,
-            variantId: selectedVariant?.id || 'NA',
+            baseId: selectedVariantCommandParts?.baseId || entry.id,
+            variantId: selectedVariantCommandParts?.variantId || 'NA',
             variantLabel,
             image: detailImage,
         };
@@ -190,22 +195,22 @@ const CatalogDetail = () => {
                                         </label>
                                         <div className="d-flex flex-wrap gap-3">
                                             {(entry.variations || []).map((variant) => {
-                                                const variantId = variant.id || 'NA';
+                                                const variantKey = getVariantKey(variant);
                                                 const variantText = getVariantLabel(variant) || 'Default';
-                                                const isSelected = variantId === selectedVariantId;
+                                                const isSelected = variantKey === selectedVariantKey;
                                                 const thumbUrl = variant.imageUrl || entry.image;
 
                                                 if (thumbUrl) {
                                                     return (
                                                         <button
-                                                            key={variantId}
+                                                            key={variantKey}
                                                             type="button"
-                                                            onClick={() => handleVariantSelect(variantId)}
-                                                            className={`variant-thumb-btn btn p-2 rounded-4 d-flex flex-column align-items-center gap-1 ${isSelected ? 'variant-thumb-btn--selected' : 'btn-outline-secondary'}`}
-                                                                        title={variantText}
-                                                                        aria-pressed={isSelected}
-                                                                        aria-label={`Select variation ${variantText}`}
-                                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantId); } }}
+                                                            onClick={() => handleVariantSelect(variantKey)}
+                                                            className={`variant-thumb-btn btn p-2 rounded-3 d-flex flex-column align-items-center gap-1 ${isSelected ? 'variant-thumb-btn--selected' : 'btn-outline-secondary'}`}
+                                                            title={variantText}
+                                                            aria-pressed={isSelected}
+                                                            aria-label={`Select variation ${variantText}`}
+                                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantKey); } }}
                                                         >
                                                             <div className="ratio ratio-1x1" style={{ width: '48px' }}>
                                                                 <img src={thumbUrl} alt={variantText} className="w-100 h-100 object-fit-contain rounded-3" />
@@ -217,12 +222,12 @@ const CatalogDetail = () => {
 
                                                 return (
                                                     <button
-                                                        key={variantId}
+                                                        key={variantKey}
                                                         type="button"
-                                                        onClick={() => handleVariantSelect(variantId)}
+                                                        onClick={() => handleVariantSelect(variantKey)}
                                                         className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${isSelected ? 'bg-nook-green text-white border-0' : 'btn-outline-secondary text-dark border-2'}`}
                                                         aria-pressed={isSelected}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantId); } }}
+                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantKey); } }}
                                                         style={isSelected ? { boxShadow: '0 3px 8px rgba(40, 167, 69, 0.3)' } : {}}
                                                     >
                                                         {variantText}
@@ -350,6 +355,13 @@ const CatalogDetail = () => {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        <div className="mt-4">
+                            <CatalogAvailability
+                                mode={entry.entityType === 'villager' ? 'villager' : 'item'}
+                                query={entry.name}
+                            />
                         </div>
                     </div>
 

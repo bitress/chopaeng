@@ -12,4 +12,5 @@ export const API_BASE = trimTrailingSlash(
 
 export const DODO_API_BASE = API_BASE;
 export const ACNH_FINDER_API_BASE = API_BASE;
+export const FINDER_API_BASE = API_BASE;
 export const BLOGS_API_BASE = API_BASE;

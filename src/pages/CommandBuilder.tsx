@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { CatalogEntity } from "../data/commandBuilderData";
 import { loadExplorerItems } from "../data/explorerDataLoader";
 import { loadVillagers } from "../data/villagerDataLoader";
-import { getVariantLabel } from "../utils/commandBuilderHex";
+import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets, type PocketItem } from "../hooks/useCommandBuilderPockets";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
 
@@ -97,14 +97,18 @@ const CommandBuilder = () => {
                 return [item as ItemData];
             }
 
-            return item.variations.map((variant) => ({
-                ...item,
-                id: `${item.id}:${variant.id ?? 'NA'}`,
-                baseId: variant.pokerId || item.id,
-                variantId: variant.id || 'NA',
-                variantLabel: getVariantLabel(variant),
-                image: variant.imageUrl || item.image,
-            }));
+            return item.variations.map((variant) => {
+                const variantKey = getVariantKey(variant);
+                const commandParts = getVariantCommandParts(item.id, variant);
+                return {
+                    ...item,
+                    id: `${item.id}:${variantKey}`,
+                    baseId: commandParts.baseId,
+                    variantId: commandParts.variantId,
+                    variantLabel: getVariantLabel(variant),
+                    image: variant.imageUrl || item.image,
+                };
+            });
         });
     }, [hideVariants, catalogEntities]);
 
@@ -159,6 +163,16 @@ const CommandBuilder = () => {
         setCurrentPage(1);
     };
 
+    const activeFilterCount = [
+        kindFilter,
+        category,
+        villagerType,
+        theme,
+        series,
+        interactivity,
+        colour,
+    ].filter((value) => value !== 'All').length + (searchInput.trim() ? 1 : 0);
+
     return (
         <>
             <title>Chopaeng | Command Builder</title>
@@ -167,7 +181,7 @@ const CommandBuilder = () => {
 
             <div className="bg-pattern font-nunito min-vh-100 pb-5">
                 <section className="container mt-n5 position-relative" style={{ zIndex: 10 }}>
-                    <div className="glass-filter rounded-5 p-4 border mb-4 shadow-sm">
+                    <div className="glass-filter rounded-4 p-4 border mb-4 shadow-sm">
                         
                         {/* Mobile Search & Filter Toggle Row */}
                         <div className="d-flex gap-2 mb-3">
@@ -182,12 +196,29 @@ const CommandBuilder = () => {
                                 />
                             </div>
                             <button 
-                                className="btn btn-white border rounded-pill shadow-sm d-md-none px-4"
+                                className={`btn border rounded-pill shadow-sm d-md-none px-4 ${activeFilterCount > 0 ? 'btn-nook text-white' : 'btn-white'}`}
                                 onClick={() => setShowFiltersMobile(!showFiltersMobile)}
                                 aria-label="Toggle Filters"
                             >
                                 <i className="fa-solid fa-filter"></i>
                             </button>
+                        </div>
+
+                        <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                            <span className="badge bg-white text-dark rounded-pill border px-3 py-2 fw-bold">
+                                <i className="fa-solid fa-sliders me-1 text-success"></i>
+                                {activeFilterCount === 0 ? 'No active filters' : `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
+                            </span>
+                            {!hideVariants && (
+                                <span className="badge bg-success-subtle text-success rounded-pill border border-success-subtle px-3 py-2 fw-bold">
+                                    Showing variants
+                                </span>
+                            )}
+                            {!compactMode && (
+                                <span className="badge bg-info-subtle text-info-emphasis rounded-pill border border-info-subtle px-3 py-2 fw-bold">
+                                    Spacious cards
+                                </span>
+                            )}
                         </div>
 
                         {/* Collapsible Advanced Filters */}
@@ -253,7 +284,7 @@ const CommandBuilder = () => {
                                     <input className="form-check-input cursor-pointer" type="checkbox" id="compactMode" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />
                                     <label className="form-check-label small text-dark cursor-pointer fw-bold" htmlFor="compactMode">Compact</label>
                                 </div>
-                                <button type="button" className="btn btn-white text-dark rounded-pill px-4 py-1 small fw-bold shadow-sm border ms-auto ms-md-0" onClick={clearFilters}>
+                                <button type="button" className="btn btn-white text-dark rounded-pill px-4 py-2 small fw-bold shadow-sm border ms-auto ms-md-0" onClick={clearFilters}>
                                     <i className="fa-solid fa-rotate-left me-1"></i> Reset
                                 </button>
                             </div>
@@ -326,6 +357,16 @@ const CommandBuilder = () => {
                                                                 {!isVillager && <button type="button" className="btn btn-link text-muted p-0 m-0" onClick={(e) => { e.stopPropagation(); openDetail(item); }}><i className="fa-solid fa-circle-info" style={{fontSize: "0.85rem"}}></i></button>}
                                                             </div>
                                                             <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{fontSize: "0.85rem"}}>{item.name}</h3>
+                                                            {item.variantLabel && (
+                                                                <div className="badge bg-success-subtle text-success border border-success-subtle rounded-pill mt-1 text-truncate" style={{ maxWidth: '100%', fontSize: '0.66rem' }}>
+                                                                    {item.variantLabel}
+                                                                </div>
+                                                            )}
+                                                            {!isVillager && !item.variantLabel && hideVariants && (item.variations?.length ?? 0) > 1 && (
+                                                                <div className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mt-1" style={{ fontSize: '0.66rem' }}>
+                                                                    {item.variations?.length} variants
+                                                                </div>
+                                                            )}
                                                             <p className="text-muted mb-2 text-truncate" style={{ fontSize: '0.7rem' }}>{item.theme} · {item.colour}</p>
                                                         </div>
 

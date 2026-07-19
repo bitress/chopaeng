@@ -8,6 +8,29 @@ export type ItemVariant = {
     uniqueEntryId?: string;
 };
 
+export const hasMeaningfulVariantId = (id?: string | number | null): boolean => {
+    if (id === null || id === undefined) return false;
+    const value = String(id).trim();
+    return value !== '' && value !== 'NA';
+};
+
+export const getVariantKey = (variant?: ItemVariant | null): string => {
+    if (!variant) return 'NA';
+    if (hasMeaningfulVariantId(variant.id)) return String(variant.id);
+    if (variant.pokerId) return String(variant.pokerId);
+    if (variant.uniqueEntryId) return variant.uniqueEntryId;
+    return 'NA';
+};
+
+export const getVariantCommandParts = (
+    parentId: string | number,
+    variant?: ItemVariant | null
+) => {
+    const variantId = hasMeaningfulVariantId(variant?.id) ? String(variant?.id) : 'NA';
+    const baseId = variantId === 'NA' ? (variant?.pokerId || parentId) : parentId;
+    return { baseId, variantId };
+};
+
 export const generateFullItemHex = (
     baseId: string | number | null | undefined,
     variantString: string | number | null | undefined,

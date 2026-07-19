@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { CatalogEntity } from "../data/commandBuilderData";
 
 type PocketItem = CatalogEntity & {
@@ -73,6 +73,7 @@ const CommandBuilderSummary = ({
     canIncreaseDrop = true,
     showTerminal = false,
 }: CommandBuilderSummaryProps) => {
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const orderCount = orderPockets.reduce((sum, p) => sum + p.quantity, 0);
     const dropCount = dropPockets.reduce((sum, p) => sum + p.quantity, 0);
     const villagerCount = savedVillagers.length;
@@ -123,9 +124,20 @@ const CommandBuilderSummary = ({
                             Villagers {villagerCount}
                         </span>
                     )}
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-1"
+                        onClick={() => setIsCollapsed((value) => !value)}
+                        aria-expanded={!isCollapsed}
+                    >
+                        <i className={`fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'} me-1`}></i>
+                        {isCollapsed ? 'Show' : 'Hide'}
+                    </button>
                 </div>
             </div>
 
+            {!isCollapsed && (
+                <>
             {/* Pockets list */}
             <div className="mb-4">
                 {isEmpty ? (
@@ -480,6 +492,8 @@ const CommandBuilderSummary = ({
                         </div>
                     </div>
                 </div>
+            )}
+                </>
             )}
         </div>
     );
