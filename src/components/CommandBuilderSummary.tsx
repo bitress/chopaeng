@@ -45,6 +45,7 @@ type CommandBuilderSummaryProps = {
 
 const ORDER_BOT_MAX = 40;
 const DROP_BOT_MAX = 9;
+const POCKETS_LIST_ID = "command-builder-pockets-list";
 
 const CommandBuilderSummary = ({
     orderPockets,
@@ -81,6 +82,8 @@ const CommandBuilderSummary = ({
 
     const orderFull = orderCount >= ORDER_BOT_MAX;
     const dropFull = dropCount >= DROP_BOT_MAX;
+    const orderPct = Math.min(100, (orderCount / ORDER_BOT_MAX) * 100);
+    const dropPct = Math.min(100, (dropCount / DROP_BOT_MAX) * 100);
 
     // Keyboard shortcuts: Ctrl+Shift+O = Copy Order, Ctrl+Shift+D = Copy Drop
     useEffect(() => {
@@ -100,8 +103,13 @@ const CommandBuilderSummary = ({
 
     return (
         <div className="bg-cream rounded-4 border-0 shadow p-4" style={{ borderTop: '4px solid #28a745' }}>
+            {/* Screen-reader announcements for copy actions */}
+            <div aria-live="polite" className="visually-hidden">
+                {[copyOrderStatus, copyDropStatus, copyInjectVillagerStatus].filter(Boolean).join(". ")}
+            </div>
+
             {/* Header */}
-            <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+            <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-3">
                 <div>
                     <h2 className="h5 fw-black mb-1 ac-font text-nook" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>Your Pockets</h2>
                     <p className="small text-muted mb-0">Review items before copying your command.</p>
@@ -129,6 +137,7 @@ const CommandBuilderSummary = ({
                         className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-1"
                         onClick={() => setIsCollapsed((value) => !value)}
                         aria-expanded={!isCollapsed}
+                        aria-controls={POCKETS_LIST_ID}
                     >
                         <i className={`fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'} me-1`}></i>
                         {isCollapsed ? 'Show' : 'Hide'}
@@ -136,8 +145,44 @@ const CommandBuilderSummary = ({
                 </div>
             </div>
 
+            {/* Capacity progress — stays visible even when the list is collapsed */}
+            <div className="d-flex flex-column flex-sm-row gap-3 mb-4">
+                <div className="flex-grow-1">
+                    <div className="d-flex justify-content-between align-items-center mb-1">
+                        <span className="tiny-text fw-bold text-muted">Order capacity</span>
+                        <span className="tiny-text fw-bold text-muted">{orderCount}/{ORDER_BOT_MAX}</span>
+                    </div>
+                    <div className="progress rounded-pill" style={{ height: '6px' }}>
+                        <div
+                            className={`progress-bar rounded-pill transition-all ${orderFull ? 'bg-danger' : 'bg-nook-green'}`}
+                            role="progressbar"
+                            style={{ width: `${orderPct}%` }}
+                            aria-valuenow={orderCount}
+                            aria-valuemin={0}
+                            aria-valuemax={ORDER_BOT_MAX}
+                        ></div>
+                    </div>
+                </div>
+                <div className="flex-grow-1">
+                    <div className="d-flex justify-content-between align-items-center mb-1">
+                        <span className="tiny-text fw-bold text-muted">Drop capacity</span>
+                        <span className="tiny-text fw-bold text-muted">{dropCount}/{DROP_BOT_MAX}</span>
+                    </div>
+                    <div className="progress rounded-pill" style={{ height: '6px' }}>
+                        <div
+                            className={`progress-bar rounded-pill transition-all ${dropFull ? 'bg-danger' : 'bg-info'}`}
+                            role="progressbar"
+                            style={{ width: `${dropPct}%` }}
+                            aria-valuenow={dropCount}
+                            aria-valuemin={0}
+                            aria-valuemax={DROP_BOT_MAX}
+                        ></div>
+                    </div>
+                </div>
+            </div>
+
             {!isCollapsed && (
-                <>
+                <div id={POCKETS_LIST_ID}>
             {/* Pockets list */}
             <div className="mb-4">
                 {isEmpty ? (
@@ -149,145 +194,152 @@ const CommandBuilderSummary = ({
                     <div className="d-flex flex-column gap-3">
 
                         {/* ── Order Section ────────────────────────────────── */}
-                        {(orderPockets.length > 0 || true) && (
-                            <div>
-                                <div className="d-flex align-items-center justify-content-between mb-2">
-                                    <span className="badge bg-nook-green text-white rounded-pill fw-bold x-small px-2" style={{ boxShadow: '0 2px 6px rgba(40,167,69,0.2)' }}>
-                                        <i className="fa-solid fa-basket-shopping me-1"></i>Order Bot
-                                    </span>
-                                    {onClearOrderPockets && orderPockets.length > 0 && (
-                                        <button type="button" onClick={onClearOrderPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all" style={{ fontSize: '0.7rem', padding: '2px 10px' }}>
-                                            <i className="fa-solid fa-trash-can me-1"></i>Clear
-                                        </button>
-                                    )}
-                                </div>
-                                {orderPockets.length === 0 ? (
-                                    <div className="text-center py-2 rounded-3 bg-light text-muted small" style={{ border: '1px dashed #ccc' }}>No order items yet</div>
-                                ) : (
-                                    <div className="d-flex flex-column gap-2">
-                                        {orderPockets.map((pocket) => (
-                                            <div key={pocket.item.id} className="d-flex align-items-center gap-3 rounded-4 border-2 border-success border-opacity-10 p-3 bg-white transition-all" style={{ boxShadow: '0 2px 6px rgba(40,167,69,0.08)' }}>
-                                                <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e8f5e9' }}>
-                                                    <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
-                                                </div>
-                                                <div className="flex-grow-1 text-truncate">
-                                                    <strong className="d-block text-dark small text-truncate" title={pocket.item.name} style={{ fontFamily: '"Quicksand", sans-serif' }}>{pocket.item.name}</strong>
-                                                    <span className="tiny-text text-muted text-truncate d-block">
-                                                        {pocket.item.category}{pocket.item.variantLabel ? ` · ${pocket.item.variantLabel}` : ''}
-                                                    </span>
-                                                </div>
-                                                <div className="d-flex align-items-center gap-1 flex-nowrap">
-                                                    {onDecreaseOrderQuantity && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onDecreaseOrderQuantity(pocket.item.id)}
-                                                            className="btn btn-nook-sm transition-all"
-                                                            style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                            disabled={pocket.quantity <= 1}
-                                                            title="Decrease"
-                                                        >
-                                                            <i className="fa-solid fa-minus x-small"></i>
-                                                        </button>
-                                                    )}
-                                                    <span className="badge rounded-pill bg-nook-green text-white x-small px-2 fw-bold">{pocket.quantity}</span>
-                                                    {onIncreaseOrderQuantity && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onIncreaseOrderQuantity(pocket.item.id)}
-                                                            className="btn btn-nook-sm transition-all"
-                                                            style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                            disabled={!canIncreaseOrder}
-                                                            title="Increase"
-                                                        >
-                                                            <i className="fa-solid fa-plus x-small"></i>
-                                                        </button>
-                                                    )}
-                                                    {onRemoveOrderItem && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onRemoveOrderItem(pocket.item.id)}
-                                                            className="btn btn-link text-danger p-0 ms-1 transition-all"
-                                                            title="Remove"
-                                                            style={{ fontSize: '0.9rem' }}
-                                                        >
-                                                            <i className="fa-solid fa-trash-can"></i>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                        <div>
+                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                <span className="badge bg-nook-green text-white rounded-pill fw-bold x-small px-2" style={{ boxShadow: '0 2px 6px rgba(40,167,69,0.2)' }}>
+                                    <i className="fa-solid fa-basket-shopping me-1"></i>Order Bot
+                                </span>
+                                {onClearOrderPockets && orderPockets.length > 0 && (
+                                    <button type="button" onClick={onClearOrderPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all" style={{ fontSize: '0.7rem', padding: '2px 10px' }}>
+                                        <i className="fa-solid fa-trash-can me-1"></i>Clear
+                                    </button>
                                 )}
                             </div>
-                        )}
-
-                            {dropPockets.length > 0 && (
-                                <div>
-                                    <div className="d-flex align-items-center justify-content-between mb-2">
-                                        <span className="badge bg-info text-dark rounded-pill fw-bold x-small px-2" style={{ boxShadow: '0 2px 6px rgba(91,192,222,0.2)' }}>
-                                            <i className="fa-solid fa-box-open me-1"></i>Drop Bot
-                                        </span>
-                                        {onClearDropPockets && (
-                                            <button type="button" onClick={onClearDropPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all" style={{ fontSize: '0.7rem', padding: '2px 10px' }}>
-                                                <i className="fa-solid fa-trash-can me-1"></i>Clear
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="d-flex flex-column gap-2">
-                                        {dropPockets.map((pocket) => (
-                                            <div key={pocket.item.id} className="d-flex align-items-center gap-3 rounded-4 border-2 p-3 bg-white transition-all" style={{ borderColor: '#b2ebf2', boxShadow: '0 2px 6px rgba(91,192,222,0.1)' }}>
-                                                <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e0f7fa' }}>
-                                                    <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
-                                                </div>
-                                                <div className="flex-grow-1 text-truncate">
-                                                    <strong className="d-block text-dark small text-truncate" title={pocket.item.name} style={{ fontFamily: '"Quicksand", sans-serif' }}>{pocket.item.name}</strong>
-                                                    <span className="tiny-text text-muted text-truncate d-block">
-                                                        {pocket.item.category}{pocket.item.variantLabel ? ` · ${pocket.item.variantLabel}` : ''}
-                                                    </span>
-                                                </div>
-                                                <div className="d-flex align-items-center gap-1 flex-nowrap">
-                                                    {onDecreaseDropQuantity && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onDecreaseDropQuantity(pocket.item.id)}
-                                                            className="btn btn-nook-sm transition-all"
-                                                            style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                            disabled={pocket.quantity <= 1}
-                                                            title="Decrease"
-                                                        >
-                                                            <i className="fa-solid fa-minus x-small"></i>
-                                                        </button>
-                                                    )}
-                                                    <span className="badge rounded-pill bg-info text-dark x-small px-2 fw-bold">{pocket.quantity}</span>
-                                                    {onIncreaseDropQuantity && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onIncreaseDropQuantity(pocket.item.id)}
-                                                            className="btn btn-nook-sm transition-all"
-                                                            style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                            disabled={!canIncreaseDrop}
-                                                            title={!canIncreaseDrop ? `Drop bot full (${DROP_BOT_MAX}/${DROP_BOT_MAX})` : 'Increase'}
-                                                        >
-                                                            <i className="fa-solid fa-plus x-small"></i>
-                                                        </button>
-                                                    )}
-                                                    {onRemoveDropItem && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onRemoveDropItem(pocket.item.id)}
-                                                            className="btn btn-link text-danger p-0 ms-1 transition-all"
-                                                            title="Remove"
-                                                            style={{ fontSize: '0.9rem' }}
-                                                        >
-                                                            <i className="fa-solid fa-trash-can"></i>
-                                                        </button>
-                                                    )}
-                                                </div>
+                            {orderPockets.length === 0 ? (
+                                <div className="text-center py-2 rounded-3 bg-light text-muted small" style={{ border: '1px dashed #ccc' }}>No order items yet</div>
+                            ) : (
+                                <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
+                                    {orderPockets.map((pocket) => (
+                                        <div key={pocket.item.id} className="d-flex align-items-center gap-3 rounded-4 border-2 border-success border-opacity-10 p-3 bg-white transition-all" style={{ boxShadow: '0 2px 6px rgba(40,167,69,0.08)' }}>
+                                            <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e8f5e9' }}>
+                                                <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
                                             </div>
-                                        ))}
-                                    </div>
+                                            <div className="flex-grow-1 text-truncate">
+                                                <strong className="d-block text-dark small text-truncate" title={pocket.item.name} style={{ fontFamily: '"Quicksand", sans-serif' }}>{pocket.item.name}</strong>
+                                                <span className="tiny-text text-muted text-truncate d-block">
+                                                    {pocket.item.category}{pocket.item.variantLabel ? ` · ${pocket.item.variantLabel}` : ''}
+                                                </span>
+                                            </div>
+                                            <div className="d-flex align-items-center gap-1 flex-nowrap">
+                                                {onDecreaseOrderQuantity && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onDecreaseOrderQuantity(pocket.item.id)}
+                                                        className="btn btn-nook-sm transition-all"
+                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                        disabled={pocket.quantity <= 1}
+                                                        title="Decrease"
+                                                        aria-label={`Decrease quantity of ${pocket.item.name}`}
+                                                    >
+                                                        <i className="fa-solid fa-minus x-small"></i>
+                                                    </button>
+                                                )}
+                                                <span className="badge rounded-pill bg-nook-green text-white x-small px-2 fw-bold">{pocket.quantity}</span>
+                                                {onIncreaseOrderQuantity && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onIncreaseOrderQuantity(pocket.item.id)}
+                                                        className="btn btn-nook-sm transition-all"
+                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                        disabled={!canIncreaseOrder}
+                                                        title={!canIncreaseOrder ? `Order bot full (${ORDER_BOT_MAX}/${ORDER_BOT_MAX})` : 'Increase'}
+                                                        aria-label={`Increase quantity of ${pocket.item.name}`}
+                                                    >
+                                                        <i className="fa-solid fa-plus x-small"></i>
+                                                    </button>
+                                                )}
+                                                {onRemoveOrderItem && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onRemoveOrderItem(pocket.item.id)}
+                                                        className="btn btn-link text-danger p-0 ms-1 transition-all"
+                                                        title="Remove"
+                                                        aria-label={`Remove ${pocket.item.name} from order`}
+                                                        style={{ fontSize: '0.9rem' }}
+                                                    >
+                                                        <i className="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
+                        </div>
+
+                        {/* ── Drop Section ─────────────────────────────────── */}
+                        <div>
+                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                <span className="badge bg-info text-dark rounded-pill fw-bold x-small px-2" style={{ boxShadow: '0 2px 6px rgba(91,192,222,0.2)' }}>
+                                    <i className="fa-solid fa-box-open me-1"></i>Drop Bot
+                                </span>
+                                {onClearDropPockets && dropPockets.length > 0 && (
+                                    <button type="button" onClick={onClearDropPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all" style={{ fontSize: '0.7rem', padding: '2px 10px' }}>
+                                        <i className="fa-solid fa-trash-can me-1"></i>Clear
+                                    </button>
+                                )}
+                            </div>
+                            {dropPockets.length === 0 ? (
+                                <div className="text-center py-2 rounded-3 bg-light text-muted small" style={{ border: '1px dashed #ccc' }}>No drop items yet</div>
+                            ) : (
+                                <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
+                                    {dropPockets.map((pocket) => (
+                                        <div key={pocket.item.id} className="d-flex align-items-center gap-3 rounded-4 border-2 p-3 bg-white transition-all" style={{ borderColor: '#b2ebf2', boxShadow: '0 2px 6px rgba(91,192,222,0.1)' }}>
+                                            <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e0f7fa' }}>
+                                                <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
+                                            </div>
+                                            <div className="flex-grow-1 text-truncate">
+                                                <strong className="d-block text-dark small text-truncate" title={pocket.item.name} style={{ fontFamily: '"Quicksand", sans-serif' }}>{pocket.item.name}</strong>
+                                                <span className="tiny-text text-muted text-truncate d-block">
+                                                    {pocket.item.category}{pocket.item.variantLabel ? ` · ${pocket.item.variantLabel}` : ''}
+                                                </span>
+                                            </div>
+                                            <div className="d-flex align-items-center gap-1 flex-nowrap">
+                                                {onDecreaseDropQuantity && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onDecreaseDropQuantity(pocket.item.id)}
+                                                        className="btn btn-nook-sm transition-all"
+                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                        disabled={pocket.quantity <= 1}
+                                                        title="Decrease"
+                                                        aria-label={`Decrease quantity of ${pocket.item.name}`}
+                                                    >
+                                                        <i className="fa-solid fa-minus x-small"></i>
+                                                    </button>
+                                                )}
+                                                <span className="badge rounded-pill bg-info text-dark x-small px-2 fw-bold">{pocket.quantity}</span>
+                                                {onIncreaseDropQuantity && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onIncreaseDropQuantity(pocket.item.id)}
+                                                        className="btn btn-nook-sm transition-all"
+                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                        disabled={!canIncreaseDrop}
+                                                        title={!canIncreaseDrop ? `Drop bot full (${DROP_BOT_MAX}/${DROP_BOT_MAX})` : 'Increase'}
+                                                        aria-label={`Increase quantity of ${pocket.item.name}`}
+                                                    >
+                                                        <i className="fa-solid fa-plus x-small"></i>
+                                                    </button>
+                                                )}
+                                                {onRemoveDropItem && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onRemoveDropItem(pocket.item.id)}
+                                                        className="btn btn-link text-danger p-0 ms-1 transition-all"
+                                                        title="Remove"
+                                                        aria-label={`Remove ${pocket.item.name} from drop`}
+                                                        style={{ fontSize: '0.9rem' }}
+                                                    >
+                                                        <i className="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
                         {/* ── Villagers ──────────────────────────────────────── */}
                         {savedVillagers.length > 0 && (
@@ -302,7 +354,7 @@ const CommandBuilderSummary = ({
                                         </button>
                                     )}
                                 </div>
-                                <div className="d-flex flex-column gap-2">
+                                <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '280px', paddingRight: '4px' }}>
                                     {savedVillagers.map((villager) => (
                                         <div key={villager.id} className="d-flex align-items-center gap-3 rounded-4 border-2 p-3 bg-white transition-all" style={{ borderColor: '#88e0a0', boxShadow: '0 2px 6px rgba(136,224,160,0.15)' }}>
                                             <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e0f7fa' }}>
@@ -318,6 +370,7 @@ const CommandBuilderSummary = ({
                                                     onClick={() => onRemoveVillager(villager.id)}
                                                     className="btn btn-link text-danger p-0 ms-auto transition-all"
                                                     title="Remove villager"
+                                                    aria-label={`Remove villager ${villager.name}`}
                                                     style={{ fontSize: '0.9rem' }}
                                                 >
                                                     <i className="fa-solid fa-trash-can"></i>
@@ -342,6 +395,7 @@ const CommandBuilderSummary = ({
                             onClick={onCopyOrder}
                             className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
                             disabled={!orderCommandText}
+                            title={orderCommandText ? undefined : 'Add order items to enable copying'}
                             style={{
                                 background: '#28a745',
                                 color: 'white',
@@ -359,6 +413,7 @@ const CommandBuilderSummary = ({
                             onClick={onCopyDrop}
                             className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
                             disabled={!dropCommandText}
+                            title={dropCommandText ? undefined : 'Add drop items to enable copying'}
                             style={{
                                 background: '#5bc0de',
                                 color: 'white',
@@ -371,6 +426,11 @@ const CommandBuilderSummary = ({
                             <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                             {copyDropStatus === 'Copied!' ? 'Drop Command Copied!' : 'Copy Drop Command'}
                         </button>
+                        {(orderCommandText || dropCommandText) && (
+                            <p className="tiny-text text-muted text-center mb-0">
+                                Tip: <kbd className="mx-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+O</kbd> / <kbd className="mx-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+D</kbd> copy instantly
+                            </p>
+                        )}
                         {savedVillagers.length > 0 && (
                             <div className="p-3 rounded-4 bg-dark text-info font-monospace small" style={{ border: '1px solid #333', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(34,211,238,0.15)' }}>
                                 <div className="mb-2 d-flex align-items-center justify-content-between">
@@ -493,7 +553,7 @@ const CommandBuilderSummary = ({
                     </div>
                 </div>
             )}
-                </>
+                </div>
             )}
         </div>
     );

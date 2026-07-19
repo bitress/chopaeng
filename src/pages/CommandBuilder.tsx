@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CatalogEntity } from "../data/commandBuilderData";
 import { loadExplorerItems } from "../data/explorerDataLoader";
@@ -16,13 +16,16 @@ const uniqueValues = (items: CatalogEntity[], key: CatalogStringKey) => [
     ...Array.from(new Set(items.map((item) => String(item[key])))).sort(),
 ];
 
+const FALLBACK_IMAGE = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f3f5'/%3E%3Cpath d='M30 65 L45 45 L58 58 L68 42 L75 65 Z' fill='%23ced4da'/%3E%3Ccircle cx='38' cy='35' r='7' fill='%23ced4da'/%3E%3C/svg%3E";
+
 const explorerItems = loadExplorerItems();
 const villagerEntities = loadVillagers();
 const catalogEntities = [...explorerItems, ...villagerEntities];
 
 const CommandBuilder = () => {
     const navigate = useNavigate();
-    
+    const catalogHeadingRef = useRef<HTMLDivElement | null>(null);
+
     // --- Filters ---
     const [category, setCategory] = useState("All");
     const [theme, setTheme] = useState("All");
@@ -148,6 +151,11 @@ const CommandBuilder = () => {
         navigate(getDetailUrl(item));
     };
 
+    const goToPage = (page: number) => {
+        setCurrentPage(page);
+        catalogHeadingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     const clearFilters = () => {
         setCategory("All");
         setTheme("All");
@@ -163,15 +171,18 @@ const CommandBuilder = () => {
         setCurrentPage(1);
     };
 
-    const activeFilterCount = [
-        kindFilter,
-        category,
-        villagerType,
-        theme,
-        series,
-        interactivity,
-        colour,
-    ].filter((value) => value !== 'All').length + (searchInput.trim() ? 1 : 0);
+    const activeFilterChips = [
+        kindFilter !== 'All' && { key: 'kind', label: `Type: ${kindFilter}`, clear: () => setKindFilter('All') },
+        category !== 'All' && { key: 'category', label: `Category: ${category}`, clear: () => setCategory('All') },
+        villagerType !== 'All' && { key: 'villagerType', label: `Villager: ${villagerType}`, clear: () => setVillagerType('All') },
+        theme !== 'All' && { key: 'theme', label: `Theme: ${theme}`, clear: () => setTheme('All') },
+        series !== 'All' && { key: 'series', label: `Series: ${series}`, clear: () => setSeries('All') },
+        interactivity !== 'All' && { key: 'interactivity', label: `Interact: ${interactivity}`, clear: () => setInteractivity('All') },
+        colour !== 'All' && { key: 'colour', label: `Colour: ${colour}`, clear: () => setColour('All') },
+        searchInput.trim() && { key: 'search', label: `"${searchInput.trim()}"`, clear: () => { setSearchInput(''); setDebouncedSearch(''); } },
+    ].filter(Boolean) as Array<{ key: string; label: string; clear: () => void }>;
+
+    const activeFilterCount = activeFilterChips.length;
 
     return (
         <>
@@ -189,23 +200,35 @@ const CommandBuilder = () => {
                                 <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-4 text-muted"></i>
                                 <input
                                     type="search"
-                                    className="form-control bg-white rounded-pill border-0 shadow-sm ps-5 pe-4 py-2"
+                                    className="form-control bg-white rounded-pill border-0 shadow-sm ps-5 pe-5 py-2"
                                     placeholder="Search catalog (e.g. Ironwood)..."
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
+                                    aria-label="Search catalog"
                                 />
+                                {searchInput && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-link text-muted position-absolute top-50 end-0 translate-middle-y me-3 p-0"
+                                        onClick={() => setSearchInput('')}
+                                        aria-label="Clear search"
+                                    >
+                                        <i className="fa-solid fa-circle-xmark"></i>
+                                    </button>
+                                )}
                             </div>
                             <button 
                                 className={`btn border rounded-pill shadow-sm d-md-none px-4 ${activeFilterCount > 0 ? 'btn-nook text-white' : 'btn-white'}`}
                                 onClick={() => setShowFiltersMobile(!showFiltersMobile)}
                                 aria-label="Toggle Filters"
+                                aria-expanded={showFiltersMobile}
                             >
                                 <i className="fa-solid fa-filter"></i>
                             </button>
                         </div>
 
                         <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-                            <span className="badge bg-white text-dark rounded-pill border px-3 py-2 fw-bold">
+                            <span className="badge bg-white text-dark rounded-pill border px-3 py-2 fw-bold" aria-live="polite">
                                 <i className="fa-solid fa-sliders me-1 text-success"></i>
                                 {activeFilterCount === 0 ? 'No active filters' : `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
                             </span>
@@ -220,6 +243,24 @@ const CommandBuilder = () => {
                                 </span>
                             )}
                         </div>
+
+                        {/* Dismissible active-filter chips */}
+                        {activeFilterChips.length > 0 && (
+                            <div className="d-flex flex-wrap gap-2 mb-3">
+                                {activeFilterChips.map((chip) => (
+                                    <button
+                                        key={chip.key}
+                                        type="button"
+                                        onClick={chip.clear}
+                                        className="badge bg-nook-green text-white rounded-pill border-0 px-3 py-2 fw-bold d-inline-flex align-items-center gap-2 transition-all"
+                                        aria-label={`Remove filter ${chip.label}`}
+                                    >
+                                        {chip.label}
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Collapsible Advanced Filters */}
                         <div className={`row g-3 ${showFiltersMobile ? 'd-flex' : 'd-none d-md-flex'}`}>
@@ -284,7 +325,7 @@ const CommandBuilder = () => {
                                     <input className="form-check-input cursor-pointer" type="checkbox" id="compactMode" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />
                                     <label className="form-check-label small text-dark cursor-pointer fw-bold" htmlFor="compactMode">Compact</label>
                                 </div>
-                                <button type="button" className="btn btn-white text-dark rounded-pill px-4 py-2 small fw-bold shadow-sm border ms-auto ms-md-0" onClick={clearFilters}>
+                                <button type="button" className="btn btn-white text-dark rounded-pill px-4 py-2 small fw-bold shadow-sm border ms-auto ms-md-0" onClick={clearFilters} disabled={activeFilterCount === 0}>
                                     <i className="fa-solid fa-rotate-left me-1"></i> Reset
                                 </button>
                             </div>
@@ -295,12 +336,12 @@ const CommandBuilder = () => {
                 <section className="container py-4">
                     <div className="row gy-4">
                         <div className="col-lg-8">
-                            <div className="d-flex align-items-center justify-content-between mb-3">
+                            <div className="d-flex align-items-center justify-content-between mb-3" ref={catalogHeadingRef} style={{ scrollMarginTop: '90px' }}>
                                 <div>
                                     <h2 className="h4 fw-black mb-1">Catalog</h2>
                                     <p className="mb-0 text-muted small">Select items or a villager to build your command.</p>
                                 </div>
-                                <span className="badge bg-white text-dark rounded-pill px-3 py-2 border shadow-sm">
+                                <span className="badge bg-white text-dark rounded-pill px-3 py-2 border shadow-sm" aria-live="polite">
                                     {filteredItems.length} results
                                 </span>
                             </div>
@@ -313,7 +354,12 @@ const CommandBuilder = () => {
                                                 <i className="fa-solid fa-magnifying-glass fs-4"></i>
                                             </div>
                                             <h3 className="h5 fw-bold mb-2">No items match those filters.</h3>
-                                            <p className="mb-0">Try a different category, theme, or search term.</p>
+                                            <p className="mb-3">Try a different category, theme, or search term.</p>
+                                            {activeFilterCount > 0 && (
+                                                <button type="button" className="btn btn-nook rounded-pill fw-bold px-4" onClick={clearFilters}>
+                                                    <i className="fa-solid fa-rotate-left me-2"></i>Reset filters
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
@@ -330,6 +376,10 @@ const CommandBuilder = () => {
                                                 <div 
                                                     className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${cardSelected ? 'border-success border-2' : 'border-light'} cursor-pointer transition-all`}
                                                     onClick={() => openDetail(item)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-label={`View details for ${item.name}`}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item); } }}
                                                 >
                                                     {/* Selection Badges */}
                                                     {cardSelected && (
@@ -345,6 +395,8 @@ const CommandBuilder = () => {
                                                         <img
                                                             src={isVillager ? ((item as any).image || `https://www.pange.ca/itemsearch/villagers/${item.id}.png`) : item.image}
                                                             alt={item.name}
+                                                            loading="lazy"
+                                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
                                                             className={`w-100 h-100 ${compactMode ? 'p-2' : 'p-4'} ${cardSelected ? 'opacity-75' : ''} ${isVillager ? 'object-fit-contain' : 'object-fit-cover'}`}
                                                         />
                                                     </div>
@@ -354,7 +406,7 @@ const CommandBuilder = () => {
                                                         <div className="mb-auto">
                                                             <div className="d-flex justify-content-between align-items-start mb-1">
                                                                 <span className="badge bg-light text-muted rounded-pill px-2 py-1" style={{fontSize: "0.65rem", border: "1px solid #dee2e6"}}>{isVillager ? 'Villager' : item.category}</span>
-                                                                {!isVillager && <button type="button" className="btn btn-link text-muted p-0 m-0" onClick={(e) => { e.stopPropagation(); openDetail(item); }}><i className="fa-solid fa-circle-info" style={{fontSize: "0.85rem"}}></i></button>}
+                                                                {!isVillager && <button type="button" className="btn btn-link text-muted p-0 m-0" onClick={(e) => { e.stopPropagation(); openDetail(item); }} aria-label={`More info about ${item.name}`}><i className="fa-solid fa-circle-info" style={{fontSize: "0.85rem"}}></i></button>}
                                                             </div>
                                                             <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{fontSize: "0.85rem"}}>{item.name}</h3>
                                                             {item.variantLabel && (
@@ -377,23 +429,23 @@ const CommandBuilder = () => {
                                                                     {/* Order Button Group */}
                                                                     {orderQty > 0 ? (
                                                                         <div className="btn-group border border-success rounded-pill overflow-hidden flex-grow-1 bg-white">
-                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => decreaseOrderQuantity(item.id)}>−</button>
+                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
                                                                             <div className="bg-success text-white d-flex align-items-center justify-content-center fw-bold px-1" style={{fontSize: "0.75rem", minWidth: "24px"}}>{orderQty}</div>
-                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder}>+</button>
+                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder} aria-label={`Increase order quantity for ${item.name}`} title={!canIncreaseOrder ? 'Order bot full (40/40)' : undefined}>+</button>
                                                                         </div>
                                                                     ) : (
-                                                                        <button type="button" className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold" style={{fontSize: "0.75rem"}} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40}>Order</button>
+                                                                        <button type="button" className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold" style={{fontSize: "0.75rem"}} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
                                                                     )}
 
                                                                     {/* Drop Button Group */}
                                                                     {dropQty > 0 ? (
                                                                         <div className="btn-group border border-info rounded-pill overflow-hidden flex-grow-1 bg-white">
-                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => decreaseDropQuantity(item.id)}>−</button>
+                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
                                                                             <div className="bg-info text-dark d-flex align-items-center justify-content-center fw-bold px-1" style={{fontSize: "0.75rem", minWidth: "24px"}}>{dropQty}</div>
-                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop}>+</button>
+                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
                                                                         </div>
                                                                     ) : (
-                                                                        <button type="button" className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold" style={{fontSize: "0.75rem"}} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9}>Drop</button>
+                                                                        <button type="button" className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold" style={{fontSize: "0.75rem"}} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
                                                                     )}
                                                                 </div>
                                                             ) : (
@@ -410,27 +462,52 @@ const CommandBuilder = () => {
                                 )}
                             </div>
 
-                            {/* Pagination Logic Remains Unchanged */}
+                            {/* Pagination */}
                             {totalPages > 1 && (
                                 <nav className="d-flex align-items-center justify-content-between mt-4 bg-white p-3 rounded-pill shadow-sm border" aria-label="Catalog pagination">
                                     <div className="text-muted small ms-3 fw-bold">Page {currentPage} of {totalPages}</div>
                                     <ul className="pagination pagination-sm mb-0 me-2">
                                         <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                                            <button className="page-link rounded-pill border-0" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>Prev</button>
+                                            <button
+                                                className="page-link rounded-pill border-0"
+                                                onClick={() => goToPage(Math.max(1, currentPage - 1))}
+                                                aria-label="Previous page"
+                                                aria-disabled={currentPage === 1}
+                                                tabIndex={currentPage === 1 ? -1 : undefined}
+                                            >
+                                                Prev
+                                            </button>
                                         </li>
                                         {Array.from({ length: totalPages }).map((_, idx) => {
                                             if (totalPages > 7 && Math.abs(currentPage - (idx + 1)) > 2 && idx !== 0 && idx !== totalPages - 1) {
                                                 if (idx === 1 || idx === totalPages - 2) return <li key={idx} className="page-item disabled"><span className="page-link border-0 bg-transparent">...</span></li>;
                                                 return null;
                                             }
+                                            const isActive = currentPage === idx + 1;
                                             return (
-                                                <li key={idx} className={`page-item ${currentPage === idx + 1 ? 'active' : ''}`}>
-                                                    <button className={`page-link rounded-circle border-0 mx-1 ${currentPage === idx + 1 ? 'bg-dark text-white shadow-sm' : 'text-dark'}`} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setCurrentPage(idx + 1)}>{idx + 1}</button>
+                                                <li key={idx} className={`page-item ${isActive ? 'active' : ''}`}>
+                                                    <button
+                                                        className={`page-link rounded-circle border-0 mx-1 ${isActive ? 'bg-dark text-white shadow-sm' : 'text-dark'}`}
+                                                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        onClick={() => goToPage(idx + 1)}
+                                                        aria-label={`Go to page ${idx + 1}`}
+                                                        aria-current={isActive ? 'page' : undefined}
+                                                    >
+                                                        {idx + 1}
+                                                    </button>
                                                 </li>
                                             );
                                         })}
                                         <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                            <button className="page-link rounded-pill border-0" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>Next</button>
+                                            <button
+                                                className="page-link rounded-pill border-0"
+                                                onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
+                                                aria-label="Next page"
+                                                aria-disabled={currentPage === totalPages}
+                                                tabIndex={currentPage === totalPages ? -1 : undefined}
+                                            >
+                                                Next
+                                            </button>
                                         </li>
                                     </ul>
                                 </nav>

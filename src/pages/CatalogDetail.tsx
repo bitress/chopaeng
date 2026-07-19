@@ -27,6 +27,7 @@ const CatalogDetail = () => {
 
     const [detailStatus, setDetailStatus] = useState('');
     const [selectedVariantKey, setSelectedVariantKey] = useState<string | null>(null);
+    const [linkCopied, setLinkCopied] = useState(false);
     const detailStatusRef = useRef<HTMLDivElement | null>(null);
 
     const {
@@ -80,6 +81,21 @@ const CatalogDetail = () => {
         setSelectedVariantKey(validKeys[0] || null);
     }, [entry, variantIdParam]);
 
+    // Scroll to top whenever a different catalog entry is opened
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [id]);
+
+    // Keep the browser tab title in sync with the entry being viewed
+    useEffect(() => {
+        if (entry) {
+            document.title = `${entry.name} · Command Builder`;
+        }
+        return () => {
+            document.title = 'Command Builder';
+        };
+    }, [entry]);
+
     if (!entry) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center bg-pattern font-nunito py-5">
@@ -115,6 +131,16 @@ const CatalogDetail = () => {
         const basePath = `/command-builder/${entry.entityType}/${entry.id}`;
         const query = variantKey && variantKey !== 'NA' ? `?variantId=${encodeURIComponent(variantKey)}` : '';
         navigate(`${basePath}${query}`, { replace: true });
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+        } catch {
+            setLinkCopied(false);
+        }
     };
 
     const addToOrder = () => {
@@ -160,11 +186,30 @@ const CatalogDetail = () => {
     return (
         <div className="bg-pattern font-nunito min-vh-100 pb-5">
             <section className="container py-5">
-                <div className="mb-5">
-                    <Link to="/command-builder" className="text-decoration-none text-nook small fw-bold transition-all" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <i className="fa-solid fa-arrow-left"></i>
-                        <span>Back to catalog</span>
-                    </Link>
+                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 mb-5">
+                    <nav aria-label="breadcrumb">
+                        <ol className="breadcrumb mb-0 small fw-bold">
+                            <li className="breadcrumb-item">
+                                <Link to="/command-builder" className="text-decoration-none text-nook transition-all">
+                                    <i className="fa-solid fa-arrow-left me-2"></i>Command Builder
+                                </Link>
+                            </li>
+                            <li className="breadcrumb-item text-muted" aria-current="page">
+                                {entry.entityType === 'item' ? entry.category : 'Villagers'}
+                            </li>
+                            <li className="breadcrumb-item active text-truncate text-dark" style={{ maxWidth: '220px' }} aria-current="page">
+                                {entry.name}
+                            </li>
+                        </ol>
+                    </nav>
+                    <button
+                        type="button"
+                        onClick={handleCopyLink}
+                        className="btn btn-sm btn-white border rounded-pill fw-bold px-3 shadow-sm transition-all flex-shrink-0"
+                    >
+                        <i className={`fa-solid ${linkCopied ? 'fa-check' : 'fa-link'} me-2`}></i>
+                        {linkCopied ? 'Link copied!' : 'Copy link'}
+                    </button>
                 </div>
 
                 <div className="row gy-4">
@@ -239,28 +284,36 @@ const CatalogDetail = () => {
                                 )}
 
                                 <div className="row g-3 mb-5">
-                                    <div className="col-6">
+                                    <div className="col-6 col-md-3">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Category</span>
-                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.category}</div>
+                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                <i className="fa-solid fa-tag opacity-50"></i>Category
+                                            </span>
+                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.category}>{entry.category}</div>
                                         </div>
                                     </div>
-                                    <div className="col-6">
+                                    <div className="col-6 col-md-3">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Theme</span>
-                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.theme}</div>
+                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                <i className="fa-solid fa-palette opacity-50"></i>Theme
+                                            </span>
+                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.theme}>{entry.theme}</div>
                                         </div>
                                     </div>
-                                    <div className="col-6">
+                                    <div className="col-6 col-md-3">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Series</span>
-                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.series}</div>
+                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                <i className="fa-solid fa-layer-group opacity-50"></i>Series
+                                            </span>
+                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.series}>{entry.series}</div>
                                         </div>
                                     </div>
-                                    <div className="col-6">
+                                    <div className="col-6 col-md-3">
                                         <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Colour</span>
-                                            <div className="fw-black mt-3 text-nook" style={{ fontSize: '1.05rem' }}>{entry.colour}</div>
+                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                <i className="fa-solid fa-swatchbook opacity-50"></i>Colour
+                                            </span>
+                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.colour}>{entry.colour}</div>
                                         </div>
                                     </div>
                                 </div>
