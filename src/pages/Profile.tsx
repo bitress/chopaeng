@@ -82,9 +82,19 @@ const uniqueValues = (items: string[]) => Array.from(new Set(items.filter(Boolea
 
 const roleNamesFrom = (roles?: ProfileRole[]) => asArray(roles).map((role) => role.name || role.id);
 
+// Threshold used to distinguish unix seconds from unix milliseconds.
+// Any numeric timestamp below this is assumed to be seconds (multiplied by 1000);
+// anything at or above it is assumed to already be milliseconds.
+// (Sept 2001 in ms == ~1e12, so seconds-since-epoch values stay well under 1e12
+// for the foreseeable future while ms values are always well above it.)
+const MS_TIMESTAMP_THRESHOLD = 1e12;
+
 const formatDate = (value?: string | number | null) => {
     if (!value) return "Not available";
-    const date = typeof value === "number" ? new Date(value * 1000) : new Date(value);
+    const date =
+        typeof value === "number"
+            ? new Date(value < MS_TIMESTAMP_THRESHOLD ? value * 1000 : value)
+            : new Date(value);
     if (Number.isNaN(date.getTime())) return "Not available";
     return new Intl.DateTimeFormat(undefined, {
         month: "short",
@@ -102,7 +112,7 @@ const Profile = () => {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        document.title = "My Chopaeng Profile";
+        document.title = "Profile";
     }, []);
 
     useEffect(() => {
@@ -114,13 +124,13 @@ const Profile = () => {
             return;
         }
 
-        let active = true;
+        const controller = new AbortController();
         setLoading(true);
         setError("");
 
         fetch(`${DODO_API_BASE}/api/profile`, {
             headers: { Authorization: `Bearer ${token}` },
-            credentials: "include",
+            signal: controller.signal,
         })
             .then(async (resp) => {
                 if (!resp.ok) {
@@ -130,19 +140,24 @@ const Profile = () => {
                 return resp.json() as Promise<ProfileResponse>;
             })
             .then((data) => {
-                if (active) setProfile(data);
+                setProfile(data);
             })
-            .catch((err: Error) => {
-                if (active) setError(err.message || "Unable to load your profile.");
+            .catch((err: unknown) => {
+                if (err instanceof DOMException && err.name === "AbortError") return;
+                const message = err instanceof Error ? err.message : "Unable to load your profile.";
+                setError(message);
             })
             .finally(() => {
-                if (active) setLoading(false);
+                setLoading(false);
             });
 
         return () => {
-            active = false;
+            controller.abort();
         };
-    }, [authLoading]);
+        // Re-run once auth finishes loading AND whenever the logged-in user changes
+        // (e.g. right after a successful login), not just when authLoading flips.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authLoading, authUser?.user_id]);
 
     const subscriptionRoleNames = useMemo(() => {
         const subscriptions = profile?.subscriptions;
@@ -165,7 +180,6 @@ const Profile = () => {
         ]);
     }, [profile]);
 
-    const islandTypeVisits = profile?.visits.by_island_type ?? profile?.visits.visits_by_island_type ?? {};
     const accessibleIslands = asArray(
         profile?.subscriptions.accessible_member_islands ?? profile?.subscriptions.accessible_islands
     );
@@ -174,6 +188,10 @@ const Profile = () => {
     const warningSummary = profile?.visits.warning_summary;
     const profileUser = profile?.user;
     const displayName = profileUser?.display_name || authUser?.username || "Chopaeng member";
+
+    // Whether the current error looks like an auth problem (so we only offer
+    // the "Refresh Discord login" recovery action when it's actually relevant).
+    const isAuthError = /auth|login|token|unauthorized|401|403/i.test(error);
 
     if (authLoading || loading) {
         return (
@@ -211,9 +229,19 @@ const Profile = () => {
                     <i className="fa-solid fa-triangle-exclamation text-warning display-4 mb-3"></i>
                     <h1 className="ac-font h3 text-dark mb-3">Profile unavailable</h1>
                     <p className="text-muted fw-bold mb-4">{error}</p>
-                    <button type="button" onClick={login} className="btn btn-success rounded-pill fw-black px-4 py-3">
-                        Refresh Discord login
-                    </button>
+                    {isAuthError ? (
+                        <button type="button" onClick={login} className="btn btn-success rounded-pill fw-black px-4 py-3">
+                            Refresh Discord login
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => window.location.reload()}
+                            className="btn btn-success rounded-pill fw-black px-4 py-3"
+                        >
+                            Try again
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -227,10 +255,14 @@ const Profile = () => {
                         <div className="col-lg-7 d-flex align-items-center gap-4">
                             <div className="rounded-4 border border-3 border-white shadow-sm overflow-hidden bg-light flex-shrink-0" style={{ width: 96, height: 96 }}>
                                 {profileUser?.avatar ? (
-                                    <img src={profileUser.avatar} alt="" className="w-100 h-100 object-fit-cover" />
+                                    <img
+                                        src={profileUser.avatar}
+                                        alt={`${displayName}'s avatar`}
+                                        className="w-100 h-100 object-fit-cover"
+                                    />
                                 ) : (
                                     <div className="w-100 h-100 d-flex align-items-center justify-content-center text-success">
-                                        <i className="fa-brands fa-discord fa-3x"></i>
+                                        <i className="fa-brands fa-discord fa-3x" aria-hidden="true"></i>
                                     </div>
                                 )}
                             </div>
@@ -238,7 +270,7 @@ const Profile = () => {
                                 <p className="text-success fw-black text-uppercase tiny-text mb-2">Discord Passport</p>
                                 <h1 className="ac-font display-6 text-dark mb-2">{displayName}</h1>
                                 <div className="d-flex flex-wrap gap-2">
-                                    {profileUser?.is_admin && <span className="badge rounded-pill bg-dark px-3 py-2">Admin</span>}
+                                    {profileUser?.is_admin && <span className="badge rounded-pill bg-warning px-3 py-2">Admin</span>}
                                     {profileUser?.is_mod && <span className="badge rounded-pill bg-success px-3 py-2">Moderator</span>}
                                     <span className="badge rounded-pill bg-light text-dark border px-3 py-2">
                                         Joined {formatDate(profileUser?.joined_at ?? profileUser?.joined_timestamp)}
@@ -250,7 +282,7 @@ const Profile = () => {
                             <div className="row g-3">
                                 <ProfileStat label="Total visits" value={formatNumber(profile?.visits.total)} icon="fa-plane-arrival" />
                                 <ProfileStat label="Authorized" value={formatNumber(profile?.visits.authorized)} icon="fa-circle-check" color="success" />
-                                <ProfileStat label="Denied" value={formatNumber(profile?.visits.unauthorized)} icon="fa-ban" color="danger" />
+                                <ProfileStat label="Unauthorized" value={formatNumber(profile?.visits.unauthorized)} icon="fa-ban" color="danger" />
                             </div>
                         </div>
                     </div>
@@ -299,29 +331,7 @@ const Profile = () => {
                         </ProfileCard>
                     </div>
 
-                    <div className="col-lg-5">
-                        <ProfileCard title="Visits By Island Type" icon="fa-chart-pie">
-                            {Object.entries(islandTypeVisits).length > 0 ? (
-                                <div className="d-flex flex-column gap-3">
-                                    {Object.entries(islandTypeVisits).map(([type, count]) => (
-                                        <div key={type}>
-                                            <div className="d-flex justify-content-between fw-bold small mb-1">
-                                                <span className="text-capitalize">{type}</span>
-                                                <span>{formatNumber(count)}</span>
-                                            </div>
-                                            <div className="progress rounded-pill bg-secondary-subtle" style={{ height: 10 }}>
-                                                <div className="progress-bar bg-success rounded-pill" style={{ width: `${Math.min(100, (count / Math.max(1, profile?.visits.total ?? count)) * 100)}%` }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <EmptyLine text="No visit type data yet." />
-                            )}
-                        </ProfileCard>
-                    </div>
-
-                    <div className="col-lg-7">
+                    <div className="col-lg-12">
                         <ProfileCard title="Most Visited Islands" icon="fa-location-dot">
                             <IslandVisitTable visits={mostVisited} emptyText="No favorite islands yet." />
                         </ProfileCard>
@@ -352,7 +362,7 @@ const Profile = () => {
                                 />
                             ) : (
                                 <div className="text-center py-4">
-                                    <i className="fa-solid fa-circle-check text-success display-6 mb-3"></i>
+                                    <i className="fa-solid fa-circle-check text-success display-6 mb-3" aria-hidden="true"></i>
                                     <p className="fw-bold text-muted mb-0">No warnings on your account.</p>
                                 </div>
                             )}
@@ -362,7 +372,7 @@ const Profile = () => {
 
                 <div className="text-center mt-5">
                     <Link to="/islands" className="btn btn-nook rounded-pill fw-black px-4 py-3">
-                        <i className="fa-solid fa-plane-departure me-2"></i>
+                        <i className="fa-solid fa-plane-departure me-2" aria-hidden="true"></i>
                         Browse Islands
                     </Link>
                 </div>
@@ -381,7 +391,7 @@ interface ProfileStatProps {
 const ProfileStat = ({ label, value, icon, color = "success" }: ProfileStatProps) => (
     <div className="col-4">
         <div className="bg-light rounded-4 border p-3 text-center h-100">
-            <i className={`fa-solid ${icon} text-${color} mb-2`}></i>
+            <i className={`fa-solid ${icon} text-${color} mb-2`} aria-hidden="true"></i>
             <div className="h4 ac-font text-dark mb-0">{value}</div>
             <div className="tiny-text text-muted fw-black text-uppercase">{label}</div>
         </div>
@@ -398,7 +408,7 @@ const ProfileCard = ({ title, icon, children }: ProfileCardProps) => (
     <section className="bg-white rounded-4 shadow-sm border h-100 p-4">
         <div className="d-flex align-items-center gap-3 mb-4">
             <div className="icon-bubble bg-success bg-opacity-10 text-success">
-                <i className={`fa-solid ${icon}`}></i>
+                <i className={`fa-solid ${icon}`} aria-hidden="true"></i>
             </div>
             <h2 className="h5 ac-font text-dark mb-0">{title}</h2>
         </div>
@@ -451,7 +461,14 @@ interface PaginatedTableProps {
 
 const PaginatedTable = ({ columns, rows, searchable = true, perPage = 5 }: PaginatedTableProps) => {
     const tableRef = useRef<HTMLTableElement | null>(null);
-    const tableKey = useMemo(() => JSON.stringify({ columns, rows }), [columns, rows]);
+
+    // Content-based key so the datatable only rebuilds when the actual
+    // displayed data changes, not on every render. Kept lightweight
+    // (length + values) rather than a full JSON.stringify of both arrays.
+    const tableKey = useMemo(
+        () => `${columns.join("|")}::${rows.length}::${rows.map((row) => row.join(",")).join(";")}`,
+        [columns, rows]
+    );
 
     useEffect(() => {
         if (!tableRef.current || rows.length === 0) return;
@@ -470,6 +487,7 @@ const PaginatedTable = ({ columns, rows, searchable = true, perPage = 5 }: Pagin
         });
 
         return () => dataTable.destroy();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tableKey, searchable, perPage, rows.length]);
 
     return (
@@ -503,20 +521,30 @@ interface IslandVisitTableProps {
 }
 
 const IslandVisitTable = ({ visits, emptyText, showDate = false }: IslandVisitTableProps) => {
+    // Memoize the derived columns/rows so PaginatedTable receives stable-content
+    // arrays and its tableKey comparison stays cheap and meaningful.
+    const columns = useMemo(
+        () => (showDate ? ["Island", "Type", "Status", "Visited", "Visits"] : ["Island", "Type", "Status", "Visits"]),
+        [showDate]
+    );
+
+    const rows = useMemo(
+        () =>
+            visits.map((visit) => {
+                const base = [
+                    visit.island_name ?? visit.name ?? visit.island_id ?? "Island",
+                    visit.type ?? "Treasure island",
+                    visit.authorized === false ? "Denied" : "Authorized",
+                ];
+
+                return showDate
+                    ? [...base, formatDate(visit.visited_at ?? visit.last_visit), formatNumber(visit.visits ?? visit.count ?? 1)]
+                    : [...base, formatNumber(visit.visits ?? visit.count ?? 1)];
+            }),
+        [visits, showDate]
+    );
+
     if (visits.length === 0) return <EmptyLine text={emptyText} />;
-
-    const columns = showDate ? ["Island", "Type", "Status", "Visited", "Visits"] : ["Island", "Type", "Status", "Visits"];
-    const rows = visits.map((visit) => {
-        const base = [
-            visit.island_name ?? visit.name ?? visit.island_id ?? "Island",
-            visit.type ?? "Treasure island",
-            visit.authorized === false ? "Denied" : "Authorized",
-        ];
-
-        return showDate
-            ? [...base, formatDate(visit.visited_at ?? visit.last_visit), formatNumber(visit.visits ?? visit.count ?? 1)]
-            : [...base, formatNumber(visit.visits ?? visit.count ?? 1)];
-    });
 
     return <PaginatedTable columns={columns} rows={rows} />;
 };

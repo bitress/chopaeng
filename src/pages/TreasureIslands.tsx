@@ -264,10 +264,10 @@ const TreasureIslands = () => {
 
         const title =
             filter === "ALL"
-                ? "ACNH Treasure Islands – Live Dodo Codes & Free Maps | Chopaeng"
+                ? "ACNH Treasure Islands - Live Dodo Codes & Free Maps | Chopaeng"
                 : filter === "public"
-                    ? "Free ACNH Treasure Islands – Live Dodo Codes & Maps | Chopaeng"
-                    : "VIP ACNH Treasure Islands – Private Islands & Priority Access | Chopaeng";
+                    ? "Free ACNH Treasure Islands - Live Dodo Codes & Maps | Chopaeng"
+                    : "VIP ACNH Treasure Islands - Private Islands & Priority Access | Chopaeng";
 
         const desc =
             filter === "ALL"
@@ -595,39 +595,83 @@ const TreasureIslands = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Action Button */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (isRevealableStatus) {
-                                                        if (hasInstantCode) onCopyCode(island, liveCode as string);
-                                                        else onRevealCode(island);
-                                                    }
-                                                }}
-                                                disabled={btnDisabled}
-                                                className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : btnClass}`}
-                                            >
-                                                <div className="d-flex align-items-center justify-content-center gap-2">
-                                                    {isCopied ? (
-                                                        <>
-                                                            <i className="fa-solid fa-check"></i> COPIED!
-                                                        </>
-                                                    ) : isRevealing ? (
-                                                        <><i className="fa-solid fa-circle-notch fa-spin"></i> LOADING...</>
-                                                    ) : revealedCode ? (
-                                                        <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{revealedCode}</span></>
-                                                    ) : hasInstantCode ? (
-                                                        <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{liveCode}</span></>
-                                                    ) : isRevealableStatus && !needsAuth ? (
-                                                        <><i className="fa-solid fa-eye opacity-70"></i> REVEAL CODE</>
-                                                    ) : (
-                                                        <>
-                                                            {btnIcon && <i className={`fa-solid ${btnIcon}`}></i>}
-                                                            <span>{btnText}</span>
-                                                        </>
-                                                    )}
+                                            {/* Action Button / Order Bot Panel */}
+                                            {isOrder ? (
+                                                <div
+                                                    className="rounded-4 p-3 mb-3"
+                                                    style={{
+                                                        background: 'linear-gradient(135deg, #f0f4ff 0%, #ede8ff 100%)',
+                                                        border: '1.5px solid #c7bfff'
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="d-flex align-items-center gap-2 mb-2">
+                                                        <span
+                                                            className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                                            style={{ width: 28, height: 28, background: '#7c6fff', color: '#fff', fontSize: '0.75rem' }}
+                                                        >
+                                                            <i className="fa-solid fa-box-open"></i>
+                                                        </span>
+                                                        <span className="fw-black x-small text-uppercase" style={{ color: '#5a47c9', letterSpacing: '0.06em' }}>Order Required</span>
+                                                    </div>
+                                                    <p className="x-small text-muted mb-2 lh-sm" style={{ fontSize: '0.72rem' }}>
+                                                        Place your order first to receive a Dodo Code:
+                                                    </p>
+                                                    <div className="d-flex gap-2">
+                                                        <a
+                                                            href="https://discord.gg/chopaeng"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="btn btn-sm fw-bold d-flex align-items-center gap-1 flex-fill rounded-pill"
+                                                            style={{ background: '#5865f2', color: '#fff', fontSize: '0.72rem', border: 'none' }}
+                                                        >
+                                                            <i className="fa-brands fa-discord"></i> Discord
+                                                        </a>
+                                                        <a
+                                                            href="https://www.twitch.tv/chopaeng"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="btn btn-sm fw-bold d-flex align-items-center gap-1 flex-fill rounded-pill"
+                                                            style={{ background: '#9146ff', color: '#fff', fontSize: '0.72rem', border: 'none' }}
+                                                        >
+                                                            <i className="fa-brands fa-twitch"></i> Twitch
+                                                        </a>
+                                                    </div>
                                                 </div>
-                                            </button>
+                                            ) : (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (isRevealableStatus) {
+                                                            if (hasInstantCode) onCopyCode(island, liveCode as string);
+                                                            else onRevealCode(island);
+                                                        }
+                                                    }}
+                                                    disabled={btnDisabled}
+                                                    className={`btn w-100 rounded-pill fw-black py-2 mb-3 position-relative overflow-hidden transition-all ${isCopied ? 'btn-success' : btnClass}`}
+                                                >
+                                                    <div className="d-flex align-items-center justify-content-center gap-2">
+                                                        {isCopied ? (
+                                                            <>
+                                                                <i className="fa-solid fa-check"></i> COPIED!
+                                                            </>
+                                                        ) : isRevealing ? (
+                                                            <><i className="fa-solid fa-circle-notch fa-spin"></i> LOADING...</>
+                                                        ) : revealedCode ? (
+                                                            <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{revealedCode}</span></>
+                                                        ) : hasInstantCode ? (
+                                                            <><i className="fa-regular fa-copy opacity-50"></i><span className="dodo-text">{liveCode}</span></>
+                                                        ) : isRevealableStatus && !needsAuth ? (
+                                                            <><i className="fa-solid fa-eye opacity-70"></i> REVEAL CODE</>
+                                                        ) : (
+                                                            <>
+                                                                {btnIcon && <i className={`fa-solid ${btnIcon}`}></i>}
+                                                                <span>{btnText}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            )}
 
                                         </div>
                                     </div>

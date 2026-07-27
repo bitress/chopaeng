@@ -22,6 +22,7 @@ export interface CatalogEntity {
         Colours?: string[];
         uniqueEntryId?: string;
     }>;
+    personality?: string;
 }
 
 const IMAGE_FALLBACK = banner;

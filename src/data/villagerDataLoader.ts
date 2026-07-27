@@ -24,6 +24,7 @@ const toVillagerEntity = (villager: VillagerJson): CatalogEntity => ({
     image: `https://www.pange.ca/itemsearch/villagers/${villager.id}.png`,
     description: `Request ${villager.name}${villager.personality ? `, a ${villager.personality.toLowerCase()} ${villager.species?.toLowerCase() || 'villager'}` : ' as your requested villager'}.`,
     variations: [],
+    personality: villager.personality
 });
 
 export const loadVillagers = (): CatalogEntity[] => {
