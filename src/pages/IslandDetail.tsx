@@ -1,10 +1,90 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
-import { DODO_API_BASE } from "../config/api";
+import { DODO_API_BASE, FINDER_API_BASE } from "../config/api";
 import RevealErrorPopup from "../components/RevealErrorPopup";
+import { loadVillagers } from "../data/villagerDataLoader";
+
+
+export const ResidentVillagerPill = ({ villagerName }: { villagerName: string }) => {
+    const navigate = useNavigate();
+    const villagersList = useMemo(() => loadVillagers(), []);
+
+    const matched = useMemo(() => {
+        return villagersList.find((v) => v.name.toLowerCase() === villagerName.toLowerCase());
+    }, [villagersList, villagerName]);
+
+    const fallbackImg = matched?.image || `https://www.pange.ca/itemsearch/villagers/${matched?.id || villagerName.toLowerCase()}.png`;
+
+    const [iconUrl, setIconUrl] = useState<string | null>(matched?.image || null);
+    const [imgError, setImgError] = useState(false);
+
+    useEffect(() => {
+        // Reset state immediately if the villagerName prop changes
+        setIconUrl(matched?.image || null);
+        setImgError(false);
+
+        let isMounted = true;
+        const fetchIcon = async () => {
+            try {
+                const res = await fetch(`${FINDER_API_BASE}/api/v1/villager/${encodeURIComponent(villagerName)}`);
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const fetchedIcon = data.villager?.nh_details?.icon_url
+                    || data.villager?.image_url
+                    || data.icon_url
+                    || data.image_url;
+
+                if (fetchedIcon && isMounted) {
+                    setIconUrl(fetchedIcon);
+                }
+            } catch {
+                // Let the fallback handle the apocalypse
+            }
+        };
+
+        fetchIcon();
+
+        return () => { isMounted = false; };
+    }, [villagerName, matched?.image]);
+
+    const displayImg = iconUrl || fallbackImg;
+
+    const handleClick = () => {
+        const pathId = matched ? matched.id : encodeURIComponent(villagerName.toLowerCase());
+        navigate(`/command-builder/villager/${pathId}`);
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleClick}
+            className="btn btn-sm btn-light border-0 rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2 shadow-sm transition-all hover-scale"
+            style={{ backgroundColor: '#ffffff' }}
+            title={`View ${villagerName} details`}
+        >
+            <div
+                className="rounded-circle overflow-hidden bg-light d-flex align-items-center justify-content-center flex-shrink-0"
+                style={{ width: '32px', height: '32px', border: '2px solid rgba(0,0,0,0.05)' }}
+            >
+                {!imgError && displayImg ? (
+                    <img
+                        src={displayImg}
+                        alt={villagerName}
+                        className="w-100 h-100 object-fit-contain"
+                        onError={() => setImgError(true)}
+                    />
+                ) : (
+                    <i className="fa-solid fa-paw text-nook small"></i>
+                )}
+            </div>
+            <span className="fw-bold text-dark small">{villagerName}</span>
+        </button>
+    );
+};
 
 const IslandDetail = () => {
     const { id } = useParams();
@@ -147,12 +227,10 @@ const IslandDetail = () => {
         return string.charAt(0).toUpperCase() + string.slice(1);
     };
 
-
     const siteUrl = window.location.origin;
     const currentUrl = `${siteUrl}${location.pathname}`;
     const seoImage = mapImageSrc;
     const pageTitle = `${capitalizeFirstLetter(island.name)} ACNH Treasure Island – Map, Items & Villagers | Chopaeng`;
-
     const pageDesc = `${island.description ? island.description + '. ' : ''}View the full map, available items, DIYs, Bells, villagers, and live Dodo code status for the ${capitalizeFirstLetter(island.name)} ACNH treasure island on Chopaeng.`;
 
     return (
@@ -341,15 +419,10 @@ const IslandDetail = () => {
                                     ) : currentVillagers.length > 0 ? (
                                         <div className="d-flex flex-wrap gap-2">
                                             {currentVillagers.map((villager, index) => (
-                                                <div
+                                                <ResidentVillagerPill
                                                     key={`${villager}-${index}`}
-                                                    className="villager-pill"
-                                                    title={`Ask ChoBot to order ${villager}!`}
-                                                    style={{ cursor: 'help' }}
-                                                >
-                                                    <i className="fa-solid fa-paw me-1 text-nook opacity-50"></i>
-                                                    {villager}
-                                                </div>
+                                                    villagerName={villager}
+                                                />
                                             ))}
                                         </div>
                                     ) : (
