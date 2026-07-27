@@ -7,6 +7,52 @@ import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils
 import { useCommandBuilderPockets } from "../hooks/useCommandBuilderPockets";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
 import CatalogAvailability from "../components/CatalogAvailability";
+import { FINDER_API_BASE } from "../config/api";
+
+type NookipediaNhDetails = {
+    catchphrase?: string;
+    clothing?: string;
+    clothing_variation?: string;
+    fav_colors?: string[];
+    fav_styles?: string[];
+    hobby?: string;
+    house_exterior_url?: string;
+    house_flooring?: string;
+    house_interior_url?: string;
+    house_music?: string;
+    house_music_note?: string;
+    house_wallpaper?: string;
+    icon_url?: string;
+    image_url?: string;
+    photo_url?: string;
+    quote?: string;
+    "sub-personality"?: string;
+    umbrella?: string;
+};
+
+type NookipediaVillager = {
+    alt_name?: string;
+    appearances?: string[];
+    birthday_day?: string;
+    birthday_month?: string;
+    clothing?: string;
+    debut?: string;
+    gender?: string;
+    id: string;
+    image_url?: string;
+    islander?: boolean;
+    name: string;
+    nh_details?: NookipediaNhDetails;
+    personality?: string;
+    phrase?: string;
+    prev_phrases?: string[];
+    quote?: string;
+    sign?: string;
+    species?: string;
+    text_color?: string;
+    title_color?: string;
+    url?: string;
+};
 
 const CatalogDetail = () => {
     const { entityType, id } = useParams<{ entityType?: string; id?: string }>();
@@ -28,7 +74,46 @@ const CatalogDetail = () => {
     const [detailStatus, setDetailStatus] = useState('');
     const [selectedVariantKey, setSelectedVariantKey] = useState<string | null>(null);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [villagerData, setVillagerData] = useState<NookipediaVillager | null>(null);
+    const [loadingVillager, setLoadingVillager] = useState(false);
+    const [activeHouseTab, setActiveHouseTab] = useState<'interior' | 'exterior' | 'photo'>('interior');
     const detailStatusRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!entry || entry.entityType !== 'villager') {
+            setVillagerData(null);
+            setLoadingVillager(false);
+            return;
+        }
+
+        let isMounted = true;
+        setLoadingVillager(true);
+
+        const fetchVillagerInfo = async () => {
+            try {
+                const response = await fetch(`${FINDER_API_BASE}/api/v1/villager/${encodeURIComponent(entry.name)}`);
+                if (!response.ok) throw new Error("Failed to fetch villager details");
+                const data = await response.json();
+                if (isMounted) {
+                    if (data.success && data.villager) {
+                        setVillagerData(data.villager);
+                    } else if (data.name) {
+                        setVillagerData(data);
+                    }
+                }
+            } catch (error) {
+                console.error("Villager API Error:", error);
+            } finally {
+                if (isMounted) setLoadingVillager(false);
+            }
+        };
+
+        fetchVillagerInfo();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [entry]);
 
     const {
         orderItems,
@@ -215,108 +300,347 @@ const CatalogDetail = () => {
                 <div className="row gy-4">
                     <div className="col-lg-8">
                         <div className="mb-3">
-                            <span className="badge bg-nook-green text-white rounded-pill px-2 py-2 fw-black x-small" style={{ boxShadow: '0 3px 8px rgba(40, 167, 69, 0.2)' }}>
+                            <span className="badge bg-nook-green text-white rounded-pill px-3 py-2 fw-black x-small shadow-sm">
+                                <i className={`fa-solid ${entry.entityType === 'villager' ? 'fa-user' : 'fa-box'} me-1`}></i>
                                 {entry.entityType === 'item' ? 'Item Details' : 'Villager Details'}
                             </span>
+                            {entry.entityType === 'villager' && loadingVillager && (
+                                <span className="ms-2 badge bg-light text-muted border rounded-pill px-3 py-2 fw-bold x-small">
+                                    <i className="fa-solid fa-spinner fa-spin me-1 text-nook"></i> Loading details...
+                                </span>
+                            )}
                             <h1 className="ac-font fw-black mt-2 mb-2 text-nook" style={{ fontSize: '2.2rem', letterSpacing: '0.5px' }}>{detailTitle}</h1>
                             <p className="text-muted small mb-0" style={{ fontSize: '0.95rem' }}>
                                 {entry.entityType === 'item'
                                     ? 'Choose a variation and add this item to your pockets.'
-                                    : 'Request this villager for your command.'}
+                                    : `Explore ${entry.name}'s personality, profile, and house details.`}
                             </p>
                         </div>
 
-                        <div className="bg-cream rounded-4 border-0 shadow overflow-hidden" style={{ borderTop: '4px solid #28a745' }}>
-                            <div className="ratio ratio-4x3 bg-light p-4">
-                                <img src={detailImage} alt={detailTitle} className="w-100 h-100 object-fit-contain" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }} />
+                        {entry.entityType === 'villager' && (villagerData?.quote || villagerData?.nh_details?.quote) && (
+                            <div className="p-4 rounded-4 bg-cream border-2 border-success border-opacity-25 shadow-sm mb-4">
+                                <div className="d-flex align-items-center gap-2 mb-2">
+                                    <i className="fa-solid fa-quote-left text-nook opacity-75 fs-5"></i>
+                                    <span className="x-small fw-black text-nook tracking-wide text-uppercase">Villager Quote</span>
+                                </div>
+                                <p className="fst-italic fw-bold text-dark mb-0 fs-6 ms-3" style={{ fontFamily: 'var(--font-accent)' }}>
+                                    "{villagerData?.quote || villagerData?.nh_details?.quote}"
+                                </p>
                             </div>
-                            <div className="p-4">
-                                <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>{entry.description}</p>
+                        )}
 
-                                {entry.entityType === 'item' && entry.variations && entry.variations.length > 0 && (
-                                    <div className="mb-5 p-4 rounded-4 bg-light-green border-2" style={{ borderColor: '#88e0a0' }}>
-                                        <label className="fw-black small text-nook mb-3 d-block" style={{ fontSize: '0.95rem' }}>
-                                            <i className="fa-solid fa-palette me-2"></i>Choose a variation
-                                        </label>
-                                        <div className="d-flex flex-wrap gap-3">
-                                            {(entry.variations || []).map((variant) => {
-                                                const variantKey = getVariantKey(variant);
-                                                const variantText = getVariantLabel(variant) || 'Default';
-                                                const isSelected = variantKey === selectedVariantKey;
-                                                const thumbUrl = variant.imageUrl || entry.image;
-
-                                                if (thumbUrl) {
-                                                    return (
-                                                        <button
-                                                            key={variantKey}
-                                                            type="button"
-                                                            onClick={() => handleVariantSelect(variantKey)}
-                                                            className={`variant-thumb-btn btn p-2 rounded-3 d-flex flex-column align-items-center gap-1 ${isSelected ? 'variant-thumb-btn--selected' : 'btn-outline-secondary'}`}
-                                                            title={variantText}
-                                                            aria-pressed={isSelected}
-                                                            aria-label={`Select variation ${variantText}`}
-                                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantKey); } }}
-                                                        >
-                                                            <div className="ratio ratio-1x1" style={{ width: '48px' }}>
-                                                                <img src={thumbUrl} alt={variantText} className="w-100 h-100 object-fit-contain rounded-3" />
-                                                            </div>
-                                                            <span className="x-small fw-bold text-truncate" style={{ maxWidth: '72px' }}>{variantText}</span>
-                                                        </button>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <button
-                                                        key={variantKey}
-                                                        type="button"
-                                                        onClick={() => handleVariantSelect(variantKey)}
-                                                        className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${isSelected ? 'bg-nook-green text-white border-0' : 'btn-outline-secondary text-dark border-2'}`}
-                                                        aria-pressed={isSelected}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantKey); } }}
-                                                        style={isSelected ? { boxShadow: '0 3px 8px rgba(40, 167, 69, 0.3)' } : {}}
-                                                    >
-                                                        {variantText}
-                                                    </button>
-                                                );
-                                            })}
+                        <div className="bg-cream rounded-4 border-0 shadow overflow-hidden mb-4" style={{ borderTop: '4px solid #28a745' }}>
+                            <div className="ratio ratio-4x3 bg-light p-4 position-relative">
+                                <img
+                                    src={entry.entityType === 'villager' ? (villagerData?.nh_details?.image_url || villagerData?.image_url || entry.image) : detailImage}
+                                    alt={detailTitle}
+                                    className="w-100 h-100 object-fit-contain"
+                                    style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.08))' }}
+                                />
+                                {entry.entityType === 'villager' && villagerData?.nh_details?.icon_url && (
+                                    <div className="position-absolute bottom-0 end-0 p-3">
+                                        <div className="bg-white rounded-circle p-2 shadow-sm border" style={{ width: '56px', height: '56px' }}>
+                                            <img src={villagerData.nh_details.icon_url} alt={`${entry.name} Icon`} className="w-100 h-100 object-fit-contain" />
                                         </div>
                                     </div>
                                 )}
+                            </div>
 
-                                <div className="row g-3 mb-5">
-                                    <div className="col-6 col-md-3">
-                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
-                                                <i className="fa-solid fa-tag opacity-50"></i>Category
-                                            </span>
-                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.category}>{entry.category}</div>
+                            <div className="p-4">
+                                {entry.entityType === 'item' ? (
+                                    <>
+                                        <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>{entry.description}</p>
+
+                                        {entry.variations && entry.variations.length > 0 && (
+                                            <div className="mb-5 p-4 rounded-4 bg-light-green border-2" style={{ borderColor: '#88e0a0' }}>
+                                                <label className="fw-black small text-nook mb-3 d-block" style={{ fontSize: '0.95rem' }}>
+                                                    <i className="fa-solid fa-palette me-2"></i>Choose a variation
+                                                </label>
+                                                <div className="d-flex flex-wrap gap-3">
+                                                    {(entry.variations || []).map((variant) => {
+                                                        const variantKey = getVariantKey(variant);
+                                                        const variantText = getVariantLabel(variant) || 'Default';
+                                                        const isSelected = variantKey === selectedVariantKey;
+                                                        const thumbUrl = variant.imageUrl || entry.image;
+
+                                                        if (thumbUrl) {
+                                                            return (
+                                                                <button
+                                                                    key={variantKey}
+                                                                    type="button"
+                                                                    onClick={() => handleVariantSelect(variantKey)}
+                                                                    className={`variant-thumb-btn btn p-2 rounded-3 d-flex flex-column align-items-center gap-1 ${isSelected ? 'variant-thumb-btn--selected' : 'btn-outline-secondary'}`}
+                                                                    title={variantText}
+                                                                    aria-pressed={isSelected}
+                                                                    aria-label={`Select variation ${variantText}`}
+                                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantKey); } }}
+                                                                >
+                                                                    <div className="ratio ratio-1x1" style={{ width: '48px' }}>
+                                                                        <img src={thumbUrl} alt={variantText} className="w-100 h-100 object-fit-contain rounded-3" />
+                                                                    </div>
+                                                                    <span className="x-small fw-bold text-truncate" style={{ maxWidth: '72px' }}>{variantText}</span>
+                                                                </button>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <button
+                                                                key={variantKey}
+                                                                type="button"
+                                                                onClick={() => handleVariantSelect(variantKey)}
+                                                                className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${isSelected ? 'bg-nook-green text-white border-0' : 'btn-outline-secondary text-dark border-2'}`}
+                                                                aria-pressed={isSelected}
+                                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleVariantSelect(variantKey); } }}
+                                                                style={isSelected ? { boxShadow: '0 3px 8px rgba(40, 167, 69, 0.3)' } : {}}
+                                                            >
+                                                                {variantText}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="row g-3 mb-5">
+                                            <div className="col-6 col-md-3">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-tag opacity-50"></i>Category
+                                                    </span>
+                                                    <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.category}>{entry.category}</div>
+                                                </div>
+                                            </div>
+                                            <div className="col-6 col-md-3">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-palette opacity-50"></i>Theme
+                                                    </span>
+                                                    <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.theme}>{entry.theme}</div>
+                                                </div>
+                                            </div>
+                                            <div className="col-6 col-md-3">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-layer-group opacity-50"></i>Series
+                                                    </span>
+                                                    <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.series}>{entry.series}</div>
+                                                </div>
+                                            </div>
+                                            <div className="col-6 col-md-3">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-swatchbook opacity-50"></i>Colour
+                                                    </span>
+                                                    <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.colour}>{entry.colour}</div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="col-6 col-md-3">
-                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
-                                                <i className="fa-solid fa-palette opacity-50"></i>Theme
-                                            </span>
-                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.theme}>{entry.theme}</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Structured Villager Info Cards */}
+                                        <div className="row g-3 mb-4">
+                                            {/* Card 1: Info */}
+                                            <div className="col-12 col-md-6">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 shadow-sm">
+                                                    <div className="d-flex align-items-center gap-2 mb-3">
+                                                        <span className="badge bg-nook-green text-white rounded-pill px-3 py-2 fw-bold">
+                                                            <i className="fa-solid fa-circle-info me-1"></i> Info
+                                                        </span>
+                                                    </div>
+                                                    <ul className="list-unstyled mb-0 d-flex flex-column gap-2 small">
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
+                                                            <span className="text-muted fw-semibold">Species</span>
+                                                            <span className="fw-black text-dark">{villagerData?.species || entry.theme || 'Unknown'}</span>
+                                                        </li>
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
+                                                            <span className="text-muted fw-semibold">Gender</span>
+                                                            <span className="fw-black text-dark">{villagerData?.gender || entry.interactivity || 'Unknown'}</span>
+                                                        </li>
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
+                                                            <span className="text-muted fw-semibold">Code</span>
+                                                            <span className="fw-black text-dark">{villagerData?.id || entry.id}</span>
+                                                        </li>
+                                                        {villagerData?.debut && (
+                                                            <li className="d-flex justify-content-between">
+                                                                <span className="text-muted fw-semibold">Debut</span>
+                                                                <span className="fw-black text-dark">{villagerData.debut}</span>
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            {/* Card 2: Personality */}
+                                            <div className="col-12 col-md-6">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-info border-opacity-10 shadow-sm">
+                                                    <div className="d-flex align-items-center gap-2 mb-3">
+                                                        <span className="badge bg-info text-white rounded-pill px-3 py-2 fw-bold">
+                                                            <i className="fa-solid fa-face-smile me-1"></i> Personality
+                                                        </span>
+                                                    </div>
+                                                    <ul className="list-unstyled mb-0 d-flex flex-column gap-2 small">
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
+                                                            <span className="text-muted fw-semibold">Type</span>
+                                                            <span className="fw-black text-dark">
+                                                                {villagerData?.personality || entry.category}
+                                                                {villagerData?.nh_details?.['sub-personality'] ? ` (Sub ${villagerData.nh_details['sub-personality']})` : ''}
+                                                            </span>
+                                                        </li>
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
+                                                            <span className="text-muted fw-semibold">Catchphrase</span>
+                                                            <span className="fw-black text-nook">"{villagerData?.phrase || villagerData?.nh_details?.catchphrase || 'arfer'}"</span>
+                                                        </li>
+                                                        {villagerData?.nh_details?.hobby && (
+                                                            <li className="d-flex justify-content-between border-bottom pb-2">
+                                                                <span className="text-muted fw-semibold">Hobby</span>
+                                                                <span className="fw-black text-dark">{villagerData.nh_details.hobby}</span>
+                                                            </li>
+                                                        )}
+                                                        {(villagerData?.nh_details?.clothing || villagerData?.clothing) && (
+                                                            <li className="d-flex justify-content-between">
+                                                                <span className="text-muted fw-semibold">Clothing</span>
+                                                                <span className="fw-black text-dark text-capitalize">{villagerData.nh_details?.clothing || villagerData.clothing}</span>
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            {/* Card 3: Details */}
+                                            <div className="col-12 col-md-6">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-warning border-opacity-10 shadow-sm">
+                                                    <div className="d-flex align-items-center gap-2 mb-3">
+                                                        <span className="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold">
+                                                            <i className="fa-solid fa-sparkles me-1"></i> Details
+                                                        </span>
+                                                    </div>
+                                                    <ul className="list-unstyled mb-0 d-flex flex-column gap-2 small">
+                                                        {(villagerData?.birthday_month || villagerData?.birthday_day) && (
+                                                            <li className="d-flex justify-content-between border-bottom pb-2">
+                                                                <span className="text-muted fw-semibold">Birthday</span>
+                                                                <span className="fw-black text-dark">{villagerData.birthday_month} {villagerData.birthday_day}</span>
+                                                            </li>
+                                                        )}
+                                                        {villagerData?.sign && (
+                                                            <li className="d-flex justify-content-between border-bottom pb-2">
+                                                                <span className="text-muted fw-semibold">Sign</span>
+                                                                <span className="fw-black text-dark">{villagerData.sign}</span>
+                                                            </li>
+                                                        )}
+                                                        {villagerData?.nh_details?.fav_colors && villagerData.nh_details.fav_colors.length > 0 && (
+                                                            <li className="d-flex justify-content-between border-bottom pb-2">
+                                                                <span className="text-muted fw-semibold">Colors</span>
+                                                                <span className="fw-black text-dark">{villagerData.nh_details.fav_colors.join(', ')}</span>
+                                                            </li>
+                                                        )}
+                                                        {villagerData?.nh_details?.fav_styles && villagerData.nh_details.fav_styles.length > 0 && (
+                                                            <li className="d-flex justify-content-between">
+                                                                <span className="text-muted fw-semibold">Styles</span>
+                                                                <span className="fw-black text-dark">{villagerData.nh_details.fav_styles.join(', ')}</span>
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            {/* Card 4: House Information */}
+                                            <div className="col-12 col-md-6">
+                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-primary border-opacity-10 shadow-sm">
+                                                    <div className="d-flex align-items-center gap-2 mb-3">
+                                                        <span className="badge bg-primary text-white rounded-pill px-3 py-2 fw-bold">
+                                                            <i className="fa-solid fa-house me-1"></i> {entry.name}'s House Information
+                                                        </span>
+                                                    </div>
+                                                    <ul className="list-unstyled mb-0 d-flex flex-column gap-2 small">
+                                                        {villagerData?.nh_details?.house_flooring && (
+                                                            <li className="d-flex justify-content-between border-bottom pb-2">
+                                                                <span className="text-muted fw-semibold">Flooring</span>
+                                                                <span className="fw-black text-dark">{villagerData.nh_details.house_flooring}</span>
+                                                            </li>
+                                                        )}
+                                                        {villagerData?.nh_details?.house_wallpaper && (
+                                                            <li className="d-flex justify-content-between border-bottom pb-2">
+                                                                <span className="text-muted fw-semibold">Wallpaper</span>
+                                                                <span className="fw-black text-dark">{villagerData.nh_details.house_wallpaper}</span>
+                                                            </li>
+                                                        )}
+                                                        {villagerData?.nh_details?.house_music && (
+                                                            <li className="d-flex justify-content-between border-bottom pb-2">
+                                                                <span className="text-muted fw-semibold">Music</span>
+                                                                <span className="fw-black text-dark">
+                                                                    <i className="fa-solid fa-music me-1 text-primary"></i>
+                                                                    {villagerData.nh_details.house_music}
+                                                                </span>
+                                                            </li>
+                                                        )}
+                                                        {villagerData?.nh_details?.umbrella && (
+                                                            <li className="d-flex justify-content-between">
+                                                                <span className="text-muted fw-semibold">Umbrella</span>
+                                                                <span className="fw-black text-dark text-capitalize">{villagerData.nh_details.umbrella}</span>
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="col-6 col-md-3">
-                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
-                                                <i className="fa-solid fa-layer-group opacity-50"></i>Series
-                                            </span>
-                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.series}>{entry.series}</div>
-                                        </div>
-                                    </div>
-                                    <div className="col-6 col-md-3">
-                                        <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
-                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
-                                                <i className="fa-solid fa-swatchbook opacity-50"></i>Colour
-                                            </span>
-                                            <div className="fw-black mt-3 text-nook text-truncate" style={{ fontSize: '1.05rem' }} title={entry.colour}>{entry.colour}</div>
-                                        </div>
-                                    </div>
-                                </div>
+
+                                        {/* Image Previews Tabs (Interior / Exterior / Photo) */}
+                                        {(villagerData?.nh_details?.house_interior_url || villagerData?.nh_details?.house_exterior_url || villagerData?.nh_details?.photo_url) && (
+                                            <div className="mb-4 p-4 rounded-4 bg-white border shadow-sm">
+                                                <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                                    <span className="fw-black small text-nook text-uppercase tracking-wide">
+                                                        <i className="fa-solid fa-images me-2"></i>Image Previews
+                                                    </span>
+                                                    <div className="btn-group btn-group-sm rounded-pill p-1 bg-light border" role="group" aria-label="House image previews">
+                                                        {villagerData.nh_details?.house_interior_url && (
+                                                            <button
+                                                                type="button"
+                                                                className={`btn rounded-pill px-3 fw-bold ${activeHouseTab === 'interior' ? 'bg-nook-green text-white border-0 shadow-sm' : 'btn-light text-muted border-0'}`}
+                                                                onClick={() => setActiveHouseTab('interior')}
+                                                            >
+                                                                Interior
+                                                            </button>
+                                                        )}
+                                                        {villagerData.nh_details?.house_exterior_url && (
+                                                            <button
+                                                                type="button"
+                                                                className={`btn rounded-pill px-3 fw-bold ${activeHouseTab === 'exterior' ? 'bg-nook-green text-white border-0 shadow-sm' : 'btn-light text-muted border-0'}`}
+                                                                onClick={() => setActiveHouseTab('exterior')}
+                                                            >
+                                                                Exterior
+                                                            </button>
+                                                        )}
+                                                        {villagerData.nh_details?.photo_url && (
+                                                            <button
+                                                                type="button"
+                                                                className={`btn rounded-pill px-3 fw-bold ${activeHouseTab === 'photo' ? 'bg-nook-green text-white border-0 shadow-sm' : 'btn-light text-muted border-0'}`}
+                                                                onClick={() => setActiveHouseTab('photo')}
+                                                            >
+                                                                Photo
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="ratio ratio-16x9 bg-light rounded-4 overflow-hidden border">
+                                                    <img
+                                                        src={
+                                                            activeHouseTab === 'interior'
+                                                                ? villagerData.nh_details?.house_interior_url
+                                                                : activeHouseTab === 'exterior'
+                                                                    ? villagerData.nh_details?.house_exterior_url
+                                                                    : villagerData.nh_details?.photo_url
+                                                        }
+                                                        alt={`${entry.name} ${activeHouseTab}`}
+                                                        className="w-100 h-100 object-fit-contain p-2"
+                                                        style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.06))' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
 
                                 {entry.entityType === 'item' && (inOrderQty > 0 || inDropQty > 0) && (
                                     <div className="alert rounded-4 py-3 px-4 mb-4 small border-2" style={{ background: '#f0fdf4', borderColor: '#88e0a0', color: '#1e7e34' }} role="status">
@@ -378,8 +702,8 @@ const CatalogDetail = () => {
                                                 {totalOrderCount >= 40 && totalDropCount >= 9
                                                     ? 'Both bots are full. Remove items to add more.'
                                                     : totalOrderCount >= 40
-                                                    ? 'Order bot is full (40/40).'
-                                                    : 'Drop bot is full (9/9).'}
+                                                        ? 'Order bot is full (40/40).'
+                                                        : 'Drop bot is full (9/9).'}
                                             </p>
                                         )}
                                     </div>
