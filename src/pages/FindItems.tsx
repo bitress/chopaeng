@@ -1,6 +1,7 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom"; // Import Link
 import { ACNH_FINDER_API_BASE } from "../config/api";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 
 interface SearchResult {
     found: boolean;
@@ -54,13 +55,13 @@ const FindItems = () => {
 
         const title =
             searchMode === "item"
-                ? "Find Items on ACNH Treasure Islands | Chopaeng"
-                : "Find Villagers on ACNH Treasure Islands | Chopaeng";
+                ? "Find Items on ACNH Fan Islands | Chopaeng Community"
+                : "Find Villager Matching on ACNH Fan Islands | Chopaeng Community";
 
         const desc =
             searchMode === "item"
-                ? "Search which live ACNH treasure islands on Chopaeng currently have the item you want. Real-time results across free and member Animal Crossing: New Horizons islands."
-                : "Search which live ACNH treasure islands on Chopaeng currently have the villager you want. Real-time results across free and member Animal Crossing: New Horizons islands.";
+                ? "Search which live community-hosted ACNH islands on Chopaeng currently feature the item you want. Real-time item lookup across free and supporter islands."
+                : "Search which live community-hosted ACNH islands on Chopaeng currently offer villager matching for your favorite villager. Real-time villager request lookup across free and supporter islands.";
 
 
         document.title = title;
@@ -112,10 +113,10 @@ const FindItems = () => {
             <header className="w-100 bg-nook-green pt-4 pb-4 py-sm-5 position-relative shadow-sm rounded-bottom-5 mb-5 overflow-hidden">
                 <div className="container position-relative z-1 text-center">
                     <span className="badge bg-white text-nook-green rounded-pill mb-3 px-3 py-2 fw-black text-uppercase tracking-wide shadow-sm">
-                        <i className="fa-solid fa-wifi me-2"></i> Connected to ChoBot
+                        <i className="fa-solid fa-wifi me-2"></i> Connected to ChoBot Community Assistant
                     </span>
                     <h1 className="display-4 fw-black text-white ac-font mb-4">
-                        {searchMode === 'item' ? 'Item Finder' : 'Villager Finder'}
+                        {searchMode === 'item' ? 'Item Directory Search' : 'Villager Matching Finder'}
                     </h1>
 
                     {/* MODE TOGGLE */}
@@ -169,7 +170,7 @@ const FindItems = () => {
             </header>
 
             {/* 2. RESULTS SECTION */}
-            <section className="container px-3" style={{ maxWidth: '800px' }}>
+            <section className="container px-3 mb-5" style={{ maxWidth: '800px' }}>
 
                 {/* ERROR STATE */}
                 {error && (
@@ -203,8 +204,8 @@ const FindItems = () => {
                 {data && !data.found && (!data.suggestions || data.suggestions.length === 0) && (
                     <div className="text-center py-5 opacity-50">
                         <i className="fa-solid fa-box-open fs-1 mb-3"></i>
-                        <h3 className="fw-black">No results found.</h3>
-                        <p>Check your spelling or try a different term!</p>
+                        <h3 className="fw-black">No matching items or villagers found.</h3>
+                        <p>Check your spelling or try searching for another term!</p>
                     </div>
                 )}
 
@@ -214,13 +215,13 @@ const FindItems = () => {
                         {/* Result Header */}
                         <div className="card-header bg-cream border-bottom border-light p-3 p-sm-4 text-center">
                             <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 mb-2 fw-bold text-uppercase x-small">
-                                {searchMode === 'item' ? 'Item Found' : 'Villager Found'}
+                                {searchMode === 'item' ? 'Item Listed' : 'Villager Matching Available'}
                             </span>
                             <h2 className="display-6 fw-black text-dark m-0 text-capitalize text-break">
                                 {data.query}
                             </h2>
                             <p className="text-muted small fw-bold mt-2 mb-0">
-                                Available on {data.results.free.length + data.results.sub.length} island{(data.results.free.length + data.results.sub.length) === 1 ? '' : 's'} below.
+                                Listed across {data.results.free.length + data.results.sub.length} community island{(data.results.free.length + data.results.sub.length) === 1 ? '' : 's'} below.
                             </p>
                         </div>
 
@@ -233,7 +234,7 @@ const FindItems = () => {
                                             <div className="bg-success-subtle p-2 rounded-circle">
                                                 <i className="fa-solid fa-unlock"></i>
                                             </div>
-                                            <h5 className="fw-black m-0">Free Islands</h5>
+                                            <h5 className="fw-black m-0">Public Islands</h5>
                                         </div>
 
                                         {data.results.free.length > 0 ? (
@@ -250,7 +251,7 @@ const FindItems = () => {
                                             </div>
                                         ) : (
                                             <div className="text-muted small fst-italic border rounded-3 p-3 bg-light text-center">
-                                                Not currently available on Free Islands.
+                                                Not currently available on Public Islands.
                                             </div>
                                         )}
                                     </div>
@@ -263,7 +264,7 @@ const FindItems = () => {
                                             <div className="bg-warning-subtle p-2 rounded-circle">
                                                 <i className="fa-solid fa-crown"></i>
                                             </div>
-                                            <h5 className="fw-black m-0">Member Islands</h5>
+                                            <h5 className="fw-black m-0">Supporter Islands</h5>
                                         </div>
 
                                         {data.results.sub.length > 0 ? (
@@ -280,7 +281,7 @@ const FindItems = () => {
                                             </div>
                                         ) : (
                                             <div className="text-muted small fst-italic border rounded-3 p-3 bg-white text-center">
-                                                Not currently available on Sub Islands.
+                                                Not currently available on Supporter Islands.
                                             </div>
                                         )}
                                     </div>
@@ -293,11 +294,14 @@ const FindItems = () => {
                                 className="btn btn-nook-primary rounded-pill px-4 py-2 fw-bold hover-nook"
                             >
                                 <i className="fa-solid fa-list-check me-2"></i>
-                                Build a Full Order in Command Builder
+                                Build a Custom Item Request in Command Builder
                             </Link>
                         </div>
                     </div>
                 )}
+
+                {/* FAN SITE DISCLAIMER */}
+                <DisclaimerBanner variant="alert" className="mt-4 mb-2" />
             </section>
         </div>
     );

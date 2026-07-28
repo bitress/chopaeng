@@ -1,4 +1,5 @@
-import {useEffect} from "react";
+import { useEffect } from "react";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 
 const Membership = () => {
 
@@ -63,7 +64,7 @@ const Membership = () => {
             price: "3",
             tagline: "Entry Level",
             isSoldOut: true,
-            features: ["2 Private Islands", "Unlimited Trips", "Bot Access", "Discord Role"],
+            features: ["2 Private Islands", "Unrestricted Trips", "Bot Access", "Discord Role"],
             color: "secondary",
             icon: "gem"
         },
@@ -72,7 +73,7 @@ const Membership = () => {
             price: "4",
             tagline: "Standard Plan",
             isSoldOut: true,
-            features: ["9 Private Islands", "ChoBot Access", "Unlimited Trips", "DM Support", "Discord Role"],
+            features: ["9 Private Islands", "ChoBot Access", "Unrestricted Trips", "DM Support", "Discord Role"],
             color: "secondary",
             icon: "mug-hot"
         },
@@ -81,7 +82,7 @@ const Membership = () => {
             price: "5",
             tagline: "Most Popular",
             isRecommended: true,
-            features: ["9 Private Islands", "PRIORITY ChoBot", "Priority Requests", "Unlimited Trips", "Discord Role"],
+            features: ["9 Private Islands", "PRIORITY ChoBot", "Priority Requests", "Unrestricted Trips", "Discord Role"],
             color: "success",
             icon: "fire"
         },
@@ -98,7 +99,7 @@ const Membership = () => {
     return (
         <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center">
 
-            <div className="app-container w-100" style={{maxWidth: '1000px'}}>
+            <div className="app-container w-100" style={{ maxWidth: '1000px' }}>
 
                 {/* 1. ABD HEADER */}
                 <div className="text-center mb-5">
@@ -192,7 +193,7 @@ const Membership = () => {
                                     target="_blank"
                                     rel="noreferrer"
                                     className={`btn rounded-pill fw-black py-2 w-100 shadow-sm border-2 text-uppercase text-decoration-none ${tier.isSoldOut ? 'btn-light text-muted border-0 disabled-link' : `btn-${tier.color} text-white border-white`}`}
-                                    style={{pointerEvents: tier.isSoldOut ? 'none' : 'auto'}}
+                                    style={{ pointerEvents: tier.isSoldOut ? 'none' : 'auto' }}
                                 >
                                     {tier.isSoldOut ? 'SOLD OUT' : 'Select on Patreon'}
                                 </a>
@@ -234,9 +235,10 @@ const Membership = () => {
                 </div>
 
                 <div className="text-center mt-5">
-                    <p className="tiny-text text-muted fw-bold text-uppercase opacity-50">
-                        * NO REFUNDS ON DIGITAL GOODS. ISLANDS MANAGED BY CHOPAENG
+                    <p className="tiny-text text-muted fw-bold text-uppercase opacity-50 mb-2">
+                        * NO REFUNDS ON DIGITAL GOODS. ISLANDS MANAGED BY CHOPAENG COMMUNITY
                     </p>
+                    <DisclaimerBanner variant="text" className="mb-0" />
                 </div>
 
             </div>

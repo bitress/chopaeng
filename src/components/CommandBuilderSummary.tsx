@@ -434,7 +434,7 @@ const CommandBuilderSummary = ({
                         {savedVillagers.length > 0 && (
                             <div className="p-3 rounded-4 bg-dark text-info font-monospace small" style={{ border: '1px solid #333', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(34,211,238,0.15)' }}>
                                 <div className="mb-2 d-flex align-items-center justify-content-between">
-                                    <span className="badge bg-warning text-dark rounded-pill fw-bold">👤 Inject Villager</span>
+                                    <span className="badge bg-warning text-dark rounded-pill fw-bold">👤 Villager Request</span>
                                 </div>
                                 {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villagers...</span>}
                             </div>
@@ -453,7 +453,7 @@ const CommandBuilderSummary = ({
                                 }}
                             >
                                 <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                                {copyInjectVillagerStatus === 'Copied!' ? 'Inject Command Copied!' : 'Copy Inject Command'}
+                                {copyInjectVillagerStatus === 'Copied!' ? 'Villager Request Copied!' : 'Copy Villager Request'}
                             </button>
                         )}
                     </div>
@@ -527,7 +527,7 @@ const CommandBuilderSummary = ({
                             {savedVillagers.length > 0 && (
                                 <div className="bg-dark rounded-3 p-3 mt-3 font-monospace small text-warning" style={{ border: '1px solid #665200', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(255,193,7,0.15)' }}>
                                     <div className="d-flex justify-content-between align-items-center mb-2">
-                                        <span className="badge bg-warning text-dark rounded-pill fw-bold">Inject Bot</span>
+                                        <span className="badge bg-warning text-dark rounded-pill fw-bold">Villager Bot</span>
                                     </div>
                                     {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villagers...</span>}
                                 </div>
@@ -546,7 +546,7 @@ const CommandBuilderSummary = ({
                                     }}
                                 >
                                     <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                                    {copyInjectVillagerStatus === 'Copied!' ? 'Copied!' : 'Copy Inject'}
+                                    {copyInjectVillagerStatus === 'Copied!' ? 'Copied!' : 'Copy Villager Request'}
                                 </button>
                             )}
                         </div>

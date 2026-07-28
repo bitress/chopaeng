@@ -6,6 +6,7 @@ import { loadVillagers } from "../data/villagerDataLoader";
 import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets, type PocketItem } from "../hooks/useCommandBuilderPockets";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 
 type ItemData = PocketItem;
 
@@ -34,12 +35,12 @@ const CommandBuilder = () => {
     const [colour, setColour] = useState("All");
     const [kindFilter, setKindFilter] = useState("All");
     const [villagerType, setVillagerType] = useState("All");
-    
+
     // --- UI State ---
     const [hideVariants, setHideVariants] = useState(true);
     const [compactMode, setCompactMode] = useState(true);
     const [showFiltersMobile, setShowFiltersMobile] = useState(false);
-    
+
     // --- Search & Pagination ---
     const [searchInput, setSearchInput] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -127,12 +128,12 @@ const CommandBuilder = () => {
             const matchesSeries = series === "All" || item.series === series;
             const matchesInteractivity = interactivity === "All" || item.interactivity === interactivity;
             const matchesColour = colour === "All" || item.colour === colour;
-            const matchesKind = kindFilter === 'All' || 
-                (kindFilter === 'Items' && item.entityType === 'item' && item.category !== 'Recipes') || 
-                (kindFilter === 'Recipes' && item.entityType === 'item' && item.category === 'Recipes') || 
+            const matchesKind = kindFilter === 'All' ||
+                (kindFilter === 'Items' && item.entityType === 'item' && item.category !== 'Recipes') ||
+                (kindFilter === 'Recipes' && item.entityType === 'item' && item.category === 'Recipes') ||
                 (kindFilter === 'Villagers' && item.entityType === 'villager');
             const matchesVillagerType = villagerType === 'All' || item.entityType !== 'villager' || item.category === villagerType;
-            
+
             return matchesSearch && matchesCategory && matchesTheme && matchesSeries && matchesInteractivity && matchesColour && matchesKind && matchesVillagerType;
         });
     }, [expandedCatalogItems, category, theme, series, interactivity, colour, debouncedSearch, kindFilter, villagerType]);
@@ -193,7 +194,7 @@ const CommandBuilder = () => {
             <div className="bg-pattern font-nunito min-vh-100 pb-5">
                 <section className="container mt-n5 position-relative" style={{ zIndex: 10 }}>
                     <div className="glass-filter rounded-4 p-4 border mb-4 shadow-sm">
-                        
+
                         {/* Mobile Search & Filter Toggle Row */}
                         <div className="d-flex gap-2 mb-3">
                             <div className="flex-grow-1 position-relative">
@@ -217,7 +218,7 @@ const CommandBuilder = () => {
                                     </button>
                                 )}
                             </div>
-                            <button 
+                            <button
                                 className={`btn border rounded-pill shadow-sm d-md-none px-4 ${activeFilterCount > 0 ? 'btn-nook text-white' : 'btn-white'}`}
                                 onClick={() => setShowFiltersMobile(!showFiltersMobile)}
                                 aria-label="Toggle Filters"
@@ -273,7 +274,7 @@ const CommandBuilder = () => {
                                     <option value="Villagers">Villagers</option>
                                 </select>
                             </div>
-                            
+
                             <div className="col-6 col-md-3">
                                 <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-tags me-1 text-muted"></i> Category</label>
                                 <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -370,10 +371,10 @@ const CommandBuilder = () => {
                                         const orderQty = orderEntry?.quantity ?? 0;
                                         const dropQty = dropEntry?.quantity ?? 0;
                                         const cardSelected = isVillager ? villagerIds.includes(item.id) : (orderQty > 0 || dropQty > 0);
-                                        
+
                                         return (
                                             <div className="col-6 col-md-4 col-xl-3" key={item.id}>
-                                                <div 
+                                                <div
                                                     className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${cardSelected ? 'border-success border-2' : 'border-light'} cursor-pointer transition-all`}
                                                     onClick={() => openDetail(item)}
                                                     role="button"
@@ -405,10 +406,10 @@ const CommandBuilder = () => {
                                                     <div className="p-2 d-flex flex-column flex-grow-1 border-top">
                                                         <div className="mb-auto">
                                                             <div className="d-flex justify-content-between align-items-start mb-1">
-                                                                <span className="badge bg-light text-muted rounded-pill px-2 py-1" style={{fontSize: "0.65rem", border: "1px solid #dee2e6"}}>{isVillager ? 'Villager' : item.category}</span>
-                                                                {!isVillager && <button type="button" className="btn btn-link text-muted p-0 m-0" onClick={(e) => { e.stopPropagation(); openDetail(item); }} aria-label={`More info about ${item.name}`}><i className="fa-solid fa-circle-info" style={{fontSize: "0.85rem"}}></i></button>}
+                                                                <span className="badge bg-light text-muted rounded-pill px-2 py-1" style={{ fontSize: "0.65rem", border: "1px solid #dee2e6" }}>{isVillager ? 'Villager' : item.category}</span>
+                                                                {!isVillager && <button type="button" className="btn btn-link text-muted p-0 m-0" onClick={(e) => { e.stopPropagation(); openDetail(item); }} aria-label={`More info about ${item.name}`}><i className="fa-solid fa-circle-info" style={{ fontSize: "0.85rem" }}></i></button>}
                                                             </div>
-                                                            <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{fontSize: "0.85rem"}}>{item.name}</h3>
+                                                            <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{ fontSize: "0.85rem" }}>{item.name}</h3>
                                                             {item.variantLabel && (
                                                                 <div className="badge bg-success-subtle text-success border border-success-subtle rounded-pill mt-1 text-truncate" style={{ maxWidth: '100%', fontSize: '0.66rem' }}>
                                                                     {item.variantLabel}
@@ -430,22 +431,22 @@ const CommandBuilder = () => {
                                                                     {orderQty > 0 ? (
                                                                         <div className="btn-group border border-success rounded-pill overflow-hidden flex-grow-1 bg-white">
                                                                             <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
-                                                                            <div className="bg-success text-white d-flex align-items-center justify-content-center fw-bold px-1" style={{fontSize: "0.75rem", minWidth: "24px"}}>{orderQty}</div>
+                                                                            <div className="bg-success text-white d-flex align-items-center justify-content-center fw-bold px-1" style={{ fontSize: "0.75rem", minWidth: "24px" }}>{orderQty}</div>
                                                                             <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder} aria-label={`Increase order quantity for ${item.name}`} title={!canIncreaseOrder ? 'Order bot full (40/40)' : undefined}>+</button>
                                                                         </div>
                                                                     ) : (
-                                                                        <button type="button" className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold" style={{fontSize: "0.75rem"}} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
+                                                                        <button type="button" className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold" style={{ fontSize: "0.75rem" }} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
                                                                     )}
 
                                                                     {/* Drop Button Group */}
                                                                     {dropQty > 0 ? (
                                                                         <div className="btn-group border border-info rounded-pill overflow-hidden flex-grow-1 bg-white">
                                                                             <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
-                                                                            <div className="bg-info text-dark d-flex align-items-center justify-content-center fw-bold px-1" style={{fontSize: "0.75rem", minWidth: "24px"}}>{dropQty}</div>
+                                                                            <div className="bg-info text-dark d-flex align-items-center justify-content-center fw-bold px-1" style={{ fontSize: "0.75rem", minWidth: "24px" }}>{dropQty}</div>
                                                                             <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
                                                                         </div>
                                                                     ) : (
-                                                                        <button type="button" className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold" style={{fontSize: "0.75rem"}} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
+                                                                        <button type="button" className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold" style={{ fontSize: "0.75rem" }} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
                                                                     )}
                                                                 </div>
                                                             ) : (
@@ -549,8 +550,13 @@ const CommandBuilder = () => {
                             </div>
                         </aside>
                     </div>
+
                 </section>
+                <div className="container">
+                    <DisclaimerBanner className="mb-3" />
+                </div>
             </div>
+
         </>
     );
 };

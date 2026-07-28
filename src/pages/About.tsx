@@ -115,7 +115,7 @@ const About = () => {
                             <p className="text-muted fw-bold lh-lg mb-0">
                                 The site provides free access to public treasure islands packed with rare furniture, DIY
                                 recipes, materials, seasonal items, and bells — plus premium member-only islands with
-                                advanced features like villager injection, max bells, and priority ChoBot access.
+                                advanced features like villager matching assistance, curated Bell packages, and priority ChoBot access.
                             </p>
                         </div>
                         <div className="col-lg-6">

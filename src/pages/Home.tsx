@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import banner from '../assets/banner.png'
 import logo from '../assets/logo.webp'
 import StreamEmbed from "../components/StreamEmbed.tsx";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 import { BLOGS_API_BASE } from "../config/api";
 interface BlogPost {
     id: string;
@@ -146,7 +147,7 @@ const Home = () => {
                             </h1>
 
                             <p className="lead text-muted mb-4 fw-bold opacity-75 fs-6 mx-auto mx-lg-0" style={{ maxWidth: '500px' }}>
-                                Skip the grind. Join the community to access 24/7 Treasure Islands, Max Bells, and order any villager via ChoBot.
+                                 Skip the grind. Join the community to access 24/7 Treasure Islands, curated Bells, and villager matching via ChoBot.
                             </p>
 
                             <div className="d-flex flex-column flex-sm-row gap-3 mb-4 justify-content-center justify-content-lg-start">
@@ -271,27 +272,27 @@ const Home = () => {
                             <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Learn More</span>
                         </div>
                         <h2 className="display-6 fw-black text-dark ac-font mb-2">What Is an ACNH Treasure Island?</h2>
-                        <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '560px' }}>Everything you need to know about treasure islands in Animal Crossing: New Horizons.</p>
+                        <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '560px' }}>Everything you need to know about community treasure islands in Animal Crossing: New Horizons.</p>
                     </div>
 
                     <div className="row g-5">
                         <div className="col-lg-6">
                             <h3 className="h5 fw-black text-dark ac-font mb-3">The Short Answer</h3>
                             <p className="text-muted fw-bold lh-lg">
-                                A <strong>treasure island</strong> is a modded Animal Crossing: New Horizons island that has been loaded with rare furniture sets, seasonal items, crafting materials, DIY recipe cards, Nook Miles Tickets, Star Fragments, and Bells. The host island runs a custom save that keeps item spawning indefinitely, so the ground is always covered with loot.
+                                A <strong>community treasure island</strong> is a specially organized Animal Crossing: New Horizons island designed to help players design, build, and complete their dream islands. These visitor destinations feature neat layouts organized by theme, housing catalog furniture sets, seasonal items, crafting materials, DIY recipe cards, Nook Miles Tickets, Star Fragments, and Bells.
                             </p>
                             <p className="text-muted fw-bold lh-lg">
-                                Players visit using a <strong>Dodo code</strong> — a 5-character code entered at the in-game airport — and are free to take anything they find on the ground, dig up, or fish during their stay. There are no timers, no purchase requirements, and no limits on how many items you can carry out.
+                                Players visit using a standard <strong>Dodo code</strong> — a 5-character code entered at Dodo Airlines in-game — and are welcome to pick up items they need for cataloging or island crafting during their visit. Community-hosted islands streamline island development so you spend less time searching for elusive DIY recipes and more time decorating.
                             </p>
 
-                            <h3 className="h5 fw-black text-dark ac-font mb-3 mt-4">Why Use a Treasure Island?</h3>
+                            <h3 className="h5 fw-black text-dark ac-font mb-3 mt-4">Why Visit a Treasure Island?</h3>
                             <ul className="list-unstyled d-flex flex-column gap-2">
                                 {[
-                                    { icon: "fa-couch", text: "Complete your home furniture catalog without spending years collecting" },
-                                    { icon: "fa-coins", text: "Earn max Bells (999,999,999) in a single trip using the turnip glitch" },
-                                    { icon: "fa-people-group", text: "Invite dream villagers like Raymond or Sasha to your island instantly" },
-                                    { icon: "fa-screwdriver-wrench", text: "Stock up on crafting materials: iron nuggets, wood, clay, and more" },
-                                    { icon: "fa-scroll", text: "Collect rare seasonal DIY recipes you missed during limited-time events" },
+                                    { icon: "fa-couch", text: "Complete your home furniture catalog quickly without waiting for shop rotations" },
+                                    { icon: "fa-coins", text: "Receive curated Bell bundles to help pay off home loans and bridges" },
+                                    { icon: "fa-people-group", text: "Use our community villager matching service to find your ideal island companion" },
+                                    { icon: "fa-screwdriver-wrench", text: "Stock up on essential crafting materials: iron nuggets, wood, clay, and stone" },
+                                    { icon: "fa-scroll", text: "Collect hard-to-find seasonal DIY recipes and event-exclusive items" },
                                 ].map((item, i) => (
                                     <li key={i} className="d-flex align-items-start gap-3">
                                         <div className="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 36, height: 36 }}>
@@ -306,30 +307,70 @@ const Home = () => {
                         <div className="col-lg-6">
                             <h3 className="h5 fw-black text-dark ac-font mb-3">How Chopaeng Is Different</h3>
                             <p className="text-muted fw-bold lh-lg">
-                                Most treasure island communities operate exclusively through Discord, requiring members to manually request codes and wait in long queues. Chopaeng built a full real-time web dashboard so anyone — member or not — can see at a glance which islands are online, how many visitors are on each one, and what items are available before committing to a visit.
+                                Many Animal Crossing communities operate exclusively through social channels, requiring members to manually ask for active codes and queue in long lines. Chopaeng features a real-time web dashboard so anyone can see which community islands are online, current visitor traffic, and active island themes before heading to the airport.
                             </p>
                             <p className="text-muted fw-bold lh-lg">
-                                The site is powered by <strong>ChoBot</strong>, a custom Discord integration that generates private, on-demand islands for members in seconds. Instead of waiting for the next public drop, members type a single command with the item or villager name they want and receive a unique Dodo code instantly.
+                                The site integrates with <strong>ChoBot</strong>, our Discord community bot designed to coordinate island visits and requests for supporters. Community members can submit request commands to find specific furniture themes or coordinate villager moves smoothly.
                             </p>
 
                             <div className="bg-light rounded-4 p-4 border mt-4">
-                                <h4 className="h6 fw-black text-dark ac-font mb-3">Free vs. Member Islands</h4>
+                                <h4 className="h6 fw-black text-dark ac-font mb-3">Free vs. Member Community Islands</h4>
                                 <div className="row g-3">
                                     <div className="col-6">
                                         <div className="text-center p-3 bg-white rounded-3 border h-100">
                                             <i className="fa-solid fa-lock-open text-success fs-3 mb-2"></i>
                                             <h6 className="fw-black text-dark mb-1 small">Free Islands</h6>
-                                            <p className="text-muted x-small fw-bold mb-0">Open to everyone. Shared public access. Regular furniture, materials, and seasonal drops.</p>
+                                            <p className="text-muted x-small fw-bold mb-0">Open to all players. Shared public access featuring furniture, materials, and seasonal drops.</p>
                                         </div>
                                     </div>
                                     <div className="col-6">
                                         <div className="text-center p-3 bg-white rounded-3 border h-100">
                                             <i className="fa-solid fa-crown text-warning fs-3 mb-2"></i>
                                             <h6 className="fw-black text-dark mb-1 small">Member Islands</h6>
-                                            <p className="text-muted x-small fw-bold mb-0">Private access. Villager injection, max Bells, priority ChoBot, and exclusive rare item drops.</p>
+                                            <p className="text-muted x-small fw-bold mb-0">Priority queue access, villager matching assistance, community perks, and faster server connection.</p>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* NEW GUIDANCE SECTION: Island Visitor Etiquette & Beginner Guide */}
+            <section className="container py-5 position-relative z-2">
+                <div className="bg-white rounded-5 shadow-sm border p-4 p-lg-5">
+                    <div className="text-center mb-4">
+                        <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                            <i className="fa-solid fa-compass text-info fs-4"></i>
+                            <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Traveler's Guide</span>
+                        </div>
+                        <h2 className="display-6 fw-black text-dark ac-font mb-2">Island Etiquette & Flight Guide</h2>
+                        <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '600px' }}>Follow these simple community guidelines to ensure a smooth journey for yourself and fellow island visitors.</p>
+                    </div>
+                    <div className="row g-4 mt-2">
+                        <div className="col-md-4">
+                            <div className="p-4 bg-light rounded-4 border h-100">
+                                <h3 className="h6 fw-black text-dark ac-font mb-2"><i className="fa-solid fa-suitcase text-success me-2"></i>Prepare Your Pockets</h3>
+                                <p className="text-muted small fw-bold mb-0 lh-lg">
+                                    Before heading to Orville at Dodo Airlines, empty your inventory completely. Leave your tools and local fruits in storage so you have all 40 pocket slots free to gather items and recipes during your trip.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="col-md-4">
+                            <div className="p-4 bg-light rounded-4 border h-100">
+                                <h3 className="h6 fw-black text-dark ac-font mb-2"><i className="fa-solid fa-plane-arrival text-warning me-2"></i>Close Windows Promptly</h3>
+                                <p className="text-muted small fw-bold mb-0 lh-lg">
+                                    When other players are landing or departing, keep in-game dialogue windows, pocket menus, and chat boxes closed. Keeping menus open causes flight interference for everyone trying to visit.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="col-md-4">
+                            <div className="p-4 bg-light rounded-4 border h-100">
+                                <h3 className="h6 fw-black text-dark ac-font mb-2"><i className="fa-solid fa-door-open text-info me-2"></i>Always Exit via Airport</h3>
+                                <p className="text-muted small fw-bold mb-0 lh-lg">
+                                    When you finish collecting items, walk directly into the airport to fly back home. Avoid using the minus (-) button to quit or closing the game, as silent leaves can cause connectivity resets for other visitors.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -426,22 +467,22 @@ const Home = () => {
                     <div className="col-md-4">
                         <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
                             <div className="app-icon mb-3 mx-auto bg-light-green text-nook d-flex align-items-center justify-content-center rounded-circle"><i className="fa-solid fa-robot fs-2"></i></div>
-                            <h3 className="h4 fw-black text-dark mb-2">ChoBot Orders</h3>
-                            <p className="text-muted small fw-bold mb-0">Don't wait for drops. Type a command, receive a Dodo code, and fly to an island generated just for you.</p>
+                            <h3 className="h4 fw-black text-dark mb-2">ChoBot Requests</h3>
+                            <p className="text-muted small fw-bold mb-0">Streamline your island visits. Use community bot commands to get an active Dodo code and visit tailored islands quickly.</p>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
                             <div className="app-icon mb-3 mx-auto bg-light-yellow text-warning d-flex align-items-center justify-content-center rounded-circle"><i className="fa-solid fa-coins fs-2"></i></div>
-                            <h3 className="h4 fw-black text-dark mb-2">Max Bells</h3>
-                            <p className="text-muted small fw-bold mb-0">Pay off that raccoon today. Hit max bells (999,999,999) in a single trip with the Turnip glitch.</p>
+                            <h3 className="h4 fw-black text-dark mb-2">Curated Bells</h3>
+                            <p className="text-muted small fw-bold mb-0">Finance your dream island. Access dedicated Bell islands and item bundles to pay off island bridges and home loans.</p>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
                             <div className="app-icon mb-3 mx-auto bg-light-blue text-info d-flex align-items-center justify-content-center rounded-circle"><i className="fa-solid fa-ticket fs-2"></i></div>
-                            <h3 className="h4 fw-black text-dark mb-2">Villager Injection</h3>
-                            <p className="text-muted small fw-bold mb-0">Need Raymond? Sasha? Any villager in boxes ready to move to your island instantly.</p>
+                            <h3 className="h4 fw-black text-dark mb-2">Villager Matching</h3>
+                            <p className="text-muted small fw-bold mb-0">Looking for Raymond or Sasha? Our villager request service helps pair you with villagers who are ready to move.</p>
                         </div>
                     </div>
                 </div>
@@ -461,51 +502,51 @@ const Home = () => {
                         {[
                             {
                                 q: "What is an ACNH Treasure Island?",
-                                a: "An ACNH Treasure Island is a modded Animal Crossing: New Horizons island stocked with rare furniture, DIY recipes, crafting materials, seasonal items, Bells, and Nook Miles Tickets. Visitors fly to the island using a Dodo code and are free to pick up everything on the ground. Treasure islands let players obtain hard-to-find catalog items, complete museum donations, and earn millions of Bells without grinding.",
+                                a: "An ACNH Treasure Island is a community-hosted Animal Crossing: New Horizons destination organized with thousands of items including catalog furniture, DIY recipe cards, building materials, seasonal decor, Bells, and Nook Miles Tickets. Players visit via a standard Dodo code to find specific items needed to decorate their home and island without waiting months for natural store rotations.",
                             },
                             {
                                 q: "Is Chopaeng free to use?",
-                                a: "Yes! Free public treasure islands are available to every Animal Crossing: New Horizons player at no cost. Visit the Treasure Islands page to see which public islands are currently online, copy the Dodo code, and fly over. Premium member-only islands with exclusive items, villager injection, max Bells, and priority ChoBot access require a paid Patreon, Twitch, or YouTube membership.",
+                                a: "Yes! Free public community islands are accessible to every Animal Crossing player at no charge. You can view online islands on our monitor page, grab an active Dodo code, and fly over. We also offer optional community memberships on Patreon, Twitch, or YouTube for supporters who want extra perks like priority queueing, dedicated Discord channels, and expedited server responses.",
                             },
                             {
                                 q: "What is a Dodo code and how do I use it?",
-                                a: "A Dodo code is a 5-character code that lets you fly to another player's island. In Animal Crossing: New Horizons, speak to Orville at Dodo Airlines, select 'I want to fly' → 'Visit someone' → 'Online play' → 'Search via Dodo Code', and enter the code. You will be transported to the treasure island within seconds.",
+                                a: "A Dodo code is a unique 5-character code used for online multiplayer visits in Animal Crossing: New Horizons. To fly to a community island, visit Orville at Dodo Airlines inside your airport, select 'I want to fly' → 'Visit someone' → 'Via online play' → 'Search via Dodo Code', and type in the code displayed on our site.",
                             },
                             {
                                 q: "What should I do before flying to a treasure island?",
-                                a: "Make sure all 40 of your inventory slots are completely empty before flying. Leave all tools, furniture, and items at home — axes, shovels, and fishing rods are provided on the island. Also ensure you have a stable internet connection (NAT Type A or B) to avoid communication errors.",
+                                a: "Clear all 40 slots in your pockets before talking to Orville at the airport. Leave your custom tools, materials, and clothing in storage so you have maximum inventory space to pick up furniture, DIYs, or items. Also, verify that your Nintendo Switch has a stable internet connection (NAT Type A or B).",
                             },
                             {
                                 q: "What is ChoBot and how do I use it?",
-                                a: "ChoBot is Chopaeng's custom Discord bot that automatically generates private on-demand treasure islands for members. After joining the Discord server, type !order [item name] or !villager [villager name] in the correct channel. The bot will spin up a dedicated island and send you a unique private Dodo code, usually within seconds.",
+                                a: "ChoBot is our custom Discord integration designed to help organize community island access for server members. Through dedicated Discord channels, supporters can use bot commands to request specific item categories or inquire about villager availability. ChoBot coordinates the connection and sends a private Dodo code directly to you.",
                             },
                             {
-                                q: "How do I get max Bells (999,999,999)?",
-                                a: "Premium Chopaeng members can visit the dedicated Bells island, which uses the turnip duplication glitch to grant max Bells in a single trip. Fly to the Bells island, pick up the turnips on the ground, return home, and sell them at Nook's Cranny for the full 999,999,999 Bells. This lets you pay off your entire home loan and fund island development instantly.",
+                                q: "How do I obtain Bells for my island?",
+                                a: "Chopaeng provides community islands formatted specifically with Bell bundles and high-value items. Visitors can stop by these islands, pick up Bell bundles, and bring them back to their home island to easily fund bridge construction, incline fees, and home loan upgrades.",
                             },
                             {
                                 q: "Can I request a specific villager?",
-                                a: "Absolutely! Members can request any Animal Crossing: New Horizons villager through ChoBot on Discord using the !villager [name] command. The bot creates a private island with that villager already placed in boxes, ready to move to your island. Popular villagers like Raymond, Sasha, Marshal, and Judy can all be requested this way.",
+                                a: "Yes! Through our community villager matching service, supporters can request assistance finding specific Animal Crossing: New Horizons villagers such as Raymond, Sasha, Marshal, or Judy. When a matching villager is available and ready to move in boxes, you can visit the island to invite them to live on your town.",
                             },
                             {
                                 q: "What items can I find on Chopaeng treasure islands?",
-                                a: "Chopaeng treasure islands are regularly stocked with rare seasonal furniture, wall-mounted items, flooring and wallpaper, DIY recipe cards, crafting materials such as iron nuggets and different types of wood, Nook Miles Tickets, Star Fragments, fossils, art pieces, and seasonal event items. Each island has a theme and inventory that is refreshed on a regular schedule.",
+                                a: "Our islands are categorized by theme and regularly stocked with full furniture color variations, seasonal event decor, wall and flooring items, DIY recipe cards, fossils, real/fake artwork, Nook Miles Tickets, and essential crafting materials like iron nuggets, clay, and all wood types.",
                             },
                             {
                                 q: "Why do I keep getting a 'Wuh-oh! Interference' error?",
-                                a: "The 'Interference' message appears when someone else is currently flying in or out, or when a visitor has a menu open. It is temporary. Simply keep pressing 'A' to retry — you will be let in once the interference clears, usually within a few seconds.",
+                                a: "The 'Interference' message occurs when another visitor is actively landing at the airport, departing, or holding an open text dialog box. It is completely normal during busy travel times. Wait a few seconds, close any menus on your screen, and press 'A' to retry.",
                             },
                             {
                                 q: "How do I leave a treasure island properly?",
-                                a: "Always leave by walking into the airport terminal and speaking to Orville to fly home. Never press the minus (-) button to quit while visiting. Quitting this way causes a communication error that crashes the island for every other visitor still on it, forcing a full reboot.",
+                                a: "To leave an island safely, walk directly into the airport building and speak with Orville at the counter to fly home. Never press the minus (-) button to force-exit or disconnect your Wi-Fi, as doing so can trigger network errors for other visitors on the island.",
                             },
                             {
                                 q: "What membership tiers does Chopaeng offer?",
-                                a: "Chopaeng offers four tiers via Patreon, Twitch, or YouTube: Chotato (entry, $3/mo), ChoColate (standard, $4/mo), ChoFries (most popular with priority ChoBot, $5/mo), and ChoSoup (all-access VIP with every perk, $10/mo). All paid tiers unlock private member islands, unlimited trips, and a Discord role.",
+                                a: "We offer optional community supporter tiers (Chotato, ChoColate, ChoFries, and ChoSoup) via Patreon, Twitch, or YouTube. Membership tiers provide perks such as priority Discord support, access to member-only island queues, faster bot response times, and special community roles.",
                             },
                             {
                                 q: "Is Animal Crossing: New Horizons required to visit?",
-                                a: "Yes. Animal Crossing: New Horizons (ACNH) on Nintendo Switch is required to fly to any treasure island. You need an active Nintendo Switch Online subscription for online play. The Chopaeng website works on any device for browsing maps and Dodo codes, but the actual island visit happens inside the game.",
+                                a: "Yes. You must own a copy of Animal Crossing: New Horizons on Nintendo Switch along with an active Nintendo Switch Online membership to travel to other islands via Dodo codes. You can browse our website maps on any device.",
                             },
                         ].map((faq) => (
                             <details key={faq.q} className="bg-white rounded-4 shadow-sm border p-4 faq-item" style={{ cursor: 'pointer' }}>
@@ -526,7 +567,7 @@ const Home = () => {
                     <div className="row align-items-center">
                         <div className="col-lg-5 text-center text-lg-start mb-4 mb-lg-0">
                             <h2 className="display-5 fw-black text-white ac-font mb-3">Get Your <br /> Passport</h2>
-                            <p className="text-white opacity-75 fw-bold mb-4">Join the sub squad on Twitch or Discord to unlock the premium Dodo codes.</p>
+                            <p className="text-white opacity-75 fw-bold mb-4">Join the community on Patreon, Twitch, or Discord to unlock priority support and perks.</p>
                             <a href="https://www.patreon.com/cw/chopaeng/membership" target="_blank" className="btn btn-light rounded-pill px-4 py-2 fw-black text-nook shadow-sm"><i className="fa-brands fa-patreon me-2"></i> Subscribe Now</a>
                         </div>
                         <div className="col-lg-7">
@@ -552,18 +593,21 @@ const Home = () => {
                                 </div>
                                 <div className="border-top border-2 border-dashed my-3 opacity-25"></div>
                                 <div className="row fw-bold text-dark small">
-                                    <div className="col-6 mb-2 text-muted text-uppercase x-small">Benefits</div>
+                                    <div className="col-6 mb-2 text-muted text-uppercase x-small">Community Perks</div>
                                     <div className="col-6 mb-2 text-end text-nook">Active</div>
-                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> 24/7 Access</div>
-                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> Request Items, DIYs, or Villagers</div>
-                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> Access to Exclusive Islands</div>
-                                    <div className="col-12"><i className="fa-solid fa-check text-success me-2"></i> Exclusive Discord Role</div>
+                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> 24/7 Island Monitoring</div>
+                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> Priority Villager & Item Matching</div>
+                                    <div className="col-12 mb-2"><i className="fa-solid fa-check text-success me-2"></i> Exclusive Supporter Islands</div>
+                                    <div className="col-12"><i className="fa-solid fa-check text-success me-2"></i> Exclusive Discord Role & Support</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+
+            {/* VISIBLE UNOFFICIAL FAN-SITE DISCLAIMER */}
+            <DisclaimerBanner variant="footer" className="mt-0" />
         </>
     );
 };

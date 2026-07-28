@@ -6,6 +6,7 @@ import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
 import { ACNH_FINDER_API_BASE, DODO_API_BASE } from "../config/api";
 import RevealErrorPopup from "../components/RevealErrorPopup";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
 type FilterKey = "ALL" | IslandCategory;
@@ -299,7 +300,7 @@ const TreasureIslands = () => {
         };
 
         setMeta("name", "description", desc);
-        setMeta("name", "keywords", "ACNH treasure islands, Animal Crossing New Horizons treasure island, treasure island ACNH, ACNH dodo codes, free ACNH items, Animal Crossing treasure island dodo code, ACNH bells, ACNH villagers, ACNH DIYs, free Animal Crossing items");
+        setMeta("name", "keywords", "ACNH treasure islands, Animal Crossing New Horizons treasure island, treasure island ACNH, ACNH dodo codes, community ACNH items, Animal Crossing treasure island dodo code, ACNH bells, ACNH villagers, ACNH DIYs, Animal Crossing cataloging");
         setLink("canonical", url);
 
         setMeta("property", "og:type", "website");
@@ -680,6 +681,9 @@ const TreasureIslands = () => {
                         );
                     })}
                 </div>
+
+                {/* Unofficial Fan-Site Disclaimer Banner */}
+                <DisclaimerBanner />
             </div>
 
             {/* --- MAP MODAL (Unchanged Logic / Minor Style Tweak) --- */}

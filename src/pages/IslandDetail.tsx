@@ -5,6 +5,7 @@ import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
 import { DODO_API_BASE, FINDER_API_BASE } from "../config/api";
 import RevealErrorPopup from "../components/RevealErrorPopup";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 import { loadVillagers } from "../data/villagerDataLoader";
 
 const DODO_PLACEHOLDER = {
@@ -822,6 +823,9 @@ const IslandDetail = () => {
             )}
 
             {revealError && <RevealErrorPopup message={revealError} onClose={() => setRevealError(null)} />}
+
+            {/* VISIBLE UNOFFICIAL FAN-SITE DISCLAIMER */}
+            <DisclaimerBanner variant="footer" style={{ maxWidth: "1050px" }} />
         </div>
     );
 };
