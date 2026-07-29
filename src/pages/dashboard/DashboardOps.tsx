@@ -3,7 +3,7 @@ import { dashboardApi, type DashboardBackupList, type DashboardOpsStatus } from 
 
 const statusColor = (status = "") => {
   if (["ok", "running"].includes(status)) return "text-nook-green";
-  if (["degraded", "starting", "not_selected"].includes(status)) return "dashboard-yellow";
+  if (["degraded", "starting", "not_selected"].includes(status)) return "text-warning";
   return "text-danger";
 };
 
@@ -22,6 +22,17 @@ const bytes = (value: unknown) => {
   if (n >= 1048576) return `${(n / 1048576).toFixed(1)} MB`;
   if (n >= 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${n} B`;
+};
+
+const timeAgo = (dateStr: string) => {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 60) return "just now";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} min ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} hr ago`;
+  return `${Math.floor(diffSec / 86400)} days ago`;
 };
 
 const DashboardOps = () => {
@@ -46,8 +57,22 @@ const DashboardOps = () => {
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(load, 60000);
-    return () => window.clearInterval(timer);
+    let timer = window.setInterval(load, 60000);
+    
+    const handleVisibility = () => {
+      if (document.hidden) {
+        window.clearInterval(timer);
+      } else {
+        load(); // fetch immediately on return
+        timer = window.setInterval(load, 60000);
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [load]);
 
   const maintenance = status?.maintenance || {};
@@ -96,9 +121,9 @@ const DashboardOps = () => {
                   {services.length ? services.map(([name, svc]) => (
                     <tr key={name}>
                       <td className="fw-bold">{name}</td>
-                      <td className={statusColor(svc.status)}>{svc.status || "-"}</td>
+                      <td className={`fw-bold ${statusColor(svc.status)}`}><i className="fa-solid fa-circle me-2" style={{ fontSize: "0.6rem" }} />{svc.status || "-"}</td>
                       <td>{svc.mode || "-"}</td>
-                      <td>{svc.last_heartbeat || "-"}</td>
+                      <td>{timeAgo(svc.last_heartbeat as string)}</td>
                       <td className="small text-muted">{svc.last_error || ""}</td>
                     </tr>
                   )) : <tr><td colSpan={5} className="text-center py-4 text-muted fw-bold">No service heartbeats yet.</td></tr>}
@@ -122,7 +147,7 @@ const DashboardOps = () => {
                   <input
                     className="form-check-input"
                     type="checkbox"
-                    checked={Boolean(maintenance[key])}
+                    checked={Boolean(maintenance[key as keyof typeof maintenance])}
                     disabled={saving}
                     onChange={(event) => saveMaintenance({ [key]: event.target.checked })}
                   />

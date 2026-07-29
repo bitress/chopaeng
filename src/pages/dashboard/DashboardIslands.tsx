@@ -35,13 +35,32 @@ const DashboardIslands = () => {
   }, [load]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
+    const fetchStatus = () => {
       dashboardApi.statusSummary().then((summary) => {
         const statusMap = new Map(summary.islands.map((island) => [island.id, island.status]));
         setIslands((prev) => prev.map((island) => ({ ...island, status: statusMap.get(island.id) || island.status })));
-      }).catch(() => undefined);
-    }, 15000);
-    return () => window.clearInterval(timer);
+      }).catch((err: any) => {
+        if (err?.status === 401 || String(err?.message || "").includes("401")) {
+          setError("Session expired. Please refresh.");
+        }
+      });
+    };
+
+    let timer = window.setInterval(fetchStatus, 15000);
+    const handleVisibility = () => {
+      if (document.hidden) {
+        window.clearInterval(timer);
+      } else {
+        fetchStatus();
+        timer = window.setInterval(fetchStatus, 15000);
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   const counts = useMemo(() => ({

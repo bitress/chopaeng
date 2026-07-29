@@ -42,8 +42,20 @@ const DashboardAnalytics = () => {
   }, [load]);
 
   useEffect(() => {
-    const timer = window.setInterval(load, 60000);
-    return () => window.clearInterval(timer);
+    let timer = window.setInterval(load, 60000);
+    const handleVisibility = () => {
+      if (document.hidden) {
+        window.clearInterval(timer);
+      } else {
+        load();
+        timer = window.setInterval(load, 60000);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [load]);
 
   const authStats = obj(data?.auth_stats);
@@ -216,13 +228,7 @@ const DashboardAnalytics = () => {
         <div className="col-12 col-lg-6"><section className="section-card h-100"><div className="section-card-header"><span><i className="fa-solid fa-plane me-2 dashboard-purple" />Most Active Travelers</span></div><div className="p-3">{renderBarRows(topTravelers, "dashboard-purple-bars")}</div></section></div>
       </div>
 
-      <section className="section-card mb-4">
-        <div className="section-card-header"><span><i className="fa-solid fa-chart-simple me-2 dashboard-blue" />Island Visit Breakdown</span></div>
-        <div className="p-3">{renderBarRows(topIslands, "dashboard-blue-bars")}</div>
-      </section>
-
       <div className="row g-4 mb-4">
-        <div className="col-12 col-lg-8"><section className="section-card h-100"><div className="section-card-header"><span><i className="fa-solid fa-user me-2 dashboard-purple" />Top Travelers - Visit Count</span></div><div className="p-3">{renderBarRows(topTravelers, "dashboard-purple-bars")}</div></section></div>
         <div className="col-12 col-lg-4">
           <section className="section-card h-100">
             <div className="section-card-header"><span><i className="fa-solid fa-chart-pie me-2 dashboard-blue" />Visits by Tier</span></div>

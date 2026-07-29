@@ -39,13 +39,47 @@ const DashboardLogs = () => {
           <table className="db-table">
             <thead><tr><th>User</th><th>Detail</th><th>Time</th></tr></thead>
             <tbody>
-              {data.entries.map((entry, idx) => (
-                <tr key={idx}>
-                  <td className="fw-bold">{String(entry.ign || entry.user_name || "Unknown")}</td>
-                  <td>{String(entry.destination || entry.reason || entry.event || "")}</td>
-                  <td className="text-muted small">{String(entry.timestamp || "")}</td>
+              {data.entries.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center py-4 text-muted fw-bold">
+                    No log entries found.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                data.entries.map((entry, idx) => {
+                  const userName = String(entry.ign || entry.user_name || "Unknown");
+                  const hasTrustLink = Boolean(entry.user_id);
+                  let badge = null;
+                  if (entry.action_type || entry.type) {
+                    const action = String(entry.action_type || entry.type).toUpperCase();
+                    let badgeClass = "badge bg-secondary";
+                    if (["WARN", "KICK"].includes(action)) badgeClass = "badge bg-warning text-dark";
+                    if (["BAN"].includes(action)) badgeClass = "badge bg-danger";
+                    if (["NOTE"].includes(action)) badgeClass = "badge bg-info text-dark";
+                    if (["ADMIT"].includes(action)) badgeClass = "badge bg-success";
+                    badge = <span className={`${badgeClass} me-2`}>{action}</span>;
+                  }
+
+                  return (
+                    <tr key={idx}>
+                      <td className="fw-bold">
+                        {hasTrustLink ? (
+                          <a href={`/dashboard/trust?user_id=${entry.user_id}`} className="text-decoration-none">
+                            {userName}
+                          </a>
+                        ) : (
+                          userName
+                        )}
+                      </td>
+                      <td>
+                        {badge}
+                        {String(entry.destination || entry.reason || entry.event || "")}
+                      </td>
+                      <td className="text-muted small">{String(entry.timestamp || "")}</td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

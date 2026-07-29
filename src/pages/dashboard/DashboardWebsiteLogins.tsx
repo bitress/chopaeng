@@ -17,10 +17,18 @@ const DashboardWebsiteLogins = () => {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [access, setAccess] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const perPage = 25;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [query]);
 
   const params = useMemo(() => {
     const search = new URLSearchParams({
@@ -28,11 +36,11 @@ const DashboardWebsiteLogins = () => {
       per_page: String(perPage),
       access,
     });
-    if (query.trim()) search.set("q", query.trim());
+    if (debouncedQuery.trim()) search.set("q", debouncedQuery.trim());
     if (dateFrom) search.set("from", dateFrom);
     if (dateTo) search.set("to", dateTo);
     return search.toString();
-  }, [access, dateFrom, dateTo, page, query]);
+  }, [access, dateFrom, dateTo, page, debouncedQuery]);
 
   useEffect(() => {
     setError("");

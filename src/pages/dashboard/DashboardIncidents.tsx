@@ -16,7 +16,22 @@ const severityClass = (severity: string) => {
 
 const fmtDate = (value: unknown) => {
   if (typeof value === "number") return new Date(value * 1000).toLocaleString();
+  if (typeof value === "string" && value) {
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) return d.toLocaleString();
+  }
   return String(value || "-");
+};
+
+const timeAgo = (dateStr: string) => {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 60) return "just now";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} min ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} hr ago`;
+  return `${Math.floor(diffSec / 86400)} days ago`;
 };
 
 const DashboardIncidents = () => {
@@ -41,8 +56,20 @@ const DashboardIncidents = () => {
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(load, 60000);
-    return () => window.clearInterval(timer);
+    let timer = window.setInterval(load, 60000);
+    const handleVisibility = () => {
+      if (document.hidden) {
+        window.clearInterval(timer);
+      } else {
+        load();
+        timer = window.setInterval(load, 60000);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [load]);
 
   const updateIncident = async (event: DashboardIncidentEvent, status: string) => {
@@ -132,7 +159,7 @@ const DashboardIncidents = () => {
                         <td className="small fw-bold">{event.kind}</td>
                         <td className="fw-bold">{event.title}</td>
                         <td>{event.status || "new"}</td>
-                        <td className="small">{event.timestamp}</td>
+                        <td className="small">{timeAgo(String(event.timestamp))}</td>
                         <td>
                           {event.user_id ? (
                             <Link className="fw-bold" to={`/dashboard/trust?user_id=${encodeURIComponent(String(event.user_id))}`}>

@@ -19,13 +19,15 @@ const DashboardDatabase = () => {
   const [tablePage, setTablePage] = useState(1);
   const tablePerPage = 15;
 
-  const load = () => dashboardApi.migrationStatus().then((payload) => {
-    setData(payload);
-    const mariadb = asRecord(payload.mariadb);
-    setTruncate(Boolean(mariadb.default_truncate_before_import));
-  }).catch((err) => setError(err.message));
+  const load = useCallback(() => {
+    dashboardApi.migrationStatus().then((payload) => {
+      setData(payload);
+      const mariadb = asRecord(payload.mariadb);
+      setTruncate(Boolean(mariadb.default_truncate_before_import));
+    }).catch((err) => setError(err.message));
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const run = async (dryRun: boolean) => {
     if (!dryRun && !window.confirm("Run the SQLite to MariaDB/MySQL migration now?")) return;

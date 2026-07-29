@@ -68,8 +68,10 @@ const DashboardLayout = () => {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(String(payload?.error || "Refresh failed"));
       setNotice("API cache refresh started.");
+      setTimeout(() => setNotice(""), 4000);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Refresh failed");
+      setTimeout(() => setNotice(""), 4000);
     } finally {
       setRefreshing(false);
     }

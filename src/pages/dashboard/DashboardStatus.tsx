@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import DashboardPagination from "../../components/dashboard/DashboardPagination";
 import { dashboardApi, type DashboardAccessTestResult, type DashboardStatusSummary } from "../../lib/dashboardApi";
 
+const statusClass = (status: string) => {
+  if (status === "ONLINE") return "status-online";
+  if (status === "SUB ONLY") return "status-sub";
+  if (status === "REFRESHING") return "status-refreshing";
+  return "status-offline";
+};
+
 const DashboardStatus = () => {
   const [data, setData] = useState<DashboardStatusSummary | null>(null);
   const [testResult, setTestResult] = useState<DashboardAccessTestResult | null>(null);
@@ -74,7 +81,7 @@ const DashboardStatus = () => {
               {pagedIslands.map((island) => (
                 <tr key={island.id}>
                   <td className="fw-bold">{island.name}</td>
-                  <td>{island.status}</td>
+                  <td><span className={`status-pill ${statusClass(island.status)} dashboard-static-pill`}>{island.status}</span></td>
                   <td>
                     <div className="d-flex flex-wrap gap-1">
                       <span className={`badge rounded-pill ${(island.access_warnings?.length || 0) > 0 ? "bg-warning-subtle text-warning-emphasis border border-warning-subtle" : "badge-auth"}`}>
