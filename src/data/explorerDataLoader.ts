@@ -1,4 +1,3 @@
-import explorerData from './explorer.json';
 import type { CatalogEntity } from './commandBuilderData';
 
 export interface ExplorerItem {
@@ -39,10 +38,21 @@ export interface ExplorerItem {
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/150?text=No+Image';
 
-export const loadExplorerItems = (): CatalogEntity[] => {
+let _fetchPromise: Promise<any> | null = null;
+
+export const fetchExplorerData = async (): Promise<any> => {
+    if (!_fetchPromise) {
+        _fetchPromise = fetch('/explorer.json').then((res) => {
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.json();
+        });
+    }
+    return _fetchPromise;
+};
+
+export const loadExplorerItems = async (): Promise<CatalogEntity[]> => {
     try {
-        // explorer.json has structure { items: [...] }
-        const data = explorerData as any;
+        const data = await fetchExplorerData();
         const items: ExplorerItem[] = Array.isArray(data) ? data : data.items || [];
         
         return items.map((item) => {
@@ -70,4 +80,3 @@ export const loadExplorerItems = (): CatalogEntity[] => {
     }
 };
 
-export default explorerData;

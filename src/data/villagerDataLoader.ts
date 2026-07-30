@@ -1,5 +1,5 @@
 import type { CatalogEntity } from './commandBuilderData';
-import explorerData from './explorer.json';
+import { fetchExplorerData } from './explorerDataLoader';
 
 type VillagerJson = {
     id: string;
@@ -27,9 +27,9 @@ const toVillagerEntity = (villager: VillagerJson): CatalogEntity => ({
     personality: villager.personality
 });
 
-export const loadVillagers = (): CatalogEntity[] => {
+export const loadVillagers = async (): Promise<CatalogEntity[]> => {
     try {
-        const data = explorerData as any;
+        const data = await fetchExplorerData();
         const villagers: VillagerJson[] = Array.isArray(data) ? data : data.villagers || [];
         return Array.isArray(villagers) ? villagers.map(toVillagerEntity) : [];
     } catch (error) {
@@ -37,3 +37,4 @@ export const loadVillagers = (): CatalogEntity[] => {
         return [];
     }
 };
+

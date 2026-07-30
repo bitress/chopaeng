@@ -101,6 +101,7 @@ const TreasureIslands = () => {
     const [revealError, setRevealError] = useState<string | null>(null);
     const [selectedMap, setSelectedMap] = useState<IslandData | null>(null);
     const revealingIdsRef = useRef<Set<string>>(new Set());
+    const lastRevealTimestamps = useRef<Map<string, number>>(new Map());
 
     const [search, setSearch] = useState<string>("");
     const [searchMode, setSearchMode] = useState<SearchMode>("FILTER");
@@ -197,9 +198,14 @@ const TreasureIslands = () => {
             login();
             return;
         }
-        if (revealingIdsRef.current.size > 0) return;
+        // Debounce: ignore rapid re-reveals within 2 seconds per island
+        const now = Date.now();
+        const lastReveal = lastRevealTimestamps.current.get(island.id) ?? 0;
+        if (now - lastReveal < 2000) return;
+        if (revealingIdsRef.current.has(island.id)) return;
 
         // Fetch dodo code from backend
+        lastRevealTimestamps.current.set(island.id, now);
         revealingIdsRef.current.add(island.id);
         setRevealingId(island.id);
         try {
@@ -576,7 +582,7 @@ const TreasureIslands = () => {
                                                     ))}
 
                                                 {island.items.length > 3 && (
-                                                    <span className="loot-pill more badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">+{island.items.length - 4}</span>
+                                                    <span className="loot-pill more badge bg-light text-dark fw-bold border border-light-subtle rounded-pill px-2 py-1 x-small">+{island.items.length - 3}</span>
                                                 )}
                                             </div>
 

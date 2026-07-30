@@ -21,7 +21,7 @@ const BUFFER_OPTIONS = {
     '08A4': { id: '08A4', name: '99,000 Bells', icon: 'https://dodo.ac/np/images/1/1e/99k_Bells_NH_Inv_Icon.png' },
 };
 
-const villagerEntities = loadVillagers();
+// Villagers are loaded asynchronously when needed
 
 const parsePocketEntries = (key: string): PocketEntry[] => {
     try {
@@ -62,13 +62,10 @@ const parseSavedVillagerIds = (): string[] => {
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-            return parsed.filter((entry) => typeof entry === 'string' && villagerEntities.some((v) => v.id === entry));
+            return parsed.filter((entry) => typeof entry === 'string');
         }
         if (typeof parsed === 'string') {
-            const matchById = villagerEntities.find((v) => v.id === parsed);
-            if (matchById) return [parsed];
-            const matchByName = villagerEntities.find((v) => v.name.toLowerCase() === parsed.toLowerCase());
-            return matchByName ? [matchByName.id] : [];
+            return [parsed];
         }
         return [];
     } catch {
@@ -94,6 +91,34 @@ export const useCommandBuilderPockets = () => {
     const [copyOrderStatus, setCopyOrderStatus] = useState('Copy order');
     const [copyDropStatus, setCopyDropStatus] = useState('Copy drop');
     const [copyInjectVillagerStatus, setCopyInjectVillagerStatus] = useState('Copy inject');
+    const [villagerEntities, setVillagerEntities] = useState<CatalogEntity[]>([]);
+
+    // Asynchronously validate/migrate villager IDs against the catalog
+    useEffect(() => {
+        let mounted = true;
+        loadVillagers().then(villagers => {
+            if (!mounted) return;
+            setVillagerEntities(villagers);
+            setVillagerIds(prev => {
+                if (prev.length === 0) return prev;
+                const validated = prev.map(idOrName => {
+                    const matchById = villagers.find(v => v.id === idOrName);
+                    if (matchById) return matchById.id;
+                    const matchByName = villagers.find(v => v.name.toLowerCase() === idOrName.toLowerCase());
+                    if (matchByName) return matchByName.id;
+                    return null;
+                }).filter(Boolean) as string[];
+                
+                const uniqueValidated = Array.from(new Set(validated));
+                // Only update if it actually changed to avoid unnecessary renders
+                if (uniqueValidated.length !== prev.length || !uniqueValidated.every((v, i) => v === prev[i])) {
+                    return uniqueValidated;
+                }
+                return prev;
+            });
+        });
+        return () => { mounted = false; };
+    }, []);
 
     // Persist to localStorage
     useEffect(() => {
@@ -259,8 +284,8 @@ export const useCommandBuilderPockets = () => {
     const clearVillagers = useCallback(() => setVillagerIds([]), []);
 
     const selectedVillagers = useMemo(
-        () => villagerEntities.filter((v) => villagerIds.includes(v.id)),
-        [villagerIds]
+        () => villagerEntities.filter((v: CatalogEntity) => villagerIds.includes(v.id)),
+        [villagerIds, villagerEntities]
     );
 
     // ── Command text ───────────────────────────────────────────────────────
@@ -279,7 +304,7 @@ export const useCommandBuilderPockets = () => {
     const injectVillagerCommandText = useMemo(() => {
         if (selectedVillagers.length === 0) return '';
         if (selectedVillagers.length === 1) return `!injectvillager ${selectedVillagers[0].name}`;
-        return `!mvi ${selectedVillagers.map((villager) => villager.name).join(' ')}`;
+        return `!mvi ${selectedVillagers.map((villager: CatalogEntity) => villager.name).join(' ')}`;
     }, [selectedVillagers]);
 
     // ── Copy handlers ──────────────────────────────────────────────────────

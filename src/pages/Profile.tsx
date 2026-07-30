@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { DataTable } from "simple-datatables";
-import "simple-datatables/dist/style.css";
 import { DODO_API_BASE } from "../config/api";
 import { getAuthToken } from "../context/authToken";
 import { useAuth } from "../context/useAuth";
@@ -473,20 +471,29 @@ const PaginatedTable = ({ columns, rows, searchable = true, perPage = 5 }: Pagin
     useEffect(() => {
         if (!tableRef.current || rows.length === 0) return;
 
-        const dataTable = new DataTable(tableRef.current, {
-            searchable,
-            perPage,
-            perPageSelect: [5, 10, 25],
-            fixedHeight: false,
-            labels: {
-                placeholder: "Search...",
-                perPage: "rows per page",
-                noRows: "No rows found",
-                info: "Showing {start} to {end} of {rows} rows",
-            },
+        let dataTable: import('simple-datatables').DataTable | undefined;
+
+        // Lazy-load simple-datatables and its CSS only when a table is actually rendered
+        Promise.all([
+            import('simple-datatables'),
+            import('simple-datatables/dist/style.css'),
+        ]).then(([{ DataTable }]) => {
+            if (!tableRef.current) return;
+            dataTable = new DataTable(tableRef.current, {
+                searchable,
+                perPage,
+                perPageSelect: [5, 10, 25],
+                fixedHeight: false,
+                labels: {
+                    placeholder: "Search...",
+                    perPage: "rows per page",
+                    noRows: "No rows found",
+                    info: "Showing {start} to {end} of {rows} rows",
+                },
+            });
         });
 
-        return () => dataTable.destroy();
+        return () => dataTable?.destroy();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tableKey, searchable, perPage, rows.length]);
 

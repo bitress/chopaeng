@@ -7,6 +7,7 @@ import { DODO_API_BASE, FINDER_API_BASE } from "../config/api";
 import RevealErrorPopup from "../components/RevealErrorPopup";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import { loadVillagers } from "../data/villagerDataLoader";
+import type { CatalogEntity } from "../data/commandBuilderData";
 
 const DODO_PLACEHOLDER = {
     GETTING: "GETTIN'",
@@ -23,7 +24,7 @@ const ISLAND_CATEGORY = {
     ORDER: "order",
 } as const;
 
-const VILLAGERS_LIST = loadVillagers();
+// Villagers are loaded asynchronously inside components that need them
 
 const PERSONALITY_COLORS: Record<string, { ring: string; bg: string; text: string }> = {
     lazy: { ring: "#E8A33D", bg: "#FBF0DD", text: "#8A5A17" },
@@ -66,8 +67,16 @@ function getPersonalityStyle(personality: string | undefined, seed: string) {
 export const ResidentVillagerPill = ({ villagerName }: { villagerName: string }) => {
     const navigate = useNavigate();
 
-    const matched = useMemo(() => {
-        return VILLAGERS_LIST.find((v) => v.name.toLowerCase() === villagerName.toLowerCase());
+    const [matched, setMatched] = useState<CatalogEntity | null>(null);
+
+    useEffect(() => {
+        let mounted = true;
+        loadVillagers().then(villagers => {
+            if (mounted) {
+                setMatched(villagers.find((v) => v.name.toLowerCase() === villagerName.toLowerCase()) || null);
+            }
+        });
+        return () => { mounted = false; };
     }, [villagerName]);
 
     const fallbackImg =

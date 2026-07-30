@@ -43,9 +43,7 @@ const getAcnhcdnUrl = (url: string | undefined): string => {
     return url;
 };
 
-const explorerItems = loadExplorerItems();
-const villagerEntities = loadVillagers();
-const catalogEntities = [...explorerItems, ...villagerEntities];
+// Data is now loaded asynchronously inside the component
 
 const CommandBuilder = () => {
     const navigate = useNavigate();
@@ -69,6 +67,36 @@ const CommandBuilder = () => {
     const [searchInput, setSearchInput] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+
+    // --- Data State ---
+    const [catalogEntities, setCatalogEntities] = useState<CatalogEntity[]>([]);
+    const [explorerItems, setExplorerItems] = useState<CatalogEntity[]>([]);
+    const [villagerEntities, setVillagerEntities] = useState<CatalogEntity[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    useEffect(() => {
+        let mounted = true;
+        const loadData = async () => {
+            setIsLoadingData(true);
+            try {
+                const [items, villagers] = await Promise.all([
+                    loadExplorerItems(),
+                    loadVillagers()
+                ]);
+                if (mounted) {
+                    setExplorerItems(items);
+                    setVillagerEntities(villagers);
+                    setCatalogEntities([...items, ...villagers]);
+                }
+            } catch (err) {
+                console.error("Failed to load catalog data", err);
+            } finally {
+                if (mounted) setIsLoadingData(false);
+            }
+        };
+        loadData();
+        return () => { mounted = false; };
+    }, []);
 
     const {
         orderItems,
@@ -225,7 +253,7 @@ const CommandBuilder = () => {
                                 <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-4 text-muted"></i>
                                 <input
                                     type="search"
-                                    className="form-control bg-white rounded-pill border-0 shadow-sm ps-5 pe-5 py-2"
+                                    className="form-control bg-white rounded-pill border shadow-sm ps-5 pe-5 py-2"
                                     placeholder="Search catalog (e.g. Ironwood)..."
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
@@ -372,7 +400,13 @@ const CommandBuilder = () => {
                             </div>
 
                             <div className="row g-3">
-                                {filteredItems.length === 0 ? (
+                                {isLoadingData ? (
+                                    <div className="col-12 py-5 text-center">
+                                        <div className="spinner-border text-success mb-3" role="status"></div>
+                                        <h3 className="h5 fw-bold text-muted">Loading Catalog...</h3>
+                                        <p className="small text-muted">Fetching items and villagers...</p>
+                                    </div>
+                                ) : filteredItems.length === 0 ? (
                                     <div className="col-12">
                                         <div className="bg-white rounded-5 border p-5 text-center text-muted shadow-sm">
                                             <div className="icon-circle bg-light mx-auto mb-3 text-secondary">
@@ -399,7 +433,7 @@ const CommandBuilder = () => {
                                         return (
                                             <div className="col-6 col-md-4 col-xl-3" key={item.id}>
                                                 <div
-                                                    className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${cardSelected ? 'border-success border-2' : 'border-light'} cursor-pointer transition-all`}
+                                                    className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${cardSelected ? 'border-success border-2' : 'border-light'} cursor-pointer transition-all hover-scale`}
                                                     onClick={() => openDetail(item)}
                                                     role="button"
                                                     tabIndex={0}

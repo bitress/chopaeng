@@ -72,6 +72,9 @@ const CommandBuilderSummary = ({
     onClearVillagers,
     canIncreaseOrder = true,
     canIncreaseDrop = true,
+    onFillTickets,
+    onFillCrowns,
+    onFillBells,
     showTerminal = false,
 }: CommandBuilderSummaryProps) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -102,7 +105,7 @@ const CommandBuilderSummary = ({
     }, [orderCommandText, dropCommandText, onCopyOrder, onCopyDrop]);
 
     return (
-        <div className="bg-cream rounded-4 border-0 shadow p-4" style={{ borderTop: '4px solid #28a745' }}>
+        <div className="bg-cream rounded-4 border-0 shadow-sm p-4" style={{ borderTop: '4px solid var(--nook-green)' }}>
             {/* Screen-reader announcements for copy actions */}
             <div aria-live="polite" className="visually-hidden">
                 {[copyOrderStatus, copyDropStatus, copyInjectVillagerStatus].filter(Boolean).join(". ")}
@@ -117,18 +120,16 @@ const CommandBuilderSummary = ({
                 <div className="d-flex gap-2 flex-wrap align-items-center">
                     <span
                         className={`badge rounded-pill fw-bold x-small transition-all ${orderFull ? 'bg-danger' : 'bg-nook-green'} text-white`}
-                        style={{ boxShadow: orderFull ? '0 3px 8px rgba(220,53,69,0.2)' : '0 3px 8px rgba(40,167,69,0.2)' }}
                     >
                         Order {orderCount} / {ORDER_BOT_MAX}
                     </span>
                     <span
                         className={`badge rounded-pill fw-bold x-small transition-all ${dropFull ? 'bg-danger' : dropCount > 0 ? 'bg-info text-dark' : 'bg-light text-dark border'}`}
-                        style={{ boxShadow: dropFull ? '0 3px 8px rgba(220,53,69,0.2)' : dropCount > 0 ? '0 3px 8px rgba(91,192,222,0.2)' : 'none' }}
                     >
                         Drop {dropCount} / {DROP_BOT_MAX}
                     </span>
                     {villagerCount > 0 && (
-                        <span className="badge rounded-pill fw-bold x-small bg-warning text-dark" style={{ boxShadow: '0 3px 8px rgba(255,193,7,0.2)' }}>
+                        <span className="badge rounded-pill fw-bold x-small bg-warning text-dark">
                             Villagers {villagerCount}
                         </span>
                     )}
@@ -196,17 +197,17 @@ const CommandBuilderSummary = ({
                         {/* ── Order Section ────────────────────────────────── */}
                         <div>
                             <div className="d-flex align-items-center justify-content-between mb-2">
-                                <span className="badge bg-nook-green text-white rounded-pill fw-bold x-small px-2" style={{ boxShadow: '0 2px 6px rgba(40,167,69,0.2)' }}>
+                                <span className="badge bg-nook-green text-white rounded-pill fw-bold x-small px-3 py-2 shadow-sm">
                                     <i className="fa-solid fa-basket-shopping me-1"></i>Order Bot
                                 </span>
                                 {onClearOrderPockets && orderPockets.length > 0 && (
-                                    <button type="button" onClick={onClearOrderPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all" style={{ fontSize: '0.7rem', padding: '2px 10px' }}>
+                                    <button type="button" onClick={onClearOrderPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all fw-bold" style={{ fontSize: '0.7rem', padding: '4px 12px' }}>
                                         <i className="fa-solid fa-trash-can me-1"></i>Clear
                                     </button>
                                 )}
                             </div>
                             {orderPockets.length === 0 ? (
-                                <div className="text-center py-2 rounded-3 bg-light text-muted small" style={{ border: '1px dashed #ccc' }}>No order items yet</div>
+                                <div className="text-center py-3 rounded-4 bg-white text-muted small shadow-sm border border-light">No order items yet</div>
                             ) : (
                                 <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
                                     {orderPockets.map((pocket) => (
@@ -265,22 +266,46 @@ const CommandBuilderSummary = ({
                                     ))}
                                 </div>
                             )}
+
+                            {/* Quick Fill Buttons */}
+                            {canIncreaseOrder && (onFillTickets || onFillCrowns || onFillBells) && (
+                                <div className="mt-3">
+                                    <span className="tiny-text fw-bold text-muted mb-2 d-block text-uppercase tracking-wide">Quick Fill Remaining Slots</span>
+                                    <div className="d-flex flex-column gap-2">
+                                        {onFillTickets && (
+                                            <button type="button" onClick={onFillTickets} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold w-100 text-start px-3 py-2">
+                                                <i className="fa-solid fa-ticket me-2 text-primary"></i>Fill with Nook Miles Tickets
+                                            </button>
+                                        )}
+                                        {onFillCrowns && (
+                                            <button type="button" onClick={onFillCrowns} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold w-100 text-start px-3 py-2">
+                                                <i className="fa-solid fa-crown me-2 text-warning"></i>Fill with Royal Crowns
+                                            </button>
+                                        )}
+                                        {onFillBells && (
+                                            <button type="button" onClick={onFillBells} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold w-100 text-start px-3 py-2">
+                                                <i className="fa-solid fa-sack-dollar me-2 text-success"></i>Fill with 99,000 Bells
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* ── Drop Section ─────────────────────────────────── */}
                         <div>
                             <div className="d-flex align-items-center justify-content-between mb-2">
-                                <span className="badge bg-info text-dark rounded-pill fw-bold x-small px-2" style={{ boxShadow: '0 2px 6px rgba(91,192,222,0.2)' }}>
+                                <span className="badge bg-info text-dark rounded-pill fw-bold x-small px-3 py-2 shadow-sm">
                                     <i className="fa-solid fa-box-open me-1"></i>Drop Bot
                                 </span>
                                 {onClearDropPockets && dropPockets.length > 0 && (
-                                    <button type="button" onClick={onClearDropPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all" style={{ fontSize: '0.7rem', padding: '2px 10px' }}>
+                                    <button type="button" onClick={onClearDropPockets} className="btn btn-sm btn-outline-danger rounded-pill transition-all fw-bold" style={{ fontSize: '0.7rem', padding: '4px 12px' }}>
                                         <i className="fa-solid fa-trash-can me-1"></i>Clear
                                     </button>
                                 )}
                             </div>
                             {dropPockets.length === 0 ? (
-                                <div className="text-center py-2 rounded-3 bg-light text-muted small" style={{ border: '1px dashed #ccc' }}>No drop items yet</div>
+                                <div className="text-center py-3 rounded-4 bg-white text-muted small shadow-sm border border-light">No drop items yet</div>
                             ) : (
                                 <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
                                     {dropPockets.map((pocket) => (
@@ -344,12 +369,12 @@ const CommandBuilderSummary = ({
                         {/* ── Villagers ──────────────────────────────────────── */}
                         {savedVillagers.length > 0 && (
                             <div>
-                                <div className="d-flex align-items-center justify-content-between mb-2">
-                                    <span className="badge bg-warning text-dark rounded-pill fw-bold x-small px-2" style={{ boxShadow: '0 2px 6px rgba(255,193,7,0.2)' }}>
+                                <div className="d-flex align-items-center justify-content-between mb-2 mt-3">
+                                    <span className="badge bg-warning text-dark rounded-pill fw-bold x-small px-3 py-2 shadow-sm">
                                         <i className="fa-solid fa-user-group me-1"></i>Villagers
                                     </span>
                                     {onClearVillagers && (
-                                        <button type="button" onClick={onClearVillagers} className="btn btn-sm btn-outline-warning rounded-pill transition-all" style={{ fontSize: '0.7rem', padding: '2px 10px' }}>
+                                        <button type="button" onClick={onClearVillagers} className="btn btn-sm btn-outline-warning rounded-pill transition-all fw-bold" style={{ fontSize: '0.7rem', padding: '4px 12px' }}>
                                             <i className="fa-solid fa-trash-can-arrow-up me-1"></i>Clear
                                         </button>
                                     )}
@@ -393,17 +418,9 @@ const CommandBuilderSummary = ({
                         <button
                             type="button"
                             onClick={onCopyOrder}
-                            className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
+                            className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all btn-nook text-white shadow-sm"
                             disabled={!orderCommandText}
                             title={orderCommandText ? undefined : 'Add order items to enable copying'}
-                            style={{
-                                background: '#28a745',
-                                color: 'white',
-                                border: 'none',
-                                boxShadow: orderCommandText ? '0 4px 12px rgba(40,167,69,0.3)' : 'none'
-                            }}
-                            onMouseEnter={(e) => !orderCommandText ? null : (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 6px 16px rgba(40,167,69,0.4)')}
-                            onMouseLeave={(e) => !orderCommandText ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.3)')}
                         >
                             <i className={`fa-solid ${copyOrderStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                             {copyOrderStatus === 'Copied!' ? 'Order Command Copied!' : 'Copy Order Command'}
@@ -411,17 +428,10 @@ const CommandBuilderSummary = ({
                         <button
                             type="button"
                             onClick={onCopyDrop}
-                            className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
+                            className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all shadow-sm text-dark border-0"
                             disabled={!dropCommandText}
                             title={dropCommandText ? undefined : 'Add drop items to enable copying'}
-                            style={{
-                                background: '#5bc0de',
-                                color: 'white',
-                                border: 'none',
-                                boxShadow: dropCommandText ? '0 4px 12px rgba(91,192,222,0.3)' : 'none'
-                            }}
-                            onMouseEnter={(e) => !dropCommandText ? null : (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 6px 16px rgba(91,192,222,0.4)')}
-                            onMouseLeave={(e) => !dropCommandText ? null : (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 12px rgba(91,192,222,0.3)')}
+                            style={{ background: '#5bc0de' }}
                         >
                             <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                             {copyDropStatus === 'Copied!' ? 'Drop Command Copied!' : 'Copy Drop Command'}
@@ -432,7 +442,7 @@ const CommandBuilderSummary = ({
                             </p>
                         )}
                         {savedVillagers.length > 0 && (
-                            <div className="p-3 rounded-4 bg-dark text-info font-monospace small" style={{ border: '1px solid #333', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(34,211,238,0.15)' }}>
+                            <div className="p-3 rounded-4 bg-white text-dark font-monospace small shadow-sm" style={{ border: '2px solid #ffc107', whiteSpace: 'pre-wrap' }}>
                                 <div className="mb-2 d-flex align-items-center justify-content-between">
                                     <span className="badge bg-warning text-dark rounded-pill fw-bold">👤 Villager Request</span>
                                 </div>
@@ -443,14 +453,9 @@ const CommandBuilderSummary = ({
                             <button
                                 type="button"
                                 onClick={onCopyInjectVillager}
-                                className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
+                                className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all shadow-sm text-dark border-0 mt-2"
                                 disabled={!injectVillagerCommandText}
-                                style={{
-                                    background: '#ffc107',
-                                    color: 'white',
-                                    border: 'none',
-                                    boxShadow: injectVillagerCommandText ? '0 4px 12px rgba(255,193,7,0.3)' : 'none'
-                                }}
+                                style={{ background: '#ffc107' }}
                             >
                                 <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                                 {copyInjectVillagerStatus === 'Copied!' ? 'Villager Request Copied!' : 'Copy Villager Request'}
@@ -462,34 +467,26 @@ const CommandBuilderSummary = ({
 
             {/* ── Terminal mode ─────────────────────────────────────────── */}
             {showTerminal && (
-                <div className="terminal-window shadow-lg rounded-4" style={{ overflow: 'hidden', border: '2px solid #1e7e34' }}>
-                    <div className="terminal-header" style={{ background: '#1e7e34', padding: '12px 16px' }}>
-                        <div className="terminal-dot r"></div>
-                        <div className="terminal-dot y"></div>
-                        <div className="terminal-dot g"></div>
-                        <span className="ms-3 font-monospace tracking-wide opacity-75 fw-bold text-white" style={{ fontSize: '0.85rem' }}>🏝️ nook-os terminal</span>
+                <div className="terminal-window shadow-sm rounded-4" style={{ overflow: 'hidden', border: '2px solid var(--nook-green)' }}>
+                    <div className="terminal-header d-flex align-items-center" style={{ background: 'var(--nook-green)', padding: '12px 16px' }}>
+                        <i className="fa-solid fa-terminal text-white me-2"></i>
+                        <span className="font-monospace tracking-wide fw-bold text-white" style={{ fontSize: '0.85rem' }}>nook-os terminal</span>
                     </div>
-                    <div className="p-4" style={{ background: '#0a0e0a' }}>
+                    <div className="p-4 bg-white">
                         {/* Order Bot */}
                         <div className="mb-4">
                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                <span className="badge bg-success text-white rounded-pill fw-bold font-monospace" style={{ boxShadow: '0 3px 8px rgba(40,167,69,0.3)' }}>Order Bot</span>
+                                <span className="badge bg-success text-white rounded-pill fw-bold font-monospace shadow-sm">Order Bot</span>
                             </div>
-                            <div className="bg-dark rounded-3 p-3 mb-3 font-monospace small text-success transition-all" style={{ minHeight: '70px', border: '1px solid #333', whiteSpace: 'pre-wrap', color: '#4ade80', textShadow: '0 0 8px rgba(74,222,128,0.3)' }}>
-                                {orderCommandText || <span className="opacity-50">&gt; Waiting for items or villager...</span>}
+                            <div className="bg-light rounded-4 p-3 mb-3 font-monospace small text-dark transition-all border shadow-sm" style={{ minHeight: '70px', whiteSpace: 'pre-wrap' }}>
+                                {orderCommandText || <span className="text-muted">&gt; Waiting for items or villager...</span>}
                             </div>
                             <button
                                 type="button"
-                                className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
+                                className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all btn-nook text-white shadow-sm"
                                 onClick={onCopyOrder}
                                 disabled={!orderCommandText}
                                 title="Ctrl+Shift+O"
-                                style={{
-                                    background: '#28a745',
-                                    color: 'white',
-                                    border: 'none',
-                                    boxShadow: orderCommandText ? '0 4px 12px rgba(40,167,69,0.3)' : 'none'
-                                }}
                             >
                                 <i className={`fa-solid ${copyOrderStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                                 {copyOrderStatus === 'Copied!' ? 'Copied!' : 'Copy Order'}
@@ -498,25 +495,20 @@ const CommandBuilderSummary = ({
                         </div>
 
                         {/* Drop Bot */}
-                        <div className="border-top border-secondary pt-4">
+                        <div className="border-top pt-4">
                             <div className="d-flex justify-content-between align-items-center mb-3">
-                                <span className="badge bg-info text-dark rounded-pill fw-bold font-monospace" style={{ boxShadow: '0 3px 8px rgba(91,192,222,0.3)' }}>Drop Bot</span>
+                                <span className="badge bg-info text-dark rounded-pill fw-bold font-monospace shadow-sm">Drop Bot</span>
                             </div>
-                            <div className="bg-dark rounded-3 p-3 mb-3 font-monospace small text-info transition-all" style={{ minHeight: '70px', border: '1px solid #333', whiteSpace: 'pre-wrap', color: '#22d3ee', textShadow: '0 0 8px rgba(34,211,238,0.3)' }}>
-                                {dropCommandText || <span className="opacity-50">&gt; Waiting for items...</span>}
+                            <div className="bg-light rounded-4 p-3 mb-3 font-monospace small text-dark transition-all border shadow-sm" style={{ minHeight: '70px', whiteSpace: 'pre-wrap' }}>
+                                {dropCommandText || <span className="text-muted">&gt; Waiting for items...</span>}
                             </div>
                             <button
                                 type="button"
-                                className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all"
+                                className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all shadow-sm text-dark border-0"
                                 onClick={onCopyDrop}
                                 disabled={!dropCommandText}
                                 title="Ctrl+Shift+D"
-                                style={{
-                                    background: '#5bc0de',
-                                    color: 'white',
-                                    border: 'none',
-                                    boxShadow: dropCommandText ? '0 4px 12px rgba(91,192,222,0.3)' : 'none'
-                                }}
+                                style={{ background: '#5bc0de' }}
                             >
                                 <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                                 {copyDropStatus === 'Copied!' ? 'Copied!' : 'Copy Drop'}
@@ -525,25 +517,20 @@ const CommandBuilderSummary = ({
 
                             {/* Inject Villager */}
                             {savedVillagers.length > 0 && (
-                                <div className="bg-dark rounded-3 p-3 mt-3 font-monospace small text-warning" style={{ border: '1px solid #665200', whiteSpace: 'pre-wrap', boxShadow: '0 2px 6px rgba(255,193,7,0.15)' }}>
+                                <div className="bg-light rounded-4 p-3 mt-3 font-monospace small text-dark border shadow-sm" style={{ whiteSpace: 'pre-wrap' }}>
                                     <div className="d-flex justify-content-between align-items-center mb-2">
                                         <span className="badge bg-warning text-dark rounded-pill fw-bold">Villager Bot</span>
                                     </div>
-                                    {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villagers...</span>}
+                                    {injectVillagerCommandText || <span className="text-muted">&gt; Waiting for villagers...</span>}
                                 </div>
                             )}
                             {savedVillagers.length > 0 && (
                                 <button
                                     type="button"
-                                    className="btn w-100 rounded-pill py-2 fw-bold btn-sm transition-all mt-2"
+                                    className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all shadow-sm text-dark border-0 mt-2"
                                     onClick={onCopyInjectVillager}
                                     disabled={!injectVillagerCommandText}
-                                    style={{
-                                        background: '#ffc107',
-                                        color: 'white',
-                                        border: 'none',
-                                        boxShadow: injectVillagerCommandText ? '0 4px 12px rgba(255,193,7,0.3)' : 'none'
-                                    }}
+                                    style={{ background: '#ffc107' }}
                                 >
                                     <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
                                     {copyInjectVillagerStatus === 'Copied!' ? 'Copied!' : 'Copy Villager Request'}

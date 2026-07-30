@@ -61,8 +61,32 @@ const CatalogDetail = () => {
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const variantIdParam = searchParams.get('variantId') || '';
 
-    const items = useMemo(() => loadExplorerItems(), []);
-    const villagers = useMemo(() => loadVillagers(), []);
+    const [items, setItems] = useState<CatalogEntity[]>([]);
+    const [villagers, setVillagers] = useState<CatalogEntity[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    useEffect(() => {
+        let mounted = true;
+        const loadData = async () => {
+            setIsLoadingData(true);
+            try {
+                const [loadedItems, loadedVillagers] = await Promise.all([
+                    loadExplorerItems(),
+                    loadVillagers()
+                ]);
+                if (mounted) {
+                    setItems(loadedItems);
+                    setVillagers(loadedVillagers);
+                }
+            } catch (err) {
+                console.error("Failed to load catalog data", err);
+            } finally {
+                if (mounted) setIsLoadingData(false);
+            }
+        };
+        loadData();
+        return () => { mounted = false; };
+    }, []);
     const type = entityType === 'villager' ? 'villager' : 'item';
     const entry = useMemo<CatalogEntity | null>(() => {
         if (!id) return null;
@@ -180,6 +204,17 @@ const CatalogDetail = () => {
             document.title = 'Command Builder';
         };
     }, [entry]);
+
+    if (isLoadingData) {
+        return (
+            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-pattern font-nunito py-5">
+                <div className="text-center">
+                    <div className="spinner-border text-success mb-3" role="status"></div>
+                    <h3 className="h5 fw-bold text-muted">Loading Entry...</h3>
+                </div>
+            </div>
+        );
+    }
 
     if (!entry) {
         return (
@@ -329,7 +364,7 @@ const CatalogDetail = () => {
                             </div>
                         )}
 
-                        <div className="bg-cream rounded-4 border-0 shadow overflow-hidden mb-4" style={{ borderTop: '4px solid #28a745' }}>
+                        <div className="bg-cream rounded-4 border-0 shadow-sm overflow-hidden mb-4" style={{ borderTop: '4px solid var(--nook-green)' }}>
                             <div className="ratio ratio-4x3 bg-light p-4 position-relative">
                                 <img
                                     src={entry.entityType === 'villager' ? (villagerData?.nh_details?.image_url || villagerData?.image_url || entry.image) : detailImage}
@@ -403,7 +438,7 @@ const CatalogDetail = () => {
 
                                         <div className="row g-3 mb-5">
                                             <div className="col-6 col-md-3">
-                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                <div className="bg-white rounded-4 p-4 h-100 border shadow-sm hover-scale">
                                                     <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                         <i className="fa-solid fa-tag opacity-50"></i>Category
                                                     </span>
@@ -411,7 +446,7 @@ const CatalogDetail = () => {
                                                 </div>
                                             </div>
                                             <div className="col-6 col-md-3">
-                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                <div className="bg-white rounded-4 p-4 h-100 border shadow-sm hover-scale">
                                                     <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                         <i className="fa-solid fa-palette opacity-50"></i>Theme
                                                     </span>
@@ -419,7 +454,7 @@ const CatalogDetail = () => {
                                                 </div>
                                             </div>
                                             <div className="col-6 col-md-3">
-                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                <div className="bg-white rounded-4 p-4 h-100 border shadow-sm hover-scale">
                                                     <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                         <i className="fa-solid fa-layer-group opacity-50"></i>Series
                                                     </span>
@@ -427,7 +462,7 @@ const CatalogDetail = () => {
                                                 </div>
                                             </div>
                                             <div className="col-6 col-md-3">
-                                                <div className="bg-white rounded-4 p-4 h-100 border-2 border-success border-opacity-10 transition-all" style={{ boxShadow: '0 2px 6px rgba(40, 167, 69, 0.08)' }}>
+                                                <div className="bg-white rounded-4 p-4 h-100 border shadow-sm hover-scale">
                                                     <span className="x-small fw-bold text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                         <i className="fa-solid fa-swatchbook opacity-50"></i>Colour
                                                     </span>
