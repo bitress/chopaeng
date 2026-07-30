@@ -476,22 +476,30 @@ const CommandBuilder = () => {
                                                             <div className="d-flex gap-2">
                                                                 {/* Order Button Group */}
                                                                 {orderQty > 0 ? (
-                                                                    <div className="btn-group rounded-pill flex-grow-1 bg-light">
-                                                                        <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
-                                                                        <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-success" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{orderQty}</div>
-                                                                        <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder || isVillager} aria-label={`Increase order quantity for ${item.name}`} title={isVillager ? 'Max 1 villager' : (!canIncreaseOrder ? 'Order bot full (40/40)' : undefined)}>+</button>
-                                                                    </div>
+                                                                    isVillager ? (
+                                                                        <button type="button" className="btn btn-sm btn-success text-white rounded-pill flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Remove ${item.name} from order`}>In Order (x)</button>
+                                                                    ) : (
+                                                                        <div className="btn-group rounded-pill flex-grow-1 bg-light">
+                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
+                                                                            <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-success" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{orderQty}</div>
+                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder} aria-label={`Increase order quantity for ${item.name}`} title={!canIncreaseOrder ? 'Order bot full (40/40)' : undefined}>+</button>
+                                                                        </div>
+                                                                    )
                                                                 ) : (
                                                                     <button type="button" className="btn btn-sm btn-light text-success rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
                                                                 )}
 
                                                                 {/* Drop Button Group */}
                                                                 {dropQty > 0 ? (
-                                                                    <div className="btn-group rounded-pill flex-grow-1 bg-light">
-                                                                        <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
-                                                                        <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-info" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{dropQty}</div>
-                                                                        <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
-                                                                    </div>
+                                                                    isVillager ? (
+                                                                        <button type="button" className="btn btn-sm btn-info text-white rounded-pill flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => decreaseDropQuantity(item.id)} aria-label={`Remove ${item.name} from drop`}>In Drop (x)</button>
+                                                                    ) : (
+                                                                        <div className="btn-group rounded-pill flex-grow-1 bg-light">
+                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
+                                                                            <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-info" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{dropQty}</div>
+                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
+                                                                        </div>
+                                                                    )
                                                                 ) : (
                                                                     <button type="button" className="btn btn-sm btn-light text-info rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
                                                                 )}

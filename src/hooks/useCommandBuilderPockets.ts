@@ -135,6 +135,7 @@ export const useCommandBuilderPockets = () => {
             if (count >= DROP_BOT_MAX) return prev; // silently block; UI disables the button
             const pocket = prev.find((p) => p.item.id === id);
             if (!pocket) return prev;
+            if (pocket.item.entityType === 'villager') return prev; // Only 1 villager allowed
             // guard: adding 1 more would exceed cap
             if (count + 1 > DROP_BOT_MAX) return prev;
             return prev.map((p) => {
@@ -190,14 +191,26 @@ export const useCommandBuilderPockets = () => {
         if (totalDropCount >= DROP_BOT_MAX) {
             return { success: false, message: `Drop pockets are full (${DROP_BOT_MAX} items). Remove an item first.` };
         }
+        let message = 'Added to Drop pockets!';
+        let success = true;
         setDropItems((prev) => {
+            if (item.entityType === 'villager') {
+                const existingVillager = prev.find(p => p.item.id === item.id);
+                if (existingVillager) {
+                    message = 'Villager is already in Drop pockets.';
+                    success = false;
+                    return prev;
+                }
+                return [...prev, { item, quantity: 1 }];
+            }
+
             const existing = prev.find((p) => p.item.id === item.id);
             if (existing) {
                 return prev.map((p) => p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p);
             }
             return [...prev, { item, quantity: 1 }];
         });
-        return { success: true, message: 'Added to Drop pockets!' };
+        return { success, message };
     }, [totalDropCount]);
 
     // Legacy alias — adds to order by default

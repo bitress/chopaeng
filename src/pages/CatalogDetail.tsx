@@ -382,8 +382,8 @@ const CatalogDetail = () => {
                                     {(inOrderQty > 0 || inDropQty > 0) && (
                                         <div className="alert rounded-4 py-3 px-4 mb-4 small border-2" style={{ background: '#f0fdf4', borderColor: '#88e0a0', color: '#1e7e34' }} role="status">
                                             <i className="fa-solid fa-basket-shopping me-2 fw-black"></i>
-                                            {inOrderQty > 0 && <span>Order: <strong>{inOrderQty} × {entry.name}</strong>{inDropQty > 0 ? '  ·  ' : ''}</span>}
-                                            {inDropQty > 0 && <span>Drop: <strong>{inDropQty} × {entry.name}</strong></span>}
+                                            {inOrderQty > 0 && <span>Order: <strong>{entry.entityType === 'villager' ? entry.name : `${inOrderQty} × ${entry.name}`}</strong>{inDropQty > 0 ? '  ·  ' : ''}</span>}
+                                            {inDropQty > 0 && <span>Drop: <strong>{entry.entityType === 'villager' ? entry.name : `${inDropQty} × ${entry.name}`}</strong></span>}
                                         </div>
                                     )}
 
@@ -408,7 +408,7 @@ const CatalogDetail = () => {
                                             onMouseLeave={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.3)'; } }}
                                         >
                                             <i className="fa-solid fa-basket-shopping me-2"></i>
-                                            {totalOrderCount >= 40 ? 'Order Full (40/40)' : `Add to Order${inOrderQty > 0 ? ` (${inOrderQty})` : ''}`}
+                                            {totalOrderCount >= 40 ? 'Order Full (40/40)' : `Add to Order${inOrderQty > 0 && entry.entityType !== 'villager' ? ` (${inOrderQty})` : ''}`}
                                         </button>
                                         {/* Add to Drop */}
                                         <button
@@ -430,7 +430,7 @@ const CatalogDetail = () => {
                                             onMouseLeave={(e) => { if (totalDropCount < 9) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(91,192,222,0.3)'; } }}
                                         >
                                             <i className="fa-solid fa-box-open me-2"></i>
-                                            {totalDropCount >= 9 ? 'Drop Full (9/9)' : `Add to Drop${inDropQty > 0 ? ` (${inDropQty})` : ''}`}
+                                            {totalDropCount >= 9 ? 'Drop Full (9/9)' : `Add to Drop${inDropQty > 0 && entry.entityType !== 'villager' ? ` (${inDropQty})` : ''}`}
                                         </button>
                                     </div>
 

@@ -168,32 +168,36 @@ const CommandBuilderSummary = ({
                                                 </span>
                                             </div>
                                             <div className="d-flex align-items-center gap-1 flex-nowrap">
-                                                {onDecreaseOrderQuantity && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onDecreaseOrderQuantity(pocket.item.id)}
-                                                        className="btn btn-nook-sm transition-all"
-                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                        disabled={pocket.quantity <= 1}
-                                                        title="Decrease"
-                                                        aria-label={`Decrease quantity of ${pocket.item.name}`}
-                                                    >
-                                                        <i className="fa-solid fa-minus x-small"></i>
-                                                    </button>
-                                                )}
-                                                <span className="badge rounded-pill bg-nook-green text-white x-small px-2 fw-bold">{pocket.quantity}</span>
-                                                {onIncreaseOrderQuantity && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onIncreaseOrderQuantity(pocket.item.id)}
-                                                        className="btn btn-nook-sm transition-all"
-                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                        disabled={!canIncreaseOrder || pocket.item.entityType === 'villager'}
-                                                        title={pocket.item.entityType === 'villager' ? 'Max 1 villager' : (!canIncreaseOrder ? `Order bot full (${ORDER_BOT_MAX}/${ORDER_BOT_MAX})` : 'Increase')}
-                                                        aria-label={`Increase quantity of ${pocket.item.name}`}
-                                                    >
-                                                        <i className="fa-solid fa-plus x-small"></i>
-                                                    </button>
+                                                {pocket.item.entityType !== 'villager' && (
+                                                    <>
+                                                        {onDecreaseOrderQuantity && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onDecreaseOrderQuantity(pocket.item.id)}
+                                                                className="btn btn-nook-sm transition-all"
+                                                                style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                                disabled={pocket.quantity <= 1}
+                                                                title="Decrease"
+                                                                aria-label={`Decrease quantity of ${pocket.item.name}`}
+                                                            >
+                                                                <i className="fa-solid fa-minus x-small"></i>
+                                                            </button>
+                                                        )}
+                                                        <span className="badge rounded-pill bg-nook-green text-white x-small px-2 fw-bold">{pocket.quantity}</span>
+                                                        {onIncreaseOrderQuantity && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onIncreaseOrderQuantity(pocket.item.id)}
+                                                                className="btn btn-nook-sm transition-all"
+                                                                style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                                disabled={!canIncreaseOrder}
+                                                                title={!canIncreaseOrder ? `Order bot full (${ORDER_BOT_MAX}/${ORDER_BOT_MAX})` : 'Increase'}
+                                                                aria-label={`Increase quantity of ${pocket.item.name}`}
+                                                            >
+                                                                <i className="fa-solid fa-plus x-small"></i>
+                                                            </button>
+                                                        )}
+                                                    </>
                                                 )}
                                                 {onRemoveOrderItem && (
                                                     <button
@@ -266,32 +270,36 @@ const CommandBuilderSummary = ({
                                                 </span>
                                             </div>
                                             <div className="d-flex align-items-center gap-1 flex-nowrap">
-                                                {onDecreaseDropQuantity && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onDecreaseDropQuantity(pocket.item.id)}
-                                                        className="btn btn-nook-sm transition-all"
-                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                        disabled={pocket.quantity <= 1}
-                                                        title="Decrease"
-                                                        aria-label={`Decrease quantity of ${pocket.item.name}`}
-                                                    >
-                                                        <i className="fa-solid fa-minus x-small"></i>
-                                                    </button>
-                                                )}
-                                                <span className="badge rounded-pill bg-info text-dark x-small px-2 fw-bold">{pocket.quantity}</span>
-                                                {onIncreaseDropQuantity && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onIncreaseDropQuantity(pocket.item.id)}
-                                                        className="btn btn-nook-sm transition-all"
-                                                        style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                        disabled={!canIncreaseDrop}
-                                                        title={!canIncreaseDrop ? `Drop bot full (${DROP_BOT_MAX}/${DROP_BOT_MAX})` : 'Increase'}
-                                                        aria-label={`Increase quantity of ${pocket.item.name}`}
-                                                    >
-                                                        <i className="fa-solid fa-plus x-small"></i>
-                                                    </button>
+                                                {pocket.item.entityType !== 'villager' && (
+                                                    <>
+                                                        {onDecreaseDropQuantity && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onDecreaseDropQuantity(pocket.item.id)}
+                                                                className="btn btn-nook-sm transition-all"
+                                                                style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                                disabled={pocket.quantity <= 1}
+                                                                title="Decrease"
+                                                                aria-label={`Decrease quantity of ${pocket.item.name}`}
+                                                            >
+                                                                <i className="fa-solid fa-minus x-small"></i>
+                                                            </button>
+                                                        )}
+                                                        <span className="badge rounded-pill bg-info text-dark x-small px-2 fw-bold">{pocket.quantity}</span>
+                                                        {onIncreaseDropQuantity && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onIncreaseDropQuantity(pocket.item.id)}
+                                                                className="btn btn-nook-sm transition-all"
+                                                                style={{ width: '28px', height: '28px', minWidth: '28px' }}
+                                                                disabled={!canIncreaseDrop}
+                                                                title={!canIncreaseDrop ? `Drop bot full (${DROP_BOT_MAX}/${DROP_BOT_MAX})` : 'Increase'}
+                                                                aria-label={`Increase quantity of ${pocket.item.name}`}
+                                                            >
+                                                                <i className="fa-solid fa-plus x-small"></i>
+                                                            </button>
+                                                        )}
+                                                    </>
                                                 )}
                                                 {onRemoveDropItem && (
                                                     <button
