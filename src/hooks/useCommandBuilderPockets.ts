@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type { CatalogEntity } from '../data/commandBuilderData';
 import { ITEMS } from '../data/commandBuilderData';
-import { loadVillagers } from '../data/villagerDataLoader';
 import { generateFullItemHex } from '../utils/commandBuilderHex';
 
 export type PocketItem = CatalogEntity & {
@@ -21,7 +20,6 @@ const BUFFER_OPTIONS = {
     '08A4': { id: '08A4', name: '99,000 Bells', icon: 'https://dodo.ac/np/images/1/1e/99k_Bells_NH_Inv_Icon.png' },
 };
 
-// Villagers are loaded asynchronously when needed
 
 const parsePocketEntries = (key: string): PocketEntry[] => {
     try {
@@ -56,24 +54,10 @@ const migrateOldPockets = (): PocketEntry[] => {
     }
 };
 
-const parseSavedVillagerIds = (): string[] => {
-    try {
-        const saved = localStorage.getItem('command_builder_villager');
-        if (!saved) return [];
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-            return parsed.filter((entry) => typeof entry === 'string');
-        }
-        if (typeof parsed === 'string') {
-            return [parsed];
-        }
-        return [];
-    } catch {
-        return [];
-    }
-};
-
 const getItemCommandId = (item: PocketItem) => {
+    if (item.entityType === 'villager') {
+        return `villager:${item.id}`;
+    }
     return generateFullItemHex(item.baseId ?? item.id, item.variantId ?? 'NA', item.category);
 };
 
@@ -87,38 +71,10 @@ export const useCommandBuilderPockets = () => {
     const [dropItems, setDropItems] = useState<PocketEntry[]>(() =>
         parsePocketEntries('command_builder_drop_items')
     );
-    const [villagerIds, setVillagerIds] = useState<string[]>(parseSavedVillagerIds);
     const [copyOrderStatus, setCopyOrderStatus] = useState('Copy order');
     const [copyDropStatus, setCopyDropStatus] = useState('Copy drop');
-    const [copyInjectVillagerStatus, setCopyInjectVillagerStatus] = useState('Copy inject');
-    const [villagerEntities, setVillagerEntities] = useState<CatalogEntity[]>([]);
 
-    // Asynchronously validate/migrate villager IDs against the catalog
-    useEffect(() => {
-        let mounted = true;
-        loadVillagers().then(villagers => {
-            if (!mounted) return;
-            setVillagerEntities(villagers);
-            setVillagerIds(prev => {
-                if (prev.length === 0) return prev;
-                const validated = prev.map(idOrName => {
-                    const matchById = villagers.find(v => v.id === idOrName);
-                    if (matchById) return matchById.id;
-                    const matchByName = villagers.find(v => v.name.toLowerCase() === idOrName.toLowerCase());
-                    if (matchByName) return matchByName.id;
-                    return null;
-                }).filter(Boolean) as string[];
-                
-                const uniqueValidated = Array.from(new Set(validated));
-                // Only update if it actually changed to avoid unnecessary renders
-                if (uniqueValidated.length !== prev.length || !uniqueValidated.every((v, i) => v === prev[i])) {
-                    return uniqueValidated;
-                }
-                return prev;
-            });
-        });
-        return () => { mounted = false; };
-    }, []);
+
 
     // Persist to localStorage
     useEffect(() => {
@@ -129,9 +85,7 @@ export const useCommandBuilderPockets = () => {
         localStorage.setItem('command_builder_drop_items', JSON.stringify(dropItems));
     }, [dropItems]);
 
-    useEffect(() => {
-        localStorage.setItem('command_builder_villager', JSON.stringify(villagerIds));
-    }, [villagerIds]);
+
 
     // Counts
     const totalOrderCount = orderItems.reduce((acc, curr) => acc + curr.quantity, 0);
@@ -157,6 +111,7 @@ export const useCommandBuilderPockets = () => {
             if (count >= ORDER_BOT_MAX) return prev;
             return prev.map((pocket) => {
                 if (pocket.item.id !== id) return pocket;
+                if (pocket.item.entityType === 'villager') return pocket;
                 return { ...pocket, quantity: pocket.quantity + 1 };
             });
         });
@@ -203,14 +158,32 @@ export const useCommandBuilderPockets = () => {
         if (totalOrderCount >= ORDER_BOT_MAX) {
             return { success: false, message: `Order pockets are full (${ORDER_BOT_MAX} items). Remove an item first.` };
         }
+        let message = 'Added to Order pockets!';
+        let success = true;
         setOrderItems((prev) => {
+            if (item.entityType === 'villager') {
+                const existingVillager = prev.find(p => p.item.entityType === 'villager');
+                if (existingVillager && existingVillager.item.id === item.id) {
+                    message = 'Villager is already in Order pockets.';
+                    success = false;
+                    return prev;
+                }
+                if (existingVillager) {
+                    message = `Replaced ${existingVillager.item.name} with ${item.name} in Order pockets!`;
+                } else {
+                    message = `${item.name} added to Order pockets!`;
+                }
+                const withoutVillagers = prev.filter(p => p.item.entityType !== 'villager');
+                return [...withoutVillagers, { item, quantity: 1 }];
+            }
+
             const existing = prev.find((p) => p.item.id === item.id);
             if (existing) {
                 return prev.map((p) => p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p);
             }
             return [...prev, { item, quantity: 1 }];
         });
-        return { success: true, message: 'Added to Order pockets!' };
+        return { success, message };
     }, [totalOrderCount]);
 
     const addItemToDropPockets = useCallback((item: PocketItem): { success: boolean; message: string } => {
@@ -271,41 +244,36 @@ export const useCommandBuilderPockets = () => {
     const handleFillCrowns = useCallback(() => fillWithItemName('Royal Crown'), [fillWithItemName]);
     const handleFillBells = useCallback(() => fillWithItemName('99,000 Bells'), [fillWithItemName]);
 
-    // ── Villager operations ────────────────────────────────────────────────
-    const requestVillager = useCallback((villager: CatalogEntity): { success: boolean; message: string } => {
-        setVillagerIds((prev) => prev.includes(villager.id) ? prev : [...prev, villager.id]);
-        return { success: true, message: `${villager.name} has been requested as a villager.` };
-    }, []);
 
-    const removeVillager = useCallback((villagerIdToRemove: string) => {
-        setVillagerIds((prev) => prev.filter((id) => id !== villagerIdToRemove));
-    }, []);
-
-    const clearVillagers = useCallback(() => setVillagerIds([]), []);
-
-    const selectedVillagers = useMemo(
-        () => villagerEntities.filter((v: CatalogEntity) => villagerIds.includes(v.id)),
-        [villagerIds, villagerEntities]
-    );
 
     // ── Command text ───────────────────────────────────────────────────────
     const orderCommandText = useMemo(() => {
         const itemsList = orderItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
-        const villagerPart = selectedVillagers.length === 1 ? `villager:${selectedVillagers[0].id}` : '';
-        const commandParts = [itemsList, villagerPart].filter(Boolean).join(' ');
-        return commandParts ? `!order ${commandParts}` : '';
-    }, [orderItems, selectedVillagers]);
+        return itemsList ? `!order ${itemsList}` : '';
+    }, [orderItems]);
 
     const dropCommandText = useMemo(() => {
-        const itemsList = dropItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
-        return itemsList ? `!drop ${itemsList}` : '';
-    }, [dropItems]);
+        const regularItems = dropItems.filter(p => p.item.entityType !== 'villager');
+        const villagers = dropItems.filter(p => p.item.entityType === 'villager');
 
-    const injectVillagerCommandText = useMemo(() => {
-        if (selectedVillagers.length === 0) return '';
-        if (selectedVillagers.length === 1) return `!injectvillager ${selectedVillagers[0].name}`;
-        return `!mvi ${selectedVillagers.map((villager: CatalogEntity) => villager.name).join(' ')}`;
-    }, [selectedVillagers]);
+        let dropPart = '';
+        if (regularItems.length > 0) {
+            const itemsList = regularItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
+            dropPart = `!drop ${itemsList}`;
+        }
+
+        let villagerPart = '';
+        const villagerTotalQuantity = villagers.reduce((acc, curr) => acc + curr.quantity, 0);
+        if (villagerTotalQuantity === 1) {
+            villagerPart = `!injectvillager ${villagers[0].item.name}`;
+        } else if (villagerTotalQuantity > 1) {
+            const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
+            villagerPart = `!mvi ${names}`;
+        }
+
+        if (dropPart && villagerPart) return `${dropPart}\n${villagerPart}`;
+        return dropPart || villagerPart;
+    }, [dropItems]);
 
     // ── Copy handlers ──────────────────────────────────────────────────────
     const handleCopyOrder = useCallback(async () => {
@@ -334,18 +302,7 @@ export const useCommandBuilderPockets = () => {
         }
     }, [dropCommandText]);
 
-    const handleCopyInjectVillager = useCallback(async () => {
-        if (!injectVillagerCommandText) return;
-        try {
-            await navigator.clipboard.writeText(injectVillagerCommandText);
-            setCopyInjectVillagerStatus('Copied!');
-            setTimeout(() => setCopyInjectVillagerStatus('Copy inject'), 1300);
-        } catch (error) {
-            console.error(error);
-            setCopyInjectVillagerStatus('Error');
-            setTimeout(() => setCopyInjectVillagerStatus('Copy inject'), 1300);
-        }
-    }, [injectVillagerCommandText]);
+
 
     // ── Quantity lookup ────────────────────────────────────────────────────
     const getOrderPocketQuantity = useCallback((itemId: string) => {
@@ -365,8 +322,6 @@ export const useCommandBuilderPockets = () => {
         setOrderItems,
         dropItems,
         setDropItems,
-        villagerIds,
-        setVillagerIds,
         // Legacy alias for pages that haven't been updated
         selectedItems: orderItems,
         setSelectedItems: setOrderItems,
@@ -406,26 +361,16 @@ export const useCommandBuilderPockets = () => {
         handleFillCrowns,
         handleFillBells,
 
-        // Villagers
-        requestVillager,
-        removeVillager,
-        clearVillagers,
-        selectedVillagers,
 
-        // Commands
+
         orderCommandText,
         dropCommandText,
-        injectVillagerCommandText,
 
-        // Copy status
         copyOrderStatus,
         copyDropStatus,
-        copyInjectVillagerStatus,
 
-        // Copy handlers
         handleCopyOrder,
         handleCopyDrop,
-        handleCopyInjectVillager,
 
         // Lookup
         getPocketQuantity,

@@ -103,7 +103,6 @@ const CommandBuilder = () => {
         setOrderItems,
         dropItems,
         setDropItems,
-        villagerIds,
         totalOrderCount,
         totalDropCount,
         canIncreaseOrder,
@@ -119,19 +118,12 @@ const CommandBuilder = () => {
         handleFillBells,
         addItemToOrderPockets,
         addItemToDropPockets,
-        requestVillager,
-        removeVillager,
-        clearVillagers,
-        selectedVillagers,
         orderCommandText,
         dropCommandText,
-        injectVillagerCommandText,
         copyOrderStatus,
         copyDropStatus,
-        copyInjectVillagerStatus,
         handleCopyOrder,
         handleCopyDrop,
-        handleCopyInjectVillager,
     } = useCommandBuilderPockets();
 
     // 1. Debounce Search (Saves UI threads from exploding)
@@ -318,9 +310,8 @@ const CommandBuilder = () => {
                         {/* Collapsible Advanced Filters */}
                         <div className={`row g-3 ${showFiltersMobile ? 'd-flex' : 'd-none d-md-flex'}`}>
                             <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-layer-group me-1 text-muted"></i> Type</label>
-                                <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={kindFilter} onChange={(e) => setKindFilter(e.target.value)}>
-                                    <option value="All">All</option>
+                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={kindFilter} onChange={(e) => setKindFilter(e.target.value)}>
+                                    <option value="All">All Types</option>
                                     <option value="Items">Items</option>
                                     <option value="Recipes">Recipes</option>
                                     <option value="Villagers">Villagers</option>
@@ -328,44 +319,44 @@ const CommandBuilder = () => {
                             </div>
 
                             <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-tags me-1 text-muted"></i> Category</label>
-                                <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={category} onChange={(e) => setCategory(e.target.value)}>
-                                    {itemCategories.map((value) => <option key={value} value={value}>{value}</option>)}
+                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={category} onChange={(e) => setCategory(e.target.value)}>
+                                    <option value="All">All Categories</option>
+                                    {itemCategories.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
                                 </select>
                             </div>
 
                             <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-user-astronaut me-1 text-muted"></i> Villager</label>
-                                <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={villagerType} onChange={(e) => setVillagerType(e.target.value)}>
-                                    {villagerTypes.map((value) => <option key={value} value={value}>{value}</option>)}
+                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={villagerType} onChange={(e) => setVillagerType(e.target.value)}>
+                                    <option value="All">All Villager Types</option>
+                                    {villagerTypes.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
                                 </select>
                             </div>
 
                             <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-palette me-1 text-muted"></i> Theme</label>
-                                <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={theme} onChange={(e) => setTheme(e.target.value)}>
-                                    {uniqueValues(catalogEntities, 'theme').map((value) => <option key={value} value={value}>{value}</option>)}
+                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={theme} onChange={(e) => setTheme(e.target.value)}>
+                                    <option value="All">All Themes</option>
+                                    {uniqueValues(catalogEntities, 'theme').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
                                 </select>
                             </div>
 
                             <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-cubes me-1 text-muted"></i> Series</label>
-                                <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={series} onChange={(e) => setSeries(e.target.value)}>
-                                    {uniqueValues(catalogEntities, 'series').map((value) => <option key={value} value={value}>{value}</option>)}
+                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={series} onChange={(e) => setSeries(e.target.value)}>
+                                    <option value="All">All Series</option>
+                                    {uniqueValues(catalogEntities, 'series').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
                                 </select>
                             </div>
 
                             <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-hand-pointer me-1 text-muted"></i> Interact</label>
-                                <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={interactivity} onChange={(e) => setInteractivity(e.target.value)}>
-                                    {uniqueValues(catalogEntities, 'interactivity').map((value) => <option key={value} value={value}>{value}</option>)}
+                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={interactivity} onChange={(e) => setInteractivity(e.target.value)}>
+                                    <option value="All">All Interactivity</option>
+                                    {uniqueValues(catalogEntities, 'interactivity').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
                                 </select>
                             </div>
 
                             <div className="col-6 col-md-3">
-                                <label className="form-label fw-bold text-dark small mb-1"><i className="fa-solid fa-droplet me-1 text-muted"></i> Colour</label>
-                                <select className="form-select rounded-pill border-0 shadow-sm cursor-pointer" value={colour} onChange={(e) => setColour(e.target.value)}>
-                                    {uniqueValues(catalogEntities, 'colour').map((value) => <option key={value} value={value}>{value}</option>)}
+                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={colour} onChange={(e) => setColour(e.target.value)}>
+                                    <option value="All">All Colours</option>
+                                    {uniqueValues(catalogEntities, 'colour').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
                                 </select>
                             </div>
 
@@ -428,7 +419,7 @@ const CommandBuilder = () => {
                                         const dropEntry = dropItems.find((s) => s.item.id === item.id);
                                         const orderQty = orderEntry?.quantity ?? 0;
                                         const dropQty = dropEntry?.quantity ?? 0;
-                                        const cardSelected = isVillager ? villagerIds.includes(item.id) : (orderQty > 0 || dropQty > 0);
+                                        const cardSelected = orderQty > 0 || dropQty > 0;
 
                                         return (
                                             <div className="col-6 col-md-4 col-xl-3" key={item.id}>
@@ -445,7 +436,6 @@ const CommandBuilder = () => {
                                                         <div className="position-absolute top-0 end-0 m-2 z-index-2 d-flex flex-column gap-1 pointer-events-none">
                                                             {orderQty > 0 && <div className="badge bg-success shadow-sm">O:{orderQty}</div>}
                                                             {dropQty > 0 && <div className="badge bg-info text-dark shadow-sm">D:{dropQty}</div>}
-                                                            {isVillager && <div className="badge bg-success rounded-circle p-1"><i className="fa-solid fa-check"></i></div>}
                                                         </div>
                                                     )}
 
@@ -478,40 +468,34 @@ const CommandBuilder = () => {
                                                                     {item.variations?.length} variants
                                                                 </div>
                                                             )}
-                                                            <p className="text-muted mb-2 text-truncate" style={{ fontSize: '0.7rem' }}>{item.theme} · {item.colour}</p>
+
                                                         </div>
 
                                                         {/* Action Buttons */}
-                                                        <div className="mt-2 w-100" onClick={(e) => e.stopPropagation()}>
-                                                            {!isVillager ? (
-                                                                <div className="d-flex gap-1">
-                                                                    {/* Order Button Group */}
-                                                                    {orderQty > 0 ? (
-                                                                        <div className="btn-group border border-success rounded-pill overflow-hidden flex-grow-1 bg-white">
-                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
-                                                                            <div className="bg-success text-white d-flex align-items-center justify-content-center fw-bold px-1" style={{ fontSize: "0.75rem", minWidth: "24px" }}>{orderQty}</div>
-                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder} aria-label={`Increase order quantity for ${item.name}`} title={!canIncreaseOrder ? 'Order bot full (40/40)' : undefined}>+</button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <button type="button" className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold" style={{ fontSize: "0.75rem" }} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
-                                                                    )}
+                                                        <div className="mt-auto pt-2 w-100" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="d-flex gap-2">
+                                                                {/* Order Button Group */}
+                                                                {orderQty > 0 ? (
+                                                                    <div className="btn-group rounded-pill flex-grow-1 bg-light">
+                                                                        <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
+                                                                        <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-success" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{orderQty}</div>
+                                                                        <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder || isVillager} aria-label={`Increase order quantity for ${item.name}`} title={isVillager ? 'Max 1 villager' : (!canIncreaseOrder ? 'Order bot full (40/40)' : undefined)}>+</button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button type="button" className="btn btn-sm btn-light text-success rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
+                                                                )}
 
-                                                                    {/* Drop Button Group */}
-                                                                    {dropQty > 0 ? (
-                                                                        <div className="btn-group border border-info rounded-pill overflow-hidden flex-grow-1 bg-white">
-                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
-                                                                            <div className="bg-info text-dark d-flex align-items-center justify-content-center fw-bold px-1" style={{ fontSize: "0.75rem", minWidth: "24px" }}>{dropQty}</div>
-                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <button type="button" className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold" style={{ fontSize: "0.75rem" }} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <button type="button" className={`btn btn-sm w-100 rounded-pill fw-bold py-1 ${cardSelected ? 'btn-success text-white' : 'btn-outline-primary'}`} onClick={() => requestVillager(item)} aria-pressed={cardSelected}>
-                                                                    {cardSelected ? '✓ Selected' : 'Request'}
-                                                                </button>
-                                                            )}
+                                                                {/* Drop Button Group */}
+                                                                {dropQty > 0 ? (
+                                                                    <div className="btn-group rounded-pill flex-grow-1 bg-light">
+                                                                        <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
+                                                                        <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-info" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{dropQty}</div>
+                                                                        <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button type="button" className="btn btn-sm btn-light text-info rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -578,26 +562,20 @@ const CommandBuilder = () => {
                                 <CommandBuilderSummary
                                     orderPockets={orderItems}
                                     dropPockets={dropItems}
-                                    savedVillagers={selectedVillagers}
                                     orderCommandText={orderCommandText}
                                     dropCommandText={dropCommandText}
-                                    injectVillagerCommandText={injectVillagerCommandText}
                                     copyOrderStatus={copyOrderStatus}
                                     copyDropStatus={copyDropStatus}
-                                    copyInjectVillagerStatus={copyInjectVillagerStatus}
                                     onCopyOrder={handleCopyOrder}
                                     onCopyDrop={handleCopyDrop}
-                                    onCopyInjectVillager={handleCopyInjectVillager}
                                     onDecreaseOrderQuantity={decreaseOrderQuantity}
                                     onIncreaseOrderQuantity={increaseOrderQuantity}
                                     onRemoveOrderItem={removeOrderItem}
                                     onDecreaseDropQuantity={decreaseDropQuantity}
                                     onIncreaseDropQuantity={increaseDropQuantity}
                                     onRemoveDropItem={removeDropItem}
-                                    onRemoveVillager={removeVillager}
                                     onClearOrderPockets={() => setOrderItems([])}
                                     onClearDropPockets={() => setDropItems([])}
-                                    onClearVillagers={clearVillagers}
                                     canIncreaseOrder={canIncreaseOrder}
                                     canIncreaseDrop={canIncreaseDrop}
                                     onFillTickets={handleFillTickets}

@@ -184,7 +184,7 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
             </div>
 
             <div className="search-wrapper mb-5 w-100 justify-content-start">
-                <div className="search-box w-100 max-w-100 shadow-sm focus-within-green transition-all m-0 flex-wrap gap-2" style={{ maxWidth: '100%' }}>
+                <div className="search-box w-100 max-w-100 shadow-sm focus-within-green transition-all m-0 gap-2" style={{ maxWidth: '100%' }}>
                     <i className="fa-solid fa-magnifying-glass search-icon"></i>
                     <input
                         className="font-nunito fw-bold flex-grow-1"

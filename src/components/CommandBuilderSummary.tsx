@@ -12,16 +12,12 @@ type CommandBuilderSummaryProps = {
     orderPockets: Array<{ item: PocketItem; quantity: number }>;
     // Drop pockets
     dropPockets: Array<{ item: PocketItem; quantity: number }>;
-    savedVillagers: CatalogEntity[];
     orderCommandText: string;
     dropCommandText: string;
-    injectVillagerCommandText: string;
     copyOrderStatus: string;
     copyDropStatus: string;
-    copyInjectVillagerStatus: string;
     onCopyOrder: () => void;
     onCopyDrop: () => void;
-    onCopyInjectVillager: () => void;
     // Order item controls
     onDecreaseOrderQuantity?: (itemId: string) => void;
     onIncreaseOrderQuantity?: (itemId: string) => void;
@@ -30,11 +26,8 @@ type CommandBuilderSummaryProps = {
     onDecreaseDropQuantity?: (itemId: string) => void;
     onIncreaseDropQuantity?: (itemId: string) => void;
     onRemoveDropItem?: (itemId: string) => void;
-    // Villager controls
-    onRemoveVillager?: (villagerId: string) => void;
     onClearOrderPockets?: () => void;
     onClearDropPockets?: () => void;
-    onClearVillagers?: () => void;
     canIncreaseOrder?: boolean;
     canIncreaseDrop?: boolean;
     onFillTickets?: () => void;
@@ -50,26 +43,20 @@ const POCKETS_LIST_ID = "command-builder-pockets-list";
 const CommandBuilderSummary = ({
     orderPockets,
     dropPockets,
-    savedVillagers,
     orderCommandText,
     dropCommandText,
-    injectVillagerCommandText,
     copyOrderStatus,
     copyDropStatus,
-    copyInjectVillagerStatus,
     onCopyOrder,
     onCopyDrop,
-    onCopyInjectVillager,
     onDecreaseOrderQuantity,
     onIncreaseOrderQuantity,
     onRemoveOrderItem,
     onDecreaseDropQuantity,
     onIncreaseDropQuantity,
     onRemoveDropItem,
-    onRemoveVillager,
     onClearOrderPockets,
     onClearDropPockets,
-    onClearVillagers,
     canIncreaseOrder = true,
     canIncreaseDrop = true,
     onFillTickets,
@@ -80,13 +67,10 @@ const CommandBuilderSummary = ({
     const [isCollapsed, setIsCollapsed] = useState(false);
     const orderCount = orderPockets.reduce((sum, p) => sum + p.quantity, 0);
     const dropCount = dropPockets.reduce((sum, p) => sum + p.quantity, 0);
-    const villagerCount = savedVillagers.length;
-    const isEmpty = orderPockets.length === 0 && dropPockets.length === 0 && villagerCount === 0;
+    const isEmpty = orderPockets.length === 0 && dropPockets.length === 0;
 
     const orderFull = orderCount >= ORDER_BOT_MAX;
     const dropFull = dropCount >= DROP_BOT_MAX;
-    const orderPct = Math.min(100, (orderCount / ORDER_BOT_MAX) * 100);
-    const dropPct = Math.min(100, (dropCount / DROP_BOT_MAX) * 100);
 
     // Keyboard shortcuts: Ctrl+Shift+O = Copy Order, Ctrl+Shift+D = Copy Drop
     useEffect(() => {
@@ -108,7 +92,7 @@ const CommandBuilderSummary = ({
         <div className="bg-cream rounded-4 border-0 shadow-sm p-4" style={{ borderTop: '4px solid var(--nook-green)' }}>
             {/* Screen-reader announcements for copy actions */}
             <div aria-live="polite" className="visually-hidden">
-                {[copyOrderStatus, copyDropStatus, copyInjectVillagerStatus].filter(Boolean).join(". ")}
+                {[copyOrderStatus, copyDropStatus].filter(Boolean).join(". ")}
             </div>
 
             {/* Header */}
@@ -128,11 +112,7 @@ const CommandBuilderSummary = ({
                     >
                         Drop {dropCount} / {DROP_BOT_MAX}
                     </span>
-                    {villagerCount > 0 && (
-                        <span className="badge rounded-pill fw-bold x-small bg-warning text-dark">
-                            Villagers {villagerCount}
-                        </span>
-                    )}
+
                     <button
                         type="button"
                         className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-1"
@@ -146,41 +126,7 @@ const CommandBuilderSummary = ({
                 </div>
             </div>
 
-            {/* Capacity progress — stays visible even when the list is collapsed */}
-            <div className="d-flex flex-column flex-sm-row gap-3 mb-4">
-                <div className="flex-grow-1">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                        <span className="tiny-text fw-bold text-muted">Order capacity</span>
-                        <span className="tiny-text fw-bold text-muted">{orderCount}/{ORDER_BOT_MAX}</span>
-                    </div>
-                    <div className="progress rounded-pill" style={{ height: '6px' }}>
-                        <div
-                            className={`progress-bar rounded-pill transition-all ${orderFull ? 'bg-danger' : 'bg-nook-green'}`}
-                            role="progressbar"
-                            style={{ width: `${orderPct}%` }}
-                            aria-valuenow={orderCount}
-                            aria-valuemin={0}
-                            aria-valuemax={ORDER_BOT_MAX}
-                        ></div>
-                    </div>
-                </div>
-                <div className="flex-grow-1">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                        <span className="tiny-text fw-bold text-muted">Drop capacity</span>
-                        <span className="tiny-text fw-bold text-muted">{dropCount}/{DROP_BOT_MAX}</span>
-                    </div>
-                    <div className="progress rounded-pill" style={{ height: '6px' }}>
-                        <div
-                            className={`progress-bar rounded-pill transition-all ${dropFull ? 'bg-danger' : 'bg-info'}`}
-                            role="progressbar"
-                            style={{ width: `${dropPct}%` }}
-                            aria-valuenow={dropCount}
-                            aria-valuemin={0}
-                            aria-valuemax={DROP_BOT_MAX}
-                        ></div>
-                    </div>
-                </div>
-            </div>
+
 
             {!isCollapsed && (
                 <div id={POCKETS_LIST_ID}>
@@ -209,11 +155,11 @@ const CommandBuilderSummary = ({
                             {orderPockets.length === 0 ? (
                                 <div className="text-center py-3 rounded-4 bg-white text-muted small shadow-sm border border-light">No order items yet</div>
                             ) : (
-                                <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
+                                <div className="d-flex flex-column overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
                                     {orderPockets.map((pocket) => (
-                                        <div key={pocket.item.id} className="d-flex align-items-center gap-3 rounded-4 border-2 border-success border-opacity-10 p-3 bg-white transition-all" style={{ boxShadow: '0 2px 6px rgba(40,167,69,0.08)' }}>
-                                            <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e8f5e9' }}>
-                                                <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
+                                        <div key={pocket.item.id} className="d-flex align-items-center gap-2 border-bottom py-2 bg-transparent transition-all">
+                                            <div className="ratio ratio-1x1 bg-white rounded-3 shadow-sm border" style={{ width: '36px', minWidth: '36px', overflow: 'hidden' }}>
+                                                <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '2px' }} />
                                             </div>
                                             <div className="flex-grow-1 text-truncate">
                                                 <strong className="d-block text-dark small text-truncate" title={pocket.item.name} style={{ fontFamily: '"Quicksand", sans-serif' }}>{pocket.item.name}</strong>
@@ -242,8 +188,8 @@ const CommandBuilderSummary = ({
                                                         onClick={() => onIncreaseOrderQuantity(pocket.item.id)}
                                                         className="btn btn-nook-sm transition-all"
                                                         style={{ width: '28px', height: '28px', minWidth: '28px' }}
-                                                        disabled={!canIncreaseOrder}
-                                                        title={!canIncreaseOrder ? `Order bot full (${ORDER_BOT_MAX}/${ORDER_BOT_MAX})` : 'Increase'}
+                                                        disabled={!canIncreaseOrder || pocket.item.entityType === 'villager'}
+                                                        title={pocket.item.entityType === 'villager' ? 'Max 1 villager' : (!canIncreaseOrder ? `Order bot full (${ORDER_BOT_MAX}/${ORDER_BOT_MAX})` : 'Increase')}
                                                         aria-label={`Increase quantity of ${pocket.item.name}`}
                                                     >
                                                         <i className="fa-solid fa-plus x-small"></i>
@@ -271,20 +217,20 @@ const CommandBuilderSummary = ({
                             {canIncreaseOrder && (onFillTickets || onFillCrowns || onFillBells) && (
                                 <div className="mt-3">
                                     <span className="tiny-text fw-bold text-muted mb-2 d-block text-uppercase tracking-wide">Quick Fill Remaining Slots</span>
-                                    <div className="d-flex flex-column gap-2">
+                                    <div className="d-flex gap-2">
                                         {onFillTickets && (
-                                            <button type="button" onClick={onFillTickets} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold w-100 text-start px-3 py-2">
-                                                <i className="fa-solid fa-ticket me-2 text-primary"></i>Fill with Nook Miles Tickets
+                                            <button type="button" onClick={onFillTickets} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold flex-grow-1" title="Fill with Nook Miles Tickets">
+                                                <i className="fa-solid fa-ticket text-primary"></i> <span className="d-none d-xl-inline ms-1">Tickets</span>
                                             </button>
                                         )}
                                         {onFillCrowns && (
-                                            <button type="button" onClick={onFillCrowns} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold w-100 text-start px-3 py-2">
-                                                <i className="fa-solid fa-crown me-2 text-warning"></i>Fill with Royal Crowns
+                                            <button type="button" onClick={onFillCrowns} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold flex-grow-1" title="Fill with Royal Crowns">
+                                                <i className="fa-solid fa-crown text-warning"></i> <span className="d-none d-xl-inline ms-1">Crowns</span>
                                             </button>
                                         )}
                                         {onFillBells && (
-                                            <button type="button" onClick={onFillBells} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold w-100 text-start px-3 py-2">
-                                                <i className="fa-solid fa-sack-dollar me-2 text-success"></i>Fill with 99,000 Bells
+                                            <button type="button" onClick={onFillBells} className="btn btn-sm btn-white border rounded-pill shadow-sm fw-bold flex-grow-1" title="Fill with 99,000 Bells">
+                                                <i className="fa-solid fa-sack-dollar text-success"></i> <span className="d-none d-xl-inline ms-1">Bells</span>
                                             </button>
                                         )}
                                     </div>
@@ -307,11 +253,11 @@ const CommandBuilderSummary = ({
                             {dropPockets.length === 0 ? (
                                 <div className="text-center py-3 rounded-4 bg-white text-muted small shadow-sm border border-light">No drop items yet</div>
                             ) : (
-                                <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
+                                <div className="d-flex flex-column overflow-auto" style={{ maxHeight: '360px', paddingRight: '4px' }}>
                                     {dropPockets.map((pocket) => (
-                                        <div key={pocket.item.id} className="d-flex align-items-center gap-3 rounded-4 border-2 p-3 bg-white transition-all" style={{ borderColor: '#b2ebf2', boxShadow: '0 2px 6px rgba(91,192,222,0.1)' }}>
-                                            <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e0f7fa' }}>
-                                                <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
+                                        <div key={pocket.item.id} className="d-flex align-items-center gap-2 border-bottom py-2 bg-transparent transition-all">
+                                            <div className="ratio ratio-1x1 bg-white rounded-3 shadow-sm border" style={{ width: '36px', minWidth: '36px', overflow: 'hidden' }}>
+                                                <img src={pocket.item.image} alt={pocket.item.name} className="w-100 h-100 object-fit-contain" style={{ padding: '2px' }} />
                                             </div>
                                             <div className="flex-grow-1 text-truncate">
                                                 <strong className="d-block text-dark small text-truncate" title={pocket.item.name} style={{ fontFamily: '"Quicksand", sans-serif' }}>{pocket.item.name}</strong>
@@ -366,46 +312,7 @@ const CommandBuilderSummary = ({
                             )}
                         </div>
 
-                        {/* ── Villagers ──────────────────────────────────────── */}
-                        {savedVillagers.length > 0 && (
-                            <div>
-                                <div className="d-flex align-items-center justify-content-between mb-2 mt-3">
-                                    <span className="badge bg-warning text-dark rounded-pill fw-bold x-small px-3 py-2 shadow-sm">
-                                        <i className="fa-solid fa-user-group me-1"></i>Villagers
-                                    </span>
-                                    {onClearVillagers && (
-                                        <button type="button" onClick={onClearVillagers} className="btn btn-sm btn-outline-warning rounded-pill transition-all fw-bold" style={{ fontSize: '0.7rem', padding: '4px 12px' }}>
-                                            <i className="fa-solid fa-trash-can-arrow-up me-1"></i>Clear
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: '280px', paddingRight: '4px' }}>
-                                    {savedVillagers.map((villager) => (
-                                        <div key={villager.id} className="d-flex align-items-center gap-3 rounded-4 border-2 p-3 bg-white transition-all" style={{ borderColor: '#88e0a0', boxShadow: '0 2px 6px rgba(136,224,160,0.15)' }}>
-                                            <div className="ratio ratio-1x1" style={{ width: '48px', minWidth: '48px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e0f7fa' }}>
-                                                <img src={villager.image} alt={villager.name} className="w-100 h-100 object-fit-contain" style={{ padding: '4px' }} />
-                                            </div>
-                                            <div>
-                                                <strong className="d-block text-dark small" style={{ fontFamily: '"Quicksand", sans-serif' }}>{villager.name}</strong>
-                                                <span className="tiny-text fw-bold" style={{ color: '#88e0a0' }}>Villager Selected</span>
-                                            </div>
-                                            {onRemoveVillager && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onRemoveVillager(villager.id)}
-                                                    className="btn btn-link text-danger p-0 ms-auto transition-all"
-                                                    title="Remove villager"
-                                                    aria-label={`Remove villager ${villager.name}`}
-                                                    style={{ fontSize: '0.9rem' }}
-                                                >
-                                                    <i className="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+
                     </div>
                 )}
             </div>
@@ -441,26 +348,7 @@ const CommandBuilderSummary = ({
                                 Tip: <kbd className="mx-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+O</kbd> / <kbd className="mx-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+D</kbd> copy instantly
                             </p>
                         )}
-                        {savedVillagers.length > 0 && (
-                            <div className="p-3 rounded-4 bg-white text-dark font-monospace small shadow-sm" style={{ border: '2px solid #ffc107', whiteSpace: 'pre-wrap' }}>
-                                <div className="mb-2 d-flex align-items-center justify-content-between">
-                                    <span className="badge bg-warning text-dark rounded-pill fw-bold">👤 Villager Request</span>
-                                </div>
-                                {injectVillagerCommandText || <span className="opacity-50">&gt; Waiting for villagers...</span>}
-                            </div>
-                        )}
-                        {savedVillagers.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={onCopyInjectVillager}
-                                className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all shadow-sm text-dark border-0 mt-2"
-                                disabled={!injectVillagerCommandText}
-                                style={{ background: '#ffc107' }}
-                            >
-                                <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                                {copyInjectVillagerStatus === 'Copied!' ? 'Villager Request Copied!' : 'Copy Villager Request'}
-                            </button>
-                        )}
+
                     </div>
                 </div>
             )}
@@ -479,7 +367,7 @@ const CommandBuilderSummary = ({
                                 <span className="badge bg-success text-white rounded-pill fw-bold font-monospace shadow-sm">Order Bot</span>
                             </div>
                             <div className="bg-light rounded-4 p-3 mb-3 font-monospace small text-dark transition-all border shadow-sm" style={{ minHeight: '70px', whiteSpace: 'pre-wrap' }}>
-                                {orderCommandText || <span className="text-muted">&gt; Waiting for items or villager...</span>}
+                                {orderCommandText || <span className="text-muted">&gt; Waiting for items...</span>}
                             </div>
                             <button
                                 type="button"
@@ -515,27 +403,7 @@ const CommandBuilderSummary = ({
                                 <kbd className="ms-2 opacity-50" style={{ fontSize: '0.6rem', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', padding: '1px 4px', border: '1px solid rgba(255,255,255,0.2)' }}>Ctrl+⇧+D</kbd>
                             </button>
 
-                            {/* Inject Villager */}
-                            {savedVillagers.length > 0 && (
-                                <div className="bg-light rounded-4 p-3 mt-3 font-monospace small text-dark border shadow-sm" style={{ whiteSpace: 'pre-wrap' }}>
-                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                        <span className="badge bg-warning text-dark rounded-pill fw-bold">Villager Bot</span>
-                                    </div>
-                                    {injectVillagerCommandText || <span className="text-muted">&gt; Waiting for villagers...</span>}
-                                </div>
-                            )}
-                            {savedVillagers.length > 0 && (
-                                <button
-                                    type="button"
-                                    className="btn w-100 rounded-pill py-2 fw-black btn-sm transition-all shadow-sm text-dark border-0 mt-2"
-                                    onClick={onCopyInjectVillager}
-                                    disabled={!injectVillagerCommandText}
-                                    style={{ background: '#ffc107' }}
-                                >
-                                    <i className={`fa-solid ${copyInjectVillagerStatus === 'Copied!' ? 'fa-check' : 'fa-copy'} me-2`} />
-                                    {copyInjectVillagerStatus === 'Copied!' ? 'Copied!' : 'Copy Villager Request'}
-                                </button>
-                            )}
+
                         </div>
                     </div>
                 </div>
