@@ -19,6 +19,30 @@ const uniqueValues = (items: CatalogEntity[], key: CatalogStringKey) => [
 
 const FALLBACK_IMAGE = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f3f5'/%3E%3Cpath d='M30 65 L45 45 L58 58 L68 42 L75 65 Z' fill='%23ced4da'/%3E%3Ccircle cx='38' cy='35' r='7' fill='%23ced4da'/%3E%3C/svg%3E";
 
+const getAcnhcdnUrl = (url: string | undefined): string => {
+    if (!url) return FALLBACK_IMAGE;
+    if (url.includes('acnhcdn.com')) return url;
+    
+    if (url.includes('/villagers/')) {
+        const file = url.split('/').pop();
+        return `https://acnhcdn.com/latest/NpcIcon/${file}`;
+    }
+
+    if (url.includes('/items/img/')) {
+        const file = url.split('/').pop() || '';
+        const match = file.match(/^([A-Z][a-z]+)/);
+        const prefix = match ? match[1] : '';
+        
+        const iconFolders = ['Ftr', 'Room', 'Rug', 'Cap', 'Tops', 'Bottoms', 'Shoes', 'Socks', 'Accessory', 'Bag', 'Umbrella', 'Tool'];
+        if (iconFolders.includes(prefix)) {
+            return `https://acnhcdn.com/latest/${prefix}Icon/${file}`;
+        }
+        return `https://acnhcdn.com/latest/MenuIcon/${file}`;
+    }
+
+    return url;
+};
+
 const explorerItems = loadExplorerItems();
 const villagerEntities = loadVillagers();
 const catalogEntities = [...explorerItems, ...villagerEntities];
@@ -98,7 +122,7 @@ const CommandBuilder = () => {
     const expandedCatalogItems = useMemo(() => {
         return catalogEntities.flatMap((item) => {
             if (item.entityType !== 'item' || !item.variations || hideVariants || item.variations.length === 0) {
-                return [item as ItemData];
+                return [{ ...item, image: getAcnhcdnUrl(item.image) } as ItemData];
             }
 
             return item.variations.map((variant) => {
@@ -110,7 +134,7 @@ const CommandBuilder = () => {
                     baseId: commandParts.baseId,
                     variantId: commandParts.variantId,
                     variantLabel: getVariantLabel(variant),
-                    image: variant.imageUrl || item.image,
+                    image: getAcnhcdnUrl(variant.imageUrl || item.image),
                 };
             });
         });
@@ -394,7 +418,7 @@ const CommandBuilder = () => {
                                                     {/* Image Container */}
                                                     <div className="ratio ratio-1x1 bg-light d-flex align-items-center justify-content-center">
                                                         <img
-                                                            src={isVillager ? ((item as any).image || `https://www.pange.ca/itemsearch/villagers/${item.id}.png`) : item.image}
+                                                            src={item.image}
                                                             alt={item.name}
                                                             loading="lazy"
                                                             onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
