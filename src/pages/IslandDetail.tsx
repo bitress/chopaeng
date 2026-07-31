@@ -543,7 +543,8 @@ const IslandDetail = () => {
                 <div className="row g-4">
                     {/* LEFT COLUMN: Map & Status */}
                     <div className="col-lg-5">
-                        {/* Map Polaroid */}
+                        {/* Map Polaroid – hidden for order-bot islands */}
+                        {!isOrderIsland && (
                         <div className="polaroid-stack mb-4">
                             <div className="map-polaroid cursor-pointer" onClick={() => setShowImageModal(true)}>
                                 <div className="tape-strip"></div>
@@ -569,6 +570,7 @@ const IslandDetail = () => {
                                 </div>
                             </div>
                         </div>
+                        )}
 
                         {/* DAL Flight Board */}
                         <div className="dal-card shadow-sm">
@@ -595,11 +597,15 @@ const IslandDetail = () => {
                                         )}
                                     </span>
                                 </div>
+                                {!isOrderIsland && (
+                                <>
                                 <div className="flight-divider"></div>
                                 <div className="flight-row">
                                     <span className="flight-label">PASSENGERS</span>
                                     <span className="flight-value">{formatPassengerCount(live?.visitors)}</span>
                                 </div>
+                                </>
+                                )}
                                 <div className="flight-divider"></div>
                                 <div className="flight-row">
                                     <span className="flight-label">GATE TYPE</span>
@@ -656,6 +662,7 @@ const IslandDetail = () => {
                                     </div>
                                 </div>
 
+                                {!isOrderIsland && (
                                 <div className="mb-5">
                                     <h5 className="notebook-heading">
                                         <i className="fa-solid fa-house-user me-2 text-nook"></i>
@@ -677,6 +684,7 @@ const IslandDetail = () => {
                                         </div>
                                     )}
                                 </div>
+                                )}
 
                                 <div className="action-area">
                                     {isOrderIsland ? (
