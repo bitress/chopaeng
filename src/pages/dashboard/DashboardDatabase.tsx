@@ -2,13 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardPagination from "../../components/dashboard/DashboardPagination";
 import { dashboardApi, type MigrationStatus } from "../../lib/dashboardApi";
 
-type Row = Record<string, unknown>;
-
-const asRecord = (value: unknown): Row => value && typeof value === "object" && !Array.isArray(value) ? value as Row : {};
-const asNumber = (value: unknown, fallback = 0) => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-};
 const fmt = (value: unknown) => typeof value === "number" ? value.toLocaleString() : String(value ?? "n/a");
 
 const DashboardDatabase = () => {
@@ -22,8 +15,7 @@ const DashboardDatabase = () => {
   const load = useCallback(() => {
     dashboardApi.migrationStatus().then((payload) => {
       setData(payload);
-      const mariadb = asRecord(payload.mariadb);
-      setTruncate(Boolean(mariadb.default_truncate_before_import));
+      setTruncate(Boolean(payload.mariadb?.default_truncate_before_import));
     }).catch((err) => setError(err.message));
   }, []);
 
@@ -42,15 +34,15 @@ const DashboardDatabase = () => {
     }
   };
 
-  const mariadb = asRecord(data?.mariadb);
-  const lastResult = asRecord(data?.last_result);
-  const sourceTables = asRecord(data?.source_tables);
+  const mariadb = data?.mariadb || {};
+  const lastResult = data?.last_result || {};
+  const sourceTables: Record<string, number> = data?.source_tables || {};
   const tableNames = Object.keys(sourceTables).sort();
   const totalTablePages = Math.max(1, Math.ceil(tableNames.length / tablePerPage));
   const safeTablePage = Math.min(tablePage, totalTablePages);
   const pagedTableNames = useMemo(() => tableNames.slice((safeTablePage - 1) * tablePerPage, safeTablePage * tablePerPage), [tableNames, safeTablePage]);
   const configured = Boolean(mariadb.configured);
-  const totalRows = asNumber(data?.source_total_rows);
+  const totalRows = data?.source_total_rows || 0;
   const messageType = !configured ? "warning" : lastResult.ok === false ? "danger" : lastResult.ok ? "success" : "info";
   const message = !configured
     ? `MySQL settings are incomplete: ${Array.isArray(mariadb.missing) ? mariadb.missing.join(", ") : "missing config"}`
@@ -148,7 +140,7 @@ const DashboardDatabase = () => {
               {pagedTableNames.map((name) => (
                 <tr key={name}>
                   <td className="fw-bold">{name}</td>
-                  <td className="text-end fw-bold">{fmt(asNumber(sourceTables[name]))}</td>
+                  <td className="text-end fw-bold">{fmt(sourceTables[name] || 0)}</td>
                 </tr>
               ))}
             </tbody>

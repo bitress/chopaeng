@@ -1,12 +1,14 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import type { CatalogEntity } from "../data/commandBuilderData";
-import { loadExplorerItems } from "../data/explorerDataLoader";
-import { loadVillagers } from "../data/villagerDataLoader";
 import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets, type PocketItem } from "../hooks/useCommandBuilderPockets";
+import { useCatalogData } from "../hooks/useCatalogData";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
 import DisclaimerBanner from "../components/DisclaimerBanner";
+import { CommandBuilderFilters } from "../components/command-builder/CommandBuilderFilters";
+import { CommandBuilderItemCard } from "../components/command-builder/CommandBuilderItemCard";
 
 type ItemData = PocketItem;
 
@@ -69,34 +71,10 @@ const CommandBuilder = () => {
     const [currentPage, setCurrentPage] = useState(1);
 
     // --- Data State ---
-    const [catalogEntities, setCatalogEntities] = useState<CatalogEntity[]>([]);
-    const [explorerItems, setExplorerItems] = useState<CatalogEntity[]>([]);
-    const [villagerEntities, setVillagerEntities] = useState<CatalogEntity[]>([]);
-    const [isLoadingData, setIsLoadingData] = useState(true);
-
-    useEffect(() => {
-        let mounted = true;
-        const loadData = async () => {
-            setIsLoadingData(true);
-            try {
-                const [items, villagers] = await Promise.all([
-                    loadExplorerItems(),
-                    loadVillagers()
-                ]);
-                if (mounted) {
-                    setExplorerItems(items);
-                    setVillagerEntities(villagers);
-                    setCatalogEntities([...items, ...villagers]);
-                }
-            } catch (err) {
-                console.error("Failed to load catalog data", err);
-            } finally {
-                if (mounted) setIsLoadingData(false);
-            }
-        };
-        loadData();
-        return () => { mounted = false; };
-    }, []);
+    const { data, isLoading: isLoadingData } = useCatalogData();
+    const catalogEntities = data?.all || [];
+    const explorerItems = data?.items || [];
+    const villagerEntities = data?.villagers || [];
 
     const {
         orderItems,
@@ -160,8 +138,12 @@ const CommandBuilder = () => {
         });
     }, [hideVariants, catalogEntities]);
 
-    const itemCategories = useMemo(() => uniqueValues(explorerItems.filter(i => i.entityType === 'item'), 'category'), []);
-    const villagerTypes = useMemo(() => uniqueValues(villagerEntities, 'category'), []);
+    const itemCategories = useMemo(() => uniqueValues(explorerItems.filter(i => i.entityType === 'item'), 'category'), [explorerItems]);
+    const villagerTypes = useMemo(() => uniqueValues(villagerEntities, 'category'), [villagerEntities]);
+    const uniqueThemes = useMemo(() => uniqueValues(catalogEntities, 'theme'), [catalogEntities]);
+    const uniqueSeries = useMemo(() => uniqueValues(catalogEntities, 'series'), [catalogEntities]);
+    const uniqueInteractivity = useMemo(() => uniqueValues(catalogEntities, 'interactivity'), [catalogEntities]);
+    const uniqueColours = useMemo(() => uniqueValues(catalogEntities, 'colour'), [catalogEntities]);
 
     const filteredItems = useMemo(() => {
         return expandedCatalogItems.filter((item) => {
@@ -231,150 +213,47 @@ const CommandBuilder = () => {
 
     return (
         <>
-            <title>Chopaeng | Command Builder</title>
-            <meta name="description" content="Browse items by category, theme, series, interactivity, colour, or name. Add up to 40 items to your pockets and build your ACNH command with a villager option." />
-            <link rel="canonical" href="https://www.chopaeng.com/command-builder" />
+            <Helmet>
+                <title>Chopaeng | Command Builder</title>
+                <meta name="description" content="Browse items by category, theme, series, interactivity, colour, or name. Add up to 40 items to your pockets and build your ACNH command with a villager option." />
+                <link rel="canonical" href="https://www.chopaeng.com/command-builder" />
+            </Helmet>
 
             <div className="bg-pattern font-nunito min-vh-100 pb-5">
                 <section className="container mt-n5 position-relative" style={{ zIndex: 10 }}>
-                    <div className="glass-filter rounded-4 p-4 border mb-4 shadow-sm">
-
-                        {/* Mobile Search & Filter Toggle Row */}
-                        <div className="d-flex gap-2 mb-3">
-                            <div className="flex-grow-1 position-relative">
-                                <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-4 text-muted"></i>
-                                <input
-                                    type="search"
-                                    className="form-control bg-white rounded-pill border shadow-sm ps-5 pe-5 py-2"
-                                    placeholder="Search catalog (e.g. Ironwood)..."
-                                    value={searchInput}
-                                    onChange={(e) => setSearchInput(e.target.value)}
-                                    aria-label="Search catalog"
-                                />
-                                {searchInput && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-link text-muted position-absolute top-50 end-0 translate-middle-y me-3 p-0"
-                                        onClick={() => setSearchInput('')}
-                                        aria-label="Clear search"
-                                    >
-                                        <i className="fa-solid fa-circle-xmark"></i>
-                                    </button>
-                                )}
-                            </div>
-                            <button
-                                className={`btn border rounded-pill shadow-sm d-md-none px-4 ${activeFilterCount > 0 ? 'btn-nook text-white' : 'btn-white'}`}
-                                onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-                                aria-label="Toggle Filters"
-                                aria-expanded={showFiltersMobile}
-                            >
-                                <i className="fa-solid fa-filter"></i>
-                            </button>
-                        </div>
-
-                        <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-                            <span className="badge bg-white text-dark rounded-pill border px-3 py-2 fw-bold" aria-live="polite">
-                                <i className="fa-solid fa-sliders me-1 text-success"></i>
-                                {activeFilterCount === 0 ? 'No active filters' : `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
-                            </span>
-                            {!hideVariants && (
-                                <span className="badge bg-success-subtle text-success rounded-pill border border-success-subtle px-3 py-2 fw-bold">
-                                    Showing variants
-                                </span>
-                            )}
-                            {!compactMode && (
-                                <span className="badge bg-info-subtle text-info-emphasis rounded-pill border border-info-subtle px-3 py-2 fw-bold">
-                                    Spacious cards
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Dismissible active-filter chips */}
-                        {activeFilterChips.length > 0 && (
-                            <div className="d-flex flex-wrap gap-2 mb-3">
-                                {activeFilterChips.map((chip) => (
-                                    <button
-                                        key={chip.key}
-                                        type="button"
-                                        onClick={chip.clear}
-                                        className="badge bg-nook-green text-white rounded-pill border-0 px-3 py-2 fw-bold d-inline-flex align-items-center gap-2 transition-all"
-                                        aria-label={`Remove filter ${chip.label}`}
-                                    >
-                                        {chip.label}
-                                        <i className="fa-solid fa-xmark"></i>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Collapsible Advanced Filters */}
-                        <div className={`row g-3 ${showFiltersMobile ? 'd-flex' : 'd-none d-md-flex'}`}>
-                            <div className="col-6 col-md-3">
-                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={kindFilter} onChange={(e) => setKindFilter(e.target.value)}>
-                                    <option value="All">All Types</option>
-                                    <option value="Items">Items</option>
-                                    <option value="Recipes">Recipes</option>
-                                    <option value="Villagers">Villagers</option>
-                                </select>
-                            </div>
-
-                            <div className="col-6 col-md-3">
-                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={category} onChange={(e) => setCategory(e.target.value)}>
-                                    <option value="All">All Categories</option>
-                                    {itemCategories.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="col-6 col-md-3">
-                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={villagerType} onChange={(e) => setVillagerType(e.target.value)}>
-                                    <option value="All">All Villager Types</option>
-                                    {villagerTypes.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="col-6 col-md-3">
-                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={theme} onChange={(e) => setTheme(e.target.value)}>
-                                    <option value="All">All Themes</option>
-                                    {uniqueValues(catalogEntities, 'theme').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="col-6 col-md-3">
-                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={series} onChange={(e) => setSeries(e.target.value)}>
-                                    <option value="All">All Series</option>
-                                    {uniqueValues(catalogEntities, 'series').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="col-6 col-md-3">
-                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={interactivity} onChange={(e) => setInteractivity(e.target.value)}>
-                                    <option value="All">All Interactivity</option>
-                                    {uniqueValues(catalogEntities, 'interactivity').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="col-6 col-md-3">
-                                <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={colour} onChange={(e) => setColour(e.target.value)}>
-                                    <option value="All">All Colours</option>
-                                    {uniqueValues(catalogEntities, 'colour').filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="col-12 col-md-auto ms-md-auto d-flex flex-wrap align-items-end gap-3 mt-3 mt-md-0">
-                                <div className="form-check form-switch">
-                                    <input className="form-check-input cursor-pointer" type="checkbox" id="hideVariants" checked={hideVariants} onChange={(e) => setHideVariants(e.target.checked)} />
-                                    <label className="form-check-label small text-dark cursor-pointer fw-bold" htmlFor="hideVariants">Hide variants</label>
-                                </div>
-                                <div className="form-check form-switch">
-                                    <input className="form-check-input cursor-pointer" type="checkbox" id="compactMode" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />
-                                    <label className="form-check-label small text-dark cursor-pointer fw-bold" htmlFor="compactMode">Compact</label>
-                                </div>
-                                <button type="button" className="btn btn-white text-dark rounded-pill px-4 py-2 small fw-bold shadow-sm border ms-auto ms-md-0" onClick={clearFilters} disabled={activeFilterCount === 0}>
-                                    <i className="fa-solid fa-rotate-left me-1"></i> Reset
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <CommandBuilderFilters 
+                        searchInput={searchInput}
+                        setSearchInput={setSearchInput}
+                        showFiltersMobile={showFiltersMobile}
+                        setShowFiltersMobile={setShowFiltersMobile}
+                        activeFilterCount={activeFilterCount}
+                        activeFilterChips={activeFilterChips}
+                        hideVariants={hideVariants}
+                        setHideVariants={setHideVariants}
+                        compactMode={compactMode}
+                        setCompactMode={setCompactMode}
+                        kindFilter={kindFilter}
+                        setKindFilter={setKindFilter}
+                        category={category}
+                        setCategory={setCategory}
+                        villagerType={villagerType}
+                        setVillagerType={setVillagerType}
+                        theme={theme}
+                        setTheme={setTheme}
+                        series={series}
+                        setSeries={setSeries}
+                        interactivity={interactivity}
+                        setInteractivity={setInteractivity}
+                        colour={colour}
+                        setColour={setColour}
+                        itemCategories={itemCategories}
+                        villagerTypes={villagerTypes}
+                        uniqueThemes={uniqueThemes}
+                        uniqueSeries={uniqueSeries}
+                        uniqueInteractivity={uniqueInteractivity}
+                        uniqueColours={uniqueColours}
+                        clearFilters={clearFilters}
+                    />
                 </section>
 
                 <section className="container py-4">
@@ -414,100 +293,31 @@ const CommandBuilder = () => {
                                     </div>
                                 ) : (
                                     pagedItems.map((item) => {
-                                        const isVillager = item.entityType === 'villager';
                                         const orderEntry = orderItems.find((s) => s.item.id === item.id);
                                         const dropEntry = dropItems.find((s) => s.item.id === item.id);
                                         const orderQty = orderEntry?.quantity ?? 0;
                                         const dropQty = dropEntry?.quantity ?? 0;
-                                        const cardSelected = orderQty > 0 || dropQty > 0;
 
                                         return (
-                                            <div className="col-6 col-md-4 col-xl-3" key={item.id}>
-                                                <div
-                                                    className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${cardSelected ? 'border-success border-2' : 'border-light'} cursor-pointer transition-all hover-scale`}
-                                                    onClick={() => openDetail(item)}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    aria-label={`View details for ${item.name}`}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item); } }}
-                                                >
-                                                    {/* Selection Badges */}
-                                                    {cardSelected && (
-                                                        <div className="position-absolute top-0 end-0 m-2 z-index-2 d-flex flex-column gap-1 pointer-events-none">
-                                                            {orderQty > 0 && <div className="badge bg-success shadow-sm">O:{orderQty}</div>}
-                                                            {dropQty > 0 && <div className="badge bg-info text-dark shadow-sm">D:{dropQty}</div>}
-                                                        </div>
-                                                    )}
-
-                                                    {/* Image Container */}
-                                                    <div className="ratio ratio-1x1 bg-light d-flex align-items-center justify-content-center">
-                                                        <img
-                                                            src={item.image}
-                                                            alt={item.name}
-                                                            loading="lazy"
-                                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
-                                                            className={`w-100 h-100 ${compactMode ? 'p-2' : 'p-4'} ${cardSelected ? 'opacity-75' : ''} ${isVillager ? 'object-fit-contain' : 'object-fit-cover'}`}
-                                                        />
-                                                    </div>
-
-                                                    {/* Info Block */}
-                                                    <div className="p-2 d-flex flex-column flex-grow-1 border-top">
-                                                        <div className="mb-auto">
-                                                            <div className="d-flex justify-content-between align-items-start mb-1">
-                                                                <span className="badge bg-light text-muted rounded-pill px-2 py-1" style={{ fontSize: "0.65rem", border: "1px solid #dee2e6" }}>{isVillager ? 'Villager' : item.category}</span>
-                                                                {!isVillager && <button type="button" className="btn btn-link text-muted p-0 m-0" onClick={(e) => { e.stopPropagation(); openDetail(item); }} aria-label={`More info about ${item.name}`}><i className="fa-solid fa-circle-info" style={{ fontSize: "0.85rem" }}></i></button>}
-                                                            </div>
-                                                            <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{ fontSize: "0.85rem" }}>{item.name}</h3>
-                                                            {item.variantLabel && (
-                                                                <div className="badge bg-success-subtle text-success border border-success-subtle rounded-pill mt-1 text-truncate" style={{ maxWidth: '100%', fontSize: '0.66rem' }}>
-                                                                    {item.variantLabel}
-                                                                </div>
-                                                            )}
-                                                            {!isVillager && !item.variantLabel && hideVariants && (item.variations?.length ?? 0) > 1 && (
-                                                                <div className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mt-1" style={{ fontSize: '0.66rem' }}>
-                                                                    {item.variations?.length} variants
-                                                                </div>
-                                                            )}
-
-                                                        </div>
-
-                                                        {/* Action Buttons */}
-                                                        <div className="mt-auto pt-2 w-100" onClick={(e) => e.stopPropagation()}>
-                                                            <div className="d-flex gap-2">
-                                                                {/* Order Button Group */}
-                                                                {orderQty > 0 ? (
-                                                                    isVillager ? (
-                                                                        <button type="button" className="btn btn-sm btn-success text-white rounded-pill flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Remove ${item.name} from order`}>In Order (x)</button>
-                                                                    ) : (
-                                                                        <div className="btn-group rounded-pill flex-grow-1 bg-light">
-                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
-                                                                            <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-success" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{orderQty}</div>
-                                                                            <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder} aria-label={`Increase order quantity for ${item.name}`} title={!canIncreaseOrder ? 'Order bot full (40/40)' : undefined}>+</button>
-                                                                        </div>
-                                                                    )
-                                                                ) : (
-                                                                    <button type="button" className="btn btn-sm btn-light text-success rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToOrderPockets(item as ItemData)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
-                                                                )}
-
-                                                                {/* Drop Button Group */}
-                                                                {dropQty > 0 ? (
-                                                                    isVillager ? (
-                                                                        <button type="button" className="btn btn-sm btn-info text-white rounded-pill flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => decreaseDropQuantity(item.id)} aria-label={`Remove ${item.name} from drop`}>In Drop (x)</button>
-                                                                    ) : (
-                                                                        <div className="btn-group rounded-pill flex-grow-1 bg-light">
-                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
-                                                                            <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-info" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{dropQty}</div>
-                                                                            <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
-                                                                        </div>
-                                                                    )
-                                                                ) : (
-                                                                    <button type="button" className="btn btn-sm btn-light text-info rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToDropPockets(item as ItemData)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <CommandBuilderItemCard
+                                                key={item.id}
+                                                item={item}
+                                                orderQty={orderQty}
+                                                dropQty={dropQty}
+                                                compactMode={compactMode}
+                                                hideVariants={hideVariants}
+                                                canIncreaseOrder={canIncreaseOrder}
+                                                canIncreaseDrop={canIncreaseDrop}
+                                                totalOrderCount={totalOrderCount}
+                                                totalDropCount={totalDropCount}
+                                                openDetail={openDetail}
+                                                decreaseOrderQuantity={decreaseOrderQuantity}
+                                                increaseOrderQuantity={increaseOrderQuantity}
+                                                addItemToOrderPockets={addItemToOrderPockets}
+                                                decreaseDropQuantity={decreaseDropQuantity}
+                                                increaseDropQuantity={increaseDropQuantity}
+                                                addItemToDropPockets={addItemToDropPockets}
+                                            />
                                         );
                                     })
                                 )}

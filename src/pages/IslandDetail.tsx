@@ -1,193 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
-import { DODO_API_BASE, FINDER_API_BASE } from "../config/api";
 import RevealErrorPopup from "../components/RevealErrorPopup";
 import DisclaimerBanner from "../components/DisclaimerBanner";
-import { loadVillagers } from "../data/villagerDataLoader";
-import type { CatalogEntity } from "../data/commandBuilderData";
-
-const DODO_PLACEHOLDER = {
-    GETTING: "GETTIN'",
-    FULL: "FULL",
-    SUB_ONLY: "SUB ONLY",
-} as const;
-
-const ISLAND_STATUS = {
-    OFFLINE: "OFFLINE",
-} as const;
-
-const ISLAND_CATEGORY = {
-    MEMBER: "member",
-    ORDER: "order",
-} as const;
-
-// Villagers are loaded asynchronously inside components that need them
-
-const PERSONALITY_COLORS: Record<string, { ring: string; bg: string; text: string }> = {
-    lazy: { ring: "#E8A33D", bg: "#FBF0DD", text: "#8A5A17" },
-    jock: { ring: "#4F8FE8", bg: "#E7F0FD", text: "#1F508C" },
-    cranky: { ring: "#8B6F9E", bg: "#F0EAF4", text: "#5B4470" },
-    smug: { ring: "#4FAE99", bg: "#E5F5F1", text: "#2C6E5F" },
-    normal: { ring: "#7BAE6F", bg: "#EDF5EA", text: "#4A6E40" },
-    peppy: { ring: "#F07FA6", bg: "#FDEBF1", text: "#A03D63" },
-    snooty: { ring: "#A15FD9", bg: "#F2E9FB", text: "#6B3A94" },
-    sisterly: { ring: "#E8574F", bg: "#FBE7E5", text: "#A5342C" },
-    "big sister": { ring: "#E8574F", bg: "#FBE7E5", text: "#A5342C" },
-};
-
-const FALLBACK_PALETTE = [
-    { ring: "#4F8FE8", bg: "#E7F0FD", text: "#1F508C" },
-    { ring: "#4FAE99", bg: "#E5F5F1", text: "#2C6E5F" },
-    { ring: "#E8A33D", bg: "#FBF0DD", text: "#8A5A17" },
-    { ring: "#A15FD9", bg: "#F2E9FB", text: "#6B3A94" },
-    { ring: "#F07FA6", bg: "#FDEBF1", text: "#A03D63" },
-    { ring: "#7BAE6F", bg: "#EDF5EA", text: "#4A6E40" },
-];
-
-function hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
-    }
-    return Math.abs(hash);
-}
-
-function getPersonalityStyle(personality: string | undefined, seed: string) {
-    const key = personality?.toLowerCase().trim();
-    if (key && PERSONALITY_COLORS[key]) return PERSONALITY_COLORS[key];
-    return FALLBACK_PALETTE[hashString(seed) % FALLBACK_PALETTE.length];
-}
+import { DODO_API_BASE } from "../config/api";
+import { 
+    DODO_PLACEHOLDER, 
+    ISLAND_STATUS, 
+    ISLAND_CATEGORY, 
+    DODO_UI_CONFIG 
+} from "../config/constants";
+import type { DodoUiState } from "../config/constants";
+import { ResidentVillagerPill } from "../components/island/ResidentVillagerPill";
+import { IslandMapPolaroid } from "../components/island/IslandMapPolaroid";
+import { DALFlightBoard } from "../components/island/DALFlightBoard";
+import { IslandActionArea } from "../components/island/IslandActionArea";
+import "./IslandDetail.css";
 
 
-
-export const ResidentVillagerPill = ({ villagerName }: { villagerName: string }) => {
-    const navigate = useNavigate();
-
-    const [matched, setMatched] = useState<CatalogEntity | null>(null);
-
-    useEffect(() => {
-        let mounted = true;
-        loadVillagers().then(villagers => {
-            if (mounted) {
-                setMatched(villagers.find((v) => v.name.toLowerCase() === villagerName.toLowerCase()) || null);
-            }
-        });
-        return () => { mounted = false; };
-    }, [villagerName]);
-
-    const fallbackImg =
-        matched?.image ||
-        `https://www.pange.ca/itemsearch/villagers/${matched?.id || villagerName.toLowerCase()}.png`;
-
-    const [iconUrl, setIconUrl] = useState<string | null>(matched?.image || null);
-    const [imgError, setImgError] = useState(false);
-
-    useEffect(() => {
-        setIconUrl(matched?.image || null);
-        setImgError(false);
-
-        let isMounted = true;
-        const fetchIcon = async () => {
-            try {
-                const res = await fetch(`${FINDER_API_BASE}/api/v1/villager/${encodeURIComponent(villagerName)}`);
-                if (!res.ok) return;
-
-                const data = await res.json();
-                const fetchedIcon =
-                    data.villager?.nh_details?.icon_url ||
-                    data.villager?.image_url ||
-                    data.icon_url ||
-                    data.image_url;
-
-                if (fetchedIcon && isMounted) {
-                    setIconUrl(fetchedIcon);
-                }
-            } catch {
-                // Let the fallback handle the apocalypse
-            }
-        };
-
-        fetchIcon();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [villagerName, matched?.image]);
-
-    const displayImg = iconUrl || fallbackImg;
-    const style = getPersonalityStyle(matched?.personality, villagerName.toLowerCase());
-    const personalityLabel = matched?.personality
-        ? matched.personality.charAt(0).toUpperCase() + matched.personality.slice(1)
-        : null;
-
-    const handleClick = () => {
-        const pathId = matched ? matched.id : encodeURIComponent(villagerName.toLowerCase());
-        navigate(`/command-builder/villager/${pathId}`);
-    };
-
-    return (
-        <button
-            type="button"
-            onClick={handleClick}
-            className="villager-pill border-0 d-inline-flex align-items-center gap-2"
-            title={personalityLabel ? `${villagerName} · ${personalityLabel}` : `View ${villagerName} details`}
-            style={{
-                background: style.bg,
-                borderRadius: "999px",
-                padding: "6px 14px 6px 6px",
-                transition: "transform 120ms ease, box-shadow 120ms ease",
-            }}
-        >
-            <div
-                className="rounded-circle overflow-hidden bg-white d-flex align-items-center justify-content-center flex-shrink-0 position-relative"
-                style={{
-                    width: "36px",
-                    height: "36px",
-                    border: `2px solid ${style.ring}`,
-                    boxShadow: `0 0 0 2px ${style.bg}`,
-                }}
-            >
-                {!imgError && displayImg ? (
-                    <img
-                        src={displayImg}
-                        alt={villagerName}
-                        className="w-100 h-100 object-fit-contain"
-                        onError={() => setImgError(true)}
-                    />
-                ) : (
-                    <i className="fa-solid fa-paw small" style={{ color: style.ring }} role="img" aria-label={villagerName}></i>
-                )}
-            </div>
-            <span className="d-flex flex-column align-items-start lh-sm">
-                <span className="fw-bold small" style={{ color: style.text }}>
-                    {villagerName}
-                </span>
-                {personalityLabel && (
-                    <span className="text-uppercase" style={{ fontSize: "9px", letterSpacing: "0.04em", color: style.text, opacity: 0.75 }}>
-                        {personalityLabel}
-                    </span>
-                )}
-            </span>
-        </button>
-    );
-};
 // ─────────────────────────────────────────────────────────────
 // Dodo-code button: derived UI state + lookup table
 // (replaces three duplicated nested-ternary chains)
 // ─────────────────────────────────────────────────────────────
-type DodoUiState =
-    | "copied"
-    | "free-available"
-    | "revealed"
-    | "revealing"
-    | "revealable"
-    | "needs-login"
-    | "needs-membership"
-    | "gate-closed";
+
 
 function getDodoUiState(params: {
     copied: boolean;
@@ -212,37 +50,9 @@ function getDodoUiState(params: {
     return "gate-closed";
 }
 
-const DODO_UI_CONFIG: Record<
-    DodoUiState,
-    {
-        icon: string;
-        label: string;
-        code: (ctx: { freeLiveCode: string | null; revealedCode: string | null }) => string;
-    }
-> = {
-    copied: { icon: "fa-check", label: "Copied!", code: () => "✓ Copied" },
-    "free-available": {
-        icon: "fa-copy",
-        label: "Copy Dodo Code™",
-        code: ({ freeLiveCode }) => freeLiveCode ?? "",
-    },
-    revealed: {
-        icon: "fa-copy",
-        label: "Copy Code",
-        code: ({ revealedCode }) => revealedCode ?? "",
-    },
-    revealing: { icon: "fa-spinner fa-spin", label: "Loading...", code: () => "..." },
-    revealable: { icon: "fa-eye", label: "Reveal Code", code: () => "Tap to Reveal" },
-    "needs-login": { icon: "fa-lock", label: "Subscribers Only", code: () => "Login to Access" },
-    "needs-membership": { icon: "fa-lock", label: "Subscribers Only", code: () => "Join Discord" },
-    "gate-closed": { icon: "fa-power-off", label: "Gate Closed", code: () => "Offline" },
-};
 
-function formatPassengerCount(visitors: string | undefined): string {
-    if (!visitors) return "0/7";
-    const match = visitors.match(/\d+/)?.[0];
-    return `${match ?? "0"}/7`; // was `?? 7`, which silently showed "full" on parse failure
-}
+
+
 
 async function copyToClipboard(text: string): Promise<boolean> {
     try {
@@ -480,37 +290,36 @@ const IslandDetail = () => {
 
     return (
         <div className="nook-bg min-vh-100 py-4 py-md-5">
-            <title>{pageTitle}</title>
-            <meta name="description" content={pageDesc} />
-            <meta
-                name="keywords"
-                content={`${capitalizeFirstLetter(
-                    island.name
-                )} ACNH treasure island, ACNH treasure islands, Animal Crossing New Horizons treasure island, ${capitalizeFirstLetter(
-                    island.name
-                )} island dodo code, ACNH free items, Animal Crossing treasure island`}
-            />
-            <link rel="canonical" href={currentUrl} />
+            <Helmet>
+                <title>{pageTitle}</title>
+                <meta name="description" content={pageDesc} />
+                <meta
+                    name="keywords"
+                    content={`${capitalizeFirstLetter(
+                        island.name
+                    )} ACNH treasure island, ACNH treasure islands, Animal Crossing New Horizons treasure island, ${capitalizeFirstLetter(
+                        island.name
+                    )} island dodo code, ACNH free items, Animal Crossing treasure island`}
+                />
+                <link rel="canonical" href={currentUrl} />
 
-            {/* Open Graph */}
-            <meta property="og:type" content="website" />
-            <meta property="og:url" content={currentUrl} />
-            <meta property="og:title" content={pageTitle} />
-            <meta property="og:description" content={pageDesc} />
-            <meta property="og:image" content={seoImage} />
-            <meta property="og:site_name" content="Chopaeng" />
+                {/* Open Graph */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={currentUrl} />
+                <meta property="og:title" content={pageTitle} />
+                <meta property="og:description" content={pageDesc} />
+                <meta property="og:image" content={seoImage} />
+                <meta property="og:site_name" content="Chopaeng" />
 
-            {/* Twitter Cards */}
-            <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content={pageTitle} />
-            <meta name="twitter:description" content={pageDesc} />
-            <meta name="twitter:image" content={seoImage} />
+                {/* Twitter Cards */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={pageTitle} />
+                <meta name="twitter:description" content={pageDesc} />
+                <meta name="twitter:image" content={seoImage} />
 
-            {/* Breadcrumb + Island structured data */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
+                {/* Breadcrumb + Island structured data */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
                         "@context": "https://schema.org",
                         "@type": "BreadcrumbList",
                         itemListElement: [
@@ -523,9 +332,9 @@ const IslandDetail = () => {
                             },
                             { "@type": "ListItem", position: 3, name: `${capitalizeFirstLetter(island.name)} Island` },
                         ],
-                    }),
-                }}
-            />
+                    })}
+                </script>
+            </Helmet>
 
             <div className="container" style={{ maxWidth: "1050px" }}>
                 {/* Navigation Breadcrumb */}
@@ -545,82 +354,20 @@ const IslandDetail = () => {
                     <div className="col-lg-5">
                         {/* Map Polaroid – hidden for order-bot islands */}
                         {!isOrderIsland && (
-                        <div className="polaroid-stack mb-4">
-                            <div className="map-polaroid cursor-pointer" onClick={() => setShowImageModal(true)}>
-                                <div className="tape-strip"></div>
-                                <div className="img-wrapper">
-                                    <img
-                                        src={mapImageSrc}
-                                        alt={island.name}
-                                        className="img-fluid"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            if (target.src.includes(".png")) target.src = target.src.replace(".png", ".jpg");
-                                            else if (target.src.endsWith(".jpg")) target.src = target.src.replace(".jpg", ".jpeg");
-                                            else target.src = "https://www.chopaeng.com/banner.png";
-                                        }}
-                                    />
-                                    <div className="zoom-indicator">
-                                        <i className="fa-solid fa-expand"></i>
-                                    </div>
-                                </div>
-                                <div className="polaroid-caption">
-                                    <i className="fa-solid fa-map-location-dot me-2 text-warning"></i>
-                                    {island.name} Map
-                                </div>
-                            </div>
-                        </div>
+                            <IslandMapPolaroid 
+                                mapImageSrc={mapImageSrc} 
+                                islandName={island.name} 
+                                onClick={() => setShowImageModal(true)} 
+                            />
                         )}
 
                         {/* DAL Flight Board */}
-                        <div className="dal-card shadow-sm">
-                            <div className="dal-header">
-                                <i className="fa-solid fa-plane-up me-2"></i> DAL Flight Info
-                            </div>
-                            <div className="dal-body">
-                                <div className="flight-row">
-                                    <span className="flight-label">STATUS</span>
-                                    <span
-                                        className={`flight-value ${live?.isOnline && live?.dodo !== DODO_PLACEHOLDER.GETTING
-                                            ? "text-dal-blue"
-                                            : "text-danger"
-                                            }`}
-                                    >
-                                        {loading ? (
-                                            <span className="pulse">SCANNING...</span>
-                                        ) : live?.dodo === DODO_PLACEHOLDER.GETTING ? (
-                                            DODO_PLACEHOLDER.GETTING
-                                        ) : live?.isOnline ? (
-                                            "ONLINE"
-                                        ) : (
-                                            "OFFLINE"
-                                        )}
-                                    </span>
-                                </div>
-                                {!isOrderIsland && (
-                                <>
-                                <div className="flight-divider"></div>
-                                <div className="flight-row">
-                                    <span className="flight-label">PASSENGERS</span>
-                                    <span className="flight-value">{formatPassengerCount(live?.visitors)}</span>
-                                </div>
-                                </>
-                                )}
-                                <div className="flight-divider"></div>
-                                <div className="flight-row">
-                                    <span className="flight-label">GATE TYPE</span>
-                                    <span className="flight-value text-warning">{live?.access || "PUBLIC"}</span>
-                                </div>
-                            </div>
-                            <div className="dal-footer">
-                                <small>Dodo Airlines • We make travel a breeze!</small>
-                                {island.updatedAt && (
-                                    <small className="d-block mt-1 text-muted opacity-75">
-                                        Updated {new Date(island.updatedAt).toLocaleString()}
-                                    </small>
-                                )}
-                            </div>
-                        </div>
+                        <DALFlightBoard 
+                            island={island} 
+                            live={live} 
+                            loading={loading} 
+                            isOrderIsland={isOrderIsland} 
+                        />
                     </div>
 
                     {/* RIGHT COLUMN: Passport Info */}
@@ -687,124 +434,16 @@ const IslandDetail = () => {
                                 )}
 
                                 <div className="action-area">
-                                    {isOrderIsland ? (
-                                        /* ── Order Bot Island: no live Dodo Code yet ── */
-                                        <div
-                                            className="rounded-4 p-4"
-                                            style={{
-                                                background: "linear-gradient(135deg, #f0f4ff 0%, #ede8ff 100%)",
-                                                border: "2px solid #c7bfff",
-                                            }}
-                                        >
-                                            <div className="d-flex align-items-center gap-3 mb-3">
-                                                <span
-                                                    className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                                    style={{
-                                                        width: 44,
-                                                        height: 44,
-                                                        background: "linear-gradient(135deg,#7c6fff,#a78bfa)",
-                                                        color: "#fff",
-                                                        fontSize: "1.1rem",
-                                                        boxShadow: "0 4px 14px rgba(124,111,255,0.35)",
-                                                    }}
-                                                >
-                                                    <i className="fa-solid fa-box-open"></i>
-                                                </span>
-                                                <div>
-                                                    <div
-                                                        className="fw-black"
-                                                        style={{ color: "#4c3db5", fontSize: "0.9rem", letterSpacing: "0.04em" }}
-                                                    >
-                                                        ORDER BOT ISLAND
-                                                    </div>
-                                                    <div className="text-muted small lh-sm">
-                                                        Dodo codes are issued after ordering
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <p className="text-muted mb-3" style={{ fontSize: "0.82rem", lineHeight: 1.55 }}>
-                                                <i className="fa-solid fa-circle-info me-1 text-primary opacity-75"></i>
-                                                There is no live Dodo code displayed here. Place your order on{" "}
-                                                <strong>Discord</strong> or <strong>Twitch</strong> first — you'll receive
-                                                your personal Dodo code in the order channel once it's ready.
-                                            </p>
-
-                                            <div className="d-flex flex-column gap-2">
-                                                <a
-                                                    href="https://discord.gg/chopaeng"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn fw-bold d-flex align-items-center justify-content-center gap-2 rounded-pill py-2"
-                                                    style={{
-                                                        background: "#5865f2",
-                                                        color: "#fff",
-                                                        border: "none",
-                                                        boxShadow: "0 4px 12px rgba(88,101,242,0.35)",
-                                                    }}
-                                                >
-                                                    <i className="fa-brands fa-discord fs-5"></i>
-                                                    <span>Order on Discord</span>
-                                                    <i className="fa-solid fa-arrow-up-right-from-square small opacity-75 ms-1"></i>
-                                                </a>
-                                                <a
-                                                    href="https://www.twitch.tv/chopaeng"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn fw-bold d-flex align-items-center justify-content-center gap-2 rounded-pill py-2"
-                                                    style={{
-                                                        background: "#9146ff",
-                                                        color: "#fff",
-                                                        border: "none",
-                                                        boxShadow: "0 4px 12px rgba(145,70,255,0.35)",
-                                                    }}
-                                                >
-                                                    <i className="fa-brands fa-twitch fs-5"></i>
-                                                    <span>Order on Twitch</span>
-                                                    <i className="fa-solid fa-arrow-up-right-from-square small opacity-75 ms-1"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        /* ── Regular / Sub Island: Dodo reveal button ── */
-                                        <>
-                                            <button
-                                                disabled={!canShowDodo && !needsAuth}
-                                                className={`btn-dodo-3d ${canShowDodo || needsAuth ? "" : "disabled"}`}
-                                                onClick={onRevealCode}
-                                            >
-                                                <div className="content">
-                                                    <div className="icon-box">
-                                                        <i className={`fa-solid ${dodoUiConfig.icon}`}></i>
-                                                    </div>
-                                                    <div className="text-group">
-                                                        <span className="action-label">{dodoUiConfig.label}</span>
-                                                        <span className="action-code">
-                                                            {dodoUiConfig.code({ freeLiveCode, revealedCode })}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </button>
-
-                                            {needsAuth && isRevealableState && (
-                                                <a
-                                                    href={user ? "https://www.patreon.com/cw/chopaeng/membership" : "#"}
-                                                    onClick={(e) => {
-                                                        if (!user) {
-                                                            e.preventDefault();
-                                                            login();
-                                                        }
-                                                    }}
-                                                    target={user ? "_blank" : undefined}
-                                                    rel={user ? "noopener noreferrer" : undefined}
-                                                    className="patreon-link"
-                                                >
-                                                    <i className={`fa-solid ${user ? "fa-crown" : "fa-right-to-bracket"} me-2`}></i>
-                                                    {user ? "Subscribe to Join Queue" : "Login"}
-                                                </a>
-                                            )}
-                                        </>
-                                    )}
+                                    <IslandActionArea 
+                                        isOrderIsland={isOrderIsland}
+                                        canShowDodo={canShowDodo}
+                                        needsAuth={needsAuth}
+                                        onRevealCode={onRevealCode}
+                                        dodoUiConfig={dodoUiConfig}
+                                        isRevealableState={isRevealableState}
+                                        user={user}
+                                        login={login}
+                                    />
                                 </div>
                             </div>
                         </div>

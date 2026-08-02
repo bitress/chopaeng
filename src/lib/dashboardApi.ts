@@ -1,5 +1,28 @@
+import { z } from "zod";
 import { API_BASE } from "../config/api";
 import { getAuthToken } from "../context/authToken";
+
+export const MigrationStatusSchema = z.object({
+  runtime_database: z.string().optional(),
+  source_total_rows: z.number().optional(),
+  mariadb: z.object({
+    configured: z.boolean().optional(),
+    missing: z.array(z.string()).optional(),
+    default_truncate_before_import: z.boolean().optional(),
+    host: z.string().optional(),
+    port: z.union([z.string(), z.number()]).optional(),
+    database: z.string().optional()
+  }).optional(),
+  last_result: z.object({
+    ok: z.boolean().optional(),
+    error: z.string().optional(),
+    total_rows_copied: z.number().optional(),
+    source_total_rows: z.number().optional()
+  }).optional(),
+  source_tables: z.record(z.string(), z.number()).optional()
+});
+
+export type MigrationStatus = z.infer<typeof MigrationStatusSchema>;
 
 export type DashboardIsland = {
   id: string;
@@ -159,7 +182,6 @@ export type DashboardCommandAnalytics = {
   busiest_islands: Array<Record<string, unknown>>;
   peak_hours: Array<Record<string, unknown>>;
 };
-export type MigrationStatus = Record<string, unknown>;
 
 export type WebsiteLoginEvent = {
   id: number;
@@ -368,12 +390,12 @@ export const dashboardApi = {
   commandAnalytics: (days = 30, limit = 15) =>
     dashboardRequest<DashboardCommandAnalytics>(`/command-analytics?days=${encodeURIComponent(days)}&limit=${encodeURIComponent(limit)}`),
   analyticsExportUrl: (islandType = "") => dashboardUrl(`/analytics/export.csv${islandType ? `?island_type=${encodeURIComponent(islandType)}` : ""}`),
-  migrationStatus: () => dashboardRequest<MigrationStatus>("/mariadb-migration/status"),
+  migrationStatus: () => dashboardRequest<unknown>("/mariadb-migration/status").then(d => MigrationStatusSchema.parse(d)),
   runMigration: (dryRun = true, truncateBeforeImport = false) =>
-    dashboardRequest<MigrationStatus>("/mariadb-migration", {
+    dashboardRequest<unknown>("/mariadb-migration", {
       method: "POST",
       body: JSON.stringify({ dry_run: dryRun, truncate_before_import: truncateBeforeImport }),
-    }),
+    }).then(d => MigrationStatusSchema.parse(d)),
   runtimeStatus: () => dashboardRequest<DashboardOpsStatus>("/runtime-status"),
   backups: () => dashboardRequest<DashboardBackupList>("/backups"),
   maintenanceMode: (payload: Record<string, unknown>) => dashboardRequest<unknown>("/maintenance-mode", { method: "POST", body: JSON.stringify(payload) }),

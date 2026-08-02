@@ -1,0 +1,38 @@
+.order-bot-card {
+    background: linear-gradient(135deg, #f0f4ff 0%, #ede8ff 100%);
+    border: 2px solid #c7bfff;
+}
+
+.order-bot-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg,#7c6fff,#a78bfa);
+    color: #fff;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 14px rgba(124,111,255,0.35);
+}
+
+.order-bot-title {
+    color: #4c3db5;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+}
+
+.order-bot-desc {
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
+.btn-discord {
+    background: #5865f2;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(88,101,242,0.35);
+}
+
+.btn-twitch {
+    background: #9146ff;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(145,70,255,0.35);
+}
