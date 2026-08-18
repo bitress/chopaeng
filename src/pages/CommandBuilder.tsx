@@ -19,7 +19,6 @@ import { CommandBuilderVariantModal } from "../components/command-builder/Comman
 import { CommandBuilderPocketBundlesModal } from "../components/command-builder/CommandBuilderPocketBundlesModal";
 import { CommandBuilderShareModal } from "../components/command-builder/CommandBuilderShareModal";
 import { decodePocketShareData } from "../utils/pocketSharing";
-import { useAuth } from "../context/useAuth";
 import { useFavorites } from "../hooks/useFavorites";
 
 type ItemData = PocketItem;
