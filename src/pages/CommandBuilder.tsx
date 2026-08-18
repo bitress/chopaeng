@@ -18,7 +18,7 @@ import { CommandBuilderItemCard } from "../components/command-builder/CommandBui
 import { CommandBuilderVariantModal } from "../components/command-builder/CommandBuilderVariantModal";
 import { CommandBuilderPocketBundlesModal } from "../components/command-builder/CommandBuilderPocketBundlesModal";
 import { CommandBuilderShareModal } from "../components/command-builder/CommandBuilderShareModal";
-import { decodePocketShareData } from "../utils/pocketSharing";
+import { decodePocketShareData, fetchSharedPocket } from "../utils/pocketSharing";
 import { useFavorites } from "../hooks/useFavorites";
 
 type ItemData = PocketItem;
@@ -136,17 +136,41 @@ const CommandBuilder = () => {
         getDropPocketQuantity,
     } = useCommandBuilderPockets();
 
-    // 0. Load shared pocket from URL if ?pocket= is present
+    // 0. Load shared pocket from URL if ?p= (short ID) or ?pocket= (base64) is present
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        const pocketParam = urlParams.get('pocket');
-        if (pocketParam) {
-            const decoded = decodePocketShareData(pocketParam);
-            if (decoded) {
-                loadSharedPocket(decoded);
-                const count = (decoded.orderItems?.length || 0) + (decoded.dropItems?.length || 0);
-                setSharedNotice(`✨ Shared pocket loaded: "${decoded.name || 'Custom'}" (${count} items)`);
-                setTimeout(() => setSharedNotice(null), 5000);
+        const shortParam = urlParams.get('p');
+        const legacyPocketParam = urlParams.get('pocket');
+
+        if (shortParam) {
+            fetchSharedPocket(shortParam).then((sharedData) => {
+                if (sharedData) {
+                    loadSharedPocket(sharedData);
+                    const count = (sharedData.orderItems?.length || 0) + (sharedData.dropItems?.length || 0);
+                    setSharedNotice(`✨ Shared pocket loaded: "${sharedData.name || 'ACNH Pocket'}" (${count} items)`);
+                    setTimeout(() => setSharedNotice(null), 6000);
+                }
+            });
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        } else if (legacyPocketParam) {
+            if (legacyPocketParam.length <= 15) {
+                fetchSharedPocket(legacyPocketParam).then((sharedData) => {
+                    if (sharedData) {
+                        loadSharedPocket(sharedData);
+                        const count = (sharedData.orderItems?.length || 0) + (sharedData.dropItems?.length || 0);
+                        setSharedNotice(`✨ Shared pocket loaded: "${sharedData.name || 'ACNH Pocket'}" (${count} items)`);
+                        setTimeout(() => setSharedNotice(null), 6000);
+                    }
+                });
+            } else {
+                const decoded = decodePocketShareData(legacyPocketParam);
+                if (decoded) {
+                    loadSharedPocket(decoded);
+                    const count = (decoded.orderItems?.length || 0) + (decoded.dropItems?.length || 0);
+                    setSharedNotice(`✨ Shared pocket loaded: "${decoded.name || 'Custom'}" (${count} items)`);
+                    setTimeout(() => setSharedNotice(null), 5000);
+                }
             }
             const cleanUrl = window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);

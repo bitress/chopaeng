@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { PocketItem } from '../../hooks/useCommandBuilderPockets';
-import { generatePocketShareUrl } from '../../utils/pocketSharing';
+import { createShortPocketShare } from '../../utils/pocketSharing';
 
 interface CommandBuilderShareModalProps {
     isOpen: boolean;
@@ -16,16 +16,47 @@ export const CommandBuilderShareModal = ({
     dropPockets,
 }: CommandBuilderShareModalProps) => {
     const [pocketName, setPocketName] = useState('My ACNH Pocket');
+    const [shareUrl, setShareUrl] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
     const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
     const orderCount = useMemo(() => orderPockets.reduce((s, p) => s + p.quantity, 0), [orderPockets]);
     const dropCount = useMemo(() => dropPockets.reduce((s, p) => s + p.quantity, 0), [dropPockets]);
     const totalItems = orderCount + dropCount;
 
-    const shareUrl = useMemo(() => {
-        if (!isOpen) return '';
-        return generatePocketShareUrl(orderPockets, dropPockets, pocketName);
-    }, [isOpen, orderPockets, dropPockets, pocketName]);
+    // Generate short share link when modal opens or name changes
+    useEffect(() => {
+        if (!isOpen || totalItems === 0) {
+            setShareUrl('');
+            return;
+        }
+
+        let isCancelled = false;
+        setIsGenerating(true);
+
+        const generate = async () => {
+            try {
+                const res = await createShortPocketShare(orderPockets, dropPockets, pocketName);
+                if (!isCancelled) {
+                    setShareUrl(res.url);
+                }
+            } catch {
+                if (!isCancelled) {
+                    setShareUrl(window.location.origin + '/command-builder');
+                }
+            } finally {
+                if (!isCancelled) {
+                    setIsGenerating(false);
+                }
+            }
+        };
+
+        const timer = setTimeout(generate, 300);
+        return () => {
+            isCancelled = true;
+            clearTimeout(timer);
+        };
+    }, [isOpen, orderPockets, dropPockets, pocketName, totalItems]);
 
     const handleCopy = async () => {
         if (!shareUrl) return;
@@ -138,18 +169,23 @@ export const CommandBuilderShareModal = ({
                                             type="text"
                                             readOnly
                                             className="form-control rounded-start-pill bg-light font-monospace small border text-truncate"
-                                            value={shareUrl}
+                                            value={isGenerating ? 'Generating short link...' : shareUrl}
                                             onClick={(e) => (e.target as HTMLInputElement).select()}
                                         />
                                         <button
                                             type="button"
+                                            disabled={isGenerating || !shareUrl}
                                             className={`btn rounded-end-pill px-4 fw-bold transition-all ${
                                                 copyStatus === 'copied' ? 'btn-success text-white' : 'btn-primary'
                                             }`}
                                             onClick={handleCopy}
                                         >
-                                            <i className={`fa-solid ${copyStatus === 'copied' ? 'fa-check' : 'fa-copy'} me-1`} />
-                                            {copyStatus === 'copied' ? 'Copied!' : 'Copy Link'}
+                                            {isGenerating ? (
+                                                <i className="fa-solid fa-spinner fa-spin me-1" />
+                                            ) : (
+                                                <i className={`fa-solid ${copyStatus === 'copied' ? 'fa-check' : 'fa-copy'} me-1`} />
+                                            )}
+                                            {copyStatus === 'copied' ? 'Copied!' : isGenerating ? 'Generating...' : 'Copy Link'}
                                         </button>
                                     </div>
                                     <p className="tiny-text text-muted mt-2 mb-0">
