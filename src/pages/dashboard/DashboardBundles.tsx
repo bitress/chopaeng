@@ -317,7 +317,8 @@ const DashboardBundles = () => {
                                 </tr>
                             ) : (
                                 filteredBundles.map((bundle) => {
-                                    const totalItemsCount = bundle.items.reduce((s, i) => s + i.quantity, 0);
+                                    const bundleItems = Array.isArray(bundle?.items) ? bundle.items : [];
+                                    const totalItemsCount = bundleItems.reduce((s, i) => s + (i?.quantity || 1), 0);
 
                                     return (
                                         <tr key={bundle.id}>
@@ -475,7 +476,7 @@ const DashboardBundles = () => {
                                     {/* Items list manager */}
                                     <div className="bg-white rounded-4 border p-3 shadow-sm mb-3">
                                         <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                                            <strong className="small text-dark">Included Items ({formItems.reduce((s, i) => s + i.quantity, 0)} Total Slots)</strong>
+                                            <strong className="small text-dark">Included Items ({(formItems || []).reduce((s, i) => s + (i?.quantity || 1), 0)} Total Slots)</strong>
                                         </div>
 
                                         {/* Add new item row */}

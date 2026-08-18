@@ -15,6 +15,33 @@ const getHeaders = (token?: string | null): Record<string, string> => {
     return headers;
 };
 
+export const normalizeBundle = (b: any): PocketBundle => {
+    let items: any[] = [];
+    if (Array.isArray(b?.items)) {
+        items = b.items;
+    } else if (typeof b?.items === 'string') {
+        try {
+            const parsed = JSON.parse(b.items);
+            if (Array.isArray(parsed)) items = parsed;
+        } catch {
+            items = [];
+        }
+    }
+    return {
+        id: String(b?.id || ''),
+        title: String(b?.title || 'Untitled Bundle'),
+        category: b?.category || 'General',
+        target: (b?.target === 'drop' || b?.targetPocket === 'drop') ? 'drop' : 'order',
+        description: b?.description || '',
+        icon: b?.icon || 'fa-box-open',
+        isOfficial: Boolean(b?.isOfficial),
+        userId: b?.userId || b?.createdBy || undefined,
+        createdAt: b?.createdAt || undefined,
+        updatedAt: b?.updatedAt || undefined,
+        items: items,
+    };
+};
+
 /**
  * Loads all bundles (official database bundles + user custom bundles).
  * Falls back to built-in default bundles if API is unreachable.
@@ -28,11 +55,12 @@ export const fetchPocketBundles = async (token?: string | null): Promise<PocketB
 
         if (res.ok) {
             const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
+            if (Array.isArray(data)) {
+                const normalized = data.map(normalizeBundle);
                 try {
-                    localStorage.setItem(BUNDLES_CACHE_KEY, JSON.stringify(data));
+                    localStorage.setItem(BUNDLES_CACHE_KEY, JSON.stringify(normalized));
                 } catch { /* ignore */ }
-                return data;
+                return normalized;
             }
         }
     } catch {
@@ -44,8 +72,8 @@ export const fetchPocketBundles = async (token?: string | null): Promise<PocketB
         const cached = localStorage.getItem(BUNDLES_CACHE_KEY);
         if (cached) {
             const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-                return parsed;
+            if (Array.isArray(parsed)) {
+                return parsed.map(normalizeBundle);
             }
         }
     } catch { /* ignore */ }

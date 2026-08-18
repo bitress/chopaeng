@@ -198,8 +198,8 @@ export const CommandBuilderPocketBundlesModal = ({
 
     if (!isOpen) return null;
 
-    const totalOrderItemsCount = currentOrderPockets.reduce((s, p) => s + p.quantity, 0);
-    const totalDropItemsCount = currentDropPockets.reduce((s, p) => s + p.quantity, 0);
+    const totalOrderItemsCount = (currentOrderPockets || []).reduce((s, p) => s + (p?.quantity || 1), 0);
+    const totalDropItemsCount = (currentDropPockets || []).reduce((s, p) => s + (p?.quantity || 1), 0);
 
     return (
         <div
@@ -442,7 +442,8 @@ export const CommandBuilderPocketBundlesModal = ({
                                     ) : (
                                         filteredBundles.map((bundle) => {
                                             const isSelected = activeBundle?.id === bundle.id;
-                                            const totalItems = bundle.items.reduce((s, i) => s + i.quantity, 0);
+                                            const bundleItems = Array.isArray(bundle?.items) ? bundle.items : [];
+                                            const totalItems = bundleItems.reduce((s, i) => s + (i?.quantity || 1), 0);
 
                                             return (
                                                 <div
@@ -485,7 +486,7 @@ export const CommandBuilderPocketBundlesModal = ({
                                                             </p>
                                                             <div className="d-flex align-items-center justify-content-between">
                                                                 <span className="badge bg-light text-muted border rounded-pill x-small">
-                                                                    {totalItems} items ({bundle.items.length} types)
+                                                                    {totalItems} items ({bundleItems.length} types)
                                                                 </span>
                                                                 <span className="tiny-text fw-bold text-success">
                                                                     {isSelected ? 'Viewing Items →' : 'Click to preview'}
@@ -541,12 +542,12 @@ export const CommandBuilderPocketBundlesModal = ({
                                         <div className="flex-grow-1 overflow-auto mb-3" style={{ maxHeight: '340px' }}>
                                             <div className="d-flex align-items-center justify-content-between mb-2">
                                                 <span className="tiny-text fw-bold text-muted text-uppercase tracking-wider">
-                                                    Included Items ({activeBundle.items.reduce((s, i) => s + i.quantity, 0)} Total)
+                                                    Included Items ({((activeBundle?.items) || []).reduce((s, i) => s + (i?.quantity || 1), 0)} Total)
                                                 </span>
                                             </div>
 
                                             <div className="row g-2">
-                                                {activeBundle.items.map((item, idx) => (
+                                                {((activeBundle?.items) || []).map((item, idx) => (
                                                     <div key={`${item.itemId}-${idx}`} className="col-sm-6">
                                                         <div className="d-flex align-items-center gap-2 p-2 rounded-3 bg-light border">
                                                             <div className="ratio ratio-1x1 rounded-2 bg-white border flex-shrink-0" style={{ width: '38px', height: '38px', overflow: 'hidden' }}>
