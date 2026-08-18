@@ -96,8 +96,12 @@ export const CommandBuilderPocketBundlesModal = ({
             loadBundles();
             setShowSaveForm(false);
             setFeedbackNotice(null);
+            if (user?.is_admin) {
+                setSaveAsOfficial(true);
+                setSaveCategory('Popular');
+            }
         }
-    }, [isOpen, loadBundles]);
+    }, [isOpen, loadBundles, user]);
 
     const showNotice = (text: string, type: 'success' | 'error' = 'success') => {
         setFeedbackNotice({ text, type });

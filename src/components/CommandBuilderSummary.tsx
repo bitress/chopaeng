@@ -624,7 +624,7 @@ const CommandBuilderSummary = ({
                                 <div className="mb-3">
                                     <div className="d-flex justify-content-between align-items-center mb-1">
                                         <span className="badge rounded-pill fw-bold font-monospace x-small bg-success text-white">
-                                            $order command
+                                            !order command
                                         </span>
                                         <span className="tiny-text text-muted font-monospace">
                                             <kbd className="bg-dark text-light border border-secondary px-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+O</kbd>
@@ -641,7 +641,7 @@ const CommandBuilderSummary = ({
                                             color: '#a3e635'
                                         }}
                                     >
-                                        {orderCommandText || <span className="text-muted fst-italic">&gt; Add items to generate $order command...</span>}
+                                        {orderCommandText || <span className="text-muted fst-italic">&gt; Add items to generate !order command...</span>}
                                     </div>
                                     <button
                                         type="button"
@@ -659,7 +659,7 @@ const CommandBuilderSummary = ({
                                 <div className="pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                                     <div className="d-flex justify-content-between align-items-center mb-1">
                                         <span className="badge rounded-pill fw-bold font-monospace x-small bg-info text-dark">
-                                            $drop command
+                                            !drop command
                                         </span>
                                         <span className="tiny-text text-muted font-monospace">
                                             <kbd className="bg-dark text-light border border-secondary px-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+D</kbd>
@@ -676,7 +676,7 @@ const CommandBuilderSummary = ({
                                             color: '#38bdf8'
                                         }}
                                     >
-                                        {dropCommandText || <span className="text-muted fst-italic">&gt; Add items to generate $drop command...</span>}
+                                        {dropCommandText || <span className="text-muted fst-italic">&gt; Add items to generate !drop command...</span>}
                                     </div>
                                     <button
                                         type="button"
