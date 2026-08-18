@@ -15,7 +15,9 @@ interface CommandBuilderItemCardProps {
     canIncreaseDrop: boolean;
     totalOrderCount: number;
     totalDropCount: number;
+    isHighlighted?: boolean;
     openDetail: (item: ItemData) => void;
+    openVariantPicker?: (item: ItemData) => void;
     decreaseOrderQuantity: (id: string) => void;
     increaseOrderQuantity: (id: string) => void;
     addItemToOrderPockets: (item: ItemData) => void;
@@ -34,7 +36,9 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
     canIncreaseDrop,
     totalOrderCount,
     totalDropCount,
+    isHighlighted = false,
     openDetail,
+    openVariantPicker,
     decreaseOrderQuantity,
     increaseOrderQuantity,
     addItemToOrderPockets,
@@ -44,16 +48,47 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
 }) => {
     const isVillager = item.entityType === 'villager';
     const cardSelected = orderQty > 0 || dropQty > 0;
+    const hasMultipleVariants = !isVillager && (item.variations?.length ?? 0) > 1;
+
+    const handleCardClick = () => {
+        if (hasMultipleVariants && hideVariants && openVariantPicker) {
+            openVariantPicker(item);
+        } else {
+            openDetail(item);
+        }
+    };
+
+    const handleInitialOrderClick = () => {
+        if (hasMultipleVariants && hideVariants && openVariantPicker) {
+            openVariantPicker(item);
+        } else {
+            addItemToOrderPockets(item);
+        }
+    };
+
+    const handleInitialDropClick = () => {
+        if (hasMultipleVariants && hideVariants && openVariantPicker) {
+            openVariantPicker(item);
+        } else {
+            addItemToDropPockets(item);
+        }
+    };
 
     return (
-        <div className="col-6 col-md-4 col-xl-3">
+        <div className="col-6 col-md-4 col-xl-3" id={`item-card-${item.id}`} data-item-id={item.id}>
             <div
-                className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${cardSelected ? 'border-success border-2' : 'border-light'} cursor-pointer transition-all hover-scale`}
-                onClick={() => openDetail(item)}
+                className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${
+                    isHighlighted
+                        ? 'item-card-highlighted border-success'
+                        : cardSelected
+                            ? 'border-success border-2'
+                            : 'border-light'
+                } cursor-pointer transition-all hover-scale`}
+                onClick={handleCardClick}
                 role="button"
                 tabIndex={0}
-                aria-label={`View details for ${item.name}`}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item); } }}
+                aria-label={`View details or variations for ${item.name}`}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
             >
                 {/* Selection Badges */}
                 {cardSelected && (
@@ -79,7 +114,17 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                     <div className="mb-auto">
                         <div className="d-flex justify-content-between align-items-start mb-1">
                             <span className="badge bg-light text-muted rounded-pill px-2 py-1" style={{ fontSize: "0.65rem", border: "1px solid #dee2e6" }}>{isVillager ? 'Villager' : item.category}</span>
-                            {!isVillager && <button type="button" className="btn btn-link text-muted p-0 m-0" onClick={(e) => { e.stopPropagation(); openDetail(item); }} aria-label={`More info about ${item.name}`}><i className="fa-solid fa-circle-info" style={{ fontSize: "0.85rem" }}></i></button>}
+                            {!isVillager && (
+                                <button
+                                    type="button"
+                                    className="btn btn-link text-muted p-0 m-0"
+                                    onClick={(e) => { e.stopPropagation(); openDetail(item); }}
+                                    aria-label={`More info about ${item.name}`}
+                                    title="View full detail page"
+                                >
+                                    <i className="fa-solid fa-circle-info" style={{ fontSize: "0.85rem" }}></i>
+                                </button>
+                            )}
                         </div>
                         <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{ fontSize: "0.85rem" }}>{item.name}</h3>
                         {item.variantLabel && (
@@ -87,10 +132,22 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                 {item.variantLabel}
                             </div>
                         )}
-                        {!isVillager && !item.variantLabel && hideVariants && (item.variations?.length ?? 0) > 1 && (
-                            <div className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mt-1" style={{ fontSize: '0.66rem' }}>
-                                {item.variations?.length} variants
-                            </div>
+                        {!isVillager && !item.variantLabel && hideVariants && hasMultipleVariants && (
+                            <button
+                                type="button"
+                                className="btn p-0 border-0 text-start"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (openVariantPicker) openVariantPicker(item);
+                                    else openDetail(item);
+                                }}
+                                title="Click to choose variation"
+                            >
+                                <div className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mt-1 d-inline-flex align-items-center gap-1 hover-shadow" style={{ fontSize: '0.66rem', cursor: 'pointer' }}>
+                                    <span>{item.variations?.length} variants</span>
+                                    <i className="fa-solid fa-palette" style={{ fontSize: '0.6rem' }}></i>
+                                </div>
+                            </button>
                         )}
                     </div>
 
@@ -109,7 +166,16 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                     </div>
                                 )
                             ) : (
-                                <button type="button" className="btn btn-sm btn-light text-success rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToOrderPockets(item)} disabled={totalOrderCount >= 40} title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : undefined}>Order</button>
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-light text-success rounded-pill py-1 flex-grow-1 fw-bold border-0"
+                                    style={{ fontSize: "0.75rem" }}
+                                    onClick={handleInitialOrderClick}
+                                    disabled={totalOrderCount >= 40}
+                                    title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : hasMultipleVariants && hideVariants ? 'Choose variant to order' : undefined}
+                                >
+                                    Order
+                                </button>
                             )}
 
                             {/* Drop Button Group */}
@@ -124,7 +190,16 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                     </div>
                                 )
                             ) : (
-                                <button type="button" className="btn btn-sm btn-light text-info rounded-pill py-1 flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => addItemToDropPockets(item)} disabled={totalDropCount >= 9} title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : undefined}>Drop</button>
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-light text-info rounded-pill py-1 flex-grow-1 fw-bold border-0"
+                                    style={{ fontSize: "0.75rem" }}
+                                    onClick={handleInitialDropClick}
+                                    disabled={totalDropCount >= 9}
+                                    title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : hasMultipleVariants && hideVariants ? 'Choose variant to drop' : undefined}
+                                >
+                                    Drop
+                                </button>
                             )}
                         </div>
                     </div>

@@ -290,16 +290,29 @@ const CatalogDetail = () => {
         setTimeout(() => setDetailStatus(''), 2800);
     };
 
+    const handleBackToCatalog = () => {
+        if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/command-builder');
+        }
+    };
+
     return (
         <div className="bg-pattern font-nunito min-vh-100 pb-5">
             <section className="container py-5">
                 <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 mb-5">
                     <nav aria-label="breadcrumb">
-                        <ol className="breadcrumb mb-0 small fw-bold">
+                        <ol className="breadcrumb mb-0 small fw-bold align-items-center">
                             <li className="breadcrumb-item">
-                                <Link to="/command-builder" className="text-decoration-none text-nook transition-all">
+                                <button
+                                    type="button"
+                                    onClick={handleBackToCatalog}
+                                    className="btn btn-link text-decoration-none text-nook transition-all p-0 fw-bold d-inline-flex align-items-center"
+                                    title="Return to catalog (saves your spot)"
+                                >
                                     <i className="fa-solid fa-arrow-left me-2"></i>Command Builder
-                                </Link>
+                                </button>
                             </li>
                             <li className="breadcrumb-item text-muted" aria-current="page">
                                 {entry.entityType === 'item' ? entry.category : 'Villagers'}
@@ -309,14 +322,24 @@ const CatalogDetail = () => {
                             </li>
                         </ol>
                     </nav>
-                    <button
-                        type="button"
-                        onClick={handleCopyLink}
-                        className="btn btn-sm btn-white border rounded-pill fw-bold px-3 shadow-sm transition-all flex-shrink-0"
-                    >
-                        <i className={`fa-solid ${linkCopied ? 'fa-check' : 'fa-link'} me-2`}></i>
-                        {linkCopied ? 'Link copied!' : 'Copy link'}
-                    </button>
+                    <div className="d-flex align-items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleBackToCatalog}
+                            className="btn btn-sm btn-outline-success bg-white rounded-pill fw-bold px-3 shadow-sm transition-all"
+                            title="Return to catalog (saves your spot)"
+                        >
+                            <i className="fa-solid fa-arrow-left me-1"></i> Back to Catalog
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleCopyLink}
+                            className="btn btn-sm btn-white border rounded-pill fw-bold px-3 shadow-sm transition-all flex-shrink-0"
+                        >
+                            <i className={`fa-solid ${linkCopied ? 'fa-check' : 'fa-link'} me-2`}></i>
+                            {linkCopied ? 'Link copied!' : 'Copy link'}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="row gy-4">
@@ -431,6 +454,17 @@ const CatalogDetail = () => {
                                         >
                                             <i className="fa-solid fa-box-open me-2"></i>
                                             {totalDropCount >= 9 ? 'Drop Full (9/9)' : `Add to Drop${inDropQty > 0 && entry.entityType !== 'villager' ? ` (${inDropQty})` : ''}`}
+                                        </button>
+                                    </div>
+
+                                    <div className="text-center mt-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleBackToCatalog}
+                                            className="btn btn-link text-muted p-0 x-small fw-bold text-decoration-none"
+                                            title="Return to your saved spot in the catalog"
+                                        >
+                                            <i className="fa-solid fa-arrow-left me-1 text-nook"></i> Return to Catalog (Spot Saved)
                                         </button>
                                     </div>
 

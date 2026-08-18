@@ -5,10 +5,17 @@ import type { CatalogEntity } from "../data/commandBuilderData";
 import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets, type PocketItem } from "../hooks/useCommandBuilderPockets";
 import { useCatalogData } from "../hooks/useCatalogData";
+import {
+    getSavedCommandBuilderState,
+    saveCommandBuilderState,
+    clearCommandBuilderPosition,
+    clearCommandBuilderState
+} from "../utils/commandBuilderState";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import { CommandBuilderFilters } from "../components/command-builder/CommandBuilderFilters";
 import { CommandBuilderItemCard } from "../components/command-builder/CommandBuilderItemCard";
+import { CommandBuilderVariantModal } from "../components/command-builder/CommandBuilderVariantModal";
 
 type ItemData = PocketItem;
 
@@ -51,24 +58,33 @@ const CommandBuilder = () => {
     const navigate = useNavigate();
     const catalogHeadingRef = useRef<HTMLDivElement | null>(null);
 
+    // Initial state restored from session if available
+    const savedState = useMemo(() => getSavedCommandBuilderState(), []);
+
     // --- Filters ---
-    const [category, setCategory] = useState("All");
-    const [theme, setTheme] = useState("All");
-    const [series, setSeries] = useState("All");
-    const [interactivity, setInteractivity] = useState("All");
-    const [colour, setColour] = useState("All");
-    const [kindFilter, setKindFilter] = useState("All");
-    const [villagerType, setVillagerType] = useState("All");
+    const [category, setCategory] = useState(savedState?.category || "All");
+    const [theme, setTheme] = useState(savedState?.theme || "All");
+    const [series, setSeries] = useState(savedState?.series || "All");
+    const [interactivity, setInteractivity] = useState(savedState?.interactivity || "All");
+    const [colour, setColour] = useState(savedState?.colour || "All");
+    const [kindFilter, setKindFilter] = useState(savedState?.kindFilter || "All");
+    const [villagerType, setVillagerType] = useState(savedState?.villagerType || "All");
 
     // --- UI State ---
-    const [hideVariants, setHideVariants] = useState(true);
-    const [compactMode, setCompactMode] = useState(true);
+    const [hideVariants, setHideVariants] = useState(savedState?.hideVariants !== undefined ? savedState.hideVariants : true);
+    const [compactMode, setCompactMode] = useState(savedState?.compactMode !== undefined ? savedState.compactMode : true);
     const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
     // --- Search & Pagination ---
-    const [searchInput, setSearchInput] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [searchInput, setSearchInput] = useState(savedState?.searchInput || "");
+    const [debouncedSearch, setDebouncedSearch] = useState(savedState?.debouncedSearch || savedState?.searchInput || "");
+    const [currentPage, setCurrentPage] = useState(savedState?.currentPage || 1);
+
+    // --- Highlighting spot restoration ---
+    const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
+
+    // --- Quick Variant Modal State ---
+    const [variantModalItem, setVariantModalItem] = useState<ItemData | null>(null);
 
     // --- Data State ---
     const { data, isLoading: isLoadingData } = useCatalogData();
@@ -102,6 +118,8 @@ const CommandBuilder = () => {
         copyDropStatus,
         handleCopyOrder,
         handleCopyDrop,
+        getOrderPocketQuantity,
+        getDropPocketQuantity,
     } = useCommandBuilderPockets();
 
     // 1. Debounce Search (Saves UI threads from exploding)
@@ -112,10 +130,35 @@ const CommandBuilder = () => {
         return () => clearTimeout(handler);
     }, [searchInput]);
 
-    // 2. Reset Pagination when ANY filter changes
+    // 2. Track whether this is the initial mount to prevent resetting the restored currentPage
+    const isInitialMountRef = useRef(true);
+
+    // 3. Reset Pagination when ANY filter changes, skipping initial mount
     useEffect(() => {
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            return;
+        }
         setCurrentPage(1);
     }, [category, theme, series, interactivity, colour, kindFilter, villagerType, debouncedSearch, hideVariants]);
+
+    // 4. Sync view state to sessionStorage whenever filters / page change
+    useEffect(() => {
+        saveCommandBuilderState({
+            category,
+            theme,
+            series,
+            interactivity,
+            colour,
+            kindFilter,
+            villagerType,
+            hideVariants,
+            compactMode,
+            searchInput,
+            debouncedSearch,
+            currentPage,
+        });
+    }, [category, theme, series, interactivity, colour, kindFilter, villagerType, hideVariants, compactMode, searchInput, debouncedSearch, currentPage]);
 
     const expandedCatalogItems = useMemo(() => {
         return catalogEntities.flatMap((item) => {
@@ -164,18 +207,69 @@ const CommandBuilder = () => {
         });
     }, [expandedCatalogItems, category, theme, series, interactivity, colour, debouncedSearch, kindFilter, villagerType]);
 
+    // 5. Restore scroll & card focus when catalog data is ready
+    const hasRestoredSpotRef = useRef(false);
+
+    useEffect(() => {
+        if (isLoadingData || hasRestoredSpotRef.current || filteredItems.length === 0) return;
+
+        const state = getSavedCommandBuilderState();
+        if (state?.lastViewedItemId || (state?.scrollY !== undefined && state.scrollY > 0)) {
+            hasRestoredSpotRef.current = true;
+            const targetId = state.lastViewedItemId;
+            const targetScrollY = state.scrollY;
+
+            const timer = setTimeout(() => {
+                let foundElement = false;
+                if (targetId) {
+                    const el = document.getElementById(`item-card-${targetId}`);
+                    if (el) {
+                        foundElement = true;
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setHighlightedItemId(targetId);
+                        setTimeout(() => setHighlightedItemId(null), 2500);
+                    }
+                }
+
+                if (!foundElement && targetScrollY !== undefined && targetScrollY > 0) {
+                    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+                }
+
+                // Clear the one-time scroll target so subsequent filtering won't jump back
+                clearCommandBuilderPosition();
+            }, 150);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isLoadingData, filteredItems.length]);
+
     const itemsPerPage = compactMode ? 50 : 26;
     const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
     const pagedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-    const getDetailUrl = (item: ItemData) => {
-        const [baseId, variantId] = item.id.split(":");
-        const query = variantId && variantId !== 'NA' ? `?variantId=${encodeURIComponent(variantId)}` : '';
-        return `/command-builder/${item.entityType}/${baseId}${query}`;
-    };
+    const openDetail = (item: ItemData, variantKey?: string) => {
+        const baseId = item.id.split(":")[0];
+        saveCommandBuilderState({
+            category,
+            theme,
+            series,
+            interactivity,
+            colour,
+            kindFilter,
+            villagerType,
+            hideVariants,
+            compactMode,
+            searchInput,
+            debouncedSearch,
+            currentPage,
+            scrollY: window.scrollY,
+            lastViewedItemId: baseId,
+        });
 
-    const openDetail = (item: ItemData) => {
-        navigate(getDetailUrl(item));
+        const [, itemVariantId] = item.id.split(":");
+        const effectiveVariant = variantKey || (itemVariantId && itemVariantId !== 'NA' ? itemVariantId : '');
+        const query = effectiveVariant ? `?variantId=${encodeURIComponent(effectiveVariant)}` : '';
+        navigate(`/command-builder/${item.entityType}/${baseId}${query}`);
     };
 
     const goToPage = (page: number) => {
@@ -196,6 +290,7 @@ const CommandBuilder = () => {
         setCompactMode(true);
         setHideVariants(true);
         setCurrentPage(1);
+        clearCommandBuilderState();
     };
 
     const activeFilterChips = [
@@ -310,7 +405,9 @@ const CommandBuilder = () => {
                                                 canIncreaseDrop={canIncreaseDrop}
                                                 totalOrderCount={totalOrderCount}
                                                 totalDropCount={totalDropCount}
+                                                isHighlighted={highlightedItemId === item.id || highlightedItemId === item.id.split(':')[0]}
                                                 openDetail={openDetail}
+                                                openVariantPicker={(targetItem) => setVariantModalItem(targetItem)}
                                                 decreaseOrderQuantity={decreaseOrderQuantity}
                                                 increaseOrderQuantity={increaseOrderQuantity}
                                                 addItemToOrderPockets={addItemToOrderPockets}
@@ -411,6 +508,28 @@ const CommandBuilder = () => {
                 </div>
             </div>
 
+            {/* Quick Variant Selection Modal */}
+            <CommandBuilderVariantModal
+                item={variantModalItem}
+                isOpen={Boolean(variantModalItem)}
+                onClose={() => setVariantModalItem(null)}
+                onOpenFullDetail={(targetItem, vKey) => {
+                    setVariantModalItem(null);
+                    openDetail(targetItem as ItemData, vKey);
+                }}
+                addItemToOrderPockets={addItemToOrderPockets}
+                addItemToDropPockets={addItemToDropPockets}
+                decreaseOrderQuantity={decreaseOrderQuantity}
+                increaseOrderQuantity={increaseOrderQuantity}
+                decreaseDropQuantity={decreaseDropQuantity}
+                increaseDropQuantity={increaseDropQuantity}
+                totalOrderCount={totalOrderCount}
+                totalDropCount={totalDropCount}
+                canIncreaseOrder={canIncreaseOrder}
+                canIncreaseDrop={canIncreaseDrop}
+                getOrderPocketQuantity={getOrderPocketQuantity}
+                getDropPocketQuantity={getDropPocketQuantity}
+            />
         </>
     );
 };
