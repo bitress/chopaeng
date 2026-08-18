@@ -36,7 +36,7 @@ const FALLBACK_IMAGE = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/
 const getAcnhcdnUrl = (url: string | undefined): string => {
     if (!url) return FALLBACK_IMAGE;
     if (url.includes('acnhcdn.com')) return url;
-    
+
     if (url.includes('/villagers/')) {
         const file = url.split('/').pop();
         return `https://acnhcdn.com/latest/NpcIcon/${file}`;
@@ -46,7 +46,7 @@ const getAcnhcdnUrl = (url: string | undefined): string => {
         const file = url.split('/').pop() || '';
         const match = file.match(/^([A-Z][a-z]+)/);
         const prefix = match ? match[1] : '';
-        
+
         const iconFolders = ['Ftr', 'Room', 'Rug', 'Cap', 'Tops', 'Bottoms', 'Shoes', 'Socks', 'Accessory', 'Bag', 'Umbrella', 'Tool'];
         if (iconFolders.includes(prefix)) {
             return `https://acnhcdn.com/latest/${prefix}Icon/${file}`;
@@ -94,7 +94,6 @@ const CommandBuilder = () => {
     const [variantModalItem, setVariantModalItem] = useState<ItemData | null>(null);
 
     // --- Feature Modals State ---
-    const { user } = useAuth();
     const [isBundlesModalOpen, setIsBundlesModalOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [sharedNotice, setSharedNotice] = useState<string | null>(null);
@@ -351,7 +350,7 @@ const CommandBuilder = () => {
 
             <div className="bg-pattern font-nunito min-vh-100 pb-5">
                 <section className="container mt-n5 position-relative" style={{ zIndex: 10 }}>
-                    <CommandBuilderFilters 
+                    <CommandBuilderFilters
                         searchInput={searchInput}
                         setSearchInput={setSearchInput}
                         showFiltersMobile={showFiltersMobile}
