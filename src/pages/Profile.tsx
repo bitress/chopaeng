@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { DODO_API_BASE } from "../config/api";
 import { getAuthToken } from "../context/authToken";
 import { useAuth } from "../context/useAuth";
+import { getUserPreferences, saveUserPreferences } from "../utils/userPreferences";
 
 interface ProfileUser {
     id: string;
@@ -108,6 +109,15 @@ const Profile = () => {
     const [profile, setProfile] = useState<ProfileResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [preferences, setPreferences] = useState(getUserPreferences);
+    const [prefNotice, setPrefNotice] = useState<string | null>(null);
+
+    const handleToggleSilentOrder = (checked: boolean) => {
+        const updated = saveUserPreferences({ enableSilentOrder: checked });
+        setPreferences(updated);
+        setPrefNotice(checked ? "1-Click Silent Order & Drop enabled!" : "1-Click Silent Order & Drop disabled (Manual Copy Mode active).");
+        setTimeout(() => setPrefNotice(null), 3500);
+    };
 
     useEffect(() => {
         document.title = "Profile";
@@ -204,17 +214,83 @@ const Profile = () => {
 
     if (!authUser && !profile) {
         return (
-            <div className="nook-bg min-vh-100 d-flex align-items-center justify-content-center p-4">
-                <div className="bg-white rounded-4 shadow-sm border p-4 p-md-5 text-center" style={{ maxWidth: 520 }}>
-                    <div className="d-inline-flex align-items-center justify-content-center rounded-circle text-white mb-4" style={{ width: 76, height: 76, backgroundColor: "#5865F2" }}>
-                        <i className="fa-brands fa-discord fa-2x"></i>
+            <div className="nook-bg min-vh-100 py-5 px-3">
+                <div className="container" style={{ maxWidth: 680 }}>
+                    <div className="bg-white rounded-4 shadow-sm border p-4 p-md-5 text-center mb-4">
+                        <div className="d-inline-flex align-items-center justify-content-center rounded-circle text-white mb-4" style={{ width: 76, height: 76, backgroundColor: "#5865F2" }}>
+                            <i className="fa-brands fa-discord fa-2x"></i>
+                        </div>
+                        <h1 className="ac-font h2 text-dark mb-3">Member Profile</h1>
+                        <p className="text-muted fw-bold mb-4">Login with Discord to see your island access, visit history, and server profile.</p>
+                        <button type="button" onClick={login} className="btn btn-success rounded-pill fw-black px-4 py-3">
+                            <i className="fa-solid fa-right-to-bracket me-2"></i>
+                            Login with Discord
+                        </button>
                     </div>
-                    <h1 className="ac-font h2 text-dark mb-3">Member Profile</h1>
-                    <p className="text-muted fw-bold mb-4">Login with Discord to see your island access, visit history, and server profile.</p>
-                    <button type="button" onClick={login} className="btn btn-success rounded-pill fw-black px-4 py-3">
-                        <i className="fa-solid fa-right-to-bracket me-2"></i>
-                        Login with Discord
-                    </button>
+
+                    {/* Order & Command Builder Preferences (available for all users) */}
+                    <div className="bg-white rounded-4 shadow-sm border p-4">
+                        <div className="d-flex align-items-center gap-3 mb-3">
+                            <div className="icon-bubble bg-success bg-opacity-10 text-success">
+                                <i className="fa-solid fa-sliders" aria-hidden="true"></i>
+                            </div>
+                            <h2 className="h5 ac-font text-dark mb-0">Order & Command Builder Preferences</h2>
+                        </div>
+
+                        {prefNotice && (
+                            <div className="alert alert-success rounded-4 py-2 px-3 small fw-bold mb-3 animate-fade">
+                                <i className="fa-solid fa-circle-check me-2"></i>
+                                {prefNotice}
+                            </div>
+                        )}
+
+                        <div className="bg-light rounded-4 p-3 border">
+                            <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
+                                <div className="me-sm-3">
+                                    <div className="d-flex align-items-center gap-2 mb-1">
+                                        <i className="fa-solid fa-paper-plane text-success"></i>
+                                        <strong className="text-dark small">
+                                            Direct "Send to Bot Queue / Drop to Island" (1-Click Silent Order)
+                                        </strong>
+                                        <span className={`badge rounded-pill x-small ${preferences.enableSilentOrder ? 'bg-success text-white' : 'bg-secondary text-white'}`}>
+                                            {preferences.enableSilentOrder ? 'Enabled' : 'Disabled'}
+                                        </span>
+                                    </div>
+                                    <p className="tiny-text text-muted mb-0">
+                                        {preferences.enableSilentOrder ? (
+                                            <>
+                                                <span className="d-block text-dark fw-bold mb-1">
+                                                    • <strong>Order Bot:</strong> Directly queues order silently via API.
+                                                </span>
+                                                <span className="d-block text-dark fw-bold">
+                                                    • <strong>Drop / Villager Inject:</strong> Lets you select target Sub Island (and house plot for villagers) with automatic Subscriber/VIP verification.
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span>
+                                                Silent order and drop buttons are hidden in Command Builder. Standard manual <strong>Copy Command</strong> mode is active.
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+
+                                <div className="form-check form-switch ms-sm-auto">
+                                    <input
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        role="switch"
+                                        id="silentOrderToggleLoggedOut"
+                                        style={{ width: '48px', height: '26px', cursor: 'pointer' }}
+                                        checked={preferences.enableSilentOrder}
+                                        onChange={(e) => handleToggleSilentOrder(e.target.checked)}
+                                    />
+                                    <label className="form-check-label visually-hidden" htmlFor="silentOrderToggleLoggedOut">
+                                        Toggle 1-Click Silent Order & Drop
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -326,6 +402,65 @@ const Profile = () => {
                             ) : (
                                 <EmptyLine text="No sub islands yet." />
                             )}
+                        </ProfileCard>
+                    </div>
+
+                    {/* Order & Command Builder Preferences */}
+                    <div className="col-lg-12">
+                        <ProfileCard title="Order & Command Builder Preferences" icon="fa-sliders">
+                            {prefNotice && (
+                                <div className="alert alert-success rounded-4 py-2 px-3 small fw-bold mb-3 animate-fade">
+                                    <i className="fa-solid fa-circle-check me-2"></i>
+                                    {prefNotice}
+                                </div>
+                            )}
+
+                            <div className="bg-light rounded-4 p-3 border mb-3">
+                                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
+                                    <div className="me-sm-3">
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <i className="fa-solid fa-paper-plane text-success"></i>
+                                            <strong className="text-dark small">
+                                                Direct "Send to Bot Queue / Drop to Island" (1-Click Silent Order)
+                                            </strong>
+                                            <span className={`badge rounded-pill x-small ${preferences.enableSilentOrder ? 'bg-success text-white' : 'bg-secondary text-white'}`}>
+                                                {preferences.enableSilentOrder ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                        </div>
+                                        <p className="tiny-text text-muted mb-0">
+                                            {preferences.enableSilentOrder ? (
+                                                <>
+                                                    <span className="d-block text-dark fw-bold mb-1">
+                                                        • <strong>Order Bot:</strong> Directly queues order silently via API.
+                                                    </span>
+                                                    <span className="d-block text-dark fw-bold">
+                                                        • <strong>Drop / Villager Inject:</strong> Lets you select target Sub Island (and house plot for villagers) with automatic Subscriber/VIP verification.
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span>
+                                                    Silent order and drop buttons are hidden in Command Builder. Standard manual <strong>Copy Command</strong> mode is active.
+                                                </span>
+                                            )}
+                                        </p>
+                                    </div>
+
+                                    <div className="form-check form-switch ms-sm-auto">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            role="switch"
+                                            id="silentOrderToggle"
+                                            style={{ width: '48px', height: '26px', cursor: 'pointer' }}
+                                            checked={preferences.enableSilentOrder}
+                                            onChange={(e) => handleToggleSilentOrder(e.target.checked)}
+                                        />
+                                        <label className="form-check-label visually-hidden" htmlFor="silentOrderToggle">
+                                            Toggle 1-Click Silent Order & Drop
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </ProfileCard>
                     </div>
 

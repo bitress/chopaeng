@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import type { CatalogEntity } from '../data/commandBuilderData';
 import { ITEMS } from '../data/commandBuilderData';
 import { generateFullItemHex } from '../utils/commandBuilderHex';
+import banner from '../assets/banner.png';
 
 export type PocketItem = CatalogEntity & {
     baseId?: string | number | null;
@@ -257,6 +258,106 @@ export const useCommandBuilderPockets = () => {
     const handleFillCrowns = useCallback(() => fillWithItemName('Royal Crown'), [fillWithItemName]);
     const handleFillBells = useCallback(() => fillWithItemName('99,000 Bells'), [fillWithItemName]);
 
+    // ── Bundle & Share loaders ─────────────────────────────────────────────
+    const loadBundleIntoOrder = useCallback((bundleItems: Array<{ itemId?: string; id?: string; name: string; quantity: number; category?: string; variantId?: string | number | null; variantLabel?: string | null; image?: string; entityType?: 'item' | 'villager' }>, mode: 'replace' | 'merge' = 'replace') => {
+        setOrderItems((prev) => {
+            const currentEntries: PocketEntry[] = mode === 'replace' ? [] : [...prev];
+            let currentCount = currentEntries.reduce((acc, curr) => acc + curr.quantity, 0);
+
+            for (const bItem of bundleItems) {
+                if (currentCount >= ORDER_BOT_MAX) break;
+                // itemId from pocketBundles is the explorer.json 'Internal ID' hex (= pokerId)
+                const itemId = String(bItem.itemId || bItem.id || bItem.name);
+                const quantityToAdd = Math.min(bItem.quantity || 1, ORDER_BOT_MAX - currentCount);
+                if (quantityToAdd <= 0) continue;
+
+                const pocketItem: PocketItem = {
+                    id: itemId,
+                    name: bItem.name,
+                    entityType: bItem.entityType || 'item',
+                    category: bItem.category || 'Misc',
+                    theme: 'Standard',
+                    series: 'General',
+                    interactivity: 'Static',
+                    colour: 'Various',
+                    image: bItem.image || banner,
+                    description: bItem.name,
+                    // baseId is always the itemId (pokerId hex from explorer.json)
+                    // variantId is the variation key (e.g. "0_0") or undefined/NA for no-variant items
+                    baseId: itemId,
+                    variantId: bItem.variantId ?? undefined,
+                    variantLabel: bItem.variantLabel ?? undefined,
+                };
+
+                const existingIdx = currentEntries.findIndex((p) => p.item.id === itemId);
+                if (existingIdx >= 0) {
+                    currentEntries[existingIdx] = {
+                        ...currentEntries[existingIdx],
+                        quantity: currentEntries[existingIdx].quantity + quantityToAdd,
+                    };
+                } else {
+                    currentEntries.push({ item: pocketItem, quantity: quantityToAdd });
+                }
+                currentCount += quantityToAdd;
+            }
+
+            return currentEntries;
+        });
+    }, []);
+
+    const loadBundleIntoDrop = useCallback((bundleItems: Array<{ itemId?: string; id?: string; name: string; quantity: number; category?: string; variantId?: string | number | null; variantLabel?: string | null; image?: string; entityType?: 'item' | 'villager' }>, mode: 'replace' | 'merge' = 'replace') => {
+        setDropItems((prev) => {
+            const currentEntries: PocketEntry[] = mode === 'replace' ? [] : [...prev];
+            let currentCount = currentEntries.reduce((acc, curr) => acc + curr.quantity, 0);
+
+            for (const bItem of bundleItems) {
+                if (currentCount >= DROP_BOT_MAX) break;
+                const itemId = String(bItem.itemId || bItem.id || bItem.name);
+                const quantityToAdd = Math.min(bItem.quantity || 1, DROP_BOT_MAX - currentCount);
+                if (quantityToAdd <= 0) continue;
+
+                const pocketItem: PocketItem = {
+                    id: itemId,
+                    name: bItem.name,
+                    entityType: bItem.entityType || 'item',
+                    category: bItem.category || 'Misc',
+                    theme: 'Standard',
+                    series: 'General',
+                    interactivity: 'Static',
+                    colour: 'Various',
+                    image: bItem.image || banner,
+                    description: bItem.name,
+                    // baseId is always the itemId (pokerId hex from explorer.json)
+                    baseId: itemId,
+                    variantId: bItem.variantId ?? undefined,
+                    variantLabel: bItem.variantLabel ?? undefined,
+                };
+
+                const existingIdx = currentEntries.findIndex((p) => p.item.id === itemId);
+                if (existingIdx >= 0) {
+                    currentEntries[existingIdx] = {
+                        ...currentEntries[existingIdx],
+                        quantity: currentEntries[existingIdx].quantity + quantityToAdd,
+                    };
+                } else {
+                    currentEntries.push({ item: pocketItem, quantity: quantityToAdd });
+                }
+                currentCount += quantityToAdd;
+            }
+
+            return currentEntries;
+        });
+    }, []);
+
+    const loadSharedPocket = useCallback((sharedData: { orderItems?: any[]; dropItems?: any[] }) => {
+        if (Array.isArray(sharedData.orderItems) && sharedData.orderItems.length > 0) {
+            loadBundleIntoOrder(sharedData.orderItems, 'replace');
+        }
+        if (Array.isArray(sharedData.dropItems) && sharedData.dropItems.length > 0) {
+            loadBundleIntoDrop(sharedData.dropItems, 'replace');
+        }
+    }, [loadBundleIntoOrder, loadBundleIntoDrop]);
+
 
 
     // ── Command text ───────────────────────────────────────────────────────
@@ -374,7 +475,10 @@ export const useCommandBuilderPockets = () => {
         handleFillCrowns,
         handleFillBells,
 
-
+        // Bundle & Share loaders
+        loadBundleIntoOrder,
+        loadBundleIntoDrop,
+        loadSharedPocket,
 
         orderCommandText,
         dropCommandText,

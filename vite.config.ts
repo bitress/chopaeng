@@ -5,10 +5,19 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// https://vite.dev/config/
 export default defineConfig({
     server: {
         port: 3000,
+        proxy: {
+            '/api': {
+                target: 'http://localhost:8100',
+                changeOrigin: true,
+            },
+            '/dashboard/api': {
+                target: 'http://localhost:8100',
+                changeOrigin: true,
+            },
+        },
     },
     resolve: {
         alias: {

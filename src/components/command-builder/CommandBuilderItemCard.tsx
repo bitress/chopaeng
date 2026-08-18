@@ -24,6 +24,8 @@ interface CommandBuilderItemCardProps {
     decreaseDropQuantity: (id: string) => void;
     increaseDropQuantity: (id: string) => void;
     addItemToDropPockets: (item: ItemData) => void;
+    isFavorite?: boolean;
+    onToggleFavorite?: (id: string, e: React.MouseEvent) => void;
 }
 
 export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
@@ -37,6 +39,8 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
     totalOrderCount,
     totalDropCount,
     isHighlighted = false,
+    isFavorite = false,
+    onToggleFavorite,
     openDetail,
     openVariantPicker,
     decreaseOrderQuantity,
@@ -90,7 +94,28 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                 aria-label={`View details or variations for ${item.name}`}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
             >
-                {/* Selection Badges */}
+                {/* Favorite Star Button (Top-Left) */}
+                {onToggleFavorite && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFavorite(item.id, e);
+                        }}
+                        className={`position-absolute top-0 start-0 m-2 btn btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 transition-all ${
+                            isFavorite 
+                                ? 'btn-warning text-white shadow-sm' 
+                                : 'btn-white bg-white text-muted border shadow-2xs opacity-85 hover-opacity-100'
+                        }`}
+                        style={{ width: '28px', height: '28px', zIndex: 10 }}
+                        title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                        aria-label={isFavorite ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`}
+                    >
+                        <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star`} style={{ fontSize: '0.75rem' }}></i>
+                    </button>
+                )}
+
+                {/* Selection Badges (Top-Right) */}
                 {cardSelected && (
                     <div className="position-absolute top-0 end-0 m-2 z-index-2 d-flex flex-column gap-1 pointer-events-none">
                         {orderQty > 0 && <div className="badge bg-success shadow-sm">O:{orderQty}</div>}

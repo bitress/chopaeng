@@ -7,6 +7,7 @@ import { useAuth } from "../context/useAuth";
 const links = [
   { to: "/dashboard", label: "Overview", icon: "fa-house", end: true },
   { to: "/dashboard/islands", label: "Islands", icon: "fa-location-dot" },
+  { to: "/dashboard/bundles", label: "Pocket Bundles", icon: "fa-boxes-stacked" },
   { to: "/dashboard/status", label: "Island Status", icon: "fa-signal" },
   { to: "/dashboard/logs", label: "XLog Reports", icon: "fa-clipboard-list" },
   { to: "/dashboard/analytics", label: "Analytics", icon: "fa-chart-line" },

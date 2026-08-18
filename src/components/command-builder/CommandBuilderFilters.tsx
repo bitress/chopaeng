@@ -37,6 +37,9 @@ interface CommandBuilderFiltersProps {
     uniqueSeries: string[];
     uniqueInteractivity: string[];
     uniqueColours: string[];
+    onlyFavorites?: boolean;
+    setOnlyFavorites?: (val: boolean) => void;
+    favoriteCount?: number;
     clearFilters: () => void;
 }
 
@@ -48,6 +51,7 @@ export const CommandBuilderFilters: React.FC<CommandBuilderFiltersProps> = ({
     theme, setTheme, series, setSeries, interactivity, setInteractivity,
     colour, setColour, itemCategories, villagerTypes,
     uniqueThemes, uniqueSeries, uniqueInteractivity, uniqueColours,
+    onlyFavorites = false, setOnlyFavorites, favoriteCount = 0,
     clearFilters
 }) => {
     return (
@@ -90,6 +94,21 @@ export const CommandBuilderFilters: React.FC<CommandBuilderFiltersProps> = ({
                     <i className="fa-solid fa-sliders me-1 text-success"></i>
                     {activeFilterCount === 0 ? 'No active filters' : `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
                 </span>
+                {setOnlyFavorites && (
+                    <button
+                        type="button"
+                        onClick={() => setOnlyFavorites(!onlyFavorites)}
+                        className={`badge rounded-pill border px-3 py-2 fw-bold transition-all d-inline-flex align-items-center gap-1 cursor-pointer ${
+                            onlyFavorites 
+                                ? 'bg-warning text-dark border-warning shadow-sm' 
+                                : 'bg-white text-muted border'
+                        }`}
+                        title={onlyFavorites ? "Show all items" : "Show starred favorites only"}
+                    >
+                        <i className={`fa-${onlyFavorites ? 'solid' : 'regular'} fa-star ${onlyFavorites ? 'text-dark' : 'text-warning'}`}></i>
+                        <span>Favorites ({favoriteCount})</span>
+                    </button>
+                )}
                 {!hideVariants && (
                     <span className="badge bg-success-subtle text-success rounded-pill border border-success-subtle px-3 py-2 fw-bold">
                         Showing variants

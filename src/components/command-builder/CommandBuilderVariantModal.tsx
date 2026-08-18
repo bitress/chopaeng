@@ -46,6 +46,8 @@ interface CommandBuilderVariantModalProps {
     canIncreaseDrop: boolean;
     getOrderPocketQuantity: (id: string) => number;
     getDropPocketQuantity: (id: string) => number;
+    isFavorite?: boolean;
+    onToggleFavorite?: (id: string, e: React.MouseEvent) => void;
 }
 
 export const CommandBuilderVariantModal: React.FC<CommandBuilderVariantModalProps> = ({
@@ -65,6 +67,8 @@ export const CommandBuilderVariantModal: React.FC<CommandBuilderVariantModalProp
     canIncreaseDrop,
     getOrderPocketQuantity,
     getDropPocketQuantity,
+    isFavorite = false,
+    onToggleFavorite,
 }) => {
     const [selectedVariantKey, setSelectedVariantKey] = useState<string | null>(null);
     const [statusMessage, setStatusMessage] = useState<string>('');
@@ -156,10 +160,23 @@ export const CommandBuilderVariantModal: React.FC<CommandBuilderVariantModalProp
                 {/* Header */}
                 <div className="p-4 pb-3 border-bottom d-flex align-items-center justify-content-between bg-light">
                     <div className="d-flex align-items-center gap-2">
+                        {onToggleFavorite && (
+                            <button
+                                type="button"
+                                onClick={(e) => onToggleFavorite(item.id, e)}
+                                className={`btn btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 transition-all ${
+                                    isFavorite ? 'btn-warning text-white shadow-sm' : 'btn-white bg-white text-muted border shadow-2xs'
+                                }`}
+                                style={{ width: '32px', height: '32px' }}
+                                title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                            >
+                                <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star`} style={{ fontSize: '0.85rem' }}></i>
+                            </button>
+                        )}
                         <span className="badge bg-nook-green text-white rounded-pill px-3 py-1 fw-black x-small">
                             {item.category}
                         </span>
-                        <h2 id="variant-modal-title" className="h5 fw-black text-dark mb-0 text-truncate" style={{ maxWidth: '320px' }}>
+                        <h2 id="variant-modal-title" className="h5 fw-black text-dark mb-0 text-truncate" style={{ maxWidth: '300px' }}>
                             {item.name}
                         </h2>
                     </div>

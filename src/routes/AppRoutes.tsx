@@ -41,6 +41,7 @@ const DashboardForbidden     = lazy(() => import("../pages/dashboard/DashboardFo
 const DashboardOps           = lazy(() => import("../pages/dashboard/DashboardOps.tsx"));
 const DashboardIncidents     = lazy(() => import("../pages/dashboard/DashboardIncidents.tsx"));
 const DashboardTrust         = lazy(() => import("../pages/dashboard/DashboardTrust.tsx"));
+const DashboardBundles       = lazy(() => import("../pages/dashboard/DashboardBundles.tsx"));
 
 /** Lightweight spinner shown while a route chunk is downloading */
 const PageLoader = () => (
@@ -84,6 +85,7 @@ const AppRoutes = () => {
                         <Route index element={<DashboardHome />} />
                         <Route path="login" element={<DashboardHome />} />
                         <Route path="islands" element={<DashboardIslands />} />
+                        <Route path="bundles" element={<DashboardBundles />} />
                         <Route path="islands/:id" element={<DashboardIslandDetail />} />
                         <Route path="logs" element={<DashboardLogs />} />
                         <Route path="auth-log" element={<DashboardWebsiteLogins />} />

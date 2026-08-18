@@ -2,13 +2,22 @@ import { useEffect, useState, useMemo } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import logo from '../assets/logo.webp';
 import { useAuth } from "../context/useAuth";
+import { THEME_OPTIONS, getStoredTheme, setStoredTheme, type ThemeMode } from "../utils/theme";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [currentTheme, setCurrentTheme] = useState<ThemeMode>(getStoredTheme);
+    const [showThemeDropdown, setShowThemeDropdown] = useState(false);
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const { user, login, logout } = useAuth();
+
+    useEffect(() => {
+        const handleThemeUpdate = () => setCurrentTheme(getStoredTheme());
+        window.addEventListener('chopaeng_theme_updated', handleThemeUpdate);
+        return () => window.removeEventListener('chopaeng_theme_updated', handleThemeUpdate);
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -135,8 +144,9 @@ const Navbar = () => {
             <nav
                 className={`navbar sticky-top transition-all ${isScrolled || isMobileMenuOpen ? "py-3" : "py-3"}`}
                 style={{
-                    backgroundColor: (isScrolled || isMobileMenuOpen) ? "rgba(255, 255, 255, 0.9)" : "transparent",
-                    borderBottom: (isScrolled || isMobileMenuOpen) ? "1px solid rgba(0,0,0,0.05)" : "none",
+                    backgroundColor: (isScrolled || isMobileMenuOpen) ? "var(--nav-scrolled-bg, rgba(255, 255, 255, 0.92))" : "transparent",
+                    borderBottom: (isScrolled || isMobileMenuOpen) ? "1px solid var(--card-border, rgba(0,0,0,0.05))" : "none",
+                    backdropFilter: (isScrolled || isMobileMenuOpen) ? "blur(12px)" : "none",
                     zIndex: 1050
                 }}
             >
@@ -196,6 +206,69 @@ const Navbar = () => {
                             </button>
                         )}
 
+                        {/* Theme Switcher Button */}
+                        <div className="position-relative">
+                            <button
+                                type="button"
+                                onClick={() => setShowThemeDropdown((prev) => !prev)}
+                                className="btn bg-white border rounded-circle shadow-sm d-flex align-items-center justify-content-center transition-all"
+                                style={{ width: '40px', height: '40px' }}
+                                title={`Theme: ${currentTheme === 'celeste' ? 'Celeste Stargazing' : currentTheme === 'roost' ? 'The Roost Cozy' : 'Nook Day'}`}
+                                aria-label="Toggle Theme"
+                                aria-expanded={showThemeDropdown}
+                            >
+                                <i className={`fa-solid ${
+                                    currentTheme === 'celeste' ? 'fa-star text-warning' :
+                                    currentTheme === 'roost' ? 'fa-mug-hot text-amber' :
+                                    'fa-leaf text-success'
+                                } fs-6`}></i>
+                            </button>
+
+                            {showThemeDropdown && (
+                                <div 
+                                    className="position-absolute end-0 mt-2 p-2 rounded-4 shadow-lg border animate-fade z-index-dropdown"
+                                    style={{ 
+                                        width: '240px', 
+                                        backgroundColor: 'var(--card-bg, #ffffff)',
+                                        borderColor: 'var(--card-border, #e9ecef)',
+                                        zIndex: 1060 
+                                    }}
+                                >
+                                    <div className="tiny-text fw-bold text-muted px-2 py-1 text-uppercase tracking-wider">
+                                        Select Island Theme
+                                    </div>
+                                    {THEME_OPTIONS.map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setStoredTheme(opt.id);
+                                                setCurrentTheme(opt.id);
+                                                setShowThemeDropdown(false);
+                                            }}
+                                            className={`btn w-100 text-start d-flex align-items-center gap-2 p-2 rounded-3 border-0 transition-all mb-1 ${
+                                                currentTheme === opt.id ? 'bg-light fw-bold text-dark' : 'text-muted'
+                                            }`}
+                                        >
+                                            <div 
+                                                className="d-flex align-items-center justify-content-center rounded-circle"
+                                                style={{ width: '28px', height: '28px', backgroundColor: `${opt.badgeColor}20`, color: opt.badgeColor }}
+                                            >
+                                                <i className={`fa-solid ${opt.icon} x-small`}></i>
+                                            </div>
+                                            <div className="flex-grow-1 text-truncate">
+                                                <div className="small text-truncate" style={{ fontSize: '0.85rem' }}>{opt.name}</div>
+                                                <div className="tiny-text text-muted text-truncate" style={{ fontSize: '0.68rem' }}>{opt.description}</div>
+                                            </div>
+                                            {currentTheme === opt.id && (
+                                                <i className="fa-solid fa-check text-success x-small"></i>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="btn bg-white border rounded-circle shadow-sm d-none d-md-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }} aria-label="Join Discord">
                             <i className="fa-brands fa-discord text-primary"></i>
                         </a>
@@ -231,6 +304,34 @@ const Navbar = () => {
                                 </div>
                             ))}
                             
+                            {/* Mobile Theme Selector */}
+                            <div className="col-12 mt-2">
+                                <div className="p-2 rounded-4 bg-white border shadow-2xs">
+                                    <div className="tiny-text fw-bold text-muted px-2 mb-1 text-uppercase tracking-wider">
+                                        Island Theme
+                                    </div>
+                                    <div className="d-flex gap-1">
+                                        {THEME_OPTIONS.map((opt) => (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setStoredTheme(opt.id);
+                                                    setCurrentTheme(opt.id);
+                                                }}
+                                                className={`btn btn-sm rounded-pill flex-grow-1 py-1 fw-bold transition-all d-flex align-items-center justify-content-center gap-1 ${
+                                                    currentTheme === opt.id ? 'btn-success text-white shadow-sm' : 'btn-light text-dark'
+                                                }`}
+                                                style={{ fontSize: '0.75rem' }}
+                                            >
+                                                <i className={`fa-solid ${opt.icon} x-small`}></i>
+                                                <span>{opt.name.split(' ')[0]}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="col-12 mt-3 pt-3 border-top">
                                 {user ? (
                                     <div className="d-flex gap-2">

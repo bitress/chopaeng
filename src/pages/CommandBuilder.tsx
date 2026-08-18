@@ -16,6 +16,11 @@ import DisclaimerBanner from "../components/DisclaimerBanner";
 import { CommandBuilderFilters } from "../components/command-builder/CommandBuilderFilters";
 import { CommandBuilderItemCard } from "../components/command-builder/CommandBuilderItemCard";
 import { CommandBuilderVariantModal } from "../components/command-builder/CommandBuilderVariantModal";
+import { CommandBuilderPocketBundlesModal } from "../components/command-builder/CommandBuilderPocketBundlesModal";
+import { CommandBuilderShareModal } from "../components/command-builder/CommandBuilderShareModal";
+import { decodePocketShareData } from "../utils/pocketSharing";
+import { useAuth } from "../context/useAuth";
+import { useFavorites } from "../hooks/useFavorites";
 
 type ItemData = PocketItem;
 
@@ -74,6 +79,8 @@ const CommandBuilder = () => {
     const [hideVariants, setHideVariants] = useState(savedState?.hideVariants !== undefined ? savedState.hideVariants : true);
     const [compactMode, setCompactMode] = useState(savedState?.compactMode !== undefined ? savedState.compactMode : true);
     const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+    const [onlyFavorites, setOnlyFavorites] = useState(false);
+    const { isFavorite, toggleFavorite, favoriteCount } = useFavorites();
 
     // --- Search & Pagination ---
     const [searchInput, setSearchInput] = useState(savedState?.searchInput || "");
@@ -85,6 +92,12 @@ const CommandBuilder = () => {
 
     // --- Quick Variant Modal State ---
     const [variantModalItem, setVariantModalItem] = useState<ItemData | null>(null);
+
+    // --- Feature Modals State ---
+    const { user } = useAuth();
+    const [isBundlesModalOpen, setIsBundlesModalOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [sharedNotice, setSharedNotice] = useState<string | null>(null);
 
     // --- Data State ---
     const { data, isLoading: isLoadingData } = useCatalogData();
@@ -110,6 +123,9 @@ const CommandBuilder = () => {
         handleFillTickets,
         handleFillCrowns,
         handleFillBells,
+        loadBundleIntoOrder,
+        loadBundleIntoDrop,
+        loadSharedPocket,
         addItemToOrderPockets,
         addItemToDropPockets,
         orderCommandText,
@@ -121,6 +137,24 @@ const CommandBuilder = () => {
         getOrderPocketQuantity,
         getDropPocketQuantity,
     } = useCommandBuilderPockets();
+
+    // 0. Load shared pocket from URL if ?pocket= is present
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pocketParam = urlParams.get('pocket');
+        if (pocketParam) {
+            const decoded = decodePocketShareData(pocketParam);
+            if (decoded) {
+                loadSharedPocket(decoded);
+                const count = (decoded.orderItems?.length || 0) + (decoded.dropItems?.length || 0);
+                setSharedNotice(`✨ Shared pocket loaded: "${decoded.name || 'Custom'}" (${count} items)`);
+                setTimeout(() => setSharedNotice(null), 5000);
+            }
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    }, [loadSharedPocket]);
+
 
     // 1. Debounce Search (Saves UI threads from exploding)
     useEffect(() => {
@@ -202,10 +236,11 @@ const CommandBuilder = () => {
                 (kindFilter === 'Recipes' && item.entityType === 'item' && item.category === 'Recipes') ||
                 (kindFilter === 'Villagers' && item.entityType === 'villager');
             const matchesVillagerType = villagerType === 'All' || item.entityType !== 'villager' || item.category === villagerType;
+            const matchesFavorites = !onlyFavorites || isFavorite(item.id) || isFavorite(item.id.split(':')[0]);
 
-            return matchesSearch && matchesCategory && matchesTheme && matchesSeries && matchesInteractivity && matchesColour && matchesKind && matchesVillagerType;
+            return matchesSearch && matchesCategory && matchesTheme && matchesSeries && matchesInteractivity && matchesColour && matchesKind && matchesVillagerType && matchesFavorites;
         });
-    }, [expandedCatalogItems, category, theme, series, interactivity, colour, debouncedSearch, kindFilter, villagerType]);
+    }, [expandedCatalogItems, category, theme, series, interactivity, colour, debouncedSearch, kindFilter, villagerType, onlyFavorites, isFavorite]);
 
     // 5. Restore scroll & card focus when catalog data is ready
     const hasRestoredSpotRef = useRef(false);
@@ -347,6 +382,9 @@ const CommandBuilder = () => {
                         uniqueSeries={uniqueSeries}
                         uniqueInteractivity={uniqueInteractivity}
                         uniqueColours={uniqueColours}
+                        onlyFavorites={onlyFavorites}
+                        setOnlyFavorites={setOnlyFavorites}
+                        favoriteCount={favoriteCount}
                         clearFilters={clearFilters}
                     />
                 </section>
@@ -414,6 +452,8 @@ const CommandBuilder = () => {
                                                 decreaseDropQuantity={decreaseDropQuantity}
                                                 increaseDropQuantity={increaseDropQuantity}
                                                 addItemToDropPockets={addItemToDropPockets}
+                                                isFavorite={isFavorite(item.id) || isFavorite(item.id.split(':')[0])}
+                                                onToggleFavorite={toggleFavorite}
                                             />
                                         );
                                     })
@@ -497,6 +537,8 @@ const CommandBuilder = () => {
                                     onFillCrowns={handleFillCrowns}
                                     onFillBells={handleFillBells}
                                     showTerminal={true}
+                                    onOpenBundlesModal={() => setIsBundlesModalOpen(true)}
+                                    onOpenShareModal={() => setIsShareModalOpen(true)}
                                 />
                             </div>
                         </aside>
@@ -504,6 +546,15 @@ const CommandBuilder = () => {
 
                 </section>
                 <div className="container">
+                    {sharedNotice && (
+                        <div className="alert alert-success rounded-4 shadow-sm p-3 mb-3 d-flex align-items-center justify-content-between animate-fade">
+                            <div>
+                                <i className="fa-solid fa-circle-check fs-5 text-success me-2 align-middle"></i>
+                                <strong className="text-dark small">{sharedNotice}</strong>
+                            </div>
+                            <button type="button" className="btn-close" onClick={() => setSharedNotice(null)} />
+                        </div>
+                    )}
                     <DisclaimerBanner className="mb-3" />
                 </div>
             </div>
@@ -529,7 +580,28 @@ const CommandBuilder = () => {
                 canIncreaseDrop={canIncreaseDrop}
                 getOrderPocketQuantity={getOrderPocketQuantity}
                 getDropPocketQuantity={getDropPocketQuantity}
+                isFavorite={variantModalItem ? (isFavorite(variantModalItem.id) || isFavorite(variantModalItem.id.split(':')[0])) : false}
+                onToggleFavorite={toggleFavorite}
             />
+
+            {/* Pocket Bundles Modal */}
+            <CommandBuilderPocketBundlesModal
+                isOpen={isBundlesModalOpen}
+                onClose={() => setIsBundlesModalOpen(false)}
+                currentOrderPockets={orderItems}
+                currentDropPockets={dropItems}
+                onApplyBundleToOrder={(items, mode) => loadBundleIntoOrder(items, mode)}
+                onApplyBundleToDrop={(items, mode) => loadBundleIntoDrop(items, mode)}
+            />
+
+            {/* Share Pocket Modal */}
+            <CommandBuilderShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                orderPockets={orderItems}
+                dropPockets={dropItems}
+            />
+
         </>
     );
 };

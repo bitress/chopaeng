@@ -5,6 +5,7 @@ import { loadVillagers } from "../data/villagerDataLoader";
 import type { CatalogEntity } from "../data/commandBuilderData";
 import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets } from "../hooks/useCommandBuilderPockets";
+import { useFavorites } from "../hooks/useFavorites";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
 import CatalogAvailability from "../components/CatalogAvailability";
 import { FINDER_API_BASE } from "../config/api";
@@ -168,6 +169,9 @@ const CatalogDetail = () => {
 
 
 
+    const { isFavorite, toggleFavorite } = useFavorites();
+    const isItemFavorited = entry ? (isFavorite(entry.id) || isFavorite(entry.id.split(':')[0])) : false;
+
     useEffect(() => {
         if (entry?.entityType !== 'item') {
             setSelectedVariantKey(null);
@@ -323,6 +327,20 @@ const CatalogDetail = () => {
                         </ol>
                     </nav>
                     <div className="d-flex align-items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={(e) => toggleFavorite(entry.id, e)}
+                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-flex align-items-center gap-2 ${
+                                isItemFavorited 
+                                    ? 'btn-warning text-white' 
+                                    : 'btn-white bg-white text-muted border'
+                            }`}
+                            title={isItemFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
+                            aria-label={isItemFavorited ? `Remove ${entry.name} from favorites` : `Add ${entry.name} to favorites`}
+                        >
+                            <i className={`fa-${isItemFavorited ? 'solid' : 'regular'} fa-star`} />
+                            <span>{isItemFavorited ? 'Favorited' : 'Favorite'}</span>
+                        </button>
                         <button
                             type="button"
                             onClick={handleBackToCatalog}

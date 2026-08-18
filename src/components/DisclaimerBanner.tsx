@@ -30,9 +30,19 @@ export const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
     }
 
     return (
-        <div className={`alert alert-light border text-center text-muted small py-3 rounded-4 shadow-sm ${className}`}>
-            <i className="fa-solid fa-circle-info me-2 text-secondary"></i>
-            <strong>Disclaimer:</strong> Chopaeng is an unofficial fan community website and is not affiliated with, sponsored by, or endorsed by Nintendo Co., Ltd. Animal Crossing and Nintendo Switch are trademarks of Nintendo.
+        <div 
+            className={`disclaimer-banner-card border text-center small py-3 px-4 rounded-4 shadow-sm ${className}`}
+            style={{
+                backgroundColor: 'var(--card-bg)',
+                borderColor: 'var(--card-border)',
+                color: 'var(--text)',
+                ...style
+            }}
+        >
+            <i className="fa-solid fa-circle-info me-2 text-muted opacity-75"></i>
+            <span className="opacity-90">
+                <strong>Disclaimer:</strong> Chopaeng is an unofficial fan community website and is not affiliated with, sponsored by, or endorsed by Nintendo Co., Ltd. Animal Crossing and Nintendo Switch are trademarks of Nintendo.
+            </span>
         </div>
     );
 };
