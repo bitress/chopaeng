@@ -18,7 +18,9 @@ import { CommandBuilderItemCard } from "../components/command-builder/CommandBui
 import { CommandBuilderVariantModal } from "../components/command-builder/CommandBuilderVariantModal";
 import { CommandBuilderPocketBundlesModal } from "../components/command-builder/CommandBuilderPocketBundlesModal";
 import { CommandBuilderShareModal } from "../components/command-builder/CommandBuilderShareModal";
+import { CommunityLoadoutsModal } from "../components/command-builder/CommunityLoadoutsModal";
 import { decodePocketShareData, fetchSharedPocket } from "../utils/pocketSharing";
+import { fetchLoadoutByCode } from "../utils/communityLoadoutsApi";
 import { useFavorites } from "../hooks/useFavorites";
 
 type ItemData = PocketItem;
@@ -34,25 +36,6 @@ const FALLBACK_IMAGE = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/
 
 const getAcnhcdnUrl = (url: string | undefined): string => {
     if (!url) return FALLBACK_IMAGE;
-    if (url.includes('acnhcdn.com')) return url;
-
-    if (url.includes('/villagers/')) {
-        const file = url.split('/').pop();
-        return `https://acnhcdn.com/latest/NpcIcon/${file}`;
-    }
-
-    if (url.includes('/items/img/')) {
-        const file = url.split('/').pop() || '';
-        const match = file.match(/^([A-Z][a-z]+)/);
-        const prefix = match ? match[1] : '';
-
-        const iconFolders = ['Ftr', 'Room', 'Rug', 'Cap', 'Tops', 'Bottoms', 'Shoes', 'Socks', 'Accessory', 'Bag', 'Umbrella', 'Tool'];
-        if (iconFolders.includes(prefix)) {
-            return `https://acnhcdn.com/latest/${prefix}Icon/${file}`;
-        }
-        return `https://acnhcdn.com/latest/MenuIcon/${file}`;
-    }
-
     return url;
 };
 
@@ -94,6 +77,7 @@ const CommandBuilder = () => {
 
     // --- Feature Modals State ---
     const [isBundlesModalOpen, setIsBundlesModalOpen] = useState(false);
+    const [isCommunityModalOpen, setIsCommunityModalOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [sharedNotice, setSharedNotice] = useState<string | null>(null);
 
@@ -121,6 +105,10 @@ const CommandBuilder = () => {
         handleFillTickets,
         handleFillCrowns,
         handleFillBells,
+        handleMaximizeStacks,
+        handleFillRemaining,
+        handleSortPockets,
+        handleLoadRecipeMaterials,
         loadBundleIntoOrder,
         loadBundleIntoDrop,
         loadSharedPocket,
@@ -136,13 +124,24 @@ const CommandBuilder = () => {
         getDropPocketQuantity,
     } = useCommandBuilderPockets();
 
-    // 0. Load shared pocket from URL if ?p= (short ID) or ?pocket= (base64) is present
+    // 0. Load shared pocket or community loadout from URL if ?p=, ?pocket=, ?loadout=, or ?code= is present
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const shortParam = urlParams.get('p');
         const legacyPocketParam = urlParams.get('pocket');
+        const loadoutCodeParam = urlParams.get('loadout') || urlParams.get('code');
 
-        if (shortParam) {
+        if (loadoutCodeParam) {
+            fetchLoadoutByCode(loadoutCodeParam).then((loadout) => {
+                if (loadout) {
+                    loadBundleIntoOrder(loadout.orderItems, 'replace');
+                    setSharedNotice(`✨ Community loadout loaded: "${loadout.name}" (${loadout.shortCode})`);
+                    setTimeout(() => setSharedNotice(null), 6000);
+                }
+            });
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        } else if (shortParam) {
             fetchSharedPocket(shortParam).then((sharedData) => {
                 if (sharedData) {
                     loadSharedPocket(sharedData);
@@ -476,6 +475,7 @@ const CommandBuilder = () => {
                                                 addItemToDropPockets={addItemToDropPockets}
                                                 isFavorite={isFavorite(item.id) || isFavorite(item.id.split(':')[0])}
                                                 onToggleFavorite={toggleFavorite}
+                                                onLoadRecipeMaterials={handleLoadRecipeMaterials}
                                             />
                                         );
                                     })
@@ -558,8 +558,12 @@ const CommandBuilder = () => {
                                     onFillTickets={handleFillTickets}
                                     onFillCrowns={handleFillCrowns}
                                     onFillBells={handleFillBells}
+                                    onMaximizeStacks={handleMaximizeStacks}
+                                    onFillRemaining={handleFillRemaining}
+                                    onSortPockets={handleSortPockets}
                                     showTerminal={true}
                                     onOpenBundlesModal={() => setIsBundlesModalOpen(true)}
+                                    onOpenCommunityLoadoutsModal={() => setIsCommunityModalOpen(true)}
                                     onOpenShareModal={() => setIsShareModalOpen(true)}
                                 />
                             </div>
@@ -622,6 +626,15 @@ const CommandBuilder = () => {
                 onClose={() => setIsShareModalOpen(false)}
                 orderPockets={orderItems}
                 dropPockets={dropItems}
+            />
+
+            {/* Community Loadouts & Cloud Sync Modal */}
+            <CommunityLoadoutsModal
+                isOpen={isCommunityModalOpen}
+                onClose={() => setIsCommunityModalOpen(false)}
+                onLoadItems={(items, mode) => loadBundleIntoOrder(items, mode)}
+                currentOrderPockets={orderItems}
+                currentDropPockets={dropItems}
             />
 
         </>

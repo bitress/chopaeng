@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import type { CatalogEntity } from "../data/commandBuilderData";
+import { SmartFillDropdown } from "./command-builder/SmartFillDropdown";
 
 type PocketItem = CatalogEntity & {
     baseId?: string | number | null;
@@ -33,9 +34,13 @@ type CommandBuilderSummaryProps = {
     onFillTickets?: () => void;
     onFillCrowns?: () => void;
     onFillBells?: () => void;
+    onMaximizeStacks?: () => void;
+    onFillRemaining?: (type: 'nmt' | 'crowns' | 'bells' | 'gold' | 'repeat') => void;
+    onSortPockets?: () => void;
     showTerminal?: boolean;
     onOpenBundlesModal?: () => void;
     onOpenShareModal?: () => void;
+    onOpenCommunityLoadoutsModal?: () => void;
 };
 
 const ORDER_BOT_MAX = 40;
@@ -64,9 +69,13 @@ const CommandBuilderSummary = ({
     onFillTickets,
     onFillCrowns,
     onFillBells,
+    onMaximizeStacks,
+    onFillRemaining,
+    onSortPockets,
     showTerminal = true,
     onOpenBundlesModal,
     onOpenShareModal,
+    onOpenCommunityLoadoutsModal,
 }: CommandBuilderSummaryProps) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState<'all' | 'order' | 'drop'>('all');
@@ -216,37 +225,55 @@ const CommandBuilderSummary = ({
                 </div>
             </div>
 
-            {/* ── Quick Action Toolbar (Bundles & Share) ─────────────────────────── */}
-            <div className="d-flex gap-2 mb-3">
-                {onOpenBundlesModal && (
+            {/* ── Quick Action Toolbar (Bundles, Smart Tools & Share) ─────────────────────────── */}
+            <div className="d-flex flex-wrap gap-2 mb-3">
+                {(onOpenCommunityLoadoutsModal || onOpenBundlesModal) && (
                     <button
                         type="button"
-                        onClick={onOpenBundlesModal}
+                        onClick={onOpenCommunityLoadoutsModal || onOpenBundlesModal}
                         className="btn btn-sm text-white rounded-pill fw-bold px-3 py-2 shadow-sm flex-grow-1 transition-all d-flex align-items-center justify-content-center gap-2"
-                        title="Browse & Apply 1-Click Themed Pocket Presets"
+                        title="Browse Community Loadouts & Official Bundles"
                         style={{
                             background: 'linear-gradient(135deg, #28a745 0%, #208738 100%)',
                             border: 'none',
+                            fontSize: '0.8rem',
                         }}
                     >
-                        <i className="fa-solid fa-bolt-lightning text-warning"></i>
-                        <span>Pocket Bundles</span>
+                        <i className="fa-solid fa-cloud-arrow-down text-warning"></i>
+                        <span>Loadouts & Bundles</span>
                     </button>
                 )}
+
+                {/* Smart Fill & Optimization Dropdown */}
+                {onFillRemaining && onMaximizeStacks && onSortPockets && (
+                    <SmartFillDropdown
+                        onFillNmt={() => onFillRemaining('nmt')}
+                        onFillCrowns={() => onFillRemaining('crowns')}
+                        onFillBells={() => onFillRemaining('bells')}
+                        onFillGold={() => onFillRemaining('gold')}
+                        onFillRepeat={() => onFillRemaining('repeat')}
+                        onMaximizeStacks={onMaximizeStacks}
+                        onSortPockets={onSortPockets}
+                        isOrderFull={orderFull}
+                        hasItems={orderPockets.length > 0}
+                    />
+                )}
+
                 {onOpenShareModal && (
                     <button
                         type="button"
                         onClick={onOpenShareModal}
-                        className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-2 shadow-sm flex-grow-1 transition-all d-flex align-items-center justify-content-center gap-2"
+                        className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-2 shadow-2xs transition-all d-flex align-items-center justify-content-center gap-2"
                         title="Generate shareable link for this exact pocket"
                         disabled={isEmpty}
                         style={{
                             borderColor: isEmpty ? '#e9ecef' : '#bfe3f0',
                             backgroundColor: isEmpty ? '#f8f9fa' : '#ffffff',
+                            fontSize: '0.8rem',
                         }}
                     >
                         <i className="fa-solid fa-share-nodes text-primary"></i>
-                        <span>Share Pocket</span>
+                        <span className="d-none d-sm-inline">Share</span>
                     </button>
                 )}
             </div>

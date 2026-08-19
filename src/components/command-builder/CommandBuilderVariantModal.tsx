@@ -7,25 +7,6 @@ const FALLBACK_IMAGE = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/
 
 const getAcnhcdnUrl = (url: string | undefined): string => {
     if (!url) return FALLBACK_IMAGE;
-    if (url.includes('acnhcdn.com')) return url;
-    
-    if (url.includes('/villagers/')) {
-        const file = url.split('/').pop();
-        return `https://acnhcdn.com/latest/NpcIcon/${file}`;
-    }
-
-    if (url.includes('/items/img/')) {
-        const file = url.split('/').pop() || '';
-        const match = file.match(/^([A-Z][a-z]+)/);
-        const prefix = match ? match[1] : '';
-        
-        const iconFolders = ['Ftr', 'Room', 'Rug', 'Cap', 'Tops', 'Bottoms', 'Shoes', 'Socks', 'Accessory', 'Bag', 'Umbrella', 'Tool'];
-        if (iconFolders.includes(prefix)) {
-            return `https://acnhcdn.com/latest/${prefix}Icon/${file}`;
-        }
-        return `https://acnhcdn.com/latest/MenuIcon/${file}`;
-    }
-
     return url;
 };
 

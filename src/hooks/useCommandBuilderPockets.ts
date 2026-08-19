@@ -2,6 +2,12 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import type { CatalogEntity } from '../data/commandBuilderData';
 import { ITEMS } from '../data/commandBuilderData';
 import { generateFullItemHex } from '../utils/commandBuilderHex';
+import {
+    maximizePocketStacks,
+    fillRemainingPockets,
+    sortPocketEntries,
+    findRecipeIngredients,
+} from '../utils/pocketOptimizer';
 import banner from '../assets/banner.png';
 
 export type PocketItem = CatalogEntity & {
@@ -258,6 +264,62 @@ export const useCommandBuilderPockets = () => {
     const handleFillCrowns = useCallback(() => fillWithItemName('Royal Crown'), [fillWithItemName]);
     const handleFillBells = useCallback(() => fillWithItemName('99,000 Bells'), [fillWithItemName]);
 
+    // ── Smart Pocket Optimization Helpers ─────────────────────────────────
+    const handleMaximizeStacks = useCallback(() => {
+        setOrderItems((prev) => maximizePocketStacks(prev, ORDER_BOT_MAX));
+    }, []);
+
+    const handleFillRemaining = useCallback((type: 'nmt' | 'crowns' | 'bells' | 'gold' | 'repeat') => {
+        setOrderItems((prev) => fillRemainingPockets(prev, type, ORDER_BOT_MAX));
+    }, []);
+
+    const handleSortPockets = useCallback(() => {
+        setOrderItems((prev) => sortPocketEntries(prev));
+    }, []);
+
+    const handleLoadRecipeMaterials = useCallback((recipeName: string, multiplier: number = 1) => {
+        const ingredients = findRecipeIngredients(recipeName);
+        if (!ingredients || ingredients.length === 0) return;
+
+        setOrderItems((prev) => {
+            const currentEntries = [...prev];
+            let currentTotal = currentEntries.reduce((acc, curr) => acc + curr.quantity, 0);
+
+            for (const ing of ingredients) {
+                if (currentTotal >= ORDER_BOT_MAX) break;
+                const neededQuantity = Math.min(ing.quantity * multiplier, ORDER_BOT_MAX - currentTotal);
+                if (neededQuantity <= 0) continue;
+
+                const pocketItem: PocketItem = {
+                    id: ing.id,
+                    name: ing.name,
+                    entityType: 'item',
+                    category: 'Materials',
+                    theme: 'Crafting',
+                    series: 'Materials',
+                    interactivity: 'Consumable',
+                    colour: 'Various',
+                    image: ing.image,
+                    description: `${ing.name} crafting material`,
+                    baseId: ing.id,
+                };
+
+                const existingIdx = currentEntries.findIndex((p) => p.item.id === ing.id);
+                if (existingIdx >= 0) {
+                    currentEntries[existingIdx] = {
+                        ...currentEntries[existingIdx],
+                        quantity: currentEntries[existingIdx].quantity + neededQuantity,
+                    };
+                } else {
+                    currentEntries.push({ item: pocketItem, quantity: neededQuantity });
+                }
+                currentTotal += neededQuantity;
+            }
+
+            return currentEntries;
+        });
+    }, []);
+
     // ── Bundle & Share loaders ─────────────────────────────────────────────
     const loadBundleIntoOrder = useCallback((bundleItems: Array<{ itemId?: string; id?: string; name: string; quantity: number; category?: string; variantId?: string | number | null; variantLabel?: string | null; image?: string; entityType?: 'item' | 'villager' }>, mode: 'replace' | 'merge' = 'replace') => {
         setOrderItems((prev) => {
@@ -474,6 +536,12 @@ export const useCommandBuilderPockets = () => {
         handleFillTickets,
         handleFillCrowns,
         handleFillBells,
+
+        // Smart Pocket Optimization
+        handleMaximizeStacks,
+        handleFillRemaining,
+        handleSortPockets,
+        handleLoadRecipeMaterials,
 
         // Bundle & Share loaders
         loadBundleIntoOrder,

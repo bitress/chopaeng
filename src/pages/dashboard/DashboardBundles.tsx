@@ -197,8 +197,8 @@ export const DashboardBundles = () => {
         setFormIcon('fa-box-open');
         setFormTarget('order');
         setFormItems([
-            { itemId: '3438', name: 'Nook Miles Ticket', quantity: 20, category: 'Currency', image: 'https://acnhcdn.com/latest/MenuIcon/TicketNook.png' },
-            { itemId: '1431', name: 'Royal Crown', quantity: 20, category: 'Clothing', image: 'https://acnhcdn.com/latest/MenuIcon/HatCrownRoyal.png' },
+            { itemId: '3438', name: 'Nook Miles Ticket', quantity: 20, category: 'Currency', image: 'https://www.pange.ca/itemsearch/items/img/MilePlaneTicket.png' },
+            { itemId: '1431', name: 'Royal Crown', quantity: 20, category: 'Clothing', image: 'https://www.pange.ca/itemsearch/items/img/CapHatCrownRed.png' },
         ]);
         setSelectedCatalogItem(null);
         setEditModalOpen(true);
@@ -681,21 +681,21 @@ export const DashboardBundles = () => {
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold text-dark"
-                                                onClick={() => handleQuickFill('Nook Miles Ticket', '3438', 'Currency', 'https://acnhcdn.com/latest/MenuIcon/TicketNook.png')}
+                                                onClick={() => handleQuickFill('Nook Miles Ticket', '3438', 'Currency', 'https://www.pange.ca/itemsearch/items/img/MilePlaneTicket.png')}
                                             >
                                                 +Full NMTs ({maxSlots})
                                             </button>
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold text-dark"
-                                                onClick={() => handleQuickFill('Royal Crown', '1431', 'Clothing', 'https://acnhcdn.com/latest/MenuIcon/HatCrownRoyal.png')}
+                                                onClick={() => handleQuickFill('Royal Crown', '1431', 'Clothing', 'https://www.pange.ca/itemsearch/items/img/CapHatCrownRed.png')}
                                             >
                                                 +Full Crowns ({maxSlots})
                                             </button>
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold text-dark"
-                                                onClick={() => handleQuickFill('Gold Nugget', '0BF1', 'Materials', 'https://acnhcdn.com/latest/MenuIcon/OreGold.png')}
+                                                onClick={() => handleQuickFill('Gold Nugget', '0BF1', 'Materials', 'https://www.pange.ca/itemsearch/items/img/DIYGold.png')}
                                             >
                                                 +Full Gold ({maxSlots})
                                             </button>

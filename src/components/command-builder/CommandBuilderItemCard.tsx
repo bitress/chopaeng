@@ -1,5 +1,6 @@
 import React from "react";
 import type { PocketItem } from "../../hooks/useCommandBuilderPockets";
+import { findRecipeIngredients } from "../../utils/pocketOptimizer";
 
 type ItemData = PocketItem;
 
@@ -26,6 +27,7 @@ interface CommandBuilderItemCardProps {
     addItemToDropPockets: (item: ItemData) => void;
     isFavorite?: boolean;
     onToggleFavorite?: (id: string, e: React.MouseEvent) => void;
+    onLoadRecipeMaterials?: (recipeName: string) => void;
 }
 
 export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
@@ -49,6 +51,7 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
     decreaseDropQuantity,
     increaseDropQuantity,
     addItemToDropPockets,
+    onLoadRecipeMaterials,
 }) => {
     const isVillager = item.entityType === 'villager';
     const cardSelected = orderQty > 0 || dropQty > 0;
@@ -171,6 +174,22 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                 <div className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mt-1 d-inline-flex align-items-center gap-1 hover-shadow" style={{ fontSize: '0.66rem', cursor: 'pointer' }}>
                                     <span>{item.variations?.length} variants</span>
                                     <i className="fa-solid fa-palette" style={{ fontSize: '0.6rem' }}></i>
+                                </div>
+                            </button>
+                        )}
+                        {onLoadRecipeMaterials && findRecipeIngredients(item.name) && (
+                            <button
+                                type="button"
+                                className="btn p-0 border-0 text-start d-block mt-1"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLoadRecipeMaterials(item.name);
+                                }}
+                                title="Autofill required crafting materials for this recipe"
+                            >
+                                <div className="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill d-inline-flex align-items-center gap-1 hover-shadow" style={{ fontSize: '0.66rem', cursor: 'pointer' }}>
+                                    <i className="fa-solid fa-hammer" style={{ fontSize: '0.6rem' }}></i>
+                                    <span>Load Materials</span>
                                 </div>
                             </button>
                         )}
