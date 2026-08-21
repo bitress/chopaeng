@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import logo from '../assets/logo.webp';
 import { useAuth } from "../context/useAuth";
 import { THEME_OPTIONS, getStoredTheme, setStoredTheme, type ThemeMode } from "../utils/theme";
+import { openSuggestionModal } from "../utils/suggestionsApi";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -348,8 +349,22 @@ const Navbar = () => {
                                     </button>
                                 )}
                             </div>
-                            <div className="col-12 mt-2 text-center">
-                                 <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="btn btn-link text-decoration-none text-muted small fw-bold">
+                            <div className="col-12 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        openSuggestionModal();
+                                    }}
+                                    className="btn btn-warning bg-opacity-10 text-dark border border-warning border-opacity-50 w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 shadow-2xs"
+                                    style={{ backgroundColor: '#fffbeb' }}
+                                >
+                                    <i className="fa-solid fa-lightbulb text-warning"></i>
+                                    <span>Suggest Feature / Feedback</span>
+                                </button>
+                            </div>
+                            <div className="col-12 mt-1 text-center">
+                                <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="btn btn-link text-decoration-none text-muted small fw-bold">
                                     <i className="fa-brands fa-discord me-2 text-primary"></i>
                                     Join the Discord Server
                                 </a>

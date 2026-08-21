@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.webp";
+import { openSuggestionModal } from "../utils/suggestionsApi";
 
 const Footer = () => {
     const [email, setEmail] = useState("");
@@ -25,6 +26,7 @@ const Footer = () => {
         support: [
             { name: "Guide Book", path: "/guides" },
             { name: "Help Center", path: "/contact" },
+            { name: "Suggest Feature", path: "#", onClick: (e: React.MouseEvent) => { e.preventDefault(); openSuggestionModal(); } },
             { name: "About Us", path: "/about" },
             { name: "Terms of Service", path: "/terms" },
         ]
@@ -76,7 +78,20 @@ const Footer = () => {
                                 <h6 className="fw-bold text-dark text-uppercase small mb-4">Support</h6>
                                 <ul className="list-unstyled d-flex flex-column gap-2">
                                     {footerNav.support.map(link => (
-                                        <li key={link.name}><Link to={link.path} className="footer-link">{link.name}</Link></li>
+                                        <li key={link.name}>
+                                            {link.onClick ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={link.onClick}
+                                                    className="footer-link btn btn-link p-0 border-0 text-decoration-none text-start text-muted"
+                                                    style={{ fontSize: 'inherit' }}
+                                                >
+                                                    {link.name}
+                                                </button>
+                                            ) : (
+                                                <Link to={link.path} className="footer-link">{link.name}</Link>
+                                            )}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>

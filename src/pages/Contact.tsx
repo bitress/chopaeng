@@ -1,3 +1,5 @@
+import { openSuggestionModal } from "../utils/suggestionsApi";
+
 const Contact = () => {
     return (
         <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center justify-content-center">
@@ -27,11 +29,10 @@ const Contact = () => {
             <meta property="og:url" content="https://www.chopaeng.com/contact" />
 
 
-            <div className="app-container w-100" style={{maxWidth: '900px'}}>
+            <div className="app-container w-100" style={{maxWidth: '1050px'}}>
 
                 {/* 1. APP HEADER */}
                 <div className="text-center mb-5">
-
                     <h1 className="display-5 fw-black ac-font text-dark mb-2">Resident Services</h1>
                     <p className="text-muted fw-bold text-uppercase spacing-wide mb-0">How can we help you today?</p>
                 </div>
@@ -40,43 +41,69 @@ const Contact = () => {
                 <div className="row g-4 justify-content-center mb-5">
 
                     {/* Discord (Community Support) */}
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                         <div className="contact-card h-100 bg-white p-4 rounded-4 shadow-sm border border-light position-relative overflow-hidden d-flex flex-column text-center hover-lift transition-all">
                             <div className="card-bg-icon text-primary opacity-10">
                                 <i className="fa-brands fa-discord"></i>
                             </div>
 
-                            <div className="z-1 position-relative">
+                            <div className="z-1 position-relative d-flex flex-column h-100">
                                 <div className="icon-squircle bg-primary text-white mx-auto mb-3 shadow-sm">
                                     <i className="fa-solid fa-comment-dots fs-3"></i>
                                 </div>
                                 <h3 className="fw-black ac-font text-dark mb-2">Community Chat</h3>
-                                <p className="text-muted fw-bold small mb-4 lh-sm px-3">
+                                <p className="text-muted fw-bold small mb-4 lh-sm px-2 flex-grow-1">
                                     Need a Dodo Code? Bot stuck? Join our Discord server for 24/7 support from our mod team.
                                 </p>
-                                <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="btn btn-primary rounded-pill fw-bold px-5 py-2 w-100 shadow-sm btn-nook">
+                                <a href="https://discord.gg/chopaeng" target="_blank" rel="noreferrer" className="btn btn-primary rounded-pill fw-bold px-4 py-2 w-100 shadow-sm btn-nook mt-auto">
                                     Open Discord
                                 </a>
                             </div>
                         </div>
                     </div>
 
+                    {/* Suggestions & Ideas (Webhook Dispatcher) */}
+                    <div className="col-md-4">
+                        <div className="contact-card h-100 bg-white p-4 rounded-4 shadow-sm border border-light position-relative overflow-hidden d-flex flex-column text-center hover-lift transition-all">
+                            <div className="card-bg-icon text-warning opacity-10">
+                                <i className="fa-solid fa-lightbulb"></i>
+                            </div>
+
+                            <div className="z-1 position-relative d-flex flex-column h-100">
+                                <div className="icon-squircle bg-warning text-white mx-auto mb-3 shadow-sm" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                                    <i className="fa-solid fa-lightbulb fs-3"></i>
+                                </div>
+                                <h3 className="fw-black ac-font text-dark mb-2">Idea & Feedback</h3>
+                                <p className="text-muted fw-bold small mb-4 lh-sm px-2 flex-grow-1">
+                                    Have a feature request, new island idea, or bug report? Submit directly to staff.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => openSuggestionModal()}
+                                    className="btn btn-warning text-white rounded-pill fw-bold px-4 py-2 w-100 shadow-sm btn-nook mt-auto"
+                                >
+                                    <i className="fa-solid fa-wand-magic-sparkles me-1"></i>Suggest Idea
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Email (Business) */}
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                         <div className="contact-card h-100 bg-white p-4 rounded-4 shadow-sm border border-light position-relative overflow-hidden d-flex flex-column text-center hover-lift transition-all">
                             <div className="card-bg-icon text-success opacity-10">
                                 <i className="fa-solid fa-envelope"></i>
                             </div>
 
-                            <div className="z-1 position-relative">
+                            <div className="z-1 position-relative d-flex flex-column h-100">
                                 <div className="icon-squircle bg-success text-white mx-auto mb-3 shadow-sm">
                                     <i className="fa-solid fa-envelope-open fs-3"></i>
                                 </div>
                                 <h3 className="fw-black ac-font text-dark mb-2">Business Mail</h3>
-                                <p className="text-muted fw-bold small mb-4 lh-sm px-3">
+                                <p className="text-muted fw-bold small mb-4 lh-sm px-2 flex-grow-1">
                                     For brand collaborations, sponsorships, or urgent account inquiries. (Replies within 24h).
                                 </p>
-                                <a href="mailto:hello@chopaeng.com" className="btn btn-success rounded-pill fw-bold px-5 py-2 w-100 shadow-sm btn-nook">
+                                <a href="mailto:hello@chopaeng.com" className="btn btn-success rounded-pill fw-bold px-4 py-2 w-100 shadow-sm btn-nook mt-auto">
                                     Send Letter
                                 </a>
                             </div>

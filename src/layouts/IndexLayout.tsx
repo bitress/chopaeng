@@ -1,15 +1,19 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar.tsx";
 import Footer from "../components/Footer.tsx";
+import { FloatingSuggestionButton } from "../components/suggestions/FloatingSuggestionButton.tsx";
+import { SuggestionModal } from "../components/suggestions/SuggestionModal.tsx";
 
 export function IndexLayout() {
     return (
         <>
-            <Navbar/>
-            <main id="wrapper" style={{  minHeight: '100vh' }}>
+            <Navbar />
+            <main id="wrapper" style={{ minHeight: '100vh' }}>
                 <Outlet />
             </main>
-            <Footer/>
+            <Footer />
+            <FloatingSuggestionButton />
+            <SuggestionModal />
         </>
     );
 }
