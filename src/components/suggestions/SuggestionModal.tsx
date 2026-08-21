@@ -16,30 +16,6 @@ interface SuggestionModalProps {
     initialCategory?: SuggestionCategory;
 }
 
-const SAMPLE_IDEA_CHIPS: Record<SuggestionCategory, string[]> = {
-    feature: [
-        '✨ Add Sanrio / 2.0 filter in Catalog',
-        '📦 1-Click max stack button for pockets',
-        '⭐ Favorite items list on profile',
-    ],
-    island: [
-        '🏝️ Cottagecore botanical forest island',
-        '🎃 Spooky Halloween DIY & furniture set',
-        '🌸 Cherry blossom & festive holiday island',
-    ],
-    bot: [
-        '🤖 Real-time queue ETA timer in Discord',
-        '📦 Auto drop delivery confirmation ping',
-    ],
-    bug: [
-        '🐛 Mobile navbar menu cut off on iPhone',
-        '🐛 Item thumbnail failed to load in builder',
-    ],
-    general: [
-        '❤️ Love the treasure islands and fast bot!',
-        '💬 Keep up the amazing work Kuya Cho!',
-    ],
-};
 
 export const SuggestionModal = ({
     isOpen: controlledIsOpen,
@@ -123,13 +99,6 @@ export const SuggestionModal = ({
         setErrorMessage(null);
     };
 
-    const handleChipClick = (chipText: string) => {
-        if (!title.trim()) {
-            setTitle(chipText.replace(/^[^\w\s]+\s*/, ''));
-        } else {
-            setDescription((prev) => (prev ? `${prev}\n- ${chipText}` : chipText));
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -415,7 +384,7 @@ export const SuggestionModal = ({
                                     </div>
                                 </div>
 
-                                {/* 2. Title & Helper Chips */}
+                                {/* 2. Suggestion Title */}
                                 <div className="mb-3">
                                     <label className="form-label fw-black text-uppercase text-muted tiny-text letter-spacing-1 mb-1">
                                         2. Suggestion Title <span className="text-danger">*</span>
@@ -430,23 +399,6 @@ export const SuggestionModal = ({
                                         required
                                         style={{ fontSize: '0.95rem' }}
                                     />
-
-                                    {/* Inspiration shortcut pills */}
-                                    <div className="d-flex gap-1 flex-wrap mt-2 align-items-center">
-                                        <span className="tiny-text text-muted fw-bold me-1">Quick ideas:</span>
-                                        {SAMPLE_IDEA_CHIPS[category].map((chip, idx) => (
-                                            <button
-                                                key={idx}
-                                                type="button"
-                                                className="btn btn-sm btn-light bg-white border rounded-pill px-2 py-0 tiny-text text-muted hover-text-dark"
-                                                style={{ fontSize: '0.72rem' }}
-                                                onClick={() => handleChipClick(chip)}
-                                                title="Click to insert idea"
-                                            >
-                                                {chip}
-                                            </button>
-                                        ))}
-                                    </div>
                                 </div>
 
                                 {/* 3. Details & Explanation */}
