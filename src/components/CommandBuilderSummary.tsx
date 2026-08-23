@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import type { CatalogEntity } from "../data/commandBuilderData";
 import { SmartFillDropdown } from "./command-builder/SmartFillDropdown";
+import { playChimeClick } from "../utils/kkAudioSynthesizer";
 
 type PocketItem = CatalogEntity & {
     baseId?: string | number | null;
@@ -47,7 +49,7 @@ const ORDER_BOT_MAX = 40;
 const DROP_BOT_MAX = 9;
 const POCKETS_LIST_ID = "command-builder-pockets-list";
 
-const CommandBuilderSummary = ({
+export const CommandBuilderSummary = ({
     orderPockets,
     dropPockets,
     orderCommandText,
@@ -79,29 +81,65 @@ const CommandBuilderSummary = ({
 }: CommandBuilderSummaryProps) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState<'all' | 'order' | 'drop'>('all');
+    const [listSearchQuery, setListSearchQuery] = useState('');
 
     const orderCount = useMemo(() => orderPockets.reduce((sum, p) => sum + p.quantity, 0), [orderPockets]);
     const dropCount = useMemo(() => dropPockets.reduce((sum, p) => sum + p.quantity, 0), [dropPockets]);
+    const totalCount = orderCount + dropCount;
     const isEmpty = orderPockets.length === 0 && dropPockets.length === 0;
 
     const orderFull = orderCount >= ORDER_BOT_MAX;
     const dropFull = dropCount >= DROP_BOT_MAX;
     const remainingOrderSlots = Math.max(0, ORDER_BOT_MAX - orderCount);
 
-    // Capacity percentages for progress rings/bars
+    // Capacity percentages
     const orderPercent = Math.min(100, Math.round((orderCount / ORDER_BOT_MAX) * 100));
     const dropPercent = Math.min(100, Math.round((dropCount / DROP_BOT_MAX) * 100));
+
+    // Filtered lists when searching in list view
+    const filteredOrderPockets = useMemo(() => {
+        if (!listSearchQuery.trim()) return orderPockets;
+        const q = listSearchQuery.toLowerCase();
+        return orderPockets.filter(p => p.item.name.toLowerCase().includes(q) || (p.item.category && p.item.category.toLowerCase().includes(q)));
+    }, [orderPockets, listSearchQuery]);
+
+    const filteredDropPockets = useMemo(() => {
+        if (!listSearchQuery.trim()) return dropPockets;
+        const q = listSearchQuery.toLowerCase();
+        return dropPockets.filter(p => p.item.name.toLowerCase().includes(q) || (p.item.category && p.item.category.toLowerCase().includes(q)));
+    }, [dropPockets, listSearchQuery]);
+
+    const [copiedInstruction, setCopiedInstruction] = useState<'order' | 'drop' | null>(null);
+
+    // Automatically reveal relevant delivery flow instructions upon copying
+    useEffect(() => {
+        if (copyOrderStatus === 'Copied!') {
+            setCopiedInstruction('order');
+        }
+    }, [copyOrderStatus]);
+
+    useEffect(() => {
+        if (copyDropStatus === 'Copied!') {
+            setCopiedInstruction('drop');
+        }
+    }, [copyDropStatus]);
 
     // Keyboard shortcuts: Ctrl+Shift+O = Copy Order, Ctrl+Shift+D = Copy Drop
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.shiftKey && (e.key === 'O' || e.key === 'o')) {
                 e.preventDefault();
-                if (orderCommandText) onCopyOrder();
+                if (orderCommandText) {
+                    onCopyOrder();
+                    setCopiedInstruction('order');
+                }
             }
             if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
                 e.preventDefault();
-                if (dropCommandText) onCopyDrop();
+                if (dropCommandText) {
+                    onCopyDrop();
+                    setCopiedInstruction('drop');
+                }
             }
         };
         window.addEventListener('keydown', handler);
@@ -110,7 +148,7 @@ const CommandBuilderSummary = ({
 
     return (
         <div 
-            className="rounded-4 border shadow-sm p-3 p-md-4 transition-all"
+            className="command-builder-summary rounded-4 border shadow-sm p-3 p-md-4 transition-all"
             style={{ 
                 borderTop: '5px solid var(--nook-green)',
                 backgroundColor: 'var(--card-bg, #ffffff)',
@@ -122,15 +160,15 @@ const CommandBuilderSummary = ({
                 {[copyOrderStatus, copyDropStatus].filter(Boolean).join(". ")}
             </div>
 
-            {/* ── Header ─────────────────────────────────────────── */}
+            {/* ── Top Header ─────────────────────────────────────────── */}
             <div className="d-flex flex-column gap-3 mb-3">
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center gap-2">
                         <div 
                             className="d-flex align-items-center justify-content-center rounded-circle shadow-sm"
                             style={{ 
-                                width: '38px', 
-                                height: '38px', 
+                                width: '40px', 
+                                height: '40px', 
                                 background: 'linear-gradient(135deg, #e8f7ec 0%, #c3edd0 100%)',
                                 color: 'var(--nook-green)' 
                             }}
@@ -139,36 +177,51 @@ const CommandBuilderSummary = ({
                         </div>
                         <div>
                             <h2 className="h5 fw-black mb-0 ac-font text-dark" style={{ fontSize: '1.25rem', letterSpacing: '0.3px' }}>
-                                Pocket Inventory
+                                Pocket Summary
                             </h2>
                             <p className="tiny-text text-muted mb-0 font-monospace">
-                                {orderCount + dropCount} total items queued
+                                {totalCount} {totalCount === 1 ? 'item' : 'items'} queued ({orderCount} order · {dropCount} drop)
                             </p>
                         </div>
                     </div>
 
-                    <button
-                        type="button"
-                        className="btn btn-sm btn-light border rounded-pill fw-bold px-3 py-1 text-muted transition-all shadow-none"
-                        onClick={() => setIsCollapsed((value) => !value)}
-                        aria-expanded={!isCollapsed}
-                        aria-controls={POCKETS_LIST_ID}
-                        title={isCollapsed ? "Expand Pocket Summary" : "Collapse Pocket Summary"}
-                        style={{ fontSize: '0.78rem' }}
-                    >
-                        <i className={`fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'} me-1`}></i>
-                        {isCollapsed ? 'Show' : 'Hide'}
-                    </button>
+                    <div className="d-flex align-items-center gap-1">
+                        <Link
+                            to="/pockets"
+                            className="btn btn-sm btn-white border rounded-pill fw-bold text-dark px-2 px-sm-3 py-1 transition-all shadow-2xs d-flex align-items-center gap-1"
+                            title="Open Full-Screen 40-Slot Pocket Inventory Grid"
+                            style={{ fontSize: '0.78rem' }}
+                        >
+                            <i className="fa-solid fa-up-right-and-down-left-from-center text-success x-small"></i>
+                            <span className="d-none d-sm-inline">Full Grid</span>
+                        </Link>
+
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-light border rounded-pill fw-bold px-2 px-sm-3 py-1 text-muted transition-all shadow-none"
+                            onClick={() => {
+                                setIsCollapsed((v) => !v);
+                                playChimeClick();
+                            }}
+                            aria-expanded={!isCollapsed}
+                            aria-controls={POCKETS_LIST_ID}
+                            title={isCollapsed ? "Expand Pocket Summary" : "Collapse Pocket Summary"}
+                            style={{ fontSize: '0.78rem' }}
+                        >
+                            <i className={`fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'} me-1`}></i>
+                            <span>{isCollapsed ? 'Show' : 'Hide'}</span>
+                        </button>
+                    </div>
                 </div>
 
-                {/* Capacity Meters */}
+                {/* Capacity Progress Meters */}
                 <div className="row g-2">
                     {/* Order Capacity Meter */}
                     <div className="col-6">
                         <div 
                             className="p-2 rounded-3 border transition-all"
                             style={{ 
-                                backgroundColor: orderFull ? 'rgba(220, 53, 69, 0.12)' : 'var(--subtle-bg, #f4fbf6)',
+                                backgroundColor: orderFull ? 'rgba(220, 53, 69, 0.08)' : 'var(--subtle-bg, #f4fbf6)',
                                 borderColor: orderFull ? '#f5c6cb' : 'var(--card-border, #d2f0dd)'
                             }}
                         >
@@ -198,13 +251,13 @@ const CommandBuilderSummary = ({
                         <div 
                             className="p-2 rounded-3 border transition-all"
                             style={{ 
-                                backgroundColor: dropFull ? 'rgba(220, 53, 69, 0.12)' : dropCount > 0 ? 'rgba(23, 162, 184, 0.12)' : 'var(--subtle-bg, #f8f9fa)',
+                                backgroundColor: dropFull ? 'rgba(220, 53, 69, 0.08)' : dropCount > 0 ? 'rgba(23, 162, 184, 0.08)' : 'var(--subtle-bg, #f8f9fa)',
                                 borderColor: dropFull ? '#f5c6cb' : 'var(--card-border, #e9ecef)'
                             }}
                         >
                             <div className="d-flex justify-content-between align-items-center mb-1">
                                 <span className="tiny-text fw-bold text-uppercase tracking-wider" style={{ color: dropFull ? '#dc3545' : '#17a2b8' }}>
-                                    <i className="fa-solid fa-box-open me-1"></i>Drop Bot
+                                    <i className="fa-solid fa-layer-group me-1"></i>Drop Radius
                                 </span>
                                 <span className={`badge rounded-pill ${dropFull ? 'bg-danger' : dropCount > 0 ? 'bg-info text-dark' : 'bg-secondary'} text-white x-small px-2 py-0`}>
                                     {dropCount}/{DROP_BOT_MAX}
@@ -230,16 +283,20 @@ const CommandBuilderSummary = ({
                 {(onOpenCommunityLoadoutsModal || onOpenBundlesModal) && (
                     <button
                         type="button"
-                        onClick={onOpenCommunityLoadoutsModal || onOpenBundlesModal}
+                        onClick={() => {
+                            if (onOpenCommunityLoadoutsModal) onOpenCommunityLoadoutsModal();
+                            else if (onOpenBundlesModal) onOpenBundlesModal();
+                            playChimeClick();
+                        }}
                         className="btn btn-sm text-white rounded-pill fw-bold px-3 py-2 shadow-sm flex-grow-1 transition-all d-flex align-items-center justify-content-center gap-2"
                         title="Browse Community Loadouts & Official Bundles"
                         style={{
-                            background: 'linear-gradient(135deg, #28a745 0%, #208738 100%)',
+                            background: 'linear-gradient(135deg, #37b06d 0%, #2ea466 100%)',
                             border: 'none',
                             fontSize: '0.8rem',
                         }}
                     >
-                        <i className="fa-solid fa-cloud-arrow-down text-warning"></i>
+                        <i className="fa-solid fa-box-open text-warning"></i>
                         <span>Loadouts & Bundles</span>
                     </button>
                 )}
@@ -247,13 +304,13 @@ const CommandBuilderSummary = ({
                 {/* Smart Fill & Optimization Dropdown */}
                 {onFillRemaining && onMaximizeStacks && onSortPockets && (
                     <SmartFillDropdown
-                        onFillNmt={() => onFillRemaining('nmt')}
-                        onFillCrowns={() => onFillRemaining('crowns')}
-                        onFillBells={() => onFillRemaining('bells')}
-                        onFillGold={() => onFillRemaining('gold')}
-                        onFillRepeat={() => onFillRemaining('repeat')}
-                        onMaximizeStacks={onMaximizeStacks}
-                        onSortPockets={onSortPockets}
+                        onFillNmt={() => { onFillRemaining('nmt'); playChimeClick(); }}
+                        onFillCrowns={() => { onFillRemaining('crowns'); playChimeClick(); }}
+                        onFillBells={() => { onFillRemaining('bells'); playChimeClick(); }}
+                        onFillGold={() => { onFillRemaining('gold'); playChimeClick(); }}
+                        onFillRepeat={() => { onFillRemaining('repeat'); playChimeClick(); }}
+                        onMaximizeStacks={() => { onMaximizeStacks(); playChimeClick(); }}
+                        onSortPockets={() => { onSortPockets(); playChimeClick(); }}
                         isOrderFull={orderFull}
                         hasItems={orderPockets.length > 0}
                     />
@@ -262,7 +319,10 @@ const CommandBuilderSummary = ({
                 {onOpenShareModal && (
                     <button
                         type="button"
-                        onClick={onOpenShareModal}
+                        onClick={() => {
+                            onOpenShareModal();
+                            playChimeClick();
+                        }}
                         className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-2 shadow-2xs transition-all d-flex align-items-center justify-content-center gap-2"
                         title="Generate shareable link for this exact pocket"
                         disabled={isEmpty}
@@ -280,36 +340,6 @@ const CommandBuilderSummary = ({
 
             {!isCollapsed && (
                 <div id={POCKETS_LIST_ID}>
-                    {/* View Switcher Tabs if there are items */}
-                    {!isEmpty && (
-                        <div className="d-flex p-1 bg-light rounded-pill mb-3 border">
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('all')}
-                                className={`btn btn-sm rounded-pill flex-grow-1 py-1 fw-bold transition-all ${activeTab === 'all' ? 'btn-white text-dark shadow-sm' : 'text-muted border-0'}`}
-                                style={{ fontSize: '0.75rem' }}
-                            >
-                                All ({orderCount + dropCount})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('order')}
-                                className={`btn btn-sm rounded-pill flex-grow-1 py-1 fw-bold transition-all ${activeTab === 'order' ? 'btn-white text-dark shadow-sm' : 'text-muted border-0'}`}
-                                style={{ fontSize: '0.75rem' }}
-                            >
-                                Order ({orderCount}/40)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('drop')}
-                                className={`btn btn-sm rounded-pill flex-grow-1 py-1 fw-bold transition-all ${activeTab === 'drop' ? 'btn-white text-dark shadow-sm' : 'text-muted border-0'}`}
-                                style={{ fontSize: '0.75rem' }}
-                            >
-                                Drop ({dropCount}/9)
-                            </button>
-                        </div>
-                    )}
-
                     {/* Empty State */}
                     {isEmpty ? (
                         <div 
@@ -327,12 +357,65 @@ const CommandBuilderSummary = ({
                             </div>
                             <h6 className="fw-bold text-dark mb-1">Your pockets are empty</h6>
                             <p className="small text-muted mb-0" style={{ maxWidth: '280px', margin: '0 auto' }}>
-                                Click any item card from the catalog to add it to your order.
+                                Click any item card from the catalog or paste bot codes to start building your order.
                             </p>
                         </div>
                     ) : (
-                        <div className="d-flex flex-column gap-3 mb-4">
-                            {/* ── Order Section ────────────────────────────────── */}
+                        /* Compact / Detailed List View */
+                        <div className="d-flex flex-column gap-3 mb-3">
+                            {/* Filter & Subtabs in List View */}
+                            <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+                                <div className="d-flex p-1 bg-light rounded-pill border flex-grow-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setActiveTab('all'); playChimeClick(); }}
+                                        className={`btn btn-sm rounded-pill flex-grow-1 py-1 fw-bold transition-all ${activeTab === 'all' ? 'btn-white text-dark shadow-sm' : 'text-muted border-0'}`}
+                                        style={{ fontSize: '0.75rem' }}
+                                    >
+                                        All ({totalCount})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setActiveTab('order'); playChimeClick(); }}
+                                        className={`btn btn-sm rounded-pill flex-grow-1 py-1 fw-bold transition-all ${activeTab === 'order' ? 'btn-white text-dark shadow-sm' : 'text-muted border-0'}`}
+                                        style={{ fontSize: '0.75rem' }}
+                                    >
+                                        Order ({orderCount}/40)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setActiveTab('drop'); playChimeClick(); }}
+                                        className={`btn btn-sm rounded-pill flex-grow-1 py-1 fw-bold transition-all ${activeTab === 'drop' ? 'btn-white text-dark shadow-sm' : 'text-muted border-0'}`}
+                                        style={{ fontSize: '0.75rem' }}
+                                    >
+                                        Drop ({dropCount}/9)
+                                    </button>
+                                </div>
+
+                                {totalCount > 4 && (
+                                    <div className="position-relative" style={{ minWidth: '130px' }}>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm rounded-pill ps-3 pe-4"
+                                            placeholder="Filter..."
+                                            value={listSearchQuery}
+                                            onChange={(e) => setListSearchQuery(e.target.value)}
+                                            style={{ fontSize: '0.75rem' }}
+                                        />
+                                        {listSearchQuery && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y p-0 pe-2 border-0"
+                                                onClick={() => setListSearchQuery('')}
+                                            >
+                                                <i className="fa-solid fa-xmark x-small"></i>
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* ── Order List Section ────────────────────────────────── */}
                             {(activeTab === 'all' || activeTab === 'order') && (
                                 <div className="p-3 rounded-4 bg-light border">
                                     <div className="d-flex align-items-center justify-content-between mb-2">
@@ -357,13 +440,13 @@ const CommandBuilderSummary = ({
                                         )}
                                     </div>
 
-                                    {orderPockets.length === 0 ? (
+                                    {filteredOrderPockets.length === 0 ? (
                                         <div className="text-center py-2 text-muted x-small bg-white rounded-3 border">
-                                            No order items added yet
+                                            {orderPockets.length === 0 ? 'No order items added yet' : 'No matching items'}
                                         </div>
                                     ) : (
                                         <div className="d-flex flex-column gap-1 overflow-auto" style={{ maxHeight: '280px', paddingRight: '2px' }}>
-                                            {orderPockets.map((pocket) => (
+                                            {filteredOrderPockets.map((pocket) => (
                                                 <div 
                                                     key={pocket.item.id} 
                                                     className="d-flex align-items-center gap-2 p-2 rounded-3 bg-white border shadow-2xs transition-all hover-shadow-sm"
@@ -377,6 +460,7 @@ const CommandBuilderSummary = ({
                                                             alt={pocket.item.name} 
                                                             className="w-100 h-100 object-fit-contain p-1" 
                                                             loading="lazy"
+                                                            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
                                                         />
                                                     </div>
                                                     <div className="flex-grow-1 text-truncate">
@@ -400,7 +484,10 @@ const CommandBuilderSummary = ({
                                                                 {onDecreaseOrderQuantity && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => onDecreaseOrderQuantity(pocket.item.id)}
+                                                                        onClick={() => {
+                                                                            onDecreaseOrderQuantity(pocket.item.id);
+                                                                            playChimeClick();
+                                                                        }}
                                                                         className="btn btn-sm btn-white rounded-circle shadow-none p-0 d-flex align-items-center justify-content-center"
                                                                         style={{ width: '22px', height: '22px', border: '1px solid #dee2e6' }}
                                                                         disabled={pocket.quantity <= 1}
@@ -416,7 +503,10 @@ const CommandBuilderSummary = ({
                                                                 {onIncreaseOrderQuantity && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => onIncreaseOrderQuantity(pocket.item.id)}
+                                                                        onClick={() => {
+                                                                            onIncreaseOrderQuantity(pocket.item.id);
+                                                                            playChimeClick();
+                                                                        }}
                                                                         className="btn btn-sm btn-white rounded-circle shadow-none p-0 d-flex align-items-center justify-content-center"
                                                                         style={{ width: '22px', height: '22px', border: '1px solid #dee2e6' }}
                                                                         disabled={!canIncreaseOrder}
@@ -431,7 +521,10 @@ const CommandBuilderSummary = ({
                                                         {onRemoveOrderItem && (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => onRemoveOrderItem(pocket.item.id)}
+                                                                onClick={() => {
+                                                                    onRemoveOrderItem(pocket.item.id);
+                                                                    playChimeClick();
+                                                                }}
                                                                 className="btn btn-sm btn-light text-danger rounded-circle p-0 d-flex align-items-center justify-content-center ms-1 transition-all"
                                                                 style={{ width: '26px', height: '26px' }}
                                                                 title="Remove item"
@@ -451,14 +544,14 @@ const CommandBuilderSummary = ({
                                         <div className="mt-2 pt-2 border-top">
                                             <div className="d-flex justify-content-between align-items-center mb-1">
                                                 <span className="tiny-text fw-bold text-muted text-uppercase tracking-wider">
-                                                    ⚡ Fill remaining ({remainingOrderSlots})
+                                                    ⚡ Fill remaining ({remainingOrderSlots} slots)
                                                 </span>
                                             </div>
                                             <div className="d-flex gap-1">
                                                 {onFillTickets && (
                                                     <button 
                                                         type="button" 
-                                                        onClick={onFillTickets} 
+                                                        onClick={() => { onFillTickets(); playChimeClick(); }} 
                                                         className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1" 
                                                         title="Fill remaining slots with Nook Miles Tickets"
                                                         style={{ fontSize: '0.75rem' }}
@@ -470,7 +563,7 @@ const CommandBuilderSummary = ({
                                                 {onFillCrowns && (
                                                     <button 
                                                         type="button" 
-                                                        onClick={onFillCrowns} 
+                                                        onClick={() => { onFillCrowns(); playChimeClick(); }} 
                                                         className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1" 
                                                         title="Fill remaining slots with Royal Crowns"
                                                         style={{ fontSize: '0.75rem' }}
@@ -482,7 +575,7 @@ const CommandBuilderSummary = ({
                                                 {onFillBells && (
                                                     <button 
                                                         type="button" 
-                                                        onClick={onFillBells} 
+                                                        onClick={() => { onFillBells(); playChimeClick(); }} 
                                                         className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1" 
                                                         title="Fill remaining slots with 99,000 Bells"
                                                         style={{ fontSize: '0.75rem' }}
@@ -497,13 +590,13 @@ const CommandBuilderSummary = ({
                                 </div>
                             )}
 
-                            {/* ── Drop Section ─────────────────────────────────── */}
+                            {/* ── Drop List Section ─────────────────────────────────── */}
                             {(activeTab === 'all' || activeTab === 'drop') && (
                                 <div className="p-3 rounded-4 bg-light border">
                                     <div className="d-flex align-items-center justify-content-between mb-2">
                                         <div className="d-flex align-items-center gap-2">
                                             <span className="badge bg-info text-dark rounded-pill fw-bold x-small px-2 py-1 shadow-sm">
-                                                <i className="fa-solid fa-box-open me-1"></i>Drop Bot
+                                                <i className="fa-solid fa-layer-group me-1"></i>Drop Bot
                                             </span>
                                             <span className="tiny-text text-muted font-monospace">
                                                 {dropCount} / {DROP_BOT_MAX} slots
@@ -522,13 +615,13 @@ const CommandBuilderSummary = ({
                                         )}
                                     </div>
 
-                                    {dropPockets.length === 0 ? (
+                                    {filteredDropPockets.length === 0 ? (
                                         <div className="text-center py-2 text-muted x-small bg-white rounded-3 border">
-                                            No drop items added yet
+                                            {dropPockets.length === 0 ? 'No drop items added yet' : 'No matching items'}
                                         </div>
                                     ) : (
                                         <div className="d-flex flex-column gap-1 overflow-auto" style={{ maxHeight: '200px', paddingRight: '2px' }}>
-                                            {dropPockets.map((pocket) => (
+                                            {filteredDropPockets.map((pocket) => (
                                                 <div 
                                                     key={pocket.item.id} 
                                                     className="d-flex align-items-center gap-2 p-2 rounded-3 bg-white border shadow-2xs transition-all hover-shadow-sm"
@@ -542,6 +635,7 @@ const CommandBuilderSummary = ({
                                                             alt={pocket.item.name} 
                                                             className="w-100 h-100 object-fit-contain p-1" 
                                                             loading="lazy"
+                                                            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
                                                         />
                                                     </div>
                                                     <div className="flex-grow-1 text-truncate">
@@ -565,7 +659,10 @@ const CommandBuilderSummary = ({
                                                                 {onDecreaseDropQuantity && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => onDecreaseDropQuantity(pocket.item.id)}
+                                                                        onClick={() => {
+                                                                            onDecreaseDropQuantity(pocket.item.id);
+                                                                            playChimeClick();
+                                                                        }}
                                                                         className="btn btn-sm btn-white rounded-circle shadow-none p-0 d-flex align-items-center justify-content-center"
                                                                         style={{ width: '22px', height: '22px', border: '1px solid #dee2e6' }}
                                                                         disabled={pocket.quantity <= 1}
@@ -581,7 +678,10 @@ const CommandBuilderSummary = ({
                                                                 {onIncreaseDropQuantity && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => onIncreaseDropQuantity(pocket.item.id)}
+                                                                        onClick={() => {
+                                                                            onIncreaseDropQuantity(pocket.item.id);
+                                                                            playChimeClick();
+                                                                        }}
                                                                         className="btn btn-sm btn-white rounded-circle shadow-none p-0 d-flex align-items-center justify-content-center"
                                                                         style={{ width: '22px', height: '22px', border: '1px solid #dee2e6' }}
                                                                         disabled={!canIncreaseDrop}
@@ -596,7 +696,10 @@ const CommandBuilderSummary = ({
                                                         {onRemoveDropItem && (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => onRemoveDropItem(pocket.item.id)}
+                                                                onClick={() => {
+                                                                    onRemoveDropItem(pocket.item.id);
+                                                                    playChimeClick();
+                                                                }}
                                                                 className="btn btn-sm btn-light text-danger rounded-circle p-0 d-flex align-items-center justify-content-center ms-1 transition-all"
                                                                 style={{ width: '26px', height: '26px' }}
                                                                 title="Remove item"
@@ -618,9 +721,9 @@ const CommandBuilderSummary = ({
                     {/* ── Terminal / Command Output ─────────────────────────────── */}
                     {showTerminal && (
                         <div 
-                            className="terminal-window rounded-4 shadow-sm mb-2 overflow-hidden border"
+                            className="terminal-window rounded-4 shadow-sm mb-3 overflow-hidden border"
                             style={{ 
-                                borderColor: 'rgba(40, 167, 69, 0.3)',
+                                borderColor: 'rgba(55, 176, 109, 0.3)',
                                 background: '#1c2420',
                             }}
                         >
@@ -651,19 +754,21 @@ const CommandBuilderSummary = ({
                                 <div className="mb-3">
                                     <div className="d-flex justify-content-between align-items-center mb-1">
                                         <span className="badge rounded-pill fw-bold font-monospace x-small bg-success text-white">
-                                            !order command
+                                            !order command ({orderCount} items)
                                         </span>
                                         <span className="tiny-text text-muted font-monospace">
                                             <kbd className="bg-dark text-light border border-secondary px-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+O</kbd>
                                         </span>
                                     </div>
                                     <div 
-                                        className="p-2 rounded-3 font-monospace text-light mb-2 transition-all"
+                                        className="p-2 rounded-3 font-monospace text-light mb-2 transition-all select-all"
                                         style={{ 
                                             backgroundColor: '#111713', 
                                             border: '1px solid rgba(255,255,255,0.08)',
                                             fontSize: '0.8rem',
                                             minHeight: '48px',
+                                            maxHeight: '80px',
+                                            overflowY: 'auto',
                                             wordBreak: 'break-all',
                                             color: '#a3e635'
                                         }}
@@ -672,33 +777,39 @@ const CommandBuilderSummary = ({
                                     </div>
                                     <button
                                         type="button"
-                                        className={`btn w-100 rounded-pill py-2 fw-bold btn-sm shadow-sm transition-all d-flex align-items-center justify-content-center gap-2 ${copyOrderStatus === 'Copied!' ? 'btn-success text-white' : 'btn-light text-dark'}`}
-                                        onClick={onCopyOrder}
+                                        className={`btn w-100 rounded-pill py-2 fw-bold btn-sm shadow-sm transition-all d-flex align-items-center justify-content-center gap-2 ${copyOrderStatus === 'Copied!' ? 'btn-success text-white' : 'btn-nook text-white'}`}
+                                        onClick={() => {
+                                            onCopyOrder();
+                                            setCopiedInstruction('order');
+                                            playChimeClick();
+                                        }}
                                         disabled={!orderCommandText}
                                         title="Copy Order Command (Ctrl+Shift+O)"
                                     >
-                                        <i className={`fa-solid ${copyOrderStatus === 'Copied!' ? 'fa-check' : 'fa-copy'}`}></i>
-                                        <span>{copyOrderStatus === 'Copied!' ? 'Order Command Copied!' : 'Copy Order Command'}</span>
+                                        <i className={`fa-solid ${copyOrderStatus === 'Copied!' ? 'fa-check' : 'fa-box'}`}></i>
+                                        <span>{copyOrderStatus === 'Copied!' ? 'Order Command Copied!' : 'Copy !order Command'}</span>
                                     </button>
                                 </div>
 
                                 {/* Drop Bot Command Block */}
                                 <div className="pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                                     <div className="d-flex justify-content-between align-items-center mb-1">
-                                        <span className="badge rounded-pill fw-bold font-monospace x-small bg-info text-dark">
-                                            !drop command
+                                        <span className="badge rounded-pill fw-bold font-monospace x-small bg-info text-white" style={{ backgroundColor: '#0284c7' }}>
+                                            !drop command ({dropCount} items)
                                         </span>
                                         <span className="tiny-text text-muted font-monospace">
                                             <kbd className="bg-dark text-light border border-secondary px-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+D</kbd>
                                         </span>
                                     </div>
                                     <div 
-                                        className="p-2 rounded-3 font-monospace text-light mb-2 transition-all"
+                                        className="p-2 rounded-3 font-monospace text-light mb-2 transition-all select-all"
                                         style={{ 
                                             backgroundColor: '#111713', 
                                             border: '1px solid rgba(255,255,255,0.08)',
                                             fontSize: '0.8rem',
                                             minHeight: '48px',
+                                            maxHeight: '80px',
+                                            overflowY: 'auto',
                                             wordBreak: 'break-all',
                                             color: '#38bdf8'
                                         }}
@@ -707,16 +818,76 @@ const CommandBuilderSummary = ({
                                     </div>
                                     <button
                                         type="button"
-                                        className={`btn w-100 rounded-pill py-2 fw-bold btn-sm shadow-sm transition-all d-flex align-items-center justify-content-center gap-2 ${copyDropStatus === 'Copied!' ? 'btn-info text-dark' : 'btn-light text-dark'}`}
-                                        onClick={onCopyDrop}
+                                        className={`btn w-100 rounded-pill py-2 fw-bold btn-sm shadow-sm transition-all d-flex align-items-center justify-content-center gap-2 text-white`}
+                                        style={{ backgroundColor: copyDropStatus === 'Copied!' ? '#198754' : '#0284c7', borderColor: '#0284c7' }}
+                                        onClick={() => {
+                                            onCopyDrop();
+                                            setCopiedInstruction('drop');
+                                            playChimeClick();
+                                        }}
                                         disabled={!dropCommandText}
                                         title="Copy Drop Command (Ctrl+Shift+D)"
                                     >
-                                        <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-copy'}`}></i>
-                                        <span>{copyDropStatus === 'Copied!' ? 'Drop Command Copied!' : 'Copy Drop Command'}</span>
+                                        <i className={`fa-solid ${copyDropStatus === 'Copied!' ? 'fa-check' : 'fa-plane-arrival'}`}></i>
+                                        <span>{copyDropStatus === 'Copied!' ? 'Drop Command Copied!' : 'Copy !drop Command'}</span>
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Bot Delivery Flow Instructions (Shows upon clicking Copy) */}
+                    {copiedInstruction && (
+                        <div
+                            className={`card rounded-4 border-2 p-3 shadow-md mb-2 animate-up position-relative ${
+                                copiedInstruction === 'order' ? 'border-success bg-success-subtle' : 'border-info bg-info-subtle'
+                            }`}
+                            style={{ borderColor: copiedInstruction === 'drop' ? '#0284c7' : undefined }}
+                        >
+                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                <div className="d-flex align-items-center gap-2">
+                                    <span
+                                        className={`badge text-white rounded-circle p-1 d-flex align-items-center justify-content-center ${
+                                            copiedInstruction === 'order' ? 'bg-success' : 'bg-info'
+                                        }`}
+                                        style={{ width: '22px', height: '22px', backgroundColor: copiedInstruction === 'drop' ? '#0284c7' : undefined }}
+                                    >
+                                        <i className="fa-solid fa-check x-small"></i>
+                                    </span>
+                                    <strong className="text-dark small fw-black text-uppercase tracking-wider">
+                                        Bot Delivery Instructions
+                                    </strong>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-sm"
+                                    onClick={() => setCopiedInstruction(null)}
+                                    aria-label="Close instructions"
+                                    title="Dismiss"
+                                />
+                            </div>
+
+                            {copiedInstruction === 'order' ? (
+                                <div className="p-3 bg-white rounded-3 border border-success-subtle shadow-2xs">
+                                    <div className="d-flex align-items-center gap-2 mb-1">
+                                        <span className="badge bg-success text-white rounded-pill px-2 py-0 font-monospace">1</span>
+                                        <strong className="text-dark small fw-bold">Order Bot Flow (40 Items / Villager):</strong>
+                                    </div>
+                                    <p className="small text-muted mb-0 mt-2" style={{ fontSize: '0.78rem', lineHeight: 1.5 }}>
+                                        Paste <code>!order</code> into the Discord <strong>#order-bot</strong> channel. The bot will DM you a private <strong>Dodo Code</strong>. Empty your inventory and fly over to collect your items!
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-white rounded-3 border border-info-subtle shadow-2xs">
+                                    <div className="d-flex align-items-center gap-2 mb-1">
+                                        <span className="badge text-white rounded-pill px-2 py-0 font-monospace" style={{ backgroundColor: '#0284c7' }}>2</span>
+                                        <strong className="text-dark small fw-bold">Drop Bot Flow (9 Ground Items):</strong>
+                                    </div>
+                                    <p className="small text-muted mb-0 mt-2" style={{ fontSize: '0.78rem', lineHeight: 1.5 }}>
+                                        Fly to an active island, stand on an open 3×3 ground area, and send <code>!drop</code> in in-game chat or Discord — <strong>ChoBot</strong> on the island will drop all 9 items right at your feet!
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

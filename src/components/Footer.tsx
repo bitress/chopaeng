@@ -19,6 +19,7 @@ const Footer = () => {
     const footerNav = {
         islands: [
             { name: "Treasure Islands", path: "/islands" },
+            { name: "Pocket Inventory", path: "/pockets" },
             { name: "Maps", path: "/maps" },
             { name: "Membership", path: "/membership" },
             { name: "Get Dodo Code", path: "/dodo" },

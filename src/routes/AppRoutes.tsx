@@ -17,6 +17,7 @@ const IslandDetail    = lazy(() => import("../pages/IslandDetail.tsx"));
 const Membership      = lazy(() => import("../pages/Membership.tsx"));
 const FindItems       = lazy(() => import("../pages/FindItems.tsx"));
 const CommandBuilder  = lazy(() => import("../pages/CommandBuilder.tsx"));
+const PocketInventory = lazy(() => import("../pages/PocketInventory.tsx"));
 const CatalogDetail   = lazy(() => import("../pages/CatalogDetail.tsx"));
 const Contact         = lazy(() => import("../pages/Contact.tsx"));
 const DodoDecryptor   = lazy(() => import("../pages/DodoDecryptor.tsx"));
@@ -66,6 +67,8 @@ const AppRoutes = () => {
                     <Route path="/membership" element={<Membership />} />
                     <Route path="/find" element={<FindItems />} />
                     <Route path="/command-builder" element={<CommandBuilder />} />
+                    <Route path="/pockets" element={<PocketInventory />} />
+                    <Route path="/pocket-inventory" element={<PocketInventory />} />
                     <Route path="/command-builder/:entityType/:id" element={<CatalogDetail />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/dodo" element={<DodoDecryptor />} />

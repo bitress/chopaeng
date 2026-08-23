@@ -13,9 +13,9 @@
     --nook-cream: #fffdf0;
 
     /* Signature Greens */
-    --nook-green: #28a745;        /* original Chopaeng green */
-    --nook-accent: #88e0a0;       /* original light mint */
-    --nook-dark: #5faf63;
+    --nook-green: #37b06d;        /* authentic ACNH leaf green */
+    --nook-accent: #2ea466;       /* rich ACNH accent green */
+    --nook-dark: #27844f;
 
     /* Accent colors */
     --nook-blue: #5bc0de;
@@ -910,21 +910,22 @@ h3 { font-size: 1.25rem; }
 }
 
 .btn-nook-primary {
-    background-color: var(--nook-green);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    background-color: var(--nook-green, #37b06d);
+    color: #ffffff !important;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 14px rgba(55, 176, 109, 0.3);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-nook-primary:hover {
-    background-color: #238b39;
-    color: white;
+    background-color: #2ea466;
+    color: #ffffff !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(40, 167, 69, 0.35);
-    filter: brightness(1.06);
+    box-shadow: 0 6px 18px rgba(55, 176, 109, 0.4);
+    filter: brightness(1.05);
 }
 .btn-nook-primary:active {
     transform: translateY(1px) scale(0.98);
-    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2);
+    box-shadow: 0 2px 6px rgba(55, 176, 109, 0.2);
 }
 
 .btn-white {
@@ -933,7 +934,7 @@ h3 { font-size: 1.25rem; }
 .btn-white:hover {
     transform: translateY(-2px);
     background-color: #ffffff;
-    border-color: var(--nook-green);
+    border-color: var(--nook-green, #37b06d);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 .btn-white:active {
@@ -944,22 +945,22 @@ h3 { font-size: 1.25rem; }
 
 /* Treasure Islands buttons */
 .btn-nook {
-    background-color: var(--nook-accent, #2b8a3e);
-    color: white;
+    background-color: var(--nook-green, #37b06d);
+    color: #ffffff !important;
     border: 2px solid transparent;
-    box-shadow: 0 4px 12px rgba(43, 138, 62, 0.28);
+    box-shadow: 0 4px 14px rgba(55, 176, 109, 0.3);
     font-weight: 700;
 }
 .btn-nook:hover {
-    background-color: #238b39;
+    background-color: #2ea466;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(43, 138, 62, 0.38);
-    filter: brightness(1.06);
-    color: white;
+    box-shadow: 0 8px 20px rgba(55, 176, 109, 0.4);
+    filter: brightness(1.05);
+    color: #ffffff !important;
 }
 .btn-nook:active {
     transform: translateY(1px) scale(0.98);
-    box-shadow: 0 2px 6px rgba(43, 138, 62, 0.2);
+    box-shadow: 0 2px 6px rgba(55, 176, 109, 0.2);
 }
 
 .btn-sub {

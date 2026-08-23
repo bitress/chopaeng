@@ -1,8 +1,6 @@
 import { API_BASE } from '../config/api';
 import { getAuthToken } from '../context/authToken';
-import type { PocketBundle } from '../data/pocketBundles';
-
-const BUNDLES_CACHE_KEY = 'chopaeng_pocket_bundles_db_cache';
+import type { PocketBundle, PocketBundleItem } from '../data/pocketBundles';
 
 const getHeaders = (token?: string | null): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -15,36 +13,71 @@ const getHeaders = (token?: string | null): Record<string, string> => {
     return headers;
 };
 
-export const normalizeBundle = (b: any): PocketBundle => {
-    let items: any[] = [];
-    if (Array.isArray(b?.items)) {
-        items = b.items;
-    } else if (typeof b?.items === 'string') {
+const parseItemsList = (raw: any): PocketBundleItem[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') {
         try {
-            const parsed = JSON.parse(b.items);
-            if (Array.isArray(parsed)) items = parsed;
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
         } catch {
-            items = [];
+            return [];
         }
     }
+    return [];
+};
+
+export const normalizeBundle = (b: any): PocketBundle => {
+    const title = String(b?.title || b?.name || 'Untitled Bundle');
+    const orderItems = parseItemsList(b?.orderItems || b?.order_items);
+    const dropItems = parseItemsList(b?.dropItems || b?.drop_items);
+    const genericItems = parseItemsList(b?.items);
+
+    let target: 'order' | 'drop' = 'order';
+    if (b?.target === 'drop' || b?.targetPocket === 'drop') {
+        target = 'drop';
+    } else if (dropItems.length > 0 && orderItems.length === 0) {
+        target = 'drop';
+    }
+
+    let items: PocketBundleItem[] = [];
+    if (genericItems.length > 0) {
+        items = genericItems;
+    } else if (target === 'drop') {
+        items = dropItems.length > 0 ? dropItems : orderItems;
+    } else {
+        items = orderItems.length > 0 ? orderItems : dropItems;
+    }
+
+    // Clean and normalize each item
+    const normalizedItems: PocketBundleItem[] = items.map((item: any) => ({
+        itemId: String(item.itemId || item.id || item.item_id || 'item'),
+        name: String(item.name || item.itemName || `Item ${item.itemId || ''}`),
+        quantity: typeof item.quantity === 'number' ? item.quantity : 1,
+        category: String(item.category || 'General'),
+        variantId: item.variantId !== undefined ? String(item.variantId) : undefined,
+        variantLabel: item.variantLabel ? String(item.variantLabel) : undefined,
+        image: item.image || undefined,
+    }));
+
     return {
-        id: String(b?.id || ''),
-        title: String(b?.title || 'Untitled Bundle'),
+        id: String(b?.id || `bundle-${Date.now()}`),
+        title,
         category: b?.category || 'General',
-        target: (b?.target === 'drop' || b?.targetPocket === 'drop') ? 'drop' : 'order',
+        target,
         description: b?.description || '',
         icon: b?.icon || 'fa-box-open',
-        isOfficial: Boolean(b?.isOfficial),
-        userId: b?.userId || b?.createdBy || undefined,
-        createdAt: b?.createdAt || undefined,
-        updatedAt: b?.updatedAt || undefined,
-        items: items,
+        isOfficial: Boolean(b?.isOfficial ?? b?.is_official),
+        userId: b?.userId || b?.createdBy || b?.created_by || undefined,
+        createdAt: b?.createdAt || b?.created_at || undefined,
+        updatedAt: b?.updatedAt || b?.updated_at || undefined,
+        items: normalizedItems,
     };
 };
 
 /**
- * Loads all bundles (official database bundles + user custom bundles).
- * Falls back to built-in default bundles if API is unreachable.
+ * Loads all bundles directly from the database API.
+ * No hardcoded or mock fallbacks are used.
  */
 export const fetchPocketBundles = async (token?: string | null): Promise<PocketBundle[]> => {
     try {
@@ -56,35 +89,18 @@ export const fetchPocketBundles = async (token?: string | null): Promise<PocketB
         if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data)) {
-                const normalized = data.map(normalizeBundle);
-                try {
-                    localStorage.setItem(BUNDLES_CACHE_KEY, JSON.stringify(normalized));
-                } catch { /* ignore */ }
-                return normalized;
+                return data.map(normalizeBundle);
             }
         }
-    } catch {
-        // Backend API may be unreachable; fallback to cached or default
+    } catch (err) {
+        console.warn('Error fetching pocket bundles from database:', err);
     }
-
-    // Try reading cached DB data
-    try {
-        const cached = localStorage.getItem(BUNDLES_CACHE_KEY);
-        if (cached) {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed)) {
-                return parsed.map(normalizeBundle);
-            }
-        }
-    } catch { /* ignore */ }
 
     return [];
 };
 
 /**
  * Creates a new bundle in the database.
- * If user is an admin and isOfficial is true, it is saved as an Official Bundle.
- * Otherwise, it is saved as a User Custom Bundle.
  */
 export const createPocketBundle = async (
     bundle: Omit<PocketBundle, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
@@ -92,9 +108,26 @@ export const createPocketBundle = async (
 ): Promise<PocketBundle> => {
     const newId = bundle.id || `bundle-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const now = new Date().toISOString();
-    const payload: PocketBundle = {
-        ...bundle,
+    const title = bundle.title || 'Untitled Bundle';
+    const items = bundle.items || [];
+    const target = bundle.target || 'order';
+
+    const orderItems = target === 'drop' ? [] : items;
+    const dropItems = target === 'drop' ? items : [];
+
+    const payload = {
         id: newId,
+        name: title,
+        title,
+        description: bundle.description || '',
+        category: bundle.category || 'General',
+        icon: bundle.icon || 'fa-box-open',
+        isOfficial: Boolean(bundle.isOfficial),
+        target,
+        items,
+        orderItems,
+        dropItems,
+        userId: bundle.userId,
         createdAt: now,
         updatedAt: now,
     };
@@ -109,20 +142,13 @@ export const createPocketBundle = async (
 
         if (res.ok) {
             const data = await res.json();
-            return data?.bundle || payload;
+            return normalizeBundle(data?.bundle || payload);
         }
-    } catch {
-        // Fallback for offline/local environment
+    } catch (err) {
+        console.error('Failed to create bundle in database:', err);
     }
 
-    // Optimistic fallback
-    try {
-        const current = await fetchPocketBundles(token);
-        const updated = [payload, ...current.filter((b) => b.id !== payload.id)];
-        localStorage.setItem(BUNDLES_CACHE_KEY, JSON.stringify(updated));
-    } catch { /* ignore */ }
-
-    return payload;
+    return normalizeBundle(payload);
 };
 
 /**
@@ -134,7 +160,30 @@ export const updatePocketBundle = async (
     token?: string | null
 ): Promise<PocketBundle | null> => {
     const now = new Date().toISOString();
-    const payload = { ...updates, updatedAt: now };
+    const title = updates.title;
+    const items = updates.items;
+    const target = updates.target;
+
+    const payload: Record<string, any> = {
+        ...updates,
+        updatedAt: now,
+    };
+
+    if (title !== undefined) {
+        payload.name = title;
+        payload.title = title;
+    }
+
+    if (items !== undefined) {
+        payload.items = items;
+        if (target === 'drop') {
+            payload.dropItems = items;
+            payload.orderItems = [];
+        } else {
+            payload.orderItems = items;
+            payload.dropItems = [];
+        }
+    }
 
     try {
         const res = await fetch(`${API_BASE}/api/bundles/${encodeURIComponent(id)}`, {
@@ -146,21 +195,13 @@ export const updatePocketBundle = async (
 
         if (res.ok) {
             const data = await res.json();
-            return data?.bundle || null;
+            return normalizeBundle(data?.bundle || payload);
         }
-    } catch {
-        // Fallback
+    } catch (err) {
+        console.error('Failed to update bundle in database:', err);
     }
 
-    // Optimistic fallback
-    try {
-        const current = await fetchPocketBundles(token);
-        const updated = current.map((b) => (b.id === id ? { ...b, ...payload } : b));
-        localStorage.setItem(BUNDLES_CACHE_KEY, JSON.stringify(updated));
-        return updated.find((b) => b.id === id) || null;
-    } catch { /* ignore */ }
-
-    return null;
+    return normalizeBundle({ id, ...payload });
 };
 
 /**
@@ -174,20 +215,9 @@ export const deletePocketBundle = async (id: string, token?: string | null): Pro
             credentials: 'include',
         });
 
-        if (res.ok) {
-            return true;
-        }
-    } catch {
-        // Fallback
+        return res.ok;
+    } catch (err) {
+        console.error('Failed to delete bundle from database:', err);
+        return false;
     }
-
-    // Optimistic fallback
-    try {
-        const current = await fetchPocketBundles(token);
-        const updated = current.filter((b) => b.id !== id);
-        localStorage.setItem(BUNDLES_CACHE_KEY, JSON.stringify(updated));
-        return true;
-    } catch { /* ignore */ }
-
-    return true;
 };

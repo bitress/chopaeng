@@ -4,12 +4,13 @@ import { type IslandData, type IslandCategory, type IslandStatus } from "../data
 import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
+import { useFavoriteIslands } from "../hooks/useFavoriteIslands";
 import { ACNH_FINDER_API_BASE, DODO_API_BASE } from "../config/api";
 import RevealErrorPopup from "../components/RevealErrorPopup";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
-type FilterKey = "ALL" | IslandCategory;
+type FilterKey = "ALL" | IslandCategory | "favorites";
 
 interface FinderResponse {
     found: boolean;
@@ -44,6 +45,7 @@ interface StatusMeta {
 
 const FILTERS: FilterTab[] = [
     { key: "ALL", label: "All Islands", icon: "fa-globe" },
+    { key: "favorites", label: "Favorites", icon: "fa-star text-warning" },
     { key: "public", label: "Free Access", icon: "fa-lock-open" },
     { key: "member", label: "VIP Only", icon: "fa-crown" },
     { key: "order", label: "Order Bot", icon: "fa-box-open" },
@@ -93,6 +95,7 @@ const TreasureIslands = () => {
     const navigate = useNavigate();
     const { islands, loading } = useIslandData();
     const { user, login, canAccessIsland } = useAuth();
+    const { isFavoriteIsland, toggleFavoriteIsland } = useFavoriteIslands();
 
     const [filter, setFilter] = useState<FilterKey>("ALL");
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -148,7 +151,9 @@ const TreasureIslands = () => {
     const filteredData = useMemo(() => {
         let data = [...islands];
 
-        if (filter !== "ALL") {
+        if (filter === "favorites") {
+            data = data.filter((island) => isFavoriteIsland(island.id) || isFavoriteIsland(island.name));
+        } else if (filter !== "ALL") {
             data = data.filter((island) => island.cat === filter.toLowerCase());
         }
 
@@ -541,6 +546,23 @@ const TreasureIslands = () => {
                                             </div>
 
                                             <div className="d-flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleFavoriteIsland(island.id, e);
+                                                    }}
+                                                    className={`btn btn-sm border rounded-circle shadow-sm d-flex align-items-center justify-content-center transition-all ${
+                                                        isFavoriteIsland(island.id)
+                                                            ? "btn-warning text-dark border-warning"
+                                                            : "btn-light text-muted"
+                                                    }`}
+                                                    title={isFavoriteIsland(island.id) ? "Remove from Favorites" : "Add to Favorites"}
+                                                    style={{ width: 32, height: 32 }}
+                                                    aria-label={isFavoriteIsland(island.id) ? "Favorited" : "Add to Favorites"}
+                                                >
+                                                    <i className={`${isFavoriteIsland(island.id) ? "fa-solid text-dark" : "fa-regular text-muted"} fa-star small`}></i>
+                                                </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setSelectedMap(island); }}
                                                     className="btn btn-sm btn-light border rounded-circle shadow-sm"

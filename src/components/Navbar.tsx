@@ -4,6 +4,7 @@ import logo from '../assets/logo.webp';
 import { useAuth } from "../context/useAuth";
 import { THEME_OPTIONS, getStoredTheme, setStoredTheme, type ThemeMode } from "../utils/theme";
 import { openSuggestionModal } from "../utils/suggestionsApi";
+import { KKSliderJukebox } from "./audio/KKSliderJukebox";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -51,6 +52,7 @@ const Navbar = () => {
         { name: "Treasure Islands", path: "/islands", icon: "fa-map" },
         { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
         { name: "Command Builder", path: "/command-builder", icon: "fa-cart-shopping" },
+        { name: "Pockets", path: "/pockets", icon: "fa-boxes-packing" },
         { name: "Guide", path: "/guides", icon: "fa-book-open" },
         { name: "About", path: "/about", icon: "fa-circle-info" },
     ], []);
@@ -206,6 +208,20 @@ const Navbar = () => {
                                 Login
                             </button>
                         )}
+
+                        {/* K.K. Slider Jukebox Quick Launcher */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                window.dispatchEvent(new CustomEvent('chopaeng_toggle_jukebox'));
+                            }}
+                            className="btn bg-white border rounded-circle shadow-sm d-flex align-items-center justify-content-center transition-all"
+                            style={{ width: '40px', height: '40px' }}
+                            title="K.K. Slider Jukebox & Music Player"
+                            aria-label="Open K.K. Slider Jukebox"
+                        >
+                            <i className="fa-solid fa-guitar text-success fs-6"></i>
+                        </button>
 
                         {/* Theme Switcher Button */}
                         <div className="position-relative">
@@ -373,6 +389,7 @@ const Navbar = () => {
                     </div>
                 </div>
             </nav>
+            <KKSliderJukebox />
         </>
     );
 };

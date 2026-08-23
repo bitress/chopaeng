@@ -438,15 +438,15 @@ const CatalogDetail = () => {
                                             style={{
                                                 background: totalOrderCount >= 40
                                                     ? '#f8f9fa'
-                                                    : 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)',
+                                                    : 'linear-gradient(135deg, #37b06d 0%, #2ea466 100%)',
                                                 color: totalOrderCount >= 40 ? '#adb5bd' : 'white',
                                                 border: 'none',
-                                                boxShadow: totalOrderCount >= 40 ? 'none' : '0 4px 12px rgba(40,167,69,0.3)',
+                                                boxShadow: totalOrderCount >= 40 ? 'none' : '0 4px 12px rgba(55,176,109,0.3)',
                                                 cursor: totalOrderCount >= 40 ? 'not-allowed' : 'pointer',
                                                 fontSize: '0.95rem'
                                             }}
-                                            onMouseEnter={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(40,167,69,0.4)'; } }}
-                                            onMouseLeave={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(40,167,69,0.3)'; } }}
+                                            onMouseEnter={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(55,176,109,0.4)'; } }}
+                                            onMouseLeave={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(55,176,109,0.3)'; } }}
                                         >
                                             <i className="fa-solid fa-basket-shopping me-2"></i>
                                             {totalOrderCount >= 40 ? 'Order Full (40/40)' : `Add to Order${inOrderQty > 0 && entry.entityType !== 'villager' ? ` (${inOrderQty})` : ''}`}

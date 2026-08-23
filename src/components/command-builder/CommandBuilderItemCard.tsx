@@ -84,13 +84,13 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
     return (
         <div className="col-6 col-md-4 col-xl-3" id={`item-card-${item.id}`} data-item-id={item.id}>
             <div
-                className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border ${
+                className={`bg-white rounded-4 shadow-sm d-flex flex-column overflow-hidden position-relative h-100 border transition-all ${
                     isHighlighted
-                        ? 'item-card-highlighted border-success'
+                        ? 'border-success shadow-md item-card-highlighted'
                         : cardSelected
-                            ? 'border-success border-2'
-                            : 'border-light'
-                } cursor-pointer transition-all hover-scale`}
+                            ? 'border-success border-2 shadow-xs'
+                            : 'border-light hover-border-success'
+                } cursor-pointer hover-scale`}
                 onClick={handleCardClick}
                 role="button"
                 tabIndex={0}
@@ -121,8 +121,18 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                 {/* Selection Badges (Top-Right) */}
                 {cardSelected && (
                     <div className="position-absolute top-0 end-0 m-2 z-index-2 d-flex flex-column gap-1 pointer-events-none">
-                        {orderQty > 0 && <div className="badge bg-success shadow-sm">O:{orderQty}</div>}
-                        {dropQty > 0 && <div className="badge bg-info text-dark shadow-sm">D:{dropQty}</div>}
+                        {orderQty > 0 && (
+                            <div className="badge bg-success text-white rounded-pill px-2 py-1 shadow-sm d-flex align-items-center gap-1 font-monospace" style={{ fontSize: '0.68rem' }}>
+                                <i className="fa-solid fa-box x-small"></i>
+                                <span>{orderQty}</span>
+                            </div>
+                        )}
+                        {dropQty > 0 && (
+                            <div className="badge bg-info text-white rounded-pill px-2 py-1 shadow-sm d-flex align-items-center gap-1 font-monospace" style={{ fontSize: '0.68rem', backgroundColor: '#0284c7' }}>
+                                <i className="fa-solid fa-plane-arrival x-small"></i>
+                                <span>{dropQty}</span>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -133,7 +143,7 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                         alt={item.name}
                         loading="lazy"
                         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
-                        className={`w-100 h-100 ${compactMode ? 'p-2' : 'p-4'} ${cardSelected ? 'opacity-75' : ''} ${isVillager ? 'object-fit-contain' : 'object-fit-cover'}`}
+                        className={`w-100 h-100 ${compactMode ? 'p-2' : 'p-4'} ${cardSelected ? 'opacity-90' : ''} ${isVillager ? 'object-fit-contain' : 'object-fit-cover'}`}
                     />
                 </div>
 
@@ -141,7 +151,9 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                 <div className="p-2 d-flex flex-column flex-grow-1 border-top">
                     <div className="mb-auto">
                         <div className="d-flex justify-content-between align-items-start mb-1">
-                            <span className="badge bg-light text-muted rounded-pill px-2 py-1" style={{ fontSize: "0.65rem", border: "1px solid #dee2e6" }}>{isVillager ? 'Villager' : item.category}</span>
+                            <span className="badge bg-light text-muted rounded-pill px-2 py-1" style={{ fontSize: "0.65rem", border: "1px solid #dee2e6" }}>
+                                {isVillager ? 'Villager' : item.category}
+                            </span>
                             {!isVillager && (
                                 <button
                                     type="button"
@@ -154,7 +166,11 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                 </button>
                             )}
                         </div>
-                        <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{ fontSize: "0.85rem" }}>{item.name}</h3>
+                        <h3 className="h6 fw-black mb-0 text-truncate" title={item.name} style={{ fontSize: "0.85rem" }}>
+                            {item.name}
+                        </h3>
+
+                        {/* Variant Pill / Count Tag */}
                         {item.variantLabel && (
                             <div className="badge bg-success-subtle text-success border border-success-subtle rounded-pill mt-1 text-truncate" style={{ maxWidth: '100%', fontSize: '0.66rem' }}>
                                 {item.variantLabel}
@@ -172,11 +188,13 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                 title="Click to choose variation"
                             >
                                 <div className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mt-1 d-inline-flex align-items-center gap-1 hover-shadow" style={{ fontSize: '0.66rem', cursor: 'pointer' }}>
-                                    <span>{item.variations?.length} variants</span>
                                     <i className="fa-solid fa-palette" style={{ fontSize: '0.6rem' }}></i>
+                                    <span>{item.variations?.length} variants</span>
                                 </div>
                             </button>
                         )}
+
+                        {/* Recipe Materials Quick Action */}
                         {onLoadRecipeMaterials && findRecipeIngredients(item.name) && (
                             <button
                                 type="button"
@@ -185,7 +203,7 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                     e.stopPropagation();
                                     onLoadRecipeMaterials(item.name);
                                 }}
-                                title="Autofill required crafting materials for this recipe"
+                                title="Autofill required crafting materials for this recipe into pockets"
                             >
                                 <div className="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill d-inline-flex align-items-center gap-1 hover-shadow" style={{ fontSize: '0.66rem', cursor: 'pointer' }}>
                                     <i className="fa-solid fa-hammer" style={{ fontSize: '0.6rem' }}></i>
@@ -195,60 +213,142 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                         )}
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons (Order vs Drop) */}
                     <div className="mt-auto pt-2 w-100" onClick={(e) => e.stopPropagation()}>
-                        <div className="d-flex gap-2">
-                            {/* Order Button Group */}
-                            {orderQty > 0 ? (
-                                isVillager ? (
-                                    <button type="button" className="btn btn-sm btn-success text-white rounded-pill flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Remove ${item.name} from order`}>In Order (x)</button>
+                        {isVillager ? (
+                            /* Villager Actions: Order Only (1 Max) */
+                            <div className="w-100">
+                                {orderQty > 0 ? (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-success text-white rounded-pill w-100 fw-bold border-0 shadow-2xs d-flex align-items-center justify-content-center gap-1 py-1"
+                                        style={{ fontSize: "0.75rem" }}
+                                        onClick={() => decreaseOrderQuantity(item.id)}
+                                        title="Click to remove villager from order"
+                                    >
+                                        <i className="fa-solid fa-check x-small"></i>
+                                        <span>In Order (1/1)</span>
+                                        <i className="fa-solid fa-xmark x-small ms-1 opacity-75"></i>
+                                    </button>
                                 ) : (
-                                    <div className="btn-group rounded-pill flex-grow-1 bg-light">
-                                        <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => decreaseOrderQuantity(item.id)} aria-label={`Decrease order quantity for ${item.name}`}>−</button>
-                                        <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-success" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{orderQty}</div>
-                                        <button type="button" className="btn btn-sm text-success px-2 py-1 fw-bold border-0" onClick={() => increaseOrderQuantity(item.id)} disabled={!canIncreaseOrder} aria-label={`Increase order quantity for ${item.name}`} title={!canIncreaseOrder ? 'Order bot full (40/40)' : undefined}>+</button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-success rounded-pill w-100 fw-bold d-flex align-items-center justify-content-center gap-1 py-1 transition-all"
+                                        style={{ fontSize: "0.75rem" }}
+                                        onClick={handleInitialOrderClick}
+                                        disabled={totalOrderCount >= 40}
+                                        title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : 'Order villager into delivery'}
+                                    >
+                                        <i className="fa-solid fa-box x-small"></i>
+                                        <span>Order Villager</span>
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            /* Standard Item Actions: Order (40 max) & Drop (9 max) */
+                            <div className="d-flex gap-1">
+                                {/* Order Button Group (Green) */}
+                                {orderQty > 0 ? (
+                                    <div
+                                        className="btn-group rounded-pill flex-grow-1 border border-success overflow-hidden"
+                                        style={{ backgroundColor: '#f0fdf4' }}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm text-success px-2 py-1 fw-bold border-0 hover-bg-success hover-text-white transition-all"
+                                            onClick={() => decreaseOrderQuantity(item.id)}
+                                            aria-label={`Decrease order quantity for ${item.name}`}
+                                            title="Decrease quantity"
+                                        >
+                                            −
+                                        </button>
+                                        <div
+                                            className="d-flex align-items-center justify-content-center fw-bold px-1 text-success font-monospace"
+                                            style={{ fontSize: "0.75rem", minWidth: "22px" }}
+                                            title={`Order: ${orderQty} items`}
+                                        >
+                                            {orderQty}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm text-success px-2 py-1 fw-bold border-0 hover-bg-success hover-text-white transition-all"
+                                            onClick={() => increaseOrderQuantity(item.id)}
+                                            disabled={!canIncreaseOrder}
+                                            aria-label={`Increase order quantity for ${item.name}`}
+                                            title={!canIncreaseOrder ? 'Order bot full (40/40)' : 'Increase quantity'}
+                                        >
+                                            +
+                                        </button>
                                     </div>
-                                )
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-light text-success rounded-pill py-1 flex-grow-1 fw-bold border-0"
-                                    style={{ fontSize: "0.75rem" }}
-                                    onClick={handleInitialOrderClick}
-                                    disabled={totalOrderCount >= 40}
-                                    title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : hasMultipleVariants && hideVariants ? 'Choose variant to order' : undefined}
-                                >
-                                    Order
-                                </button>
-                            )}
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
+                                        style={{ fontSize: "0.75rem" }}
+                                        onClick={handleInitialOrderClick}
+                                        disabled={totalOrderCount >= 40}
+                                        title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : hasMultipleVariants && hideVariants ? 'Choose variant to order' : 'Add to Order ($order)'}
+                                    >
+                                        <i className="fa-solid fa-box x-small"></i>
+                                        <span>Order</span>
+                                    </button>
+                                )}
 
-                            {/* Drop Button Group */}
-                            {dropQty > 0 ? (
-                                isVillager ? (
-                                    <button type="button" className="btn btn-sm btn-info text-white rounded-pill flex-grow-1 fw-bold border-0" style={{ fontSize: "0.75rem" }} onClick={() => decreaseDropQuantity(item.id)} aria-label={`Remove ${item.name} from drop`}>In Drop (x)</button>
-                                ) : (
-                                    <div className="btn-group rounded-pill flex-grow-1 bg-light">
-                                        <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => decreaseDropQuantity(item.id)} aria-label={`Decrease drop quantity for ${item.name}`}>−</button>
-                                        <div className="d-flex align-items-center justify-content-center fw-bold px-1 text-info" style={{ fontSize: "0.75rem", minWidth: "20px" }}>{dropQty}</div>
-                                        <button type="button" className="btn btn-sm text-info px-2 py-1 fw-bold border-0" onClick={() => increaseDropQuantity(item.id)} disabled={!canIncreaseDrop} aria-label={`Increase drop quantity for ${item.name}`} title={!canIncreaseDrop ? 'Drop bot full (9/9)' : undefined}>+</button>
+                                {/* Drop Button Group (Cyan/Blue) */}
+                                {dropQty > 0 ? (
+                                    <div
+                                        className="btn-group rounded-pill flex-grow-1 border border-info overflow-hidden"
+                                        style={{ backgroundColor: '#f0f9ff', borderColor: '#0284c7' }}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm text-info px-2 py-1 fw-bold border-0 hover-bg-info hover-text-white transition-all"
+                                            style={{ color: '#0284c7' }}
+                                            onClick={() => decreaseDropQuantity(item.id)}
+                                            aria-label={`Decrease drop quantity for ${item.name}`}
+                                            title="Decrease quantity"
+                                        >
+                                            −
+                                        </button>
+                                        <div
+                                            className="d-flex align-items-center justify-content-center fw-bold px-1 font-monospace"
+                                            style={{ fontSize: "0.75rem", minWidth: "22px", color: '#0284c7' }}
+                                            title={`Drop: ${dropQty} items`}
+                                        >
+                                            {dropQty}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm text-info px-2 py-1 fw-bold border-0 hover-bg-info hover-text-white transition-all"
+                                            style={{ color: '#0284c7' }}
+                                            onClick={() => increaseDropQuantity(item.id)}
+                                            disabled={!canIncreaseDrop}
+                                            aria-label={`Increase drop quantity for ${item.name}`}
+                                            title={!canIncreaseDrop ? 'Drop bot full (9/9)' : 'Increase quantity'}
+                                        >
+                                            +
+                                        </button>
                                     </div>
-                                )
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-light text-info rounded-pill py-1 flex-grow-1 fw-bold border-0"
-                                    style={{ fontSize: "0.75rem" }}
-                                    onClick={handleInitialDropClick}
-                                    disabled={totalDropCount >= 9}
-                                    title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : hasMultipleVariants && hideVariants ? 'Choose variant to drop' : undefined}
-                                >
-                                    Drop
-                                </button>
-                            )}
-                        </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
+                                        style={{ fontSize: "0.75rem", color: '#0284c7', borderColor: '#0284c7' }}
+                                        onClick={handleInitialDropClick}
+                                        disabled={totalDropCount >= 9}
+                                        title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : hasMultipleVariants && hideVariants ? 'Choose variant to drop' : 'Add to Drop ($drop)'}
+                                    >
+                                        <i className="fa-solid fa-plane-arrival x-small"></i>
+                                        <span>Drop</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
+export default CommandBuilderItemCard;

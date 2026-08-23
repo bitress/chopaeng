@@ -518,11 +518,11 @@ export const CommandBuilderPocketBundlesModal = ({
                                                     </span>
                                                     {activeBundle.isOfficial ? (
                                                         <span className="badge bg-warning text-dark rounded-pill px-2 py-1 fw-bold x-small">
-                                                            ⭐ Verified Official
+                                                            <i className="fa-solid fa-certificate me-1"></i> Official
                                                         </span>
                                                     ) : (
                                                         <span className="badge bg-info text-dark rounded-pill px-2 py-1 fw-bold x-small">
-                                                            👤 User Custom
+                                                            <i className="fa-solid fa-user me-1"></i> Community
                                                         </span>
                                                     )}
                                                 </div>

@@ -54,7 +54,6 @@ export const FloatingSuggestionButton = () => {
                         <i className="fa-brands fa-discord me-1"></i>To Discord Staff
                     </span>
                 </div>
-            </button>
-        </div>
+            </button>        </div>
     );
 };

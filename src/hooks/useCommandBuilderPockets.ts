@@ -277,6 +277,61 @@ export const useCommandBuilderPockets = () => {
         setOrderItems((prev) => sortPocketEntries(prev));
     }, []);
 
+    // ── Reorder helpers (used by drag-and-drop in VisualPocketGrid) ────────
+    // `newOrder` is an ordered list of item IDs (with duplicates for multi-qty stacks)
+    const reorderOrderPockets = useCallback((newOrder: string[]) => {
+        setOrderItems((prev) => {
+            // Build a map from id -> entry
+            const entryMap = new Map<string, PocketEntry>();
+            prev.forEach((p) => entryMap.set(p.item.id, p));
+
+            // Count how many times each id appears in newOrder
+            const quantityMap = new Map<string, number>();
+            for (const id of newOrder) {
+                quantityMap.set(id, (quantityMap.get(id) || 0) + 1);
+            }
+
+            // Rebuild ordered unique list preserving first-seen order
+            const seen = new Set<string>();
+            const result: PocketEntry[] = [];
+            for (const id of newOrder) {
+                if (!seen.has(id)) {
+                    seen.add(id);
+                    const entry = entryMap.get(id);
+                    if (entry) {
+                        result.push({ ...entry, quantity: quantityMap.get(id) || entry.quantity });
+                    }
+                }
+            }
+            return result;
+        });
+    }, []);
+
+    const reorderDropPockets = useCallback((newOrder: string[]) => {
+        setDropItems((prev) => {
+            const entryMap = new Map<string, PocketEntry>();
+            prev.forEach((p) => entryMap.set(p.item.id, p));
+
+            const quantityMap = new Map<string, number>();
+            for (const id of newOrder) {
+                quantityMap.set(id, (quantityMap.get(id) || 0) + 1);
+            }
+
+            const seen = new Set<string>();
+            const result: PocketEntry[] = [];
+            for (const id of newOrder) {
+                if (!seen.has(id)) {
+                    seen.add(id);
+                    const entry = entryMap.get(id);
+                    if (entry) {
+                        result.push({ ...entry, quantity: quantityMap.get(id) || entry.quantity });
+                    }
+                }
+            }
+            return result;
+        });
+    }, []);
+
     const handleLoadRecipeMaterials = useCallback((recipeName: string, multiplier: number = 1) => {
         const ingredients = findRecipeIngredients(recipeName);
         if (!ingredients || ingredients.length === 0) return;
@@ -542,6 +597,10 @@ export const useCommandBuilderPockets = () => {
         handleFillRemaining,
         handleSortPockets,
         handleLoadRecipeMaterials,
+
+        // Reorder (drag-and-drop)
+        reorderOrderPockets,
+        reorderDropPockets,
 
         // Bundle & Share loaders
         loadBundleIntoOrder,

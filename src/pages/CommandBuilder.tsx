@@ -19,6 +19,8 @@ import { CommandBuilderVariantModal } from "../components/command-builder/Comman
 import { CommandBuilderPocketBundlesModal } from "../components/command-builder/CommandBuilderPocketBundlesModal";
 import { CommandBuilderShareModal } from "../components/command-builder/CommandBuilderShareModal";
 import { CommunityLoadoutsModal } from "../components/command-builder/CommunityLoadoutsModal";
+import { MobileCommandBar } from "../components/command-builder/MobileCommandBar";
+import type { MobileTab } from "../components/command-builder/MobileCommandBar";
 import { decodePocketShareData, fetchSharedPocket } from "../utils/pocketSharing";
 import { fetchLoadoutByCode } from "../utils/communityLoadoutsApi";
 import { useFavorites } from "../hooks/useFavorites";
@@ -63,6 +65,9 @@ const CommandBuilder = () => {
     const [showFiltersMobile, setShowFiltersMobile] = useState(false);
     const [onlyFavorites, setOnlyFavorites] = useState(false);
     const { isFavorite, toggleFavorite, favoriteCount } = useFavorites();
+
+    // --- Mobile Tab State ---
+    const [mobileTab, setMobileTab] = useState<MobileTab>('catalog');
 
     // --- Search & Pagination ---
     const [searchInput, setSearchInput] = useState(savedState?.searchInput || "");
@@ -135,7 +140,7 @@ const CommandBuilder = () => {
             fetchLoadoutByCode(loadoutCodeParam).then((loadout) => {
                 if (loadout) {
                     loadBundleIntoOrder(loadout.orderItems, 'replace');
-                    setSharedNotice(`✨ Community loadout loaded: "${loadout.name}" (${loadout.shortCode})`);
+                    setSharedNotice(`Community loadout loaded: "${loadout.name}" (${loadout.shortCode})`);
                     setTimeout(() => setSharedNotice(null), 6000);
                 }
             });
@@ -146,7 +151,7 @@ const CommandBuilder = () => {
                 if (sharedData) {
                     loadSharedPocket(sharedData);
                     const count = (sharedData.orderItems?.length || 0) + (sharedData.dropItems?.length || 0);
-                    setSharedNotice(`✨ Shared pocket loaded: "${sharedData.name || 'ACNH Pocket'}" (${count} items)`);
+                    setSharedNotice(`Shared pocket loaded: "${sharedData.name || 'ACNH Pocket'}" (${count} items)`);
                     setTimeout(() => setSharedNotice(null), 6000);
                 }
             });
@@ -158,7 +163,7 @@ const CommandBuilder = () => {
                     if (sharedData) {
                         loadSharedPocket(sharedData);
                         const count = (sharedData.orderItems?.length || 0) + (sharedData.dropItems?.length || 0);
-                        setSharedNotice(`✨ Shared pocket loaded: "${sharedData.name || 'ACNH Pocket'}" (${count} items)`);
+                        setSharedNotice(`Shared pocket loaded: "${sharedData.name || 'ACNH Pocket'}" (${count} items)`);
                         setTimeout(() => setSharedNotice(null), 6000);
                     }
                 });
@@ -167,7 +172,7 @@ const CommandBuilder = () => {
                 if (decoded) {
                     loadSharedPocket(decoded);
                     const count = (decoded.orderItems?.length || 0) + (decoded.dropItems?.length || 0);
-                    setSharedNotice(`✨ Shared pocket loaded: "${decoded.name || 'Custom'}" (${count} items)`);
+                    setSharedNotice(`Shared pocket loaded: "${decoded.name || 'Custom'}" (${count} items)`);
                     setTimeout(() => setSharedNotice(null), 5000);
                 }
             }
@@ -412,7 +417,10 @@ const CommandBuilder = () => {
 
                 <section className="container py-4">
                     <div className="row gy-4">
-                        <div className="col-lg-8">
+                        {/* MOBILE: Catalog tab panel — hidden when on pockets/command tab on mobile */}
+                        <div className={`col-lg-8 ${
+                            mobileTab === 'catalog' ? 'd-block' : 'd-none d-lg-block'
+                        }`}>
                             <div className="d-flex align-items-center justify-content-between mb-3" ref={catalogHeadingRef} style={{ scrollMarginTop: '90px' }}>
                                 <div>
                                     <h2 className="h4 fw-black mb-1">Catalog</h2>
@@ -534,8 +542,82 @@ const CommandBuilder = () => {
                             )}
                         </div>
 
-                        <aside className="col-lg-4">
+                        {/* MOBILE: Pockets tab panel (full-width summary) */}
+                        <aside className={`col-lg-4 ${
+                            mobileTab === 'pockets' || mobileTab === 'command' ? 'd-block' : 'd-none d-lg-block'
+                        }`}>
                             <div className="sticky-top" style={{ top: '90px' }}>
+                                {/* Mobile Command Tab — Minimal copy-focused view */}
+                                {mobileTab === 'command' && (
+                                    <div className="d-lg-none mb-3">
+                                        <div className="card rounded-4 border shadow-sm p-3 bg-white">
+                                            <h6 className="fw-black text-dark mb-2 d-flex align-items-center gap-2">
+                                                <i className="fa-solid fa-terminal text-success"></i>
+                                                Generated Command
+                                            </h6>
+
+                                            {/* Order Command */}
+                                            {orderCommandText ? (
+                                                <div className="mb-3">
+                                                    <div className="d-flex align-items-center justify-content-between mb-1">
+                                                        <span className="tiny-text fw-bold text-uppercase text-muted">Order Bot ({totalOrderCount}/40)</span>
+                                                    </div>
+                                                    <code
+                                                        className="d-block bg-dark text-success rounded-3 p-2 small font-monospace text-break mb-2"
+                                                        style={{ fontSize: '0.72rem', maxHeight: '120px', overflowY: 'auto' }}
+                                                    >
+                                                        {orderCommandText}
+                                                    </code>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-nook text-white rounded-pill fw-bold w-100 py-2"
+                                                        onClick={handleCopyOrder}
+                                                    >
+                                                        <i className="fa-solid fa-copy me-2"></i>
+                                                        {copyOrderStatus === 'Copied!' ? 'Copied!' : 'Copy !order Command'}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center text-muted py-3 small">
+                                                    <i className="fa-solid fa-box-open fs-4 opacity-30 mb-2 d-block"></i>
+                                                    Add items from the Browse tab to generate a command.
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-success rounded-pill mt-2 fw-bold d-block mx-auto"
+                                                        onClick={() => setMobileTab('catalog')}
+                                                    >
+                                                        <i className="fa-solid fa-magnifying-glass me-1"></i>Go to Browse
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Drop Command */}
+                                            {dropCommandText && (
+                                                <div className="mt-2">
+                                                    <div className="d-flex align-items-center justify-content-between mb-1">
+                                                        <span className="tiny-text fw-bold text-uppercase text-muted">Drop Bot ({totalDropCount}/9)</span>
+                                                    </div>
+                                                    <code
+                                                        className="d-block rounded-3 p-2 small font-monospace text-break mb-2"
+                                                        style={{ fontSize: '0.72rem', backgroundColor: '#0c1a2e', color: '#38bdf8', maxHeight: '80px', overflowY: 'auto' }}
+                                                    >
+                                                        {dropCommandText}
+                                                    </code>
+                                                    <button
+                                                        type="button"
+                                                        className="btn rounded-pill fw-bold w-100 py-2 text-white"
+                                                        style={{ backgroundColor: '#0284c7' }}
+                                                        onClick={handleCopyDrop}
+                                                    >
+                                                        <i className="fa-solid fa-copy me-2"></i>
+                                                        {copyDropStatus === 'Copied!' ? 'Copied!' : 'Copy !drop Command'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <CommandBuilderSummary
                                     orderPockets={orderItems}
                                     dropPockets={dropItems}
@@ -583,6 +665,38 @@ const CommandBuilder = () => {
                     )}
                     <DisclaimerBanner className="mb-3" />
                 </div>
+
+                {/* Mobile floating pocket count pill — visible on Browse tab only */}
+                {mobileTab === 'catalog' && (totalOrderCount > 0 || totalDropCount > 0) && (
+                    <div
+                        className="d-lg-none position-fixed"
+                        style={{ bottom: '72px', right: '16px', zIndex: 1045 }}
+                    >
+                        <button
+                            type="button"
+                            className="btn btn-nook text-white rounded-pill shadow-lg fw-bold d-flex align-items-center gap-2 px-3 py-2"
+                            style={{ fontSize: '0.8rem', border: '2px solid rgba(255,255,255,0.35)' }}
+                            onClick={() => setMobileTab('pockets')}
+                        >
+                            <i className="fa-solid fa-boxes-stacked"></i>
+                            <span>
+                                {totalOrderCount > 0 && <span>Order: {totalOrderCount}/40</span>}
+                                {totalOrderCount > 0 && totalDropCount > 0 && <span className="mx-1 opacity-60">·</span>}
+                                {totalDropCount > 0 && <span>Drop: {totalDropCount}/9</span>}
+                            </span>
+                            <i className="fa-solid fa-chevron-up opacity-75" style={{ fontSize: '0.65rem' }}></i>
+                        </button>
+                    </div>
+                )}
+
+                {/* Mobile Bottom Tab Bar */}
+                <MobileCommandBar
+                    activeTab={mobileTab}
+                    onTabChange={setMobileTab}
+                    orderCount={totalOrderCount}
+                    dropCount={totalDropCount}
+                    hasCommand={!!orderCommandText || !!dropCommandText}
+                />
             </div>
 
             {/* Quick Variant Selection Modal */}

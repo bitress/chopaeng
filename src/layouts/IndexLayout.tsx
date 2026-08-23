@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar.tsx";
 import Footer from "../components/Footer.tsx";
-import { FloatingSuggestionButton } from "../components/suggestions/FloatingSuggestionButton.tsx";
 import { SuggestionModal } from "../components/suggestions/SuggestionModal.tsx";
 
 export function IndexLayout() {
@@ -12,7 +11,6 @@ export function IndexLayout() {
                 <Outlet />
             </main>
             <Footer />
-            <FloatingSuggestionButton />
             <SuggestionModal />
         </>
     );

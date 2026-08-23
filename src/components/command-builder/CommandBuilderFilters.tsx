@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface FilterChip {
     key: string;
@@ -43,6 +43,25 @@ interface CommandBuilderFiltersProps {
     clearFilters: () => void;
 }
 
+interface QuickPill {
+    id: string;
+    label: string;
+    icon: string;
+    kind?: string;
+    category?: string;
+}
+
+const QUICK_CATEGORY_PILLS: QuickPill[] = [
+    { id: 'all', label: 'All Items', icon: 'fa-border-all', kind: 'All', category: 'All' },
+    { id: 'furniture', label: 'Furniture', icon: 'fa-couch', kind: 'Items', category: 'Housewares' },
+    { id: 'fashion', label: 'Fashion', icon: 'fa-shirt', kind: 'Items', category: 'Tops' },
+    { id: 'recipes', label: 'DIY Recipes', icon: 'fa-scroll', kind: 'Recipes', category: 'All' },
+    { id: 'materials', label: 'Materials', icon: 'fa-cubes', kind: 'Items', category: 'Materials' },
+    { id: 'villagers', label: 'Villagers', icon: 'fa-paw', kind: 'Villagers', category: 'All' },
+    { id: 'art', label: 'Art', icon: 'fa-palette', kind: 'Items', category: 'Art' },
+    { id: 'fossils', label: 'Fossils', icon: 'fa-bone', kind: 'Items', category: 'Fossils' },
+];
+
 export const CommandBuilderFilters: React.FC<CommandBuilderFiltersProps> = ({
     searchInput, setSearchInput, showFiltersMobile, setShowFiltersMobile,
     activeFilterCount, activeFilterChips, hideVariants, setHideVariants,
@@ -54,158 +73,288 @@ export const CommandBuilderFilters: React.FC<CommandBuilderFiltersProps> = ({
     onlyFavorites = false, setOnlyFavorites, favoriteCount = 0,
     clearFilters
 }) => {
+    const [showAdvanced, setShowAdvanced] = useState(false);
+
+    const handleSelectQuickPill = (pill: QuickPill) => {
+        if (onlyFavorites && setOnlyFavorites) {
+            setOnlyFavorites(false);
+        }
+        if (pill.kind) setKindFilter(pill.kind);
+        if (pill.category) setCategory(pill.category);
+    };
+
+    const isPillActive = (pill: QuickPill) => {
+        if (onlyFavorites) return false;
+        if (pill.id === 'all') {
+            return kindFilter === 'All' && category === 'All';
+        }
+        if (pill.kind === 'Villagers') return kindFilter === 'Villagers';
+        if (pill.kind === 'Recipes') return kindFilter === 'Recipes';
+        return category === pill.category;
+    };
+
     return (
-        <div className="glass-filter rounded-4 p-4 border mb-4 shadow-sm">
-            {/* Mobile Search & Filter Toggle Row */}
-            <div className="d-flex gap-2 mb-3">
-                <div className="flex-grow-1 position-relative">
-                    <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-4 text-muted"></i>
-                    <input
-                        type="search"
-                        className="form-control bg-white rounded-pill border shadow-sm ps-5 pe-5 py-2"
-                        placeholder="Search catalog (e.g. Ironwood)..."
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        aria-label="Search catalog"
-                    />
-                    {searchInput && (
-                        <button
-                            type="button"
-                            className="btn btn-link text-muted position-absolute top-50 end-0 translate-middle-y me-3 p-0"
-                            onClick={() => setSearchInput('')}
-                            aria-label="Clear search"
-                        >
-                            <i className="fa-solid fa-circle-xmark"></i>
-                        </button>
-                    )}
+        <div className="glass-filter rounded-4 p-3 p-md-4 border mb-4 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
+            {/* Top Search Bar & Mobile Filter Toggle */}
+            <div className="row g-2 align-items-center mb-3">
+                <div className="col">
+                    <div className="position-relative">
+                        <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input
+                            type="search"
+                            className="form-control bg-white rounded-pill border shadow-xs ps-5 pe-5 py-2 fw-medium"
+                            placeholder="Search by item, recipe, or villager name (e.g. Ironwood, Raymond)..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            aria-label="Search catalog"
+                        />
+                        {searchInput && (
+                            <button
+                                type="button"
+                                className="btn btn-link text-muted position-absolute top-50 end-0 translate-middle-y me-2 p-1 border-0"
+                                onClick={() => setSearchInput('')}
+                                aria-label="Clear search input"
+                            >
+                                <i className="fa-solid fa-circle-xmark fs-6"></i>
+                            </button>
+                        )}
+                    </div>
                 </div>
-                <button
-                    className={`btn border rounded-pill shadow-sm d-md-none px-4 ${activeFilterCount > 0 ? 'btn-nook text-white' : 'btn-white'}`}
-                    onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-                    aria-label="Toggle Filters"
-                    aria-expanded={showFiltersMobile}
-                >
-                    <i className="fa-solid fa-filter"></i>
-                </button>
+
+                {/* Mobile Filter Button */}
+                <div className="col-auto d-md-none">
+                    <button
+                        className={`btn border rounded-pill shadow-xs px-3 py-2 ${activeFilterCount > 0 ? 'btn-nook text-white' : 'btn-white'}`}
+                        onClick={() => setShowFiltersMobile(!showFiltersMobile)}
+                        aria-label="Toggle Filters"
+                        aria-expanded={showFiltersMobile}
+                    >
+                        <i className="fa-solid fa-sliders me-1"></i>
+                        {activeFilterCount > 0 && <span className="badge bg-white text-dark ms-1">{activeFilterCount}</span>}
+                    </button>
+                </div>
             </div>
 
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <span className="badge bg-white text-dark rounded-pill border px-3 py-2 fw-bold" aria-live="polite">
-                    <i className="fa-solid fa-sliders me-1 text-success"></i>
-                    {activeFilterCount === 0 ? 'No active filters' : `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
-                </span>
+            {/* Quick Category Navigation Pills (One-tap fast browsing) */}
+            <div className="d-flex align-items-center gap-1 overflow-x-auto pb-2 mb-2 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {QUICK_CATEGORY_PILLS.map((pill) => {
+                    const active = isPillActive(pill);
+                    return (
+                        <button
+                            key={pill.id}
+                            type="button"
+                            onClick={() => handleSelectQuickPill(pill)}
+                            className={`btn btn-sm rounded-pill text-nowrap fw-bold d-inline-flex align-items-center gap-2 px-3 py-1 transition-all ${
+                                active
+                                    ? 'btn-nook text-white shadow-xs'
+                                    : 'btn-white bg-white text-dark border hover-border-success'
+                            }`}
+                            style={{ fontSize: '0.8rem' }}
+                        >
+                            <i className={`fa-solid ${pill.icon} ${active ? 'text-white' : 'text-success'}`} style={{ fontSize: '0.75rem' }}></i>
+                            <span>{pill.label}</span>
+                        </button>
+                    );
+                })}
+
+                {/* Favorites Quick Pill */}
                 {setOnlyFavorites && (
                     <button
                         type="button"
                         onClick={() => setOnlyFavorites(!onlyFavorites)}
-                        className={`badge rounded-pill border px-3 py-2 fw-bold transition-all d-inline-flex align-items-center gap-1 cursor-pointer ${
-                            onlyFavorites 
-                                ? 'bg-warning text-dark border-warning shadow-sm' 
-                                : 'bg-white text-muted border'
+                        className={`btn btn-sm rounded-pill text-nowrap fw-bold d-inline-flex align-items-center gap-2 px-3 py-1 transition-all ${
+                            onlyFavorites
+                                ? 'bg-warning text-dark border-warning shadow-xs'
+                                : 'btn-white bg-white text-dark border hover-border-warning'
                         }`}
-                        title={onlyFavorites ? "Show all items" : "Show starred favorites only"}
+                        style={{ fontSize: '0.8rem' }}
                     >
-                        <i className={`fa-${onlyFavorites ? 'solid' : 'regular'} fa-star ${onlyFavorites ? 'text-dark' : 'text-warning'}`}></i>
-                        <span>Favorites ({favoriteCount})</span>
+                        <i className={`fa-${onlyFavorites ? 'solid' : 'regular'} fa-star ${onlyFavorites ? 'text-dark' : 'text-warning'}`} style={{ fontSize: '0.75rem' }}></i>
+                        <span>Favorites</span>
+                        {favoriteCount > 0 && (
+                            <span className={`badge rounded-pill ${onlyFavorites ? 'bg-dark text-white' : 'bg-light text-dark'}`} style={{ fontSize: '0.65rem' }}>
+                                {favoriteCount}
+                            </span>
+                        )}
                     </button>
-                )}
-                {!hideVariants && (
-                    <span className="badge bg-success-subtle text-success rounded-pill border border-success-subtle px-3 py-2 fw-bold">
-                        Showing variants
-                    </span>
-                )}
-                {!compactMode && (
-                    <span className="badge bg-info-subtle text-info-emphasis rounded-pill border border-info-subtle px-3 py-2 fw-bold">
-                        Spacious cards
-                    </span>
                 )}
             </div>
 
-            {/* Dismissible active-filter chips */}
+            {/* Active Filters Row & Toggles */}
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                    {/* Advanced Filters Drawer Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={`btn btn-xs rounded-pill px-3 py-1 fw-bold border transition-all d-inline-flex align-items-center gap-1 ${
+                            showAdvanced ? 'btn-dark text-white' : 'btn-white bg-white text-muted hover-text-dark'
+                        }`}
+                        style={{ fontSize: '0.75rem' }}
+                    >
+                        <i className="fa-solid fa-filter small"></i>
+                        <span>More Filters</span>
+                        {activeFilterCount > 0 && (
+                            <span className="badge bg-success text-white rounded-pill ms-1 font-monospace">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                        <i className={`fa-solid fa-chevron-${showAdvanced ? 'up' : 'down'} x-small ms-1`}></i>
+                    </button>
+
+                    {/* View Option Switches */}
+                    <div className="d-flex align-items-center gap-2 ms-2">
+                        <button
+                            type="button"
+                            onClick={() => setHideVariants(!hideVariants)}
+                            className={`btn btn-xs rounded-pill px-2 py-1 fw-bold border transition-all ${
+                                !hideVariants ? 'bg-success text-white border-success' : 'bg-white text-muted'
+                            }`}
+                            style={{ fontSize: '0.72rem' }}
+                            title="Show all color variations separately in catalog"
+                        >
+                            <i className="fa-solid fa-layer-group me-1"></i>
+                            <span>{!hideVariants ? 'All Variants Expanded' : 'Group Variants'}</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setCompactMode(!compactMode)}
+                            className={`btn btn-xs rounded-pill px-2 py-1 fw-bold border transition-all ${
+                                compactMode ? 'bg-dark text-white' : 'bg-white text-muted'
+                            }`}
+                            style={{ fontSize: '0.72rem' }}
+                            title="Toggle between compact and spacious item cards"
+                        >
+                            <i className={`fa-solid ${compactMode ? 'fa-table-cells' : 'fa-table-cells-large'} me-1`}></i>
+                            <span>{compactMode ? 'Compact Grid' : 'Spacious Grid'}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Reset Filters Action */}
+                {activeFilterCount > 0 && (
+                    <button
+                        type="button"
+                        className="btn btn-xs text-danger rounded-pill px-2 py-1 fw-bold border-0 hover-underline"
+                        onClick={clearFilters}
+                        style={{ fontSize: '0.75rem' }}
+                    >
+                        <i className="fa-solid fa-rotate-left me-1"></i>
+                        <span>Reset All</span>
+                    </button>
+                )}
+            </div>
+
+            {/* Dismissible Active Filter Chips */}
             {activeFilterChips.length > 0 && (
-                <div className="d-flex flex-wrap gap-2 mb-3">
+                <div className="d-flex flex-wrap gap-1 mt-2 pt-2">
                     {activeFilterChips.map((chip) => (
                         <button
                             key={chip.key}
                             type="button"
                             onClick={chip.clear}
-                            className="badge bg-nook-green text-white rounded-pill border-0 px-3 py-2 fw-bold d-inline-flex align-items-center gap-2 transition-all"
-                            aria-label={`Remove filter ${chip.label}`}
+                            className="badge bg-light text-dark border rounded-pill px-2 py-1 fw-bold d-inline-flex align-items-center gap-1 hover-bg-danger hover-text-white transition-all cursor-pointer"
+                            style={{ fontSize: '0.72rem' }}
+                            title="Click to remove filter"
                         >
-                            {chip.label}
-                            <i className="fa-solid fa-xmark"></i>
+                            <span>{chip.label}</span>
+                            <i className="fa-solid fa-xmark x-small ms-1"></i>
                         </button>
                     ))}
                 </div>
             )}
 
-            {/* Collapsible Advanced Filters */}
-            <div className={`row g-3 ${showFiltersMobile ? 'd-flex' : 'd-none d-md-flex'}`}>
-                <div className="col-6 col-md-3">
-                    <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={kindFilter} onChange={(e) => setKindFilter(e.target.value)}>
-                        <option value="All">All Types</option>
-                        <option value="Items">Items</option>
-                        <option value="Recipes">Recipes</option>
-                        <option value="Villagers">Villagers</option>
-                    </select>
-                </div>
-
-                <div className="col-6 col-md-3">
-                    <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={category} onChange={(e) => setCategory(e.target.value)}>
-                        <option value="All">All Categories</option>
-                        {itemCategories.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                    </select>
-                </div>
-
-                <div className="col-6 col-md-3">
-                    <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={villagerType} onChange={(e) => setVillagerType(e.target.value)}>
-                        <option value="All">All Villager Types</option>
-                        {villagerTypes.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                    </select>
-                </div>
-
-                <div className="col-6 col-md-3">
-                    <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={theme} onChange={(e) => setTheme(e.target.value)}>
-                        <option value="All">All Themes</option>
-                        {uniqueThemes.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                    </select>
-                </div>
-
-                <div className="col-6 col-md-3">
-                    <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={series} onChange={(e) => setSeries(e.target.value)}>
-                        <option value="All">All Series</option>
-                        {uniqueSeries.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                    </select>
-                </div>
-
-                <div className="col-6 col-md-3">
-                    <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={interactivity} onChange={(e) => setInteractivity(e.target.value)}>
-                        <option value="All">All Interactivity</option>
-                        {uniqueInteractivity.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                    </select>
-                </div>
-
-                <div className="col-6 col-md-3">
-                    <select className="form-select form-select-sm rounded-pill border-0 shadow-sm cursor-pointer fw-bold text-muted" value={colour} onChange={(e) => setColour(e.target.value)}>
-                        <option value="All">All Colours</option>
-                        {uniqueColours.filter(v => v !== 'All').map((value) => <option key={value} value={value}>{value}</option>)}
-                    </select>
-                </div>
-
-                <div className="col-12 col-md-auto ms-md-auto d-flex flex-wrap align-items-end gap-3 mt-3 mt-md-0">
-                    <div className="form-check form-switch">
-                        <input className="form-check-input cursor-pointer" type="checkbox" id="hideVariants" checked={hideVariants} onChange={(e) => setHideVariants(e.target.checked)} />
-                        <label className="form-check-label small text-dark cursor-pointer fw-bold" htmlFor="hideVariants">Hide variants</label>
+            {/* Advanced Filters Grid (Collapsible) */}
+            {(showAdvanced || showFiltersMobile) && (
+                <div className="row g-2 mt-2 pt-3 border-top animate-fade">
+                    <div className="col-6 col-md-3">
+                        <label className="form-label text-muted small fw-bold mb-1">Item Category</label>
+                        <select
+                            className="form-select form-select-sm rounded-pill border bg-white shadow-2xs fw-medium text-dark"
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                        >
+                            <option value="All">All Categories</option>
+                            {itemCategories.filter(v => v !== 'All').map((value) => (
+                                <option key={value} value={value}>{value}</option>
+                            ))}
+                        </select>
                     </div>
-                    <div className="form-check form-switch">
-                        <input className="form-check-input cursor-pointer" type="checkbox" id="compactMode" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />
-                        <label className="form-check-label small text-dark cursor-pointer fw-bold" htmlFor="compactMode">Compact</label>
+
+                    <div className="col-6 col-md-3">
+                        <label className="form-label text-muted small fw-bold mb-1">Villager Personality</label>
+                        <select
+                            className="form-select form-select-sm rounded-pill border bg-white shadow-2xs fw-medium text-dark"
+                            value={villagerType}
+                            onChange={(e) => setVillagerType(e.target.value)}
+                        >
+                            <option value="All">All Personalities</option>
+                            {villagerTypes.filter(v => v !== 'All').map((value) => (
+                                <option key={value} value={value}>{value}</option>
+                            ))}
+                        </select>
                     </div>
-                    <button type="button" className="btn btn-white text-dark rounded-pill px-4 py-2 small fw-bold shadow-sm border ms-auto ms-md-0" onClick={clearFilters} disabled={activeFilterCount === 0}>
-                        <i className="fa-solid fa-rotate-left me-1"></i> Reset
-                    </button>
+
+                    <div className="col-6 col-md-3">
+                        <label className="form-label text-muted small fw-bold mb-1">Item Theme</label>
+                        <select
+                            className="form-select form-select-sm rounded-pill border bg-white shadow-2xs fw-medium text-dark"
+                            value={theme}
+                            onChange={(e) => setTheme(e.target.value)}
+                        >
+                            <option value="All">All Themes</option>
+                            {uniqueThemes.filter(v => v !== 'All').map((value) => (
+                                <option key={value} value={value}>{value}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="col-6 col-md-3">
+                        <label className="form-label text-muted small fw-bold mb-1">Series</label>
+                        <select
+                            className="form-select form-select-sm rounded-pill border bg-white shadow-2xs fw-medium text-dark"
+                            value={series}
+                            onChange={(e) => setSeries(e.target.value)}
+                        >
+                            <option value="All">All Series</option>
+                            {uniqueSeries.filter(v => v !== 'All').map((value) => (
+                                <option key={value} value={value}>{value}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="col-6 col-md-3">
+                        <label className="form-label text-muted small fw-bold mb-1">Interactivity</label>
+                        <select
+                            className="form-select form-select-sm rounded-pill border bg-white shadow-2xs fw-medium text-dark"
+                            value={interactivity}
+                            onChange={(e) => setInteractivity(e.target.value)}
+                        >
+                            <option value="All">All Interactivity</option>
+                            {uniqueInteractivity.filter(v => v !== 'All').map((value) => (
+                                <option key={value} value={value}>{value}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="col-6 col-md-3">
+                        <label className="form-label text-muted small fw-bold mb-1">Color Palette</label>
+                        <select
+                            className="form-select form-select-sm rounded-pill border bg-white shadow-2xs fw-medium text-dark"
+                            value={colour}
+                            onChange={(e) => setColour(e.target.value)}
+                        >
+                            <option value="All">All Colours</option>
+                            {uniqueColours.filter(v => v !== 'All').map((value) => (
+                                <option key={value} value={value}>{value}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
+
+export default CommandBuilderFilters;

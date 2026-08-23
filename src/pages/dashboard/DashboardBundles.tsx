@@ -15,6 +15,7 @@ import {
 import { useCatalogData } from '../../hooks/useCatalogData';
 import type { CatalogEntity } from '../../data/commandBuilderData';
 import { getVariantKey, getVariantLabel, generateFullItemHex } from '../../utils/commandBuilderHex';
+import { parseItemCodes } from '../../utils/itemCodeParser';
 
 const CATEGORIES: PocketBundleCategory[] = [
     'All',
@@ -78,9 +79,21 @@ export const DashboardBundles = () => {
     const [formItems, setFormItems] = useState<PocketBundleItem[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Manual Hex Code Direct Adder
+    // Manual Hex Code & Quick Parse Direct Adder
     const [manualHex, setManualHex] = useState('');
     const [copyCmdStatus, setCopyCmdStatus] = useState(false);
+
+    // Batch Paste & Item Code Parser Modal State
+    const [batchPasteModalOpen, setBatchPasteModalOpen] = useState(false);
+    const [batchPasteInput, setBatchPasteInput] = useState('');
+    const [batchPasteTarget, setBatchPasteTarget] = useState<'order' | 'drop'>('order');
+    const [batchPasteBundleTitle, setBatchPasteBundleTitle] = useState('');
+    const [batchPasteCategory, setBatchPasteCategory] = useState<PocketBundleCategory>('Popular');
+
+    // Live parsed result from pasted item codes
+    const parsedBatchResult = useMemo(() => {
+        return parseItemCodes(batchPasteInput, catalogData?.all || []);
+    }, [batchPasteInput, catalogData]);
 
     const maxSlots = formTarget === 'drop' ? 9 : 40;
     const currentSlotsCount = useMemo(() => {
@@ -126,6 +139,82 @@ export const DashboardBundles = () => {
         setFormItems([...formItems, newItem]);
         setManualHex('');
         showNotice(`✨ Added HEX ${cleanHex} to bundle!`);
+    };
+
+    // Inline quick parse from the single code box
+    const handleInlineQuickParse = () => {
+        if (!manualHex.trim()) return;
+        const parsed = parseItemCodes(manualHex, catalogData?.all || []);
+        if (parsed.items.length === 0) {
+            handleManualAddHex();
+            return;
+        }
+
+        const merged = [...formItems];
+        for (const it of parsed.items) {
+            const existingIdx = merged.findIndex((m) => m.itemId.toUpperCase() === it.itemId.toUpperCase());
+            if (existingIdx >= 0) {
+                merged[existingIdx] = {
+                    ...merged[existingIdx],
+                    quantity: merged[existingIdx].quantity + it.quantity,
+                };
+            } else {
+                merged.push(it);
+            }
+        }
+        setFormItems(merged);
+        setManualHex('');
+        showNotice(`✨ Parsed & added ${parsed.items.length} item types (${parsed.totalSlots} slots)!`);
+    };
+
+    // Apply parsed batch items to currently open Visual Builder modal
+    const handleApplyBatchPasteToEditor = (mode: 'replace' | 'append') => {
+        if (parsedBatchResult.items.length === 0) {
+            showNotice('No items parsed from input. Please check your pasted text.', 'error');
+            return;
+        }
+
+        if (mode === 'replace') {
+            setFormItems(parsedBatchResult.items);
+            showNotice(`✨ Replaced bundle with ${parsedBatchResult.items.length} parsed items (${parsedBatchResult.totalSlots} slots)!`);
+        } else {
+            const merged = [...formItems];
+            for (const it of parsedBatchResult.items) {
+                const existingIdx = merged.findIndex((m) => m.itemId.toUpperCase() === it.itemId.toUpperCase());
+                if (existingIdx >= 0) {
+                    merged[existingIdx] = {
+                        ...merged[existingIdx],
+                        quantity: merged[existingIdx].quantity + it.quantity,
+                    };
+                } else {
+                    merged.push(it);
+                }
+            }
+            setFormItems(merged);
+            showNotice(`✨ Appended ${parsedBatchResult.items.length} items to bundle!`);
+        }
+
+        setBatchPasteModalOpen(false);
+    };
+
+    // Standalone direct creation from Batch Paste modal
+    const handleCreateBundleFromBatchPaste = () => {
+        if (parsedBatchResult.items.length === 0) {
+            showNotice('No items parsed from input. Please check your pasted text.', 'error');
+            return;
+        }
+
+        setEditingBundle(null);
+        setFormTitle(batchPasteBundleTitle.trim() || `Bundle (${new Date().toLocaleDateString()})`);
+        setFormDescription(`Auto-parsed bundle with ${parsedBatchResult.totalSlots} items.`);
+        setFormCategory(batchPasteCategory);
+        setFormIcon('fa-box-open');
+        setFormTarget(batchPasteTarget);
+        setFormItems(parsedBatchResult.items);
+
+        setBatchPasteModalOpen(false);
+        setEditModalOpen(true);
+        showNotice(`✨ Loaded ${parsedBatchResult.items.length} parsed item types into Builder! Review & save.`);
     };
 
     // Load bundles from DB
@@ -408,10 +497,22 @@ export const DashboardBundles = () => {
                     </p>
                 </div>
 
-                <div className="d-flex gap-2">
+                <div className="d-flex flex-wrap gap-2">
                     <button type="button" className="btn btn-outline-secondary rounded-pill fw-bold btn-sm" onClick={handleExportJson}>
                         <i className="fa-solid fa-file-export me-1"></i>
                         Export JSON
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-outline-success rounded-pill fw-bold btn-sm shadow-xs"
+                        onClick={() => {
+                            setBatchPasteInput('');
+                            setBatchPasteBundleTitle('');
+                            setBatchPasteModalOpen(true);
+                        }}
+                    >
+                        <i className="fa-solid fa-paste me-1"></i>
+                        Batch Paste Codes
                     </button>
                     <button type="button" className="btn btn-nook text-white rounded-pill fw-bold btn-sm shadow-sm" onClick={openCreateModal}>
                         <i className="fa-solid fa-wand-magic-sparkles me-1"></i>
@@ -702,21 +803,34 @@ export const DashboardBundles = () => {
                                         </div>
 
                                         <div className="d-flex flex-wrap gap-2 align-items-center">
-                                            <div className="input-group input-group-sm" style={{ maxWidth: '210px' }}>
-                                                <span className="input-group-text bg-dark text-white font-monospace py-0 px-2" style={{ fontSize: '0.7rem' }}>HEX</span>
+                                            <div className="input-group input-group-sm" style={{ maxWidth: '280px' }}>
+                                                <span className="input-group-text bg-dark text-white font-monospace py-0 px-2" style={{ fontSize: '0.7rem' }}>HEX/CODE</span>
                                                 <input
                                                     type="text"
-                                                    className="form-control font-monospace text-uppercase form-control-sm py-0"
-                                                    placeholder="Hex ID (e.g. 1431)"
+                                                    className="form-control font-monospace form-control-sm py-0"
+                                                    placeholder="e.g. 1431 3438 or !order..."
                                                     style={{ fontSize: '0.75rem' }}
                                                     value={manualHex}
                                                     onChange={(e) => setManualHex(e.target.value)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleManualAddHex())}
+                                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleInlineQuickParse())}
                                                 />
-                                                <button type="button" className="btn btn-nook text-white fw-bold py-0 px-2" style={{ fontSize: '0.75rem' }} onClick={handleManualAddHex}>
-                                                    +Add
+                                                <button type="button" className="btn btn-nook text-white fw-bold py-0 px-2" style={{ fontSize: '0.75rem' }} onClick={handleInlineQuickParse}>
+                                                    +Parse
                                                 </button>
                                             </div>
+
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold text-dark"
+                                                onClick={() => {
+                                                    setBatchPasteInput('');
+                                                    setBatchPasteModalOpen(true);
+                                                }}
+                                                title="Open multi-line batch paste & parser modal"
+                                            >
+                                                <i className="fa-solid fa-paste me-1 text-success"></i>
+                                                Batch Paste
+                                            </button>
 
                                             <button
                                                 type="button"
@@ -1009,6 +1123,212 @@ export const DashboardBundles = () => {
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Batch Paste & Parse Item Codes Modal */}
+            {batchPasteModalOpen && (
+                <div
+                    className="modal fade show d-block"
+                    tabIndex={-1}
+                    role="dialog"
+                    aria-modal="true"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)', zIndex: 1070 }}
+                >
+                    <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                        <div className="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                            <div className="modal-header border-0 bg-dark text-white px-4 py-3 d-flex align-items-center justify-content-between">
+                                <div className="d-flex align-items-center gap-2">
+                                    <div className="bg-success rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: 34, height: 34 }}>
+                                        <i className="fa-solid fa-paste text-white small"></i>
+                                    </div>
+                                    <div>
+                                        <h5 className="modal-title fw-black mb-0">Batch Paste & Parse Item Codes</h5>
+                                        <span className="tiny-text opacity-75">Auto-converts bot commands, multi-line hex lists, and item names</span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    aria-label="Close"
+                                    onClick={() => setBatchPasteModalOpen(false)}
+                                />
+                            </div>
+
+                            <div className="modal-body p-4 bg-light">
+                                {/* Instructions & Example tags */}
+                                <div className="mb-3">
+                                    <label className="form-label fw-bold small text-dark d-flex align-items-center justify-content-between mb-1">
+                                        <span>Paste Raw Item Codes or Bot Command:</span>
+                                        <span className="tiny-text text-muted">Supports spaces, commas, line breaks, multipliers (1431x10)</span>
+                                    </label>
+                                    <textarea
+                                        className="form-control font-monospace border-2 rounded-3 text-dark"
+                                        rows={6}
+                                        style={{ fontSize: '0.85rem' }}
+                                        placeholder={"Paste here, for example:\n!order 1431 3438 0BF1 11F4\nor\n1431x10, 3438x5, Gold Nugget x10\nor\n1431\n3438\n0BF1"}
+                                        value={batchPasteInput}
+                                        onChange={(e) => setBatchPasteInput(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                {/* Quick Example Fillers */}
+                                <div className="d-flex flex-wrap gap-1 align-items-center mb-3">
+                                    <span className="tiny-text text-muted fw-bold me-1">Try Samples:</span>
+                                    <button
+                                        type="button"
+                                        className="badge bg-white text-dark border rounded-pill px-2 py-1 x-small fw-bold cursor-pointer"
+                                        onClick={() => setBatchPasteInput("!order 1431 3438 0BF1 1024 1025 09A2 09A3")}
+                                    >
+                                        Sample !order command
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="badge bg-white text-dark border rounded-pill px-2 py-1 x-small fw-bold cursor-pointer"
+                                        onClick={() => setBatchPasteInput("3438x20, 1431x10, 0BF1x10")}
+                                    >
+                                        Multipliers (3438x20...)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="badge bg-white text-dark border rounded-pill px-2 py-1 x-small fw-bold cursor-pointer"
+                                        onClick={() => setBatchPasteInput("Royal Crown x10\nNook Miles Ticket x20\nGold Nugget x10")}
+                                    >
+                                        Item Names by Line
+                                    </button>
+                                </div>
+
+                                {/* Live Parse Summary Box */}
+                                <div className="bg-white rounded-4 border p-3 shadow-2xs mb-3">
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <span className={`badge rounded-pill px-3 py-1 fw-bold ${parsedBatchResult.items.length > 0 ? 'bg-success text-white' : 'bg-secondary text-white'}`}>
+                                                {parsedBatchResult.items.length} Item Types
+                                            </span>
+                                            <span className={`badge rounded-pill px-3 py-1 fw-bold ${parsedBatchResult.totalSlots > (formTarget === 'drop' ? 9 : 40) ? 'bg-danger text-white' : 'bg-light text-dark border'}`}>
+                                                {parsedBatchResult.totalSlots} Total Slots
+                                            </span>
+                                        </div>
+                                        <span className="tiny-text text-muted fw-bold">
+                                            {parsedBatchResult.parsedSummary}
+                                        </span>
+                                    </div>
+
+                                    {/* Unrecognized warning if any */}
+                                    {parsedBatchResult.unrecognizedTokens.length > 0 && (
+                                        <div className="alert alert-warning py-1 px-3 mb-2 small rounded-3 d-flex align-items-center gap-2">
+                                            <i className="fa-solid fa-triangle-exclamation text-warning"></i>
+                                            <span className="tiny-text">Unrecognized tokens: {parsedBatchResult.unrecognizedTokens.slice(0, 5).join(', ')}{parsedBatchResult.unrecognizedTokens.length > 5 ? ` (+${parsedBatchResult.unrecognizedTokens.length - 5} more)` : ''}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Parsed Items Preview Chips */}
+                                    {parsedBatchResult.items.length > 0 ? (
+                                        <div className="d-flex flex-wrap gap-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                                            {parsedBatchResult.items.map((item, idx) => (
+                                                <div key={idx} className="badge bg-light text-dark border rounded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-2xs">
+                                                    {item.image && (
+                                                        <img src={item.image} alt={item.name} style={{ width: 20, height: 20, objectFit: 'contain' }} onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+                                                    )}
+                                                    <span className="font-monospace text-muted x-small">[{item.itemId}]</span>
+                                                    <span className="fw-bold">{item.name}</span>
+                                                    <span className="badge bg-dark text-white rounded-pill px-2">×{item.quantity}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-3 text-muted tiny-text">
+                                            Type or paste item codes above to see instant preview.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Target options if opening standalone */}
+                                {!editModalOpen && (
+                                    <div className="row g-2 mb-2">
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-bold tiny-text text-muted text-uppercase mb-1">Bundle Title (Optional)</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm rounded-3"
+                                                placeholder="e.g. Starter Wealth Pack"
+                                                value={batchPasteBundleTitle}
+                                                onChange={(e) => setBatchPasteBundleTitle(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="col-md-3">
+                                            <label className="form-label fw-bold tiny-text text-muted text-uppercase mb-1">Target</label>
+                                            <select
+                                                className="form-select form-select-sm rounded-3"
+                                                value={batchPasteTarget}
+                                                onChange={(e) => setBatchPasteTarget(e.target.value as 'order' | 'drop')}
+                                            >
+                                                <option value="order">Order Bot (40 Slots)</option>
+                                                <option value="drop">Drop Bot (9 Slots)</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <label className="form-label fw-bold tiny-text text-muted text-uppercase mb-1">Category</label>
+                                            <select
+                                                className="form-select form-select-sm rounded-3"
+                                                value={batchPasteCategory}
+                                                onChange={(e) => setBatchPasteCategory(e.target.value as PocketBundleCategory)}
+                                            >
+                                                {CATEGORIES.filter(c => c !== 'All').map(c => (
+                                                    <option key={c} value={c}>{c}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="modal-footer border-0 bg-white px-4 py-3 d-flex justify-content-between">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary rounded-pill px-4 fw-bold btn-sm"
+                                    onClick={() => setBatchPasteModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+
+                                <div className="d-flex gap-2">
+                                    {editModalOpen ? (
+                                        <>
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-success rounded-pill px-3 fw-bold btn-sm"
+                                                disabled={parsedBatchResult.items.length === 0}
+                                                onClick={() => handleApplyBatchPasteToEditor('append')}
+                                            >
+                                                + Append to Current ({parsedBatchResult.items.length})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-nook text-white rounded-pill px-4 fw-bold btn-sm shadow-sm"
+                                                disabled={parsedBatchResult.items.length === 0}
+                                                onClick={() => handleApplyBatchPasteToEditor('replace')}
+                                            >
+                                                <i className="fa-solid fa-check me-1"></i>
+                                                Replace Bundle Items ({parsedBatchResult.items.length})
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className="btn btn-nook text-white rounded-pill px-4 fw-bold btn-sm shadow-sm"
+                                            disabled={parsedBatchResult.items.length === 0}
+                                            onClick={handleCreateBundleFromBatchPaste}
+                                        >
+                                            <i className="fa-solid fa-wand-magic-sparkles me-1"></i>
+                                            Open in Visual Editor ({parsedBatchResult.items.length})
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

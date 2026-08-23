@@ -229,7 +229,7 @@ const DodoDecryptor: React.FC = () => {
                 }
 
                 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
-                :root { --nook-bg: #f2f4e6; --nook-green: #28a745; }
+                :root { --nook-bg: #f2f4e6; --nook-green: #37b06d; }
                 .font-nunito { font-family: 'Nunito', sans-serif; }
                 .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
                 .fw-black { font-weight: 900; }
@@ -242,13 +242,13 @@ const DodoDecryptor: React.FC = () => {
                 .tracking-widest { letter-spacing: 0.2em; }
                 .tracking-wider { letter-spacing: 0.1em; }
                 .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05); }
-                .btn-nook-primary { background-color: #88e0a0; color: white; border: 2px solid #fff; transition: all 0.2s; }
-                .btn-nook-primary:hover { background-color: #6fd18b; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(136, 224, 160, 0.4) !important; }
+                .btn-nook-primary { background-color: #37b06d; color: white; border: 2px solid rgba(255, 255, 255, 0.4); transition: all 0.2s; }
+                .btn-nook-primary:hover { background-color: #2ea466; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(55, 176, 109, 0.4) !important; }
                 .btn-white { background: white; transition: all 0.2s; }
                 .btn-white:hover { transform: translateY(-3px); }
                 .transform-active:active { transform: scale(0.95) !important; }
-                .live-dot { width: 8px; height: 8px; background: #28a745; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-                @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+                .live-dot { width: 8px; height: 8px; background: #37b06d; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+                @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(55, 176, 109, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(55, 176, 109, 0); } 100% { box-shadow: 0 0 0 0 rgba(55, 176, 109, 0); } }
                 .tape-strip { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); width: 100px; height: 35px; background-color: rgba(230, 230, 230, 0.6); border-left: 2px dashed rgba(0,0,0,0.1); border-right: 2px dashed rgba(0,0,0,0.1); box-shadow: 0 2px 5px rgba(0,0,0,0.05); backdrop-filter: blur(2px); z-index: 5; }
                 .ticket-notch { position: absolute; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; background-color: #fffdf0; border-radius: 50%; }
                 .notch-left { left: -10px; box-shadow: inset -2px 0 3px rgba(0,0,0,0.05); }

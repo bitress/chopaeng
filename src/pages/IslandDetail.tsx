@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
+import { useFavoriteIslands } from "../hooks/useFavoriteIslands";
 import RevealErrorPopup from "../components/RevealErrorPopup";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import { DODO_API_BASE } from "../config/api";
@@ -73,6 +74,7 @@ const IslandDetail = () => {
     const location = useLocation();
     const { islands, villagersMap, loading } = useIslandData();
     const { user, login, canAccessIsland } = useAuth();
+    const { isFavoriteIsland, toggleFavoriteIsland } = useFavoriteIslands();
 
     const [showImageModal, setShowImageModal] = useState(false);
     const [revealedCode, setRevealedCode] = useState<string | null>(null);
@@ -337,16 +339,35 @@ const IslandDetail = () => {
             </Helmet>
 
             <div className="container" style={{ maxWidth: "1050px" }}>
-                {/* Navigation Breadcrumb */}
-                <div className="d-flex align-items-center mb-4 px-2">
+                {/* Navigation Breadcrumb & Favorite Button */}
+                <div className="d-flex align-items-center justify-content-between mb-4 px-2">
+                    <div className="d-flex align-items-center">
+                        <button
+                            onClick={() => navigate("/islands")}
+                            className="btn-nook-back me-3"
+                            aria-label="Back to Islands"
+                        >
+                            <i className="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <span className="text-muted fw-bold text-uppercase small tracking-wide">
+                            Islands / {island.name}
+                        </span>
+                    </div>
+
                     <button
-                        onClick={() => navigate("/islands")}
-                        className="btn-nook-back me-3"
-                        aria-label="Back to Islands"
+                        type="button"
+                        onClick={(e) => toggleFavoriteIsland(island.id, e)}
+                        className={`btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 shadow-sm transition-all ${
+                            isFavoriteIsland(island.id)
+                                ? "btn-warning text-dark border-warning"
+                                : "btn-white bg-white text-muted border border-light-subtle hover-shadow-sm"
+                        }`}
+                        title={isFavoriteIsland(island.id) ? "Remove from Favorites" : "Add to Favorites"}
+                        aria-label={isFavoriteIsland(island.id) ? "Favorited" : "Add to Favorites"}
                     >
-                        <i className="fa-solid fa-arrow-left"></i>
+                        <i className={`${isFavoriteIsland(island.id) ? "fa-solid text-dark" : "fa-regular text-warning"} fa-star`}></i>
+                        <span>{isFavoriteIsland(island.id) ? "Favorited" : "Add to Favorites"}</span>
                     </button>
-                    <span className="text-muted fw-bold text-uppercase small tracking-wide">Islands</span>
                 </div>
 
                 <div className="row g-4">
@@ -381,7 +402,21 @@ const IslandDetail = () => {
                                         <h1 className="island-title">{island.name}</h1>
                                         <span className="island-badge">{island.type}</span>
                                     </div>
-                                    <i className="fa-solid fa-passport fa-4x opacity-25 text-white rotate-12"></i>
+                                    <div className="d-flex align-items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => toggleFavoriteIsland(island.id, e)}
+                                            className={`btn btn-sm rounded-circle border-0 shadow-sm d-flex align-items-center justify-content-center transition-all ${
+                                                isFavoriteIsland(island.id) ? "bg-warning text-dark" : "bg-white bg-opacity-75 text-muted hover-bg-white"
+                                            }`}
+                                            style={{ width: 40, height: 40 }}
+                                            title={isFavoriteIsland(island.id) ? "Remove from Favorites" : "Add to Favorites"}
+                                            aria-label={isFavoriteIsland(island.id) ? "Favorited" : "Add to Favorites"}
+                                        >
+                                            <i className={`${isFavoriteIsland(island.id) ? "fa-solid text-dark" : "fa-regular text-warning"} fa-star fs-5`}></i>
+                                        </button>
+                                        <i className="fa-solid fa-passport fa-4x opacity-25 text-white rotate-12"></i>
+                                    </div>
                                 </div>
                                 <div className="wave-pattern"></div>
                             </div>
