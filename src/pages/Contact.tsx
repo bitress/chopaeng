@@ -70,7 +70,7 @@ const Contact = () => {
                             </div>
 
                             <div className="z-1 position-relative d-flex flex-column h-100">
-                                <div className="icon-squircle bg-warning text-white mx-auto mb-3 shadow-sm" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                                <div className="icon-squircle bg-warning text-white mx-auto mb-3 shadow-sm">
                                     <i className="fa-solid fa-lightbulb fs-3"></i>
                                 </div>
                                 <h3 className="fw-black ac-font text-dark mb-2">Idea & Feedback</h3>

@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/useAuth';
-import {
-    SUGGESTION_CATEGORIES,
-    type SuggestionCategory,
-    type SuggestionFormData,
-} from '../../types/suggestion';
+import type { SuggestionFormData } from '../../types/suggestion';
 import {
     sendDiscordSuggestion,
     getSuggestionCooldownRemaining,
@@ -13,17 +9,13 @@ import {
 interface SuggestionModalProps {
     isOpen?: boolean;
     onClose?: () => void;
-    initialCategory?: SuggestionCategory;
 }
-
 
 export const SuggestionModal = ({
     isOpen: controlledIsOpen,
     onClose: controlledOnClose,
-    initialCategory = 'feature',
 }: SuggestionModalProps) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [category, setCategory] = useState<SuggestionCategory>(initialCategory);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [discordUsername, setDiscordUsername] = useState('');
@@ -45,11 +37,7 @@ export const SuggestionModal = ({
 
     // Handle global event trigger
     useEffect(() => {
-        const handleOpenEvent = (e: Event) => {
-            const customEvent = e as CustomEvent<{ category?: SuggestionCategory }>;
-            if (customEvent.detail?.category) {
-                setCategory(customEvent.detail.category);
-            }
+        const handleOpenEvent = () => {
             setIsOpen(true);
             setIsSubmitted(false);
             setErrorMessage(null);
@@ -99,7 +87,6 @@ export const SuggestionModal = ({
         setErrorMessage(null);
     };
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim() || !description.trim()) {
@@ -111,7 +98,6 @@ export const SuggestionModal = ({
         setErrorMessage(null);
 
         const payload: SuggestionFormData = {
-            category,
             title: title.trim(),
             description: description.trim(),
             discordUsername: discordUsername.trim() || undefined,
@@ -137,147 +123,88 @@ export const SuggestionModal = ({
 
     if (!isOpen) return null;
 
-    const currentCat = SUGGESTION_CATEGORIES[category] || SUGGESTION_CATEGORIES.feature;
     const charPercentage = Math.min(100, Math.round((description.length / 1000) * 100));
 
     return (
         <div
             className="modal show d-block fade-in"
             style={{
-                backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                backgroundColor: 'rgba(0, 0, 0, 0.55)',
                 zIndex: 1060,
-                backdropFilter: 'blur(10px)',
+                backdropFilter: 'blur(4px)',
             }}
             onClick={handleClose}
         >
             <div
                 className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable my-3"
                 onClick={(e) => e.stopPropagation()}
-                style={{ maxWidth: '720px' }}
+                style={{ maxWidth: '620px' }}
             >
-                <div
-                    className="modal-content rounded-5 border-0 shadow-2xl overflow-hidden"
-                    style={{
-                        backgroundColor: '#f8faf7',
-                        backgroundImage: 'radial-gradient(#dce2c8 10%, transparent 11%)',
-                        backgroundSize: '24px 24px',
-                    }}
-                >
-                    {/* ── Modal Header with Rich AC Styling ────────────────── */}
-                    <div
-                        className="modal-header py-4 px-4 border-0 position-relative overflow-hidden"
-                        style={{
-                            background: 'linear-gradient(135deg, #0f4c2e 0%, #166534 50%, #064e3b 100%)',
-                            color: '#ffffff',
-                            borderBottom: '3px solid rgba(255, 255, 255, 0.15)',
-                        }}
-                    >
-                        {/* Decorative Leaf Shapes */}
-                        <div
-                            className="position-absolute opacity-10 pointer-events-none"
-                            style={{ top: '-30px', right: '-20px', fontSize: '9rem' }}
-                        >
-                            <i className="fa-solid fa-leaf"></i>
-                        </div>
-
-                        <div className="d-flex align-items-center gap-3 z-1">
+                <div className="modal-content rounded-4 border-0 shadow-lg overflow-hidden bg-white">
+                    {/* ── Modal Header (Clean Flat Style) ────────────────────── */}
+                    <div className="modal-header py-3 px-4 bg-white border-bottom border-light-subtle">
+                        <div className="d-flex align-items-center gap-3">
                             <div
-                                className="rounded-4 d-flex align-items-center justify-content-center shadow-md position-relative"
+                                className="rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success"
                                 style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-                                    color: '#ffd166',
-                                    backdropFilter: 'blur(8px)',
-                                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                                    transform: 'rotate(-4deg)',
+                                    width: '40px',
+                                    height: '40px',
                                 }}
                             >
-                                <i className="fa-solid fa-lightbulb fs-4"></i>
+                                <i className="fa-solid fa-lightbulb text-warning fs-5"></i>
                             </div>
                             <div>
-                                <div className="d-flex align-items-center gap-2 mb-1">
-                                    <h4 className="modal-title fw-black ac-font mb-0 text-white" style={{ fontSize: '1.25rem' }}>
+                                <div className="d-flex align-items-center gap-2 mb-0">
+                                    <h4 className="modal-title fw-black ac-font mb-0 text-dark" style={{ fontSize: '1.15rem' }}>
                                         Resident Suggestion Box
                                     </h4>
-                                    <span
-                                        className="badge rounded-pill x-small fw-black d-flex align-items-center gap-1 shadow-2xs"
-                                        style={{
-                                            backgroundColor: 'rgba(88, 101, 242, 0.85)',
-                                            color: '#ffffff',
-                                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                                        }}
-                                    >
-                                        <i className="fa-brands fa-discord"></i>
-                                        <span>Direct to Staff</span>
+                                    <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill x-small fw-bold border border-primary border-opacity-25">
+                                        <i className="fa-brands fa-discord me-1"></i>Discord Relay
                                     </span>
                                 </div>
-                                <p className="tiny-text mb-0 text-white-50">
-                                    Have a cool feature idea, island theme, or bug to report? We read every submission!
+                                <p className="tiny-text mb-0 text-muted">
+                                    Send your ideas, feature requests, or bugs directly to staff
                                 </p>
                             </div>
                         </div>
 
                         <button
                             type="button"
-                            className="btn-close btn-close-white shadow-none opacity-75 hover-opacity-100 position-relative z-1"
+                            className="btn-close shadow-none"
                             onClick={handleClose}
                             aria-label="Close"
                         ></button>
                     </div>
 
                     {/* ── Modal Body ───────────────────────────────────────── */}
-                    <div className="modal-body p-4 p-md-4">
+                    <div className="modal-body p-4">
                         {isSubmitted ? (
-                            /* ── Celebratory Stamped Letter Receipt ────────────── */
-                            <div className="text-center py-4 px-3 animate-scale-up">
+                            /* ── Celebratory Delivery Screen ──────────────────── */
+                            <div className="text-center py-4 px-2 animate-scale-up">
                                 <div
-                                    className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-lg position-relative"
+                                    className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-success text-white shadow-sm"
                                     style={{
-                                        width: '84px',
-                                        height: '84px',
-                                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                        color: '#ffffff',
-                                        border: '4px solid #ffffff',
+                                        width: '72px',
+                                        height: '72px',
                                     }}
                                 >
-                                    <i className="fa-solid fa-envelope-circle-check fs-1"></i>
-                                    <span
-                                        className="position-absolute top-0 end-0 p-1 bg-warning rounded-circle border border-white"
-                                        style={{ width: '14px', height: '14px' }}
-                                    ></span>
+                                    <i className="fa-solid fa-envelope-circle-check fs-2"></i>
                                 </div>
 
-                                <h3 className="fw-black ac-font text-dark mb-2" style={{ fontSize: '1.4rem' }}>
+                                <h3 className="fw-black ac-font text-dark mb-2" style={{ fontSize: '1.3rem' }}>
                                     Delivered to Staff Discord!
                                 </h3>
-                                <p className="text-muted small mb-4" style={{ maxWidth: '460px', margin: '0 auto' }}>
-                                    Thank you for your feedback! Your message has been formatted into a live embed and dispatched directly to the moderator & development channels.
+                                <p className="text-muted small mb-4" style={{ maxWidth: '440px', margin: '0 auto' }}>
+                                    Thank you! Your feedback has been formatted into an embed and dispatched directly to the staff Discord channel.
                                 </p>
 
-                                {/* Stamped Ticket Card */}
+                                {/* Delivery Summary Card */}
                                 <div
-                                    className="rounded-4 p-3 bg-white border border-light-subtle shadow-sm mb-4 text-start position-relative overflow-hidden"
-                                    style={{ maxWidth: '500px', margin: '0 auto' }}
+                                    className="rounded-3 p-3 bg-light border border-light-subtle shadow-2xs mb-4 text-start position-relative"
+                                    style={{ maxWidth: '480px', margin: '0 auto' }}
                                 >
-                                    {/* Cute Wax Stamp Badge */}
-                                    <div
-                                        className="position-absolute top-0 end-0 m-3 px-2 py-1 rounded-pill text-success border border-success border-opacity-50 fw-black tiny-text font-monospace text-uppercase"
-                                        style={{ backgroundColor: '#ecfdf5', transform: 'rotate(5deg)' }}
-                                    >
-                                        <i className="fa-solid fa-stamp me-1"></i>Delivered
-                                    </div>
-
-                                    <div className="d-flex align-items-center gap-2 mb-2">
-                                        <span
-                                            className="badge rounded-pill text-white px-2 py-1 tiny-text fw-bold"
-                                            style={{ backgroundColor: currentCat.color }}
-                                        >
-                                            {currentCat.badgeText}
-                                        </span>
-                                        <span className="fw-black text-dark font-monospace text-truncate pe-5" style={{ fontSize: '0.9rem' }}>
-                                            {title}
-                                        </span>
+                                    <div className="fw-black text-dark font-monospace mb-1" style={{ fontSize: '0.95rem' }}>
+                                        💡 {title}
                                     </div>
 
                                     <p className="text-muted mb-2 small text-truncate-3" style={{ fontSize: '0.85rem' }}>
@@ -293,14 +220,14 @@ export const SuggestionModal = ({
                                 <div className="d-flex justify-content-center gap-2">
                                     <button
                                         type="button"
-                                        className="btn btn-light rounded-pill px-4 fw-bold border hover-bg-light"
+                                        className="btn btn-light rounded-pill px-4 fw-bold border"
                                         onClick={handleClose}
                                     >
                                         Done
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-success text-white rounded-pill px-4 fw-black shadow-2xs"
+                                        className="btn btn-success text-white rounded-pill px-4 fw-bold shadow-2xs"
                                         onClick={handleReset}
                                     >
                                         <i className="fa-solid fa-plus me-1"></i>Submit Another Idea
@@ -308,104 +235,30 @@ export const SuggestionModal = ({
                                 </div>
                             </div>
                         ) : (
-                            /* ── Rich Form View ───────────────────────────────── */
+                            /* ── Clean Form View ──────────────────────────────── */
                             <form onSubmit={handleSubmit}>
-                                {/* 1. Category Selection Cards */}
-                                <div className="mb-4">
-                                    <div className="d-flex align-items-center justify-content-between mb-2">
-                                        <label className="form-label fw-black text-uppercase text-muted tiny-text letter-spacing-1 mb-0">
-                                            1. Choose Topic Category
-                                        </label>
-                                        <span className="tiny-text text-muted font-monospace">
-                                            {currentCat.name}
-                                        </span>
-                                    </div>
-
-                                    <div className="row g-2">
-                                        {(Object.keys(SUGGESTION_CATEGORIES) as SuggestionCategory[]).map((catKey) => {
-                                            const meta = SUGGESTION_CATEGORIES[catKey];
-                                            const isSelected = category === catKey;
-
-                                            return (
-                                                <div key={catKey} className="col-6 col-md-4">
-                                                    <button
-                                                        type="button"
-                                                        className={`card w-100 p-2 text-start rounded-4 transition-all position-relative overflow-hidden cursor-pointer ${
-                                                            isSelected
-                                                                ? 'shadow-sm border-2'
-                                                                : 'bg-white border-light-subtle hover-shadow-2xs'
-                                                        }`}
-                                                        style={{
-                                                            borderColor: isSelected ? meta.color : undefined,
-                                                            backgroundColor: isSelected ? '#ffffff' : '#ffffff',
-                                                            transform: isSelected ? 'scale(1.02)' : 'scale(1)',
-                                                        }}
-                                                        onClick={() => setCategory(catKey)}
-                                                    >
-                                                        {/* Top Accent Strip */}
-                                                        {isSelected && (
-                                                            <div
-                                                                className="position-absolute top-0 start-0 w-100"
-                                                                style={{ height: '3px', backgroundColor: meta.color }}
-                                                            ></div>
-                                                        )}
-
-                                                        <div className="d-flex align-items-center gap-2">
-                                                            <div
-                                                                className="rounded-3 d-flex align-items-center justify-content-center text-white flex-shrink-0 shadow-2xs"
-                                                                style={{
-                                                                    width: '32px',
-                                                                    height: '32px',
-                                                                    backgroundColor: meta.color,
-                                                                    fontSize: '0.85rem',
-                                                                }}
-                                                            >
-                                                                <i className={`fa-solid ${meta.icon}`}></i>
-                                                            </div>
-                                                            <div className="overflow-hidden">
-                                                                <div
-                                                                    className="fw-black text-dark text-truncate"
-                                                                    style={{ fontSize: '0.82rem' }}
-                                                                >
-                                                                    {meta.name}
-                                                                </div>
-                                                                <div
-                                                                    className="tiny-text text-muted text-truncate"
-                                                                    style={{ fontSize: '0.68rem' }}
-                                                                >
-                                                                    {meta.badgeText}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* 2. Suggestion Title */}
+                                {/* 1. Suggestion Title */}
                                 <div className="mb-3">
                                     <label className="form-label fw-black text-uppercase text-muted tiny-text letter-spacing-1 mb-1">
-                                        2. Suggestion Title <span className="text-danger">*</span>
+                                        Suggestion Title <span className="text-danger">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        className="form-control form-control-lg rounded-4 fw-bold border shadow-none"
-                                        placeholder="e.g. Add 1-Click Pocket Autofill Filter"
+                                        className="form-control rounded-3 fw-bold border-light-subtle shadow-none"
+                                        placeholder="e.g. Add 1-Click Pocket Autofill in Command Builder"
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         maxLength={120}
                                         required
-                                        style={{ fontSize: '0.95rem' }}
+                                        style={{ fontSize: '0.92rem' }}
                                     />
                                 </div>
 
-                                {/* 3. Details & Explanation */}
+                                {/* 2. Details & Notes */}
                                 <div className="mb-3">
                                     <div className="d-flex align-items-center justify-content-between mb-1">
                                         <label className="form-label fw-black text-uppercase text-muted tiny-text letter-spacing-1 mb-0">
-                                            3. Details & Notes <span className="text-danger">*</span>
+                                            Details & Explanation <span className="text-danger">*</span>
                                         </label>
                                         <span
                                             className={`tiny-text font-monospace ${
@@ -417,9 +270,9 @@ export const SuggestionModal = ({
                                     </div>
 
                                     <textarea
-                                        className="form-control rounded-4 border shadow-none"
+                                        className="form-control rounded-3 border-light-subtle shadow-none"
                                         rows={4}
-                                        placeholder={currentCat.placeholder}
+                                        placeholder="Describe your idea, feature request, island feedback, or bug report..."
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         maxLength={1000}
@@ -442,8 +295,8 @@ export const SuggestionModal = ({
                                     </div>
                                 </div>
 
-                                {/* 4. Resident Passport / Contact Card */}
-                                <div className="card rounded-4 p-3 bg-white border border-light-subtle shadow-2xs mb-4">
+                                {/* 3. Resident Info Card */}
+                                <div className="card rounded-3 p-3 bg-light border border-light-subtle shadow-2xs mb-4">
                                     <div className="d-flex align-items-center gap-2 mb-2">
                                         <div
                                             className="rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success"
@@ -452,19 +305,19 @@ export const SuggestionModal = ({
                                             <i className="fa-solid fa-id-card"></i>
                                         </div>
                                         <span className="tiny-text fw-black text-uppercase text-muted letter-spacing-1">
-                                            Resident Passport (Optional)
+                                            Resident Info (Optional)
                                         </span>
                                     </div>
 
                                     <div className="row g-2">
                                         <div className="col-12 col-md-5">
                                             <div className="input-group input-group-sm">
-                                                <span className="input-group-text bg-light border-light-subtle text-muted">
+                                                <span className="input-group-text bg-white border-light-subtle text-muted">
                                                     <i className="fa-brands fa-discord text-primary"></i>
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    className="form-control shadow-none"
+                                                    className="form-control shadow-none bg-white"
                                                     placeholder="Discord tag (e.g. Cho#0001)"
                                                     value={discordUsername}
                                                     onChange={(e) => setDiscordUsername(e.target.value)}
@@ -474,12 +327,12 @@ export const SuggestionModal = ({
 
                                         <div className="col-6 col-md-3">
                                             <div className="input-group input-group-sm">
-                                                <span className="input-group-text bg-light border-light-subtle text-muted">
+                                                <span className="input-group-text bg-white border-light-subtle text-muted">
                                                     <i className="fa-solid fa-user text-success"></i>
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    className="form-control shadow-none"
+                                                    className="form-control shadow-none bg-white"
                                                     placeholder="In-Game Name"
                                                     value={inGameName}
                                                     onChange={(e) => setInGameName(e.target.value)}
@@ -489,12 +342,12 @@ export const SuggestionModal = ({
 
                                         <div className="col-6 col-md-4">
                                             <div className="input-group input-group-sm">
-                                                <span className="input-group-text bg-light border-light-subtle text-muted">
+                                                <span className="input-group-text bg-white border-light-subtle text-muted">
                                                     <i className="fa-solid fa-umbrella-beach text-warning"></i>
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    className="form-control shadow-none"
+                                                    className="form-control shadow-none bg-white"
                                                     placeholder="Island Name"
                                                     value={islandName}
                                                     onChange={(e) => setIslandName(e.target.value)}
@@ -506,7 +359,7 @@ export const SuggestionModal = ({
 
                                 {/* Error Alert */}
                                 {errorMessage && (
-                                    <div className="alert alert-danger py-2 px-3 small rounded-4 mb-3 animate-fade-in d-flex align-items-center gap-2">
+                                    <div className="alert alert-danger py-2 px-3 small rounded-3 mb-3 animate-fade-in d-flex align-items-center gap-2">
                                         <i className="fa-solid fa-triangle-exclamation text-danger fs-5"></i>
                                         <span>{errorMessage}</span>
                                     </div>
@@ -531,11 +384,10 @@ export const SuggestionModal = ({
                                         <button
                                             type="submit"
                                             disabled={isSubmitting || cooldown > 0 || !title.trim() || !description.trim()}
-                                            className="btn btn-success text-white rounded-pill px-4 fw-black shadow-sm d-flex align-items-center gap-2 hover-lift"
+                                            className="btn btn-success text-white rounded-pill px-4 fw-black shadow-sm d-flex align-items-center gap-2"
                                             style={{
-                                                minWidth: '150px',
+                                                minWidth: '135px',
                                                 justifyContent: 'center',
-                                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                                             }}
                                         >
                                             {isSubmitting ? (
@@ -565,10 +417,10 @@ export const SuggestionModal = ({
 
             <style>{`
                 .animate-scale-up {
-                    animation: scaleUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    animation: scaleUpModal 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
                 @keyframes scaleUpModal {
-                    from { opacity: 0; transform: scale(0.94); }
+                    from { opacity: 0; transform: scale(0.95); }
                     to { opacity: 1; transform: scale(1); }
                 }
             `}</style>

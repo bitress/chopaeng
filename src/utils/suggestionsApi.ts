@@ -1,8 +1,6 @@
-import {
-    SUGGESTION_CATEGORIES,
-    type SuggestionCategory,
-    type SuggestionFormData,
-    type SuggestionSendResult,
+import type {
+    SuggestionFormData,
+    SuggestionSendResult,
 } from '../types/suggestion';
 
 export const DISCORD_SUGGESTIONS_WEBHOOK_URL =
@@ -43,8 +41,6 @@ export const sendDiscordSuggestion = async (
         };
     }
 
-    const categoryMeta = SUGGESTION_CATEGORIES[data.category] || SUGGESTION_CATEGORIES.general;
-
     // Sender display formatting
     const senderIdentity = data.discordUsername?.trim()
         ? `\`${data.discordUsername.trim()}\``
@@ -57,19 +53,14 @@ export const sendDiscordSuggestion = async (
         .filter(Boolean)
         .join(' • ');
 
-    const fields = [
-        {
-            name: '📂 Category',
-            value: categoryMeta.badgeText,
-            inline: true,
-        },
+    const fields: Array<{ name: string; value: string; inline?: boolean }> = [
         {
             name: '👤 Submitted By',
             value: inGameInfo ? `${senderIdentity}\n${inGameInfo}` : senderIdentity,
             inline: true,
         },
         {
-            name: '📝 Suggestion / Details',
+            name: '📝 Details / Feedback',
             value: data.description.trim().slice(0, 1024),
             inline: false,
         },
@@ -88,9 +79,9 @@ export const sendDiscordSuggestion = async (
         avatar_url: 'https://www.chopaeng.com/logo.png',
         embeds: [
             {
-                title: `${categoryMeta.badgeText} — ${data.title.trim()}`,
+                title: `💡 Suggestion: ${data.title.trim()}`,
                 description: `A new resident suggestion has been submitted from **Chopaeng**!`,
-                color: categoryMeta.discordColor,
+                color: 0x198754,
                 fields,
                 footer: {
                     text: 'Chopaeng Resident Feedback System • Live Dispatcher',
@@ -135,10 +126,6 @@ export const sendDiscordSuggestion = async (
 /**
  * Triggers opening the global suggestion modal.
  */
-export const openSuggestionModal = (initialCategory?: SuggestionCategory) => {
-    window.dispatchEvent(
-        new CustomEvent('chopaeng_open_suggestions', {
-            detail: { category: initialCategory },
-        })
-    );
+export const openSuggestionModal = () => {
+    window.dispatchEvent(new CustomEvent('chopaeng_open_suggestions'));
 };
