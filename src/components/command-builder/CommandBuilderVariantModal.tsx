@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { CatalogEntity } from '../../data/commandBuilderData';
 import type { PocketItem } from '../../hooks/useCommandBuilderPockets';
 import { getVariantCommandParts, getVariantKey, getVariantLabel, type ItemVariant } from '../../utils/commandBuilderHex';
+import { playChimeClick } from '../../utils/kkAudioSynthesizer';
 
 const FALLBACK_IMAGE = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f3f5'/%3E%3Cpath d='M30 65 L45 45 L58 58 L68 42 L75 65 Z' fill='%23ced4da'/%3E%3Ccircle cx='38' cy='35' r='7' fill='%23ced4da'/%3E%3C/svg%3E";
 
@@ -332,7 +333,10 @@ export const CommandBuilderVariantModal: React.FC<CommandBuilderVariantModalProp
                                                 ? 'border-success border-2 shadow-xs bg-success-subtle'
                                                 : 'border-light bg-white hover-border-success hover-shadow-2xs'
                                         }`}
-                                        onClick={() => setSelectedVariantKey(vKey)}
+                                        onClick={() => {
+                                            setSelectedVariantKey(vKey);
+                                            playChimeClick();
+                                        }}
                                         role="button"
                                         tabIndex={0}
                                     >

@@ -51,6 +51,7 @@ type CommandBuilderSummaryProps = {
     onOpenBundlesModal?: () => void;
     onOpenShareModal?: () => void;
     onOpenCommunityLoadoutsModal?: () => void;
+    onFlipOrderAndDrop?: () => void;
 };
 
 const ORDER_BOT_MAX = 40;
@@ -82,6 +83,7 @@ export const CommandBuilderSummary = ({
     onMaximizeStacks,
     onFillRemaining,
     onSortPockets,
+    onFlipOrderAndDrop,
     showTerminal = true,
     onOpenShareModal,
     onOpenCommunityLoadoutsModal,
@@ -378,6 +380,27 @@ export const CommandBuilderSummary = ({
                         isOrderFull={orderFull}
                         hasItems={orderPockets.length > 0}
                     />
+                )}
+
+                {onFlipOrderAndDrop && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onFlipOrderAndDrop();
+                            playChimeClick();
+                        }}
+                        className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-2 shadow-2xs transition-all d-flex align-items-center justify-content-center gap-2"
+                        title="Swap or convert items between Order (40 slots) and Drop (9 radius spots)"
+                        disabled={isEmpty}
+                        style={{
+                            borderColor: isEmpty ? '#e9ecef' : '#cbd5e1',
+                            fontSize: '0.8rem',
+                        }}
+                    >
+                        <i className="fa-solid fa-right-left text-info"></i>
+                        <span className="d-none d-md-inline">Flip Order ⇄ Drop</span>
+                        <span className="d-inline d-md-none">Flip</span>
+                    </button>
                 )}
 
                 {onOpenShareModal && (

@@ -16,7 +16,6 @@ import {
     fetchOrderQueue,
     fetchUserOrderHistory,
     requestNotificationPermission,
-    notifyOrderReady,
     saveLocalOrderBackup,
     type BotStatusResponse,
     type OrderStatusResponse,
@@ -90,6 +89,21 @@ const clearOrder = () => {
 };
 
 const fmtEta = (m?: number) => (!m ? '--' : m < 1 ? '< 1 min' : `~${Math.round(m)} min`);
+
+const triggerBrowserNotification = (title: string, body: string) => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+        try {
+            new Notification(title, {
+                body,
+                icon: 'https://dodo.ac/np/images/2/26/Gold_Nugget_NH_Inv_Icon.png',
+                tag: 'chopaeng-order-dodo',
+            });
+        } catch {
+            // Ignore
+        }
+    }
+};
 
 const formatDateTime = (value?: string | number | null) => {
     if (!value) return '';
@@ -352,7 +366,10 @@ const OrderBot: React.FC = () => {
         if (d.status === 'ready' && !notifiedRef.current) {
             notifiedRef.current = true;
             playChimeClick();
-            notifyOrderReady(d.islandName, d.dodoCode);
+            triggerBrowserNotification(
+                '🦤 Your Order Bot Dodo Code is Ready!',
+                `Your flight to ${d.islandName || 'the island'} is ready! Dodo Code: ${d.dodoCode}`
+            );
             triggerInAppToast({
                 type: 'dodo',
                 title: '✈️ Dodo Code Ready!',
@@ -1261,6 +1278,30 @@ const OrderBot: React.FC = () => {
                                                     </div>
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+
+                                    {/* Browser Notification Prompt */}
+                                    {!isReady && !isDone && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
+                                        <div className="alert alert-warning border-warning-subtle rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2 shadow-2xs">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <i className="fa-solid fa-bell text-warning fs-5"></i>
+                                                <div>
+                                                    <strong className="d-block text-dark small fw-bold">Get notified when your Dodo is ready</strong>
+                                                    <span className="tiny-text text-muted">We'll alert your browser so you don't miss your flight.</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-warning text-dark rounded-pill fw-bold px-3 shadow-2xs"
+                                                onClick={async () => {
+                                                    playChimeClick();
+                                                    const res = await Notification.requestPermission();
+                                                    setNotifGranted(res === 'granted');
+                                                }}
+                                            >
+                                                <i className="fa-solid fa-bell me-1"></i>Enable Alerts
+                                            </button>
                                         </div>
                                     )}
 

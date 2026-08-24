@@ -35,6 +35,7 @@ export const PocketInventory: React.FC = () => {
         handleMaximizeStacks,
         handleSortPockets,
         handleFillRemaining,
+        handleFlipOrderAndDrop,
         loadBundleIntoOrder,
         loadBundleIntoDrop,
         orderCommandText,
@@ -404,6 +405,20 @@ export const PocketInventory: React.FC = () => {
                                     >
                                         <i className="fa-solid fa-arrow-down-a-z text-primary me-1" aria-hidden="true"></i>
                                         <span>Sort A-Z</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3"
+                                        style={{ minHeight: '32px' }}
+                                        onClick={() => {
+                                            handleFlipOrderAndDrop();
+                                            playChimeClick();
+                                        }}
+                                        title="Swap or convert items between Order (40 slots) and Drop (9 radius spots)"
+                                        aria-label="Flip order and drop pockets"
+                                    >
+                                        <i className="fa-solid fa-right-left text-info me-1" aria-hidden="true"></i>
+                                        <span>Flip Order ⇄ Drop</span>
                                     </button>
                                 </div>
                             </div>

@@ -9,6 +9,7 @@ import {
 } from '../../utils/communityLoadoutsApi';
 import { fetchPocketBundles } from '../../utils/pocketBundleApi';
 import { playChimeClick } from '../../utils/kkAudioSynthesizer';
+import { syncUserPresetsFromBackend, saveLocalPreset, deleteLocalPreset } from '../../utils/localPresetVault';
 import type { PocketEntry } from '../../hooks/useCommandBuilderPockets';
 import { getAuthToken } from '../../context/authToken';
 
@@ -60,17 +61,37 @@ export const CommunityLoadoutsModal = ({
 
     const token = getAuthToken();
 
-    // Load community loadouts + official pocket bundles (merged)
+    // Load community loadouts + official pocket bundles + local vault presets (merged & synced)
     const refreshLoadouts = async () => {
         setLoading(true);
         try {
-            // Fetch from both APIs in parallel
+            // 1. Get presets synced from Local Vault & Backend Database
+            const syncedPresets = await syncUserPresetsFromBackend(token);
+            const localPresets = syncedPresets.map((lp) => ({
+                id: lp.id,
+                shortCode: `VAULT-${lp.id.slice(-4).toUpperCase()}`,
+                name: lp.title,
+                description: lp.description || 'Saved in your private Preset Vault',
+                category: (lp.category || 'Custom Builds') as LoadoutCategory,
+                tags: [...(lp.tags || []), 'local-vault', 'synced'],
+                orderItems: lp.orderItems,
+                dropItems: lp.dropItems,
+                author: 'You (Vault)',
+                upvotes: 0,
+                views: 1,
+                isOfficial: false,
+                hasUpvoted: false,
+                createdAt: lp.createdAt,
+                updatedAt: lp.updatedAt,
+            }));
+
+            // 2. Fetch from both APIs in parallel
             const [communityData, bundlesData] = await Promise.all([
                 fetchCommunityLoadouts(token).catch(() => [] as CommunityLoadout[]),
                 fetchPocketBundles(token).catch(() => []),
             ]);
 
-            // Normalize pocket bundles into CommunityLoadout shape with unique STAFF- codes
+            // 3. Normalize pocket bundles into CommunityLoadout shape with unique STAFF- codes
             const bundleLoadouts: CommunityLoadout[] = bundlesData
                 .filter((b) => b.isOfficial)
                 .map((bundle) => {
@@ -108,14 +129,13 @@ export const CommunityLoadoutsModal = ({
                     };
                 });
 
-            // Merge: official bundles first, then community loadouts
-            // De-duplicate by checking if a community loadout already has the same name
+            // Merge: Local Vault + Official Bundles + Community Loadouts
             const existingNames = new Set(communityData.map((l) => l.name.toLowerCase()));
             const uniqueBundleLoadouts = bundleLoadouts.filter(
                 (b) => !existingNames.has(b.name.toLowerCase())
             );
 
-            setLoadouts([...uniqueBundleLoadouts, ...communityData]);
+            setLoadouts([...localPresets, ...uniqueBundleLoadouts, ...communityData]);
         } catch {
             // Ignore
         } finally {
@@ -145,7 +165,9 @@ export const CommunityLoadoutsModal = ({
                 const matchesAuthor = l.author.toLowerCase().includes(q);
                 const matchesCode = l.shortCode.toLowerCase().includes(q);
                 const matchesTag = l.tags?.some((t) => t.toLowerCase().includes(q));
-                if (!matchesName && !matchesDesc && !matchesAuthor && !matchesCode && !matchesTag) {
+                const matchesItem = (l.orderItems || []).some((it) => it.name?.toLowerCase().includes(q))
+                    || (l.dropItems || []).some((it) => it.name?.toLowerCase().includes(q));
+                if (!matchesName && !matchesDesc && !matchesAuthor && !matchesCode && !matchesTag && !matchesItem) {
                     return false;
                 }
             }
@@ -235,17 +257,59 @@ export const CommunityLoadoutsModal = ({
                 token
             );
 
-            setSaveNotice({ text: `Saved! Short code: ${saved.shortCode}`, type: 'success' });
+            setSaveNotice({ text: `Published to Cloud! Short code: ${saved.shortCode}`, type: 'success' });
             setSaveName('');
             setSaveDesc('');
             setSaveTags('');
             refreshLoadouts();
             setActiveTab('saved');
         } catch {
-            setSaveNotice({ text: 'Failed to save loadout', type: 'error' });
+            setSaveNotice({ text: 'Failed to publish to cloud', type: 'error' });
         } finally {
             setIsSaving(false);
         }
+    };
+
+    // Handle Save directly to Local Vault (instant offline + backend cloud sync)
+    const handleSaveToLocalVault = async () => {
+        if (!saveName.trim()) {
+            setSaveNotice({ text: 'Please enter a preset name', type: 'error' });
+            return;
+        }
+        if (currentOrderPockets.length === 0 && (currentDropPockets || []).length === 0) {
+            setSaveNotice({ text: 'Your current pocket is empty. Add items first!', type: 'error' });
+            return;
+        }
+        const tagsArray = saveTags
+            .split(',')
+            .map((t) => t.trim().replace(/^#/, ''))
+            .filter(Boolean);
+
+        await saveLocalPreset(
+            saveName.trim(),
+            currentOrderPockets,
+            currentDropPockets || [],
+            saveDesc.trim(),
+            saveCategory,
+            tagsArray,
+            token
+        );
+
+        playChimeClick();
+        setSaveNotice({ text: `Saved to your Vault & Synced!`, type: 'success' });
+        setSaveName('');
+        setSaveDesc('');
+        setSaveTags('');
+        refreshLoadouts();
+        setActiveTab('saved');
+    };
+
+    const handleDeleteLocal = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        playChimeClick();
+        await deleteLocalPreset(id, token);
+        setLoadouts((prev) => prev.filter((l) => l.id !== id));
+        if (previewLoadout?.id === id) setPreviewLoadout(null);
     };
 
     // Lookup by code
@@ -507,7 +571,7 @@ export const CommunityLoadoutsModal = ({
                                                 <input
                                                     type="text"
                                                     className="form-control form-control-sm rounded-3 fw-semibold border-success-subtle shadow-none"
-                                                    placeholder="Loadout Title (e.g. Zen Bamboo Garden)"
+                                                    placeholder="Preset / Loadout Title (e.g. Zen Bamboo Garden)"
                                                     value={saveName}
                                                     onChange={(e) => setSaveName(e.target.value)}
                                                     required
@@ -522,7 +586,7 @@ export const CommunityLoadoutsModal = ({
                                                     onChange={(e) => setSaveTags(e.target.value)}
                                                 />
                                             </div>
-                                            <div className="col-12 col-md-3">
+                                            <div className="col-12 col-md-2">
                                                 <select
                                                     className="form-select form-select-sm rounded-3 fw-semibold border-success-subtle shadow-none"
                                                     value={saveCategory}
@@ -535,17 +599,27 @@ export const CommunityLoadoutsModal = ({
                                                     ))}
                                                 </select>
                                             </div>
-                                            <div className="col-12 col-md-2">
+                                            <div className="col-12 col-md-3 d-flex gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSaveToLocalVault}
+                                                    disabled={currentOrderPockets.length === 0 && (currentDropPockets || []).length === 0}
+                                                    className="btn btn-sm btn-outline-success rounded-3 fw-bold flex-grow-1 shadow-2xs text-nowrap"
+                                                    title="Save to your browser's private Local Vault (instant & offline)"
+                                                >
+                                                    <i className="fa-solid fa-vault me-1"></i>Local Vault
+                                                </button>
                                                 <button
                                                     type="submit"
-                                                    disabled={isSaving || currentOrderPockets.length === 0}
-                                                    className="btn btn-sm btn-success text-white w-100 rounded-3 fw-black shadow-2xs"
+                                                    disabled={isSaving || (currentOrderPockets.length === 0 && (currentDropPockets || []).length === 0)}
+                                                    className="btn btn-sm btn-success text-white rounded-3 fw-black shadow-2xs text-nowrap"
+                                                    title="Publish as a public community loadout with shareable short code"
                                                 >
                                                     {isSaving ? (
                                                         <span className="spinner-border spinner-border-sm"></span>
                                                     ) : (
                                                         <>
-                                                            <i className="fa-solid fa-floppy-disk me-1"></i>Save
+                                                            <i className="fa-solid fa-cloud-arrow-up me-1"></i>Publish
                                                         </>
                                                     )}
                                                 </button>
@@ -726,7 +800,18 @@ export const CommunityLoadoutsModal = ({
                                                                     </span>
                                                                 </button>
 
-                                                                <div className="d-flex gap-1">
+                                                                <div className="d-flex gap-1 align-items-center">
+                                                                    {loadout.id.startsWith('local-preset-') && (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-sm btn-light border border-danger-subtle text-danger rounded-circle p-0 d-flex align-items-center justify-content-center shadow-2xs"
+                                                                            style={{ width: '26px', height: '26px' }}
+                                                                            onClick={(e) => handleDeleteLocal(loadout.id, e)}
+                                                                            title="Delete from Local Vault"
+                                                                        >
+                                                                            <i className="fa-solid fa-trash-can" style={{ fontSize: '0.65rem' }}></i>
+                                                                        </button>
+                                                                    )}
                                                                     <button
                                                                         type="button"
                                                                         className="btn btn-sm btn-outline-success rounded-pill px-2 py-1 fw-bold"

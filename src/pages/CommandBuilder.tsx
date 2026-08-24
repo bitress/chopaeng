@@ -115,6 +115,7 @@ const CommandBuilder = () => {
         handleMaximizeStacks,
         handleFillRemaining,
         handleSortPockets,
+        handleFlipOrderAndDrop,
         handleLoadRecipeMaterials,
         loadBundleIntoOrder,
         loadBundleIntoDrop,
@@ -697,6 +698,7 @@ const CommandBuilder = () => {
                                     onMaximizeStacks={handleMaximizeStacks}
                                     onFillRemaining={handleFillRemaining}
                                     onSortPockets={handleSortPockets}
+                                    onFlipOrderAndDrop={handleFlipOrderAndDrop}
                                     showTerminal={true}
                                     onOpenBundlesModal={() => setIsBundlesModalOpen(true)}
                                     onOpenCommunityLoadoutsModal={() => setIsCommunityModalOpen(true)}

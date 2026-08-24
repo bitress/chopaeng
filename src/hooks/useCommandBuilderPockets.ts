@@ -593,6 +593,74 @@ export const useCommandBuilderPockets = () => {
 
 
 
+    // ── Flip & Copy between Order & Drop ──────────────────────────────────
+    const handleFlipOrderAndDrop = useCallback(() => {
+        setOrderItems((prevOrder) => {
+            const newOrder: PocketEntry[] = [];
+            let orderCount = 0;
+            for (const entry of dropItems) {
+                if (orderCount >= ORDER_BOT_MAX) break;
+                const qty = Math.min(entry.quantity, ORDER_BOT_MAX - orderCount);
+                if (qty > 0) {
+                    newOrder.push({ ...entry, quantity: qty });
+                    orderCount += qty;
+                }
+            }
+
+            setDropItems(() => {
+                const newDrop: PocketEntry[] = [];
+                let dropCount = 0;
+                for (const entry of prevOrder) {
+                    if (dropCount >= DROP_BOT_MAX) break;
+                    const qty = Math.min(entry.quantity, DROP_BOT_MAX - dropCount);
+                    if (qty > 0) {
+                        newDrop.push({ ...entry, quantity: qty });
+                        dropCount += qty;
+                    }
+                }
+                return newDrop;
+            });
+
+            return newOrder;
+        });
+    }, [dropItems]);
+
+    const handleCopyOrderToDrop = useCallback(() => {
+        setDropItems(() => {
+            const newDrop: PocketEntry[] = [];
+            let dropCount = 0;
+            for (const entry of orderItems) {
+                if (dropCount >= DROP_BOT_MAX) break;
+                const qty = Math.min(entry.quantity, DROP_BOT_MAX - dropCount);
+                if (qty > 0) {
+                    newDrop.push({ ...entry, quantity: qty });
+                    dropCount += qty;
+                }
+            }
+            return newDrop;
+        });
+    }, [orderItems]);
+
+    const handleCopyDropToOrder = useCallback(() => {
+        setOrderItems((prevOrder) => {
+            const newOrder = [...prevOrder];
+            let currentCount = newOrder.reduce((acc, curr) => acc + curr.quantity, 0);
+            for (const entry of dropItems) {
+                if (currentCount >= ORDER_BOT_MAX) break;
+                const neededQty = Math.min(entry.quantity, ORDER_BOT_MAX - currentCount);
+                if (neededQty <= 0) continue;
+                const existing = newOrder.find((p) => p.item.id === entry.item.id);
+                if (existing) {
+                    existing.quantity += neededQty;
+                } else {
+                    newOrder.push({ ...entry, quantity: neededQty });
+                }
+                currentCount += neededQty;
+            }
+            return newOrder;
+        });
+    }, [dropItems]);
+
     // ── Quantity lookup ────────────────────────────────────────────────────
     const getOrderPocketQuantity = useCallback((itemId: string) => {
         return orderItems.find((p) => p.item.id === itemId)?.quantity ?? 0;
@@ -602,7 +670,6 @@ export const useCommandBuilderPockets = () => {
         return dropItems.find((p) => p.item.id === itemId)?.quantity ?? 0;
     }, [dropItems]);
 
-    // Legacy alias
     const getPocketQuantity = getOrderPocketQuantity;
 
     return {
@@ -655,6 +722,11 @@ export const useCommandBuilderPockets = () => {
         handleFillRemaining,
         handleSortPockets,
         handleLoadRecipeMaterials,
+
+        // Flip & Copy
+        handleFlipOrderAndDrop,
+        handleCopyOrderToDrop,
+        handleCopyDropToOrder,
 
         // Reorder (drag-and-drop)
         reorderOrderPockets,
