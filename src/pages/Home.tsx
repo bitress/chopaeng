@@ -1,14 +1,17 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import banner from '../assets/banner.png'
-import logo from '../assets/logo.webp'
-import StreamEmbed from "../components/StreamEmbed.tsx";
+import { useState, useEffect, useMemo } from "react";
+import banner from '../assets/banner.png';
+import logo from '../assets/logo.webp';
+import StreamEmbed from "../components/StreamEmbed";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import { BLOGS_API_BASE } from "../config/api";
+import { useIslandData } from "../context/useIslandData";
+import { playChimeClick } from "../utils/kkAudioSynthesizer";
+
 interface BlogPost {
     id: string;
     title: string;
-    date: string; // Formatted "Jan 24"
+    date: string;
     category: string;
     image: string;
     excerpt: string;
@@ -19,7 +22,6 @@ const stripHtml = (html: string) => {
     return doc.body.textContent || "";
 };
 
-// --- HELPER: DATE FORMATTER ---
 const formatDate = (isoString: string) => {
     const date = new Date(isoString);
     const month = date.toLocaleString('default', { month: 'short' });
@@ -28,9 +30,18 @@ const formatDate = (isoString: string) => {
 };
 
 const Home = () => {
+    const { islands, loading: islandsLoading } = useIslandData();
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Hero interactive showcase tab state (flights vs stream)
+    const [heroTab, setHeroTab] = useState<'flights' | 'stream'>('flights');
+    const [flightFilter, setFlightFilter] = useState<'all' | 'public' | 'member'>('all');
+
+    // Copy Dodo feedback
+    const [copiedDodoIsland, setCopiedDodoIsland] = useState<string | null>(null);
+
+    // Fetch blog posts
     useEffect(() => {
         const fetchPosts = async () => {
             try {
@@ -48,7 +59,6 @@ const Home = () => {
                     .slice(0, 3)
                     .map((item: any) => {
                         const attr = item.attributes;
-
                         let imageUrl = attr.image?.large_url;
                         if (!imageUrl && attr.embed_data?.provider === "YouTube") {
                             imageUrl = banner;
@@ -58,15 +68,13 @@ const Home = () => {
                         }
 
                         const category = attr.is_public ? "Announcement" : "Members Only";
-
                         const rawText = stripHtml(attr.content);
-                        const excerpt =
-                            rawText.length > 100 ? rawText.substring(0, 100) + "..." : rawText;
+                        const excerpt = rawText.length > 100 ? rawText.substring(0, 100) + "..." : rawText;
 
                         return {
                             id: item.id,
                             title: attr.title,
-                            date: formatDate(attr.published_at), // format AFTER sorting ✅
+                            date: formatDate(attr.published_at),
                             category,
                             image: imageUrl,
                             excerpt
@@ -84,178 +92,450 @@ const Home = () => {
         fetchPosts();
     }, []);
 
+    // Filter featured live islands for the departure board
+    const liveIslands = useMemo(() => {
+        if (!islands || islands.length === 0) return [];
+        return islands
+            .filter((isl) => {
+                const isOnline = isl.status === 'ONLINE' || !isl.status;
+                if (!isOnline) return false;
+                if (flightFilter === 'public') return isl.cat === 'public';
+                if (flightFilter === 'member') return isl.cat === 'member';
+                return true;
+            })
+            .slice(0, 5);
+    }, [islands, flightFilter]);
+
+    const handleCopyDodo = (dodo: string, islandName: string) => {
+        if (!dodo) return;
+        navigator.clipboard.writeText(dodo).catch(() => {});
+        playChimeClick();
+        setCopiedDodoIsland(islandName);
+        setTimeout(() => setCopiedDodoIsland(null), 2500);
+    };
+
     return (
         <>
-            <title>Chopaeng | ACNH Treasure Island – Free Maps, Items & DIYs</title>
-            <meta name="description" content="Chopaeng is the #1 ACNH treasure island site. Browse free & premium Animal Crossing: New Horizons treasure island maps, items, DIYs, Bells, villagers, and more." />
-            <meta name="keywords" content="ACNH treasure islands, Animal Crossing New Horizons treasure island, treasure island ACNH, ACNH free items, ACNH dodo codes, Animal Crossing treasure island dodo code, ACNH bells, ACNH villagers, ACNH DIYs, free Animal Crossing items" />
-
+            <title>Chopaeng | #1 ACNH Treasure Island Hub & Order Bot</title>
+            <meta name="description" content="Chopaeng is the ultimate Animal Crossing: New Horizons companion hub. 24/7 Live Treasure Islands, interactive 40-slot Command Builder, automated Order Bot delivery, and community loadouts." />
+            <meta name="keywords" content="ACNH treasure islands, Animal Crossing New Horizons treasure island, order bot acnh, command builder acnh, ACNH dodo codes, free acnh items, bells, villagers, DIYs" />
             <link rel="canonical" href="https://www.chopaeng.com/" />
 
             <meta property="og:type" content="website" />
             <meta property="og:site_name" content="Chopaeng" />
-            <meta property="og:title" content="Chopaeng | ACNH Treasure Island – Free Maps, Items & DIYs" />
-            <meta property="og:description" content="Browse free & premium ACNH treasure island maps, items, DIYs, Bells, and villagers on Chopaeng — the #1 Animal Crossing: New Horizons treasure island site." />
+            <meta property="og:title" content="Chopaeng | #1 ACNH Treasure Island Hub & Order Bot" />
+            <meta property="og:description" content="24/7 Live Treasure Islands, interactive 40-slot Command Builder, and automated Order Bot delivery." />
             <meta property="og:url" content="https://www.chopaeng.com/" />
             <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
 
-            <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content="Chopaeng | ACNH Treasure Island – Free Maps, Items & DIYs" />
-            <meta name="twitter:description" content="Browse free & premium ACNH treasure island maps, items, DIYs, Bells, and villagers on Chopaeng — the #1 Animal Crossing: New Horizons treasure island site." />
-            <meta name="twitter:image" content="https://www.chopaeng.com/banner.png" />
+            <style>
+                {`
+                .home-hero-bg {
+                    background: radial-gradient(circle at 10% 20%, rgba(220, 252, 231, 0.45) 0%, rgba(240, 253, 244, 0.2) 50%, rgba(255, 255, 255, 1) 100%);
+                }
+                .hero-tab-btn {
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .hero-tab-btn.active {
+                    background-color: #1b2d24 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 4px 12px rgba(27, 45, 36, 0.2);
+                }
+                .interactive-sandbox-slot {
+                    transition: all 0.15s ease;
+                    user-select: none;
+                }
+                .interactive-sandbox-slot:hover {
+                    transform: scale(1.08);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    z-index: 2;
+                }
+                .departure-row {
+                    transition: all 0.2s ease;
+                }
+                .departure-row:hover {
+                    background-color: #f8fafc;
+                    transform: translateY(-1px);
+                }
+                .transform-active:active { transform: scale(0.96); }
+                .faq-item[open] summary .fa-chevron-down { transform: rotate(180deg); }
+                .faq-item summary .fa-chevron-down { transition: transform 0.2s ease; }
+                `}
+            </style>
 
-            <div
-                className="nook-os position-relative d-flex align-items-center font-nunito w-100"
-                style={{ minHeight: '100dvh' }} // Use dynamic viewport height for mobile browsers
-            >
-                <style>
-                    {`
-            /* Only force a slightly shorter hero on true desktop to keep it tight */
-            @media (min-width: 992px) { 
-                .nook-os { min-height: 80vh !important; } 
-            }
-            .transform-active:active { transform: scale(0.95); }
-            /* Prevent text overflow on narrow "desktop mode" viewports */
-            .text-balance { text-wrap: balance; }
-            /* Rotate FAQ chevron when open */
-            .faq-item[open] summary .fa-chevron-down { transform: rotate(180deg); }
-            .faq-item summary .fa-chevron-down { transition: transform 0.2s ease; }
-        `}
-                </style>
-
-                {/* Background Leaf - Kept explicit size to prevent layout shifts */}
-                <div className="position-absolute top-0 end-0 opacity-10 p-4 d-none d-lg-block pointer-events-none" style={{ zIndex: 0 }}>
-                    <i className="fa-solid fa-leaf text-success" style={{ fontSize: '20rem', transform: 'rotate(45deg)' }}></i>
+            {/* ════════════════ HERO SECTION: INTERACTIVE COMMAND CENTER ════════════════ */}
+            <section className="home-hero-bg position-relative pt-4 pb-5 overflow-hidden">
+                {/* Background Nook Leaf Icon */}
+                <div className="position-absolute top-0 end-0 opacity-10 p-4 d-none d-xl-block pointer-events-none" style={{ zIndex: 0 }}>
+                    <i className="fa-solid fa-leaf text-success" style={{ fontSize: '24rem', transform: 'rotate(35deg)' }}></i>
                 </div>
 
-                <section className="container px-4 px-lg-4 position-relative z-1">
-                    <div className="row align-items-center justify-content-center py-5">
+                <div className="container position-relative z-1 py-4">
+                    <div className="row align-items-center g-4 g-lg-5">
 
-                        {/* Text Section */}
-                        {/* Added col-md-10 to prevent it from being too wide on tablet portrait */}
-                        <div className="col-12 col-md-10 col-lg-6 order-2 order-lg-1 ps-lg-4 text-center text-lg-start mt-5 mt-lg-0">
-
-                            <div className="d-inline-flex align-items-center gap-2 mb-3 px-3 py-1 rounded-pill bg-white border border-success border-opacity-25 shadow-sm">
-                                <span className="live-dot bg-danger rounded-circle" style={{ width: '8px', height: '8px' }}></span>
-                                <span className="text-success fw-bold x-small text-uppercase tracking-wider" style={{ fontSize: '0.75rem' }}>Stream Online</span>
+                        {/* LEFT COLUMN: Core Value Prop & Action Matrix */}
+                        <div className="col-12 col-lg-6 text-center text-lg-start">
+                            <div className="d-inline-flex align-items-center gap-2 mb-3 px-3 py-1 rounded-pill bg-white border border-success border-opacity-25 shadow-2xs">
+                                <span className="live-dot bg-success rounded-circle" style={{ width: '8px', height: '8px' }}></span>
+                                <span className="text-success fw-bold x-small text-uppercase tracking-wider" style={{ fontSize: '0.75rem' }}>
+                                    24/7 Island Network & Order Bot Live
+                                </span>
                             </div>
 
                             <h1 className="fw-black ac-font lh-1 mb-3 text-dark display-5 display-lg-4 text-balance">
-                                Your Ticket to <br className="d-none d-lg-block" /> <span className="text-nook">Island Paradise.</span>
+                                The All-In-One <br className="d-none d-lg-block" />
+                                <span className="text-nook">Animal Crossing Hub.</span>
                             </h1>
 
-                            <p className="lead text-muted mb-4 fw-bold opacity-75 fs-6 mx-auto mx-lg-0" style={{ maxWidth: '500px' }}>
-                                 Skip the grind. Join the community to access 24/7 Treasure Islands, curated Bells, and villager matching via ChoBot.
+                            <p className="lead text-muted mb-4 fw-bold opacity-75 fs-6 mx-auto mx-lg-0" style={{ maxWidth: '520px' }}>
+                                Skip the daily grind. Fly to 24/7 auto-restocked Treasure Islands, design custom 40-slot pockets, and receive direct in-game Dodo delivery with ChoBot.
                             </p>
 
-                            <div className="d-flex flex-column flex-sm-row gap-3 mb-4 justify-content-center justify-content-lg-start">
-                                <Link to="/islands" className="btn btn-nook-primary rounded-pill px-4 py-3 py-lg-2 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
-                                    <i className="fa-solid fa-plane-departure"></i> Start Looting
+                            {/* 4-Pillar Quick Action Launchpad */}
+                            <div className="d-flex flex-wrap gap-2 mb-4 justify-content-center justify-content-lg-start">
+                                <Link to="/islands" className="btn btn-nook-primary rounded-pill px-4 py-2 fw-black shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active">
+                                    <i className="fa-solid fa-plane-departure"></i> Treasure Islands
                                 </Link>
-                                <Link to="/maps" className="btn btn-white rounded-pill px-4 py-3 py-lg-2 fw-bold border shadow-sm text-muted transform-active">
-                                    <i className="fa-solid fa-map me-2"></i> View Maps
+                                <Link to="/command-builder" className="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 transform-active" style={{ backgroundColor: '#1b2d24', borderColor: '#1b2d24' }}>
+                                    <i className="fa-solid fa-boxes-stacked text-warning"></i> Command Builder
+                                </Link>
+                                <Link to="/order" className="btn btn-white rounded-pill px-3 py-2 fw-bold border shadow-2xs text-dark transform-active d-flex align-items-center gap-2">
+                                    <i className="fa-solid fa-robot text-info"></i> Order Bot
+                                </Link>
+                                <Link to="/maps" className="btn btn-white rounded-pill px-3 py-2 fw-bold border shadow-2xs text-muted transform-active d-flex align-items-center gap-2">
+                                    <i className="fa-solid fa-map text-success"></i> Maps
                                 </Link>
                             </div>
 
+                            {/* Live Platform Proof Metrics */}
                             <div className="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start gap-3 gap-md-4 text-muted small fw-bold">
                                 <div className="d-flex align-items-center gap-2">
-                                    <i className="fa-brands fa-discord fs-5 text-primary opacity-75"></i> <span>29k Potatoes</span>
+                                    <i className="fa-brands fa-discord fs-5 text-primary opacity-75"></i> <span>29k+ Potatoes</span>
                                 </div>
                                 <div className="d-flex align-items-center gap-2">
-                                    <i className="fa-solid fa-box-open fs-5 text-success opacity-75"></i> <span>Auto-Restock</span>
+                                    <i className="fa-solid fa-bolt fs-5 text-warning opacity-75"></i> <span>Instant Dodo Queue</span>
+                                </div>
+                                <div className="d-flex align-items-center gap-2">
+                                    <i className="fa-solid fa-rotate fs-5 text-success opacity-75"></i> <span>Auto-Restock 24/7</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Image/Stream Section */}
-                        {/* Center on tablet (md), split on desktop (lg) */}
-                        <div className="col-12 col-md-8 col-lg-6 order-1 order-lg-2 text-center position-relative mb-3 mb-lg-0">
-                            <div className="snapshot-frame mx-auto position-relative w-100" style={{ maxWidth: '480px' }}>
+                        {/* RIGHT COLUMN: Live Dodo Flights & Stream Radar */}
+                        <div className="col-12 col-lg-6">
+                            <div className="card rounded-5 border-0 shadow-xl overflow-hidden bg-white position-relative">
 
-                                <div className="tape-strip position-absolute start-50 translate-middle-x bg-white opacity-50 shadow-sm"
-                                     style={{ height: '30px', width: '100px', top: '-15px', zIndex: 2, transform: 'rotate(-2deg)' }}></div>
+                                {/* Widget Tab Header */}
+                                <div className="p-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div className="d-flex align-items-center gap-1 p-1 bg-white rounded-pill border shadow-2xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setHeroTab('flights'); playChimeClick(); }}
+                                            className={`btn btn-sm rounded-pill fw-bold px-3 hero-tab-btn ${heroTab === 'flights' ? 'active' : 'text-muted'}`}
+                                            style={{ fontSize: '0.8rem' }}
+                                        >
+                                            <i className="fa-solid fa-plane-departure me-1"></i> Live Flights
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setHeroTab('stream'); playChimeClick(); }}
+                                            className={`btn btn-sm rounded-pill fw-bold px-3 hero-tab-btn ${heroTab === 'stream' ? 'active' : 'text-muted'}`}
+                                            style={{ fontSize: '0.8rem' }}
+                                        >
+                                            <i className="fa-solid fa-tv me-1 text-danger"></i> Live Stream
+                                        </button>
+                                    </div>
 
-                                {/* Ensure StreamEmbed is responsive within this container */}
-                                <div className="ratio ratio-16x9 bg-dark rounded shadow overflow-hidden border border-4 border-white">
-                                    <StreamEmbed />
+                                    {heroTab === 'flights' && (
+                                        <div className="d-flex align-items-center gap-1">
+                                            {(['all', 'public', 'member'] as const).map((mode) => (
+                                                <button
+                                                    key={mode}
+                                                    type="button"
+                                                    onClick={() => { setFlightFilter(mode); playChimeClick(); }}
+                                                    className={`btn btn-sm rounded-pill x-small fw-bold px-2 py-1 transition-all ${
+                                                        flightFilter === mode ? 'btn-dark text-white' : 'btn-white border text-muted shadow-2xs'
+                                                    }`}
+                                                    style={{ fontSize: '0.7rem' }}
+                                                >
+                                                    {mode === 'all' ? 'All' : mode === 'public' ? 'Public' : 'Sub Member'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Adjusted badges to not float outside the container on small screens */}
-                                <div className="floating-badge bg-white p-2 rounded-circle shadow-sm position-absolute bottom-0 start-0 translate-middle-x mb-n3 ms-4 d-none d-sm-block">
-                                    <i className="fa-solid fa-sack-dollar text-warning fs-3"></i>
-                                </div>
-                                <div className="floating-badge-2 bg-white p-2 rounded-circle shadow-sm position-absolute top-0 end-0 translate-middle-x mt-n3 me-n2 d-none d-sm-block">
-                                    <i className="fa-solid fa-gift text-danger fs-3"></i>
-                                </div>
+                                {/* TAB 1: Live Flight Departure Cards */}
+                                {heroTab === 'flights' && (
+                                    <div className="p-3 p-sm-4 animate-fade">
+                                        <div className="d-flex align-items-center justify-content-between mb-3">
+                                            <h3 className="h6 fw-black text-dark ac-font mb-0">
+                                                <i className="fa-solid fa-tower-broadcast text-success me-2"></i>
+                                                Dodo Airlines Departure Board
+                                            </h3>
+                                            <Link to="/islands" className="small text-success fw-bold text-decoration-none">
+                                                All Islands ({islands.length}) <i className="fa-solid fa-arrow-right ms-1"></i>
+                                            </Link>
+                                        </div>
+
+                                        {islandsLoading ? (
+                                            <div className="text-center py-5 text-muted">
+                                                <span className="spinner-border spinner-border-sm text-success me-2"></span>
+                                                <span>Connecting to Dodo radar…</span>
+                                            </div>
+                                        ) : liveIslands.length > 0 ? (
+                                            <div className="d-flex flex-column gap-2">
+                                                {liveIslands.map((isl) => {
+                                                    const mapSrc = isl.mapUrl || `https://cdn.chopaeng.com/maps/${isl.name.toLowerCase()}.png`;
+                                                    return (
+                                                        <div key={isl.id} className="d-flex align-items-center justify-content-between p-2 p-sm-3 rounded-4 bg-light border departure-row">
+                                                            <div className="d-flex align-items-center gap-3">
+                                                                <Link
+                                                                    to={`/islands`}
+                                                                    className="rounded-3 border overflow-hidden shadow-2xs flex-shrink-0 position-relative bg-white d-block hover-scale transition-all"
+                                                                    style={{ width: '48px', height: '48px' }}
+                                                                    title={`View ${isl.name} Map`}
+                                                                >
+                                                                    <img
+                                                                        src={mapSrc}
+                                                                        alt={`${isl.name} Island Map`}
+                                                                        className="w-100 h-100 object-fit-cover"
+                                                                        onError={(e) => {
+                                                                            e.currentTarget.onerror = null;
+                                                                            e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231b2d24'/><text x='50%' y='65%' font-size='40' text-anchor='middle' fill='%2352b788'>MAP</text></svg>";
+                                                                        }}
+                                                                    />
+                                                                </Link>
+                                                                <div>
+                                                                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                                                                        <strong className="text-dark small fw-black">{isl.name}</strong>
+                                                                        <span className="badge bg-success rounded-pill x-small" style={{ fontSize: '0.65rem' }}>OPEN</span>
+                                                                        {isl.cat === 'member' && (
+                                                                            <span className="badge bg-warning-subtle text-warning-emphasis border border-warning rounded-pill x-small" style={{ fontSize: '0.6rem' }}>
+                                                                                <i className="fa-solid fa-crown me-1"></i>SUB MEMBER
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <span className="tiny-text text-muted fw-bold d-block mt-1">
+                                                                        {isl.type || (isl.cat === 'public' ? 'Public Island' : 'Sub Member Island')} · Auto-Restocked
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                {isl.dodoCode ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleCopyDodo(isl.dodoCode!, isl.name)}
+                                                                        className={`btn btn-sm rounded-pill fw-black px-3 font-monospace shadow-2xs ${
+                                                                            copiedDodoIsland === isl.name ? 'btn-success text-white' : 'btn-white border text-dark'
+                                                                        }`}
+                                                                        style={{ fontSize: '0.82rem' }}
+                                                                        title="Copy Dodo Code"
+                                                                    >
+                                                                        {copiedDodoIsland === isl.name ? (
+                                                                            <>
+                                                                                <i className="fa-solid fa-check me-1"></i> Copied!
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <i className="fa-solid fa-plane-departure text-nook me-1"></i> {isl.dodoCode}
+                                                                            </>
+                                                                        )}
+                                                                    </button>
+                                                                ) : (
+                                                                    <Link to={`/islands`} className="btn btn-sm btn-outline-success rounded-pill fw-bold px-3" style={{ fontSize: '0.8rem' }}>
+                                                                        View Pass
+                                                                    </Link>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-5">
+                                                <div className="fs-1 mb-2 text-success">
+                                                    <i className="fa-solid fa-map-location-dot"></i>
+                                                </div>
+                                                <p className="text-muted small mb-2 fw-bold">No active islands matching filter right now.</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFlightFilter('all')}
+                                                    className="btn btn-sm btn-nook-primary rounded-pill fw-bold px-3"
+                                                >
+                                                    Show All Islands
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Telemetry Footer */}
+                                        <div className="mt-3 pt-3 border-top d-flex align-items-center justify-content-between text-muted x-small fw-bold">
+                                            <span className="d-flex align-items-center gap-1">
+                                                <i className="fa-solid fa-rotate text-success"></i> Auto-Refreshed
+                                            </span>
+                                            <Link to="/islands" className="text-decoration-none text-muted hover-text-dark">
+                                                View Live Visitor Traffic →
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TAB 2: Live Video Stream */}
+                                {heroTab === 'stream' && (
+                                    <div className="p-3 animate-fade">
+                                        <div className="ratio ratio-16x9 bg-dark rounded-4 overflow-hidden border">
+                                            <StreamEmbed />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
-                </section>
-            </div>
-
-            {/* STATS STRIP */}
-            <section className="container py-4 position-relative z-2">
-                <div className="row g-3 text-center">
-                    {[
-                        { icon: "fa-users", color: "text-primary", value: "29k+", label: "Potatoes" },
-                        { icon: "fa-map-location-dot", color: "text-success", value: "100+", label: "Island Maps" },
-                        { icon: "fa-clock", color: "text-warning", value: "24/7", label: "Live Access" },
-                        { icon: "fa-star", color: "text-danger", value: "Est. 2020", label: "Community" },
-                    ].map((stat) => (
-                        <div className="col-6 col-md-3" key={stat.label}>
-                            <div className="bg-white rounded-4 shadow-sm border p-3 h-100 d-flex flex-column align-items-center justify-content-center gap-1">
-                                <i className={`fa-solid ${stat.icon} fs-3 ${stat.color} opacity-75`}></i>
-                                <h4 className="fw-black ac-font mb-0 text-dark">{stat.value}</h4>
-                                <span className="text-muted small fw-bold">{stat.label}</span>
-                            </div>
-                        </div>
-                    ))}
                 </div>
             </section>
 
-            {/* HOW IT WORKS */}
-            <section className="container py-5 position-relative z-2">
+            {/* ════════════════ 4-PILLAR SIGNATURE ECOSYSTEM ════════════════ */}
+            <section className="container py-5">
+                <div className="text-center mb-5">
+                    <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                        <i className="fa-solid fa-crown text-warning fs-5"></i>
+                        <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Everything You Need</span>
+                    </div>
+                    <h2 className="display-6 fw-black text-dark ac-font mb-2">Built For Island Perfection</h2>
+                    <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '560px' }}>
+                        Whether you want to explore public treasure islands or order exact 40-slot furniture sets directly to your town.
+                    </p>
+                </div>
+
+                <div className="row g-4">
+                    {/* Feature 1: Treasure Islands */}
+                    <div className="col-12 col-md-6 col-lg-3">
+                        <Link to="/islands" className="text-decoration-none h-100 d-block">
+                            <div className="card rounded-5 border bg-white p-4 h-100 shadow-sm transition-all hover-shadow-md d-flex flex-column justify-content-between">
+                                <div>
+                                    <div className="d-inline-flex align-items-center justify-content-center rounded-circle bg-light-green text-nook mb-3" style={{ width: '56px', height: '56px' }}>
+                                        <i className="fa-solid fa-plane-departure fs-4"></i>
+                                    </div>
+                                    <h3 className="h5 fw-black text-dark ac-font mb-2">24/7 Treasure Islands</h3>
+                                    <p className="text-muted small fw-bold mb-3">
+                                        Fly to active islands loaded with Bells, DIY recipes, seasonal furniture, materials, and real artwork.
+                                    </p>
+                                </div>
+                                <div className="d-flex align-items-center text-success fw-bold small pt-2 border-top">
+                                    <span>Browse Islands</span>
+                                    <i className="fa-solid fa-arrow-right ms-2"></i>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    {/* Feature 2: Command Builder */}
+                    <div className="col-12 col-md-6 col-lg-3">
+                        <Link to="/command-builder" className="text-decoration-none h-100 d-block">
+                            <div className="card rounded-5 border bg-white p-4 h-100 shadow-sm transition-all hover-shadow-md d-flex flex-column justify-content-between">
+                                <div>
+                                    <div className="d-inline-flex align-items-center justify-content-center rounded-circle bg-light-yellow text-warning mb-3" style={{ width: '56px', height: '56px' }}>
+                                        <i className="fa-solid fa-boxes-stacked fs-4"></i>
+                                    </div>
+                                    <h3 className="h5 fw-black text-dark ac-font mb-2">Command Builder</h3>
+                                    <p className="text-muted small fw-bold mb-3">
+                                        Interactive 40-slot pocket designer with K.K. audio, smart stack fill, variant color preview, and instant hex codes.
+                                    </p>
+                                </div>
+                                <div className="d-flex align-items-center text-warning fw-bold small pt-2 border-top">
+                                    <span>Build Pocket</span>
+                                    <i className="fa-solid fa-arrow-right ms-2"></i>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    {/* Feature 3: Order Bot */}
+                    <div className="col-12 col-md-6 col-lg-3">
+                        <Link to="/order" className="text-decoration-none h-100 d-block">
+                            <div className="card rounded-5 border bg-white p-4 h-100 shadow-sm transition-all hover-shadow-md d-flex flex-column justify-content-between">
+                                <div>
+                                    <div className="d-inline-flex align-items-center justify-content-center rounded-circle bg-light-blue text-info mb-3" style={{ width: '56px', height: '56px' }}>
+                                        <i className="fa-solid fa-robot fs-4"></i>
+                                    </div>
+                                    <h3 className="h5 fw-black text-dark ac-font mb-2">Automated Order Bot</h3>
+                                    <p className="text-muted small fw-bold mb-3">
+                                        Submit 40 items in 1 click and receive a private Dodo boarding pass with live queue tracking & browser notifications.
+                                    </p>
+                                </div>
+                                <div className="d-flex align-items-center text-info fw-bold small pt-2 border-top">
+                                    <span>Order Items</span>
+                                    <i className="fa-solid fa-arrow-right ms-2"></i>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    {/* Feature 4: Community Loadouts & Vault */}
+                    <div className="col-12 col-md-6 col-lg-3">
+                        <Link to="/command-builder" className="text-decoration-none h-100 d-block">
+                            <div className="card rounded-5 border bg-white p-4 h-100 shadow-sm transition-all hover-shadow-md d-flex flex-column justify-content-between">
+                                <div>
+                                    <div className="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger mb-3" style={{ width: '56px', height: '56px' }}>
+                                        <i className="fa-solid fa-heart fs-4"></i>
+                                    </div>
+                                    <h3 className="h5 fw-black text-dark ac-font mb-2">Community Loadouts</h3>
+                                    <p className="text-muted small fw-bold mb-3">
+                                        Explore staff curated bundles, search items inside builds, upvote favorites, and save to your private cloud-synced Vault.
+                                    </p>
+                                </div>
+                                <div className="d-flex align-items-center text-danger fw-bold small pt-2 border-top">
+                                    <span>Explore Loadouts</span>
+                                    <i className="fa-solid fa-arrow-right ms-2"></i>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* ════════════════ 3-STEP QUICK START PROCESS ════════════════ */}
+            <section className="container py-5">
                 <div className="text-center mb-5">
                     <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
                         <i className="fa-solid fa-map text-success fs-4"></i>
-                        <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Quick Start</span>
+                        <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Fast Track</span>
                     </div>
                     <h2 className="display-6 fw-black text-dark ac-font mb-2">How It Works</h2>
-                    <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '480px' }}>Getting free items and villagers is just three steps away.</p>
+                    <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '480px' }}>Getting free items, bells, and villagers is just three steps away.</p>
                 </div>
                 <div className="row g-4 justify-content-center">
                     {[
                         {
                             step: "01",
-                            icon: "fa-ticket",
+                            icon: "fa-boxes-packing",
                             color: "bg-light-green text-nook",
-                            title: "Join the Community",
-                            desc: "Subscribe on Patreon or join our Discord to become a member and unlock premium island access.",
+                            title: "Choose Island or Build Pocket",
+                            desc: "Browse 24/7 Treasure Island themes or design your custom 40-slot pocket in the Command Builder.",
                         },
                         {
                             step: "02",
-                            icon: "fa-hashtag",
+                            icon: "fa-ticket",
                             color: "bg-light-yellow text-warning",
-                            title: "Grab a Dodo Code",
-                            desc: "Head to the Island Monitor, pick an online island, and copy the live Dodo code instantly.",
+                            title: "Grab Your Dodo Pass",
+                            desc: "Copy an active public Dodo code or submit your order to receive a private personal flight boarding pass.",
                         },
                         {
                             step: "03",
                             icon: "fa-plane-departure",
                             color: "bg-light-blue text-info",
-                            title: "Fly & Loot",
-                            desc: "Enter the code at Dodo Airlines and land on a treasure island packed with items, bells, and DIYs.",
+                            title: "Fly with Dodo Airlines",
+                            desc: "Speak with Orville at the airport, enter the 5-digit code, land on the island, and pick up your items.",
                         },
                     ].map((item) => (
                         <div className="col-md-4" key={item.step}>
                             <div className="bg-white rounded-5 shadow-sm border p-4 h-100 text-center position-relative overflow-hidden">
                                 <span className="position-absolute top-0 end-0 m-3 fw-black ac-font opacity-10" style={{ fontSize: '4rem', lineHeight: 1 }}>{item.step}</span>
-                                <div className={`app-icon mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle ${item.color}`}>
-                                    <i className={`fa-solid ${item.icon} fs-2`}></i>
+                                <div className={`app-icon mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle ${item.color}`} style={{ width: '64px', height: '64px' }}>
+                                    <i className={`fa-solid ${item.icon} fs-3`}></i>
                                 </div>
-                                <h5 className="fw-black text-dark ac-font mb-2">{item.title}</h5>
+                                <h4 className="fw-black text-dark ac-font mb-2 h5">{item.title}</h4>
                                 <p className="text-muted small fw-bold mb-0">{item.desc}</p>
                             </div>
                         </div>
@@ -263,124 +543,9 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* EDUCATIONAL SECTION: What is an ACNH Treasure Island? */}
-            <section className="container py-5 position-relative z-2">
-                <div className="bg-white rounded-5 shadow-sm border p-4 p-lg-5">
-                    <div className="text-center mb-5">
-                        <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
-                            <i className="fa-solid fa-book-open text-success fs-4"></i>
-                            <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Learn More</span>
-                        </div>
-                        <h2 className="display-6 fw-black text-dark ac-font mb-2">What Is an ACNH Treasure Island?</h2>
-                        <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '560px' }}>Everything you need to know about community treasure islands in Animal Crossing: New Horizons.</p>
-                    </div>
-
-                    <div className="row g-5">
-                        <div className="col-lg-6">
-                            <h3 className="h5 fw-black text-dark ac-font mb-3">The Short Answer</h3>
-                            <p className="text-muted fw-bold lh-lg">
-                                A <strong>community treasure island</strong> is a specially organized Animal Crossing: New Horizons island designed to help players design, build, and complete their dream islands. These visitor destinations feature neat layouts organized by theme, housing catalog furniture sets, seasonal items, crafting materials, DIY recipe cards, Nook Miles Tickets, Star Fragments, and Bells.
-                            </p>
-                            <p className="text-muted fw-bold lh-lg">
-                                Players visit using a standard <strong>Dodo code</strong> — a 5-character code entered at Dodo Airlines in-game — and are welcome to pick up items they need for cataloging or island crafting during their visit. Community-hosted islands streamline island development so you spend less time searching for elusive DIY recipes and more time decorating.
-                            </p>
-
-                            <h3 className="h5 fw-black text-dark ac-font mb-3 mt-4">Why Visit a Treasure Island?</h3>
-                            <ul className="list-unstyled d-flex flex-column gap-2">
-                                {[
-                                    { icon: "fa-couch", text: "Complete your home furniture catalog quickly without waiting for shop rotations" },
-                                    { icon: "fa-coins", text: "Receive curated Bell bundles to help pay off home loans and bridges" },
-                                    { icon: "fa-people-group", text: "Use our community villager matching service to find your ideal island companion" },
-                                    { icon: "fa-screwdriver-wrench", text: "Stock up on essential crafting materials: iron nuggets, wood, clay, and stone" },
-                                    { icon: "fa-scroll", text: "Collect hard-to-find seasonal DIY recipes and event-exclusive items" },
-                                ].map((item, i) => (
-                                    <li key={i} className="d-flex align-items-start gap-3">
-                                        <div className="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 36, height: 36 }}>
-                                            <i className={`fa-solid ${item.icon} small`}></i>
-                                        </div>
-                                        <span className="text-muted fw-bold small lh-base mt-1">{item.text}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div className="col-lg-6">
-                            <h3 className="h5 fw-black text-dark ac-font mb-3">How Chopaeng Is Different</h3>
-                            <p className="text-muted fw-bold lh-lg">
-                                Many Animal Crossing communities operate exclusively through social channels, requiring members to manually ask for active codes and queue in long lines. Chopaeng features a real-time web dashboard so anyone can see which community islands are online, current visitor traffic, and active island themes before heading to the airport.
-                            </p>
-                            <p className="text-muted fw-bold lh-lg">
-                                The site integrates with <strong>ChoBot</strong>, our Discord community bot designed to coordinate island visits and requests for supporters. Community members can submit request commands to find specific furniture themes or coordinate villager moves smoothly.
-                            </p>
-
-                            <div className="bg-light rounded-4 p-4 border mt-4">
-                                <h4 className="h6 fw-black text-dark ac-font mb-3">Free vs. Member Community Islands</h4>
-                                <div className="row g-3">
-                                    <div className="col-6">
-                                        <div className="text-center p-3 bg-white rounded-3 border h-100">
-                                            <i className="fa-solid fa-lock-open text-success fs-3 mb-2"></i>
-                                            <h6 className="fw-black text-dark mb-1 small">Free Islands</h6>
-                                            <p className="text-muted x-small fw-bold mb-0">Open to all players. Shared public access featuring furniture, materials, and seasonal drops.</p>
-                                        </div>
-                                    </div>
-                                    <div className="col-6">
-                                        <div className="text-center p-3 bg-white rounded-3 border h-100">
-                                            <i className="fa-solid fa-crown text-warning fs-3 mb-2"></i>
-                                            <h6 className="fw-black text-dark mb-1 small">Member Islands</h6>
-                                            <p className="text-muted x-small fw-bold mb-0">Priority queue access, villager matching assistance, community perks, and faster server connection.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* NEW GUIDANCE SECTION: Island Visitor Etiquette & Beginner Guide */}
-            <section className="container py-5 position-relative z-2">
-                <div className="bg-white rounded-5 shadow-sm border p-4 p-lg-5">
-                    <div className="text-center mb-4">
-                        <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
-                            <i className="fa-solid fa-compass text-info fs-4"></i>
-                            <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Traveler's Guide</span>
-                        </div>
-                        <h2 className="display-6 fw-black text-dark ac-font mb-2">Island Etiquette & Flight Guide</h2>
-                        <p className="text-muted fw-bold mx-auto" style={{ maxWidth: '600px' }}>Follow these simple community guidelines to ensure a smooth journey for yourself and fellow island visitors.</p>
-                    </div>
-                    <div className="row g-4 mt-2">
-                        <div className="col-md-4">
-                            <div className="p-4 bg-light rounded-4 border h-100">
-                                <h3 className="h6 fw-black text-dark ac-font mb-2"><i className="fa-solid fa-suitcase text-success me-2"></i>Prepare Your Pockets</h3>
-                                <p className="text-muted small fw-bold mb-0 lh-lg">
-                                    Before heading to Orville at Dodo Airlines, empty your inventory completely. Leave your tools and local fruits in storage so you have all 40 pocket slots free to gather items and recipes during your trip.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="col-md-4">
-                            <div className="p-4 bg-light rounded-4 border h-100">
-                                <h3 className="h6 fw-black text-dark ac-font mb-2"><i className="fa-solid fa-plane-arrival text-warning me-2"></i>Close Windows Promptly</h3>
-                                <p className="text-muted small fw-bold mb-0 lh-lg">
-                                    When other players are landing or departing, keep in-game dialogue windows, pocket menus, and chat boxes closed. Keeping menus open causes flight interference for everyone trying to visit.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="col-md-4">
-                            <div className="p-4 bg-light rounded-4 border h-100">
-                                <h3 className="h6 fw-black text-dark ac-font mb-2"><i className="fa-solid fa-door-open text-info me-2"></i>Always Exit via Airport</h3>
-                                <p className="text-muted small fw-bold mb-0 lh-lg">
-                                    When you finish collecting items, walk directly into the airport to fly back home. Avoid using the minus (-) button to quit or closing the game, as silent leaves can cause connectivity resets for other visitors.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section className="container py-5 mt-4 position-relative z-2">
-
-                {/* Section Header */}
-                <div className="d-flex align-items-end justify-content-between mb-5">
+            {/* ════════════════ BULLETIN BOARD & NEWS ════════════════ */}
+            <section className="container py-5 mt-2 position-relative z-2">
+                <div className="d-flex align-items-end justify-content-between mb-4">
                     <div>
                         <div className="d-flex align-items-center gap-2 mb-2">
                             <i className="fa-solid fa-bullhorn text-warning fs-4 rotate-n10"></i>
@@ -388,19 +553,17 @@ const Home = () => {
                         </div>
                         <h2 className="display-6 fw-black text-dark ac-font mb-0">Bulletin Board</h2>
                     </div>
-                    <Link to="/blog" className="btn btn-white rounded-pill border fw-bold px-4 py-2 shadow-sm text-nook transform-active text-decoration-none">
+                    <Link to="/blog" className="btn btn-white rounded-pill border fw-bold px-4 py-2 shadow-2xs text-nook transform-active text-decoration-none">
                         Read All <i className="fa-solid fa-arrow-right ms-2"></i>
                     </Link>
                 </div>
 
-                {/* Cards Grid */}
                 <div className="row g-4">
                     {loading ? (
-                        /* Loading Skeletons */
                         [1, 2, 3].map(i => (
                             <div className="col-lg-4 col-md-6" key={i}>
                                 <div className="post-card h-100 bg-white rounded-5 shadow-sm border border-light overflow-hidden">
-                                    <div className="bg-light" style={{height: 220}}></div>
+                                    <div className="bg-light" style={{ height: 220 }}></div>
                                     <div className="p-4">
                                         <div className="placeholder-glow">
                                             <span className="placeholder col-4 rounded-pill mb-3"></span>
@@ -412,7 +575,6 @@ const Home = () => {
                             </div>
                         ))
                     ) : (
-                        /* Real Data */
                         posts.map((post, index) => (
                             <div className="col-lg-4 col-md-6" key={post.id}>
                                 <Link to={`/blog/${post.id}`} className="text-decoration-none">
@@ -420,19 +582,15 @@ const Home = () => {
                                         className="post-card h-100 bg-white rounded-5 shadow-sm border border-light position-relative overflow-hidden"
                                         style={{ animationDelay: `${index * 100}ms` }}
                                     >
-                                        {/* Image Area with Washi Tape */}
                                         <div className="post-img-container">
                                             <div className="washi-tape-small"></div>
                                             <img src={post.image} alt={post.title} className="w-100 h-100 object-fit-cover transition-scale" />
-
-                                            {/* Date Sticker */}
                                             <div className="date-sticker">
                                                 <span className="d-block fw-bold small text-uppercase">{post.date.split(" ")[0]}</span>
                                                 <span className="d-block fw-black fs-4 lh-1">{post.date.split(" ")[1]}</span>
                                             </div>
                                         </div>
 
-                                        {/* Card Body */}
                                         <div className="p-4 pt-4">
                                             <div className="mb-2">
                                                 <span className={`badge rounded-pill fw-bold border border-opacity-10 px-3 py-1 ${
@@ -444,7 +602,7 @@ const Home = () => {
                                                 </span>
                                             </div>
 
-                                            <h3 className="h4 fw-black text-dark mb-2 ac-font">{post.title}</h3>
+                                            <h3 className="h5 fw-black text-dark mb-2 ac-font">{post.title}</h3>
                                             <p className="text-muted small fw-bold mb-4 opacity-75 line-clamp-2">
                                                 {post.excerpt}
                                             </p>
@@ -461,42 +619,15 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* SERVICES SECTION */}
+            {/* ════════════════ FAQ ACCORDION ════════════════ */}
             <section className="container py-5">
-                <div className="row g-4">
-                    <div className="col-md-4">
-                        <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
-                            <div className="app-icon mb-3 mx-auto bg-light-green text-nook d-flex align-items-center justify-content-center rounded-circle"><i className="fa-solid fa-robot fs-2"></i></div>
-                            <h3 className="h4 fw-black text-dark mb-2">ChoBot Requests</h3>
-                            <p className="text-muted small fw-bold mb-0">Streamline your island visits. Use community bot commands to get an active Dodo code and visit tailored islands quickly.</p>
-                        </div>
-                    </div>
-                    <div className="col-md-4">
-                        <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
-                            <div className="app-icon mb-3 mx-auto bg-light-yellow text-warning d-flex align-items-center justify-content-center rounded-circle"><i className="fa-solid fa-coins fs-2"></i></div>
-                            <h3 className="h4 fw-black text-dark mb-2">Curated Bells</h3>
-                            <p className="text-muted small fw-bold mb-0">Finance your dream island. Access dedicated Bell islands and item bundles to pay off island bridges and home loans.</p>
-                        </div>
-                    </div>
-                    <div className="col-md-4">
-                        <div className="app-card h-100 text-center p-4 rounded-4 bg-white position-relative overflow-hidden">
-                            <div className="app-icon mb-3 mx-auto bg-light-blue text-info d-flex align-items-center justify-content-center rounded-circle"><i className="fa-solid fa-ticket fs-2"></i></div>
-                            <h3 className="h4 fw-black text-dark mb-2">Villager Matching</h3>
-                            <p className="text-muted small fw-bold mb-0">Looking for Raymond or Sasha? Our villager request service helps pair you with villagers who are ready to move.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* FAQ SECTION */}
-            <section className="container py-5">
-                <div className="mx-auto" style={{ maxWidth: '720px' }}>
+                <div className="mx-auto" style={{ maxWidth: '760px' }}>
                     <div className="text-center mb-5">
                         <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
                             <i className="fa-solid fa-circle-question text-success fs-4"></i>
                             <span className="text-muted fw-bold text-uppercase x-small tracking-widest">Got Questions?</span>
                         </div>
-                        <h2 className="display-6 fw-black text-dark ac-font mb-0">FAQ</h2>
+                        <h2 className="display-6 fw-black text-dark ac-font mb-0">Frequently Asked Questions</h2>
                     </div>
                     <div className="d-flex flex-column gap-3">
                         {[
@@ -505,48 +636,16 @@ const Home = () => {
                                 a: "An ACNH Treasure Island is a community-hosted Animal Crossing: New Horizons destination organized with thousands of items including catalog furniture, DIY recipe cards, building materials, seasonal decor, Bells, and Nook Miles Tickets. Players visit via a standard Dodo code to find specific items needed to decorate their home and island without waiting months for natural store rotations.",
                             },
                             {
-                                q: "Is Chopaeng free to use?",
-                                a: "Yes! Free public community islands are accessible to every Animal Crossing player at no charge. You can view online islands on our monitor page, grab an active Dodo code, and fly over. We also offer optional community memberships on Patreon, Twitch, or YouTube for supporters who want extra perks like priority queueing, dedicated Discord channels, and expedited server responses.",
+                                q: "How does the Order Bot work?",
+                                a: "The Order Bot lets you choose up to 40 items in our visual Command Builder and queue a personal delivery. You'll receive a real-time Dodo code boarding pass with live queue countdown and browser push notifications when your gate is ready.",
                             },
                             {
-                                q: "What is a Dodo code and how do I use it?",
-                                a: "A Dodo code is a unique 5-character code used for online multiplayer visits in Animal Crossing: New Horizons. To fly to a community island, visit Orville at Dodo Airlines inside your airport, select 'I want to fly' → 'Visit someone' → 'Via online play' → 'Search via Dodo Code', and type in the code displayed on our site.",
+                                q: "Is Chopaeng free to use?",
+                                a: "Yes! Free public community islands are accessible to every Animal Crossing player at no charge. You can view online islands on our monitor page, grab an active Dodo code, and fly over. We also offer optional community supporter tiers for priority queue access and Discord perks.",
                             },
                             {
                                 q: "What should I do before flying to a treasure island?",
-                                a: "Clear all 40 slots in your pockets before talking to Orville at the airport. Leave your custom tools, materials, and clothing in storage so you have maximum inventory space to pick up furniture, DIYs, or items. Also, verify that your Nintendo Switch has a stable internet connection (NAT Type A or B).",
-                            },
-                            {
-                                q: "What is ChoBot and how do I use it?",
-                                a: "ChoBot is our custom Discord integration designed to help organize community island access for server members. Through dedicated Discord channels, supporters can use bot commands to request specific item categories or inquire about villager availability. ChoBot coordinates the connection and sends a private Dodo code directly to you.",
-                            },
-                            {
-                                q: "How do I obtain Bells for my island?",
-                                a: "Chopaeng provides community islands formatted specifically with Bell bundles and high-value items. Visitors can stop by these islands, pick up Bell bundles, and bring them back to their home island to easily fund bridge construction, incline fees, and home loan upgrades.",
-                            },
-                            {
-                                q: "Can I request a specific villager?",
-                                a: "Yes! Through our community villager matching service, supporters can request assistance finding specific Animal Crossing: New Horizons villagers such as Raymond, Sasha, Marshal, or Judy. When a matching villager is available and ready to move in boxes, you can visit the island to invite them to live on your town.",
-                            },
-                            {
-                                q: "What items can I find on Chopaeng treasure islands?",
-                                a: "Our islands are categorized by theme and regularly stocked with full furniture color variations, seasonal event decor, wall and flooring items, DIY recipe cards, fossils, real/fake artwork, Nook Miles Tickets, and essential crafting materials like iron nuggets, clay, and all wood types.",
-                            },
-                            {
-                                q: "Why do I keep getting a 'Wuh-oh! Interference' error?",
-                                a: "The 'Interference' message occurs when another visitor is actively landing at the airport, departing, or holding an open text dialog box. It is completely normal during busy travel times. Wait a few seconds, close any menus on your screen, and press 'A' to retry.",
-                            },
-                            {
-                                q: "How do I leave a treasure island properly?",
-                                a: "To leave an island safely, walk directly into the airport building and speak with Orville at the counter to fly home. Never press the minus (-) button to force-exit or disconnect your Wi-Fi, as doing so can trigger network errors for other visitors on the island.",
-                            },
-                            {
-                                q: "What membership tiers does Chopaeng offer?",
-                                a: "We offer optional community supporter tiers (Chotato, ChoColate, ChoFries, and ChoSoup) via Patreon, Twitch, or YouTube. Membership tiers provide perks such as priority Discord support, access to member-only island queues, faster bot response times, and special community roles.",
-                            },
-                            {
-                                q: "Is Animal Crossing: New Horizons required to visit?",
-                                a: "Yes. You must own a copy of Animal Crossing: New Horizons on Nintendo Switch along with an active Nintendo Switch Online membership to travel to other islands via Dodo codes. You can browse our website maps on any device.",
+                                a: "Clear all 40 slots in your pockets before talking to Orville at the airport. Leave your tools and clothing in storage so you have maximum inventory space to pick up items and recipes.",
                             },
                         ].map((faq) => (
                             <details key={faq.q} className="bg-white rounded-4 shadow-sm border p-4 faq-item" style={{ cursor: 'pointer' }}>
@@ -554,21 +653,23 @@ const Home = () => {
                                     <span>{faq.q}</span>
                                     <i className="fa-solid fa-chevron-down text-muted small ms-3 flex-shrink-0"></i>
                                 </summary>
-                                <p className="text-muted small fw-bold mb-0 mt-3">{faq.a}</p>
+                                <p className="text-muted small fw-bold mb-0 mt-3 lh-lg">{faq.a}</p>
                             </details>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* PASSPORT SECTION */}
+            {/* ════════════════ PASSPORT SECTION ════════════════ */}
             <section className="container py-5 mb-5">
-                <div className=" mx-auto bg-nook-green rounded-5 p-4 p-lg-5 shadow-lg" style={{ maxWidth: '900px' }}>
+                <div className="mx-auto bg-nook-green rounded-5 p-4 p-lg-5 shadow-lg" style={{ maxWidth: '900px' }}>
                     <div className="row align-items-center">
                         <div className="col-lg-5 text-center text-lg-start mb-4 mb-lg-0">
                             <h2 className="display-5 fw-black text-white ac-font mb-3">Get Your <br /> Passport</h2>
                             <p className="text-white opacity-75 fw-bold mb-4">Join the community on Patreon, Twitch, or Discord to unlock priority support and perks.</p>
-                            <a href="https://www.patreon.com/cw/chopaeng/membership" target="_blank" className="btn btn-light rounded-pill px-4 py-2 fw-black text-nook shadow-sm"><i className="fa-brands fa-patreon me-2"></i> Subscribe Now</a>
+                            <a href="https://www.patreon.com/cw/chopaeng/membership" target="_blank" rel="noreferrer" className="btn btn-light rounded-pill px-4 py-2 fw-black text-nook shadow-sm">
+                                <i className="fa-brands fa-patreon me-2"></i> Subscribe Now
+                            </a>
                         </div>
                         <div className="col-lg-7">
                             <div className="bg-cream passport-card rounded-4 p-4 shadow-sm rotate-n2 position-relative">
@@ -581,12 +682,7 @@ const Home = () => {
                                         <img
                                             src={logo}
                                             alt="Chopaeng Logo"
-                                            style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                objectFit: 'contain',
-                                                padding: '8px' // Optional: adds a little breathing room around the logo
-                                            }}
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '8px' }}
                                         />
                                     </div>
                                     <div><h4 className="fw-black text-dark m-0">PASSPORT</h4><span className="text-muted small text-uppercase fw-bold">Cho Membership</span></div>

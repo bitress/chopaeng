@@ -136,6 +136,16 @@ export const CommandBuilderSummary = ({
         setCopiedKey(key);
         setCopiedInstruction(instructionType);
         playChimeClick();
+
+        // Redirect to Discord channel after brief delay so click registers
+        setTimeout(() => {
+            if (instructionType === 'order') {
+                window.open('https://discord.com/channels/729590421478703135/1175672083183829075', '_blank');
+            } else {
+                window.open('https://discord.gg/chopaeng', '_blank');
+            }
+        }, 450);
+
         setTimeout(() => {
             setCopiedKey((prev) => (prev === key ? null : prev));
         }, 2000);

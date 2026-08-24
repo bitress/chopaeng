@@ -22,4 +22,5 @@ export interface IslandData {
     requiredRoles: string[];
     accessible?: boolean;
     viewerHasAccess?: boolean;
+    channel_id?: string;
 }

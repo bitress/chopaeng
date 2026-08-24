@@ -23,6 +23,8 @@ interface ApiIsland {
     required_roles: string[];
     accessible?: boolean;
     viewer_has_access?: boolean;
+    channel_id?: string;
+    channelId?: string;
 }
 
 interface ApiIslandsResponse {
@@ -137,6 +139,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     requiredRoles,
                     accessible,
                     viewerHasAccess: accessible,
+                    channel_id: liveData.channel_id || liveData.channelId || undefined,
                 };
             });
 
