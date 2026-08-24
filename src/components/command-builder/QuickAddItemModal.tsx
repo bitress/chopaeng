@@ -249,7 +249,6 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                     ) : (
                         <div className="row g-2">
                             {filteredItems.map((item) => {
-                                const isVillager = item.entityType === 'villager';
                                 const defaultVariant = item.variations && item.variations.length > 0 ? item.variations[0] : null;
                                 const vKey = getVariantKey(defaultVariant);
                                 const pocketId = vKey !== 'NA' ? `${item.id}:${vKey}` : item.id;
@@ -322,45 +321,43 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                     </button>
                                                 )}
 
-                                                {/* Drop Button / Stepper (Disabled for villagers) */}
-                                                {!isVillager && (
-                                                    dropQty > 0 ? (
-                                                        <div className="btn-group rounded-pill border border-info overflow-hidden" style={{ backgroundColor: '#f0f9ff', borderColor: '#0284c7' }}>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-xs text-info fw-bold px-2 py-1 border-0"
-                                                                style={{ color: '#0284c7' }}
-                                                                onClick={() => decreaseDropQuantity(pocketId)}
-                                                                title="Decrease drop"
-                                                            >
-                                                                −
-                                                            </button>
-                                                            <span className="x-small px-1 fw-bold font-monospace d-flex align-items-center" style={{ color: '#0284c7' }}>
-                                                                {dropQty}
-                                                            </span>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-xs text-info fw-bold px-2 py-1 border-0"
-                                                                style={{ color: '#0284c7' }}
-                                                                onClick={() => increaseDropQuantity(pocketId)}
-                                                                disabled={!canIncreaseDrop}
-                                                                title="Increase drop"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        </div>
-                                                    ) : (
+                                                {/* Drop Button / Stepper */}
+                                                {dropQty > 0 ? (
+                                                    <div className="btn-group rounded-pill border border-info overflow-hidden" style={{ backgroundColor: '#f0f9ff', borderColor: '#0284c7' }}>
                                                         <button
                                                             type="button"
-                                                            className="btn btn-xs btn-outline-info rounded-pill fw-bold px-2 py-1"
-                                                            style={{ color: '#0284c7', borderColor: '#0284c7' }}
-                                                            onClick={() => handleAdd(item, 'drop')}
-                                                            disabled={totalDropCount >= 9}
-                                                            title="Add to Drop bot"
+                                                            className="btn btn-xs text-info fw-bold px-2 py-1 border-0"
+                                                            style={{ color: '#0284c7' }}
+                                                            onClick={() => decreaseDropQuantity(pocketId)}
+                                                            title="Decrease drop"
                                                         >
-                                                            <i className="fa-solid fa-plane-arrival me-1"></i>Drop
+                                                            −
                                                         </button>
-                                                    )
+                                                        <span className="x-small px-1 fw-bold font-monospace d-flex align-items-center" style={{ color: '#0284c7' }}>
+                                                            {dropQty}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs text-info fw-bold px-2 py-1 border-0"
+                                                            style={{ color: '#0284c7' }}
+                                                            onClick={() => increaseDropQuantity(pocketId)}
+                                                            disabled={!canIncreaseDrop}
+                                                            title="Increase drop"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-xs btn-outline-info rounded-pill fw-bold px-2 py-1"
+                                                        style={{ color: '#0284c7', borderColor: '#0284c7' }}
+                                                        onClick={() => handleAdd(item, 'drop')}
+                                                        disabled={totalDropCount >= 9}
+                                                        title="Add to Drop bot"
+                                                    >
+                                                        <i className="fa-solid fa-plane-arrival me-1"></i>Drop
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>

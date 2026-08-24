@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { playChimeClick } from '../../utils/kkAudioSynthesizer';
 
-export type MobileTab = 'catalog' | 'pockets' | 'command';
+export type MobileTab = 'catalog' | 'pockets' | 'command' | 'order';
 
 interface MobileCommandBarProps {
     activeTab: MobileTab;
@@ -10,16 +12,14 @@ interface MobileCommandBarProps {
     hasCommand: boolean;
 }
 
-// Text/icon colors are darkened versions of the brand palette so they clear
-// WCAG AA contrast (4.5:1) at this small font size — the original #37b06d /
-// #2ea466 read great as accents but fail as text-on-white.
 const COLORS = {
-    primary: '#37b06d', // accent only: pill, tint fill — never used for text
-    primaryText: '#1a7a45', // active label/icon color, ~5.4:1 on white
-    inactiveText: '#6b7280', // inactive label/icon color, ~4.8:1 on white
-    primaryTint: 'rgba(55, 176, 109, 0.10)',
-    pocketsBadge: '#1f7a4d', // ~5.4:1 with white badge text
-    commandBadge: '#b45309', // ~5.0:1 with white badge text
+    primary: '#16a34a',
+    primaryText: '#15803d',
+    inactiveText: '#64748b',
+    primaryTint: 'rgba(22, 163, 74, 0.12)',
+    pocketsBadge: '#16a34a',
+    commandBadge: '#d97706',
+    orderBotBadge: '#2563eb',
 };
 
 export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
@@ -29,6 +29,7 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
     dropCount,
     hasCommand,
 }) => {
+    const navigate = useNavigate();
     const totalCount = orderCount + dropCount;
 
     const tabs: {
@@ -38,29 +39,50 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
         badge?: number | string;
         badgeColor?: string;
         badgeDescription?: string;
+        isActionLink?: boolean;
+        href?: string;
     }[] = [
-            {
-                id: 'catalog',
-                icon: 'fa-magnifying-glass',
-                label: 'Browse',
-            },
-            {
-                id: 'pockets',
-                icon: 'fa-boxes-stacked',
-                label: 'Pockets',
-                badge: totalCount > 0 ? (totalCount > 99 ? '99+' : totalCount) : undefined,
-                badgeColor: COLORS.pocketsBadge,
-                badgeDescription: `${totalCount} item${totalCount === 1 ? '' : 's'}`,
-            },
-            {
-                id: 'command',
-                icon: 'fa-terminal',
-                label: 'Command',
-                badge: hasCommand ? '!' : undefined,
-                badgeColor: COLORS.commandBadge,
-                badgeDescription: 'action needed',
-            },
-        ];
+        {
+            id: 'catalog',
+            icon: 'fa-magnifying-glass',
+            label: 'Browse',
+        },
+        {
+            id: 'pockets',
+            icon: 'fa-boxes-stacked',
+            label: 'Pockets',
+            badge: totalCount > 0 ? (totalCount > 99 ? '99+' : totalCount) : undefined,
+            badgeColor: COLORS.pocketsBadge,
+            badgeDescription: `${totalCount} item${totalCount === 1 ? '' : 's'} in pocket`,
+        },
+        {
+            id: 'command',
+            icon: 'fa-terminal',
+            label: 'Command',
+            badge: hasCommand ? '!' : undefined,
+            badgeColor: COLORS.commandBadge,
+            badgeDescription: 'Generated bot command',
+        },
+        {
+            id: 'order',
+            icon: 'fa-paper-plane',
+            label: 'Order Bot',
+            badge: orderCount > 0 ? `${orderCount}` : undefined,
+            badgeColor: '#16a34a',
+            badgeDescription: 'Open Order Bot dispatch',
+            isActionLink: true,
+            href: '/order',
+        },
+    ];
+
+    const handleTabClick = (tab: typeof tabs[0]) => {
+        playChimeClick();
+        if (tab.isActionLink && tab.href) {
+            navigate(tab.href);
+            return;
+        }
+        onTabChange(tab.id);
+    };
 
     const activeLabel = tabs.find((t) => t.id === activeTab)?.label ?? '';
 
@@ -72,16 +94,17 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
                     60% { transform: scale(1.15); opacity: 1; }
                     100% { transform: scale(1); }
                 }
-                @keyframes mcb-command-pulse {
-                    0%, 100% { box-shadow: 0 0 0 0 rgba(180, 83, 9, 0.35); }
-                    50% { box-shadow: 0 0 0 4px rgba(180, 83, 9, 0); }
+                @keyframes mcb-order-pulse {
+                    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+                    50% { transform: scale(1.05); box-shadow: 0 0 0 5px rgba(22, 163, 74, 0); }
                 }
                 .mcb-tab {
                     -webkit-tap-highlight-color: transparent;
                     touch-action: manipulation;
+                    position: relative;
                 }
-                .mcb-tab:active { background: rgba(15, 23, 42, 0.045); }
-                .mcb-tab:active .mcb-icon-wrap { transform: scale(0.9); }
+                .mcb-tab:active { background: rgba(15, 23, 42, 0.05); }
+                .mcb-tab:active .mcb-icon-wrap { transform: scale(0.92); }
                 .mcb-tab:focus-visible {
                     outline: 2px solid ${COLORS.primaryText};
                     outline-offset: -3px;
@@ -89,9 +112,11 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
                 }
                 .mcb-label {
                     transition: transform 0.18s ease, font-weight 0.18s ease;
+                    font-family: 'Outfit', sans-serif;
                 }
                 .mcb-tab[aria-selected="true"] .mcb-label {
                     transform: translateY(-1px);
+                    font-weight: 800;
                 }
                 @media (prefers-reduced-motion: reduce) {
                     .mcb-tab, .mcb-icon-wrap, .mcb-pill, .mcb-badge, .mcb-label {
@@ -114,11 +139,11 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
                 style={{
                     zIndex: 1050,
                     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-                    background: 'rgba(255, 255, 255, 0.92)',
-                    backdropFilter: 'blur(12px) saturate(160%)',
-                    WebkitBackdropFilter: 'blur(12px) saturate(160%)',
-                    borderColor: 'rgba(0, 0, 0, 0.06)',
-                    boxShadow: '0 -4px 20px rgba(15, 23, 42, 0.06)',
+                    background: 'rgba(255, 255, 255, 0.94)',
+                    backdropFilter: 'blur(16px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                    borderColor: 'rgba(226, 232, 240, 0.9)',
+                    boxShadow: '0 -4px 24px rgba(15, 23, 42, 0.08)',
                 }}
             >
                 <div className="d-flex align-items-stretch" style={{ height: '64px' }}>
@@ -134,14 +159,13 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
                                 aria-current={isActive ? 'page' : undefined}
                                 aria-label={fullLabel}
                                 tabIndex={isActive ? 0 : -1}
-                                onClick={() => onTabChange(tab.id)}
-                                className="mcb-tab flex-fill d-flex flex-column align-items-center justify-content-center gap-1 border-0 bg-transparent position-relative"
+                                onClick={() => handleTabClick(tab)}
+                                className="mcb-tab flex-fill d-flex flex-column align-items-center justify-content-center gap-1 border-0 bg-transparent"
                                 style={{
                                     color: isActive ? COLORS.primaryText : COLORS.inactiveText,
-                                    fontSize: '0.6rem',
-                                    fontWeight: isActive ? 700 : 500,
-                                    letterSpacing: '0.03em',
-                                    textTransform: 'uppercase',
+                                    fontSize: '0.62rem',
+                                    fontWeight: isActive ? 800 : 600,
+                                    letterSpacing: '0.02em',
                                     transition: 'color 0.18s ease, background 0.15s ease',
                                     cursor: 'pointer',
                                     padding: 0,
@@ -165,9 +189,9 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
                                 <div
                                     className="mcb-icon-wrap position-relative d-flex align-items-center justify-content-center"
                                     style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '50%',
+                                        width: '34px',
+                                        height: '34px',
+                                        borderRadius: '10px',
                                         background: isActive ? COLORS.primaryTint : 'transparent',
                                         transition: 'background 0.18s ease, transform 0.15s ease',
                                     }}
@@ -175,7 +199,7 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
                                     <i
                                         className={`fa-solid ${tab.icon}`}
                                         aria-hidden="true"
-                                        style={{ fontSize: '1.05rem' }}
+                                        style={{ fontSize: '1rem', color: tab.id === 'order' && orderCount > 0 ? '#16a34a' : undefined }}
                                     />
                                     {/* Badge */}
                                     {tab.badge !== undefined && (
@@ -195,7 +219,7 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
                                                 lineHeight: 1,
                                                 animation:
                                                     'mcb-badge-pop 0.25s ease-out' +
-                                                    (tab.id === 'command' ? ', mcb-command-pulse 2s ease-in-out infinite 0.3s' : ''),
+                                                    (tab.id === 'order' && orderCount > 0 ? ', mcb-order-pulse 2s ease-in-out infinite' : ''),
                                             }}
                                         >
                                             {tab.badge}

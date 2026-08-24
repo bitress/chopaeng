@@ -1,10 +1,12 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import type { CatalogEntity } from "../data/commandBuilderData";
 import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets, type PocketItem } from "../hooks/useCommandBuilderPockets";
 import { useCatalogData } from "../hooks/useCatalogData";
+import { ORDER_MAX, DROP_MAX } from "../constants/limits";
+import { playChimeClick } from "../utils/kkAudioSynthesizer";
 import {
     getSavedCommandBuilderState,
     saveCommandBuilderState,
@@ -418,9 +420,52 @@ const CommandBuilder = () => {
                 <section className="container py-4">
                     <div className="row gy-4">
                         {/* MOBILE: Catalog tab panel — hidden when on pockets/command tab on mobile */}
-                        <div className={`col-lg-8 ${
-                            mobileTab === 'catalog' ? 'd-block' : 'd-none d-lg-block'
-                        }`}>
+                        <div className={`col-lg-7 ${mobileTab === 'catalog' ? 'd-block' : 'd-none d-lg-block'
+                            }`}>
+                            {/* Order Pocket Header Bridge Banner */}
+                            {totalOrderCount > 0 && (
+                                <div className="card rounded-4 p-3 bg-white border border-success border-opacity-30 shadow-2xs mb-3 animate-fade">
+                                    <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <span
+                                                className="rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success flex-shrink-0"
+                                                style={{ width: 36, height: 36 }}
+                                                aria-hidden="true"
+                                            >
+                                                <i className="fa-solid fa-bag-shopping"></i>
+                                            </span>
+                                            <div>
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <strong className="text-dark small fw-bold">Order Pocket: {totalOrderCount}/{ORDER_MAX} Slots</strong>
+                                                    <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-bold">
+                                                        {Math.min(100, Math.round((totalOrderCount / ORDER_MAX) * 100))}% Full
+                                                    </span>
+                                                </div>
+                                                <span className="tiny-text text-muted">Items loaded and ready for bot delivery or flight.</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="d-flex align-items-center gap-2">
+                                            <Link
+                                                to="/pockets"
+                                                className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-3 py-1 shadow-2xs"
+                                                onClick={() => playChimeClick()}
+                                            >
+                                                <i className="fa-solid fa-grip me-1" aria-hidden="true"></i>Pockets
+                                            </Link>
+                                            <Link
+                                                to="/order"
+                                                className="btn btn-xs btn-nook text-white rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
+                                                onClick={() => playChimeClick()}
+                                            >
+                                                <i className="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                                                <span>Send to Order Bot →</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="d-flex align-items-center justify-content-between mb-3" ref={catalogHeadingRef} style={{ scrollMarginTop: '90px' }}>
                                 <div>
                                     <h2 className="h4 fw-black mb-1">Catalog</h2>
@@ -543,9 +588,8 @@ const CommandBuilder = () => {
                         </div>
 
                         {/* MOBILE: Pockets tab panel (full-width summary) */}
-                        <aside className={`col-lg-4 ${
-                            mobileTab === 'pockets' || mobileTab === 'command' ? 'd-block' : 'd-none d-lg-block'
-                        }`}>
+                        <aside className={`col-lg-5 ${mobileTab === 'pockets' || mobileTab === 'command' ? 'd-block' : 'd-none d-lg-block'
+                            }`}>
                             <div className="sticky-top" style={{ top: '90px' }}>
                                 {/* Mobile Command Tab — Minimal copy-focused view */}
                                 {mobileTab === 'command' && (
@@ -560,7 +604,7 @@ const CommandBuilder = () => {
                                             {orderCommandText ? (
                                                 <div className="mb-3">
                                                     <div className="d-flex align-items-center justify-content-between mb-1">
-                                                        <span className="tiny-text fw-bold text-uppercase text-muted">Order Bot ({totalOrderCount}/40)</span>
+                                                        <span className="tiny-text fw-bold text-uppercase text-muted">Order Bot ({totalOrderCount}/{ORDER_MAX})</span>
                                                     </div>
                                                     <code
                                                         className="d-block bg-dark text-success rounded-3 p-2 small font-monospace text-break mb-2"
@@ -568,25 +612,35 @@ const CommandBuilder = () => {
                                                     >
                                                         {orderCommandText}
                                                     </code>
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-nook text-white rounded-pill fw-bold w-100 py-2"
-                                                        onClick={handleCopyOrder}
-                                                    >
-                                                        <i className="fa-solid fa-copy me-2"></i>
-                                                        {copyOrderStatus === 'Copied!' ? 'Copied!' : 'Copy !order Command'}
-                                                    </button>
+                                                    <div className="d-flex flex-column gap-2">
+                                                        <Link
+                                                            to="/order"
+                                                            className="btn btn-nook text-white rounded-pill fw-bold w-100 py-2 d-flex align-items-center justify-content-center gap-2 shadow-2xs"
+                                                            onClick={() => playChimeClick()}
+                                                        >
+                                                            <i className="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                                                            <span>Send to Order Bot & Fly In →</span>
+                                                        </Link>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-success rounded-pill fw-bold w-100 py-2"
+                                                            onClick={handleCopyOrder}
+                                                        >
+                                                            <i className="fa-solid fa-copy me-2" aria-hidden="true"></i>
+                                                            {copyOrderStatus === 'Copied!' ? 'Copied!' : 'Copy !order Command'}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="text-center text-muted py-3 small">
-                                                    <i className="fa-solid fa-box-open fs-4 opacity-30 mb-2 d-block"></i>
+                                                    <i className="fa-solid fa-box-open fs-4 opacity-30 mb-2 d-block" aria-hidden="true"></i>
                                                     Add items from the Browse tab to generate a command.
                                                     <button
                                                         type="button"
                                                         className="btn btn-sm btn-outline-success rounded-pill mt-2 fw-bold d-block mx-auto"
                                                         onClick={() => setMobileTab('catalog')}
                                                     >
-                                                        <i className="fa-solid fa-magnifying-glass me-1"></i>Go to Browse
+                                                        <i className="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></i>Go to Browse
                                                     </button>
                                                 </div>
                                             )}
@@ -595,7 +649,7 @@ const CommandBuilder = () => {
                                             {dropCommandText && (
                                                 <div className="mt-2">
                                                     <div className="d-flex align-items-center justify-content-between mb-1">
-                                                        <span className="tiny-text fw-bold text-uppercase text-muted">Drop Bot ({totalDropCount}/9)</span>
+                                                        <span className="tiny-text fw-bold text-uppercase text-muted">Drop Bot ({totalDropCount}/{DROP_MAX})</span>
                                                     </div>
                                                     <code
                                                         className="d-block rounded-3 p-2 small font-monospace text-break mb-2"
@@ -609,7 +663,7 @@ const CommandBuilder = () => {
                                                         style={{ backgroundColor: '#0284c7' }}
                                                         onClick={handleCopyDrop}
                                                     >
-                                                        <i className="fa-solid fa-copy me-2"></i>
+                                                        <i className="fa-solid fa-copy me-2" aria-hidden="true"></i>
                                                         {copyDropStatus === 'Copied!' ? 'Copied!' : 'Copy !drop Command'}
                                                     </button>
                                                 </div>
@@ -655,12 +709,12 @@ const CommandBuilder = () => {
                 </section>
                 <div className="container">
                     {sharedNotice && (
-                        <div className="alert alert-success rounded-4 shadow-sm p-3 mb-3 d-flex align-items-center justify-content-between animate-fade">
+                        <div className="alert alert-success rounded-4 shadow-sm p-3 mb-3 d-flex align-items-center justify-content-between animate-fade" role="status" aria-live="polite">
                             <div>
-                                <i className="fa-solid fa-circle-check fs-5 text-success me-2 align-middle"></i>
+                                <i className="fa-solid fa-circle-check fs-5 text-success me-2 align-middle" aria-hidden="true"></i>
                                 <strong className="text-dark small">{sharedNotice}</strong>
                             </div>
-                            <button type="button" className="btn-close" onClick={() => setSharedNotice(null)} />
+                            <button type="button" className="btn-close" aria-label="Close notification" onClick={() => setSharedNotice(null)} />
                         </div>
                     )}
                     <DisclaimerBanner className="mb-3" />
@@ -670,22 +724,35 @@ const CommandBuilder = () => {
                 {mobileTab === 'catalog' && (totalOrderCount > 0 || totalDropCount > 0) && (
                     <div
                         className="d-lg-none position-fixed"
-                        style={{ bottom: '72px', right: '16px', zIndex: 1045 }}
+                        style={{ bottom: '74px', right: '16px', zIndex: 1045 }}
                     >
-                        <button
-                            type="button"
-                            className="btn btn-nook text-white rounded-pill shadow-lg fw-bold d-flex align-items-center gap-2 px-3 py-2"
-                            style={{ fontSize: '0.8rem', border: '2px solid rgba(255,255,255,0.35)' }}
-                            onClick={() => setMobileTab('pockets')}
-                        >
-                            <i className="fa-solid fa-boxes-stacked"></i>
-                            <span>
-                                {totalOrderCount > 0 && <span>Order: {totalOrderCount}/40</span>}
-                                {totalOrderCount > 0 && totalDropCount > 0 && <span className="mx-1 opacity-60">·</span>}
-                                {totalDropCount > 0 && <span>Drop: {totalDropCount}/9</span>}
-                            </span>
-                            <i className="fa-solid fa-chevron-up opacity-75" style={{ fontSize: '0.65rem' }}></i>
-                        </button>
+                        <div className="d-flex gap-2 align-items-center">
+                            <button
+                                type="button"
+                                className="btn btn-nook text-white rounded-pill shadow-lg fw-bold d-flex align-items-center gap-2 px-3 py-2"
+                                style={{ fontSize: '0.82rem', border: '2px solid rgba(255,255,255,0.4)' }}
+                                aria-label={`View pockets, ${totalOrderCount} of ${ORDER_MAX} slots filled`}
+                                onClick={() => {
+                                    playChimeClick();
+                                    setMobileTab('pockets');
+                                }}
+                            >
+                                <i className="fa-solid fa-bag-shopping" aria-hidden="true"></i>
+                                <span>{totalOrderCount}/{ORDER_MAX} Pockets</span>
+                            </button>
+                            {totalOrderCount > 0 && (
+                                <Link
+                                    to="/order"
+                                    className="btn btn-dark text-white rounded-pill shadow-lg fw-bold d-flex align-items-center gap-1 px-3 py-2"
+                                    style={{ fontSize: '0.82rem', border: '2px solid rgba(74, 222, 128, 0.4)' }}
+                                    aria-label="Proceed to Order Bot dispatch"
+                                    onClick={() => playChimeClick()}
+                                >
+                                    <i className="fa-solid fa-paper-plane text-success" aria-hidden="true"></i>
+                                    <span>Order →</span>
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 )}
 

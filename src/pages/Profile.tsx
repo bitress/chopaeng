@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { DODO_API_BASE } from "../config/api";
 import { getAuthToken } from "../context/authToken";
 import { useAuth } from "../context/useAuth";
 import { useIslandData } from "../context/useIslandData";
+import { useCatalogData } from "../hooks/useCatalogData";
 import { useFavoriteIslands, getStoredFavoriteIslands, saveStoredFavoriteIslands } from "../hooks/useFavoriteIslands";
 import { useSavedCharacters } from "../hooks/useSavedCharacters";
 import { getUserActivityStats } from "../utils/userStats";
 import { getUserPreferences, saveUserPreferences } from "../utils/userPreferences";
+import { parseItemCodes } from "../utils/itemCodeParser";
+import { playChimeClick } from "../utils/kkAudioSynthesizer";
+import { fetchUserOrderHistory, type OrderHistoryItem } from "../utils/orderBotApi";
 
 interface ProfileUser {
     id: string;
@@ -100,11 +104,29 @@ const formatDate = (value?: string | number | null) => {
     }).format(date);
 };
 
+const formatDateTime = (value?: string | number | null) => {
+    if (!value) return "Not available";
+    const date =
+        typeof value === "number"
+            ? new Date(value < MS_TIMESTAMP_THRESHOLD ? value * 1000 : value)
+            : new Date(value);
+    if (Number.isNaN(date.getTime())) return "Not available";
+    return new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    }).format(date);
+};
+
 const formatNumber = (value?: number) => new Intl.NumberFormat().format(value ?? 0);
 
 const Profile = () => {
+    const navigate = useNavigate();
     const { user: authUser, loading: authLoading, login, canAccessIsland } = useAuth();
     const { islands: allIslands } = useIslandData();
+    const { data: catalogData } = useCatalogData();
     const { favoriteIslands, toggleFavoriteIsland, isFavoriteIsland } = useFavoriteIslands();
 
     const [profile, setProfile] = useState<ProfileResponse | null>(null);
@@ -112,8 +134,62 @@ const Profile = () => {
     const [error, setError] = useState("");
     const [preferences, setPreferences] = useState(getUserPreferences);
     const [prefNotice, setPrefNotice] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"passport" | "access" | "favorites" | "history">("passport");
+    const [activeTab, setActiveTab] = useState<"passport" | "access" | "favorites" | "orders" | "history">("passport");
     const [accessFilter, setAccessFilter] = useState<"all" | "public" | "member" | "order">("all");
+
+    // Orders History & Reorder State
+    const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(false);
+    const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
+
+    const loadOrders = useCallback(async () => {
+        setOrdersLoading(true);
+        const token = getAuthToken();
+        const res = await fetchUserOrderHistory(token);
+        if (res.success && res.orders) {
+            setOrders(res.orders);
+        }
+        setOrdersLoading(false);
+    }, []);
+
+    useEffect(() => {
+        loadOrders();
+    }, [loadOrders, authUser?.user_id]);
+
+    const handleReorder = (order: OrderHistoryItem, targetRoute: "/order" | "/command-builder" = "/order") => {
+        const bundle = parseItemCodes(order.command, catalogData?.all || []);
+        if (bundle.items.length > 0) {
+            const mappedEntries = bundle.items.map((item) => ({
+                item: {
+                    id: item.itemId,
+                    name: item.name,
+                    category: item.category || "General",
+                    image: item.image,
+                    baseId: item.itemId,
+                    variantId: item.variantId ?? null,
+                    variantLabel: item.variantLabel ?? null,
+                },
+                quantity: item.quantity,
+            }));
+            localStorage.setItem("command_builder_order_items", JSON.stringify(mappedEntries));
+            playChimeClick();
+            setPrefNotice(`Loaded ${bundle.items.length} item types (${bundle.totalSlots} slots) from order #${order.id}! Opening...`);
+            setTimeout(() => setPrefNotice(null), 4000);
+            navigate(targetRoute);
+        } else {
+            playChimeClick();
+            navigate(targetRoute);
+        }
+    };
+
+    const handleCopyOrderCommand = (order: OrderHistoryItem) => {
+        const cmd = order.command.startsWith("!") ? order.command : `!order ${order.command}`;
+        navigator.clipboard.writeText(cmd).catch(() => {});
+        setCopiedOrderId(order.id);
+        playChimeClick();
+        setTimeout(() => setCopiedOrderId(null), 2500);
+    };
+
 
     const subscriptionRoleNames = useMemo(() => {
         const subscriptions = profile?.subscriptions;
@@ -535,6 +611,19 @@ const Profile = () => {
                         >
                             <i className="fa-solid fa-star text-warning"></i>
                             <span>Favorite Islands ({favoriteIslands.length})</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className={`btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 transition-all ${
+                                activeTab === "orders"
+                                    ? "btn-success text-white shadow-sm"
+                                    : "btn-light bg-light text-muted border"
+                            }`}
+                            onClick={() => setActiveTab("orders")}
+                        >
+                            <i className="fa-solid fa-box-open text-success"></i>
+                            <span>Order History {orders.length > 0 ? `(${orders.length})` : ""}</span>
                         </button>
 
                         <button
@@ -1110,6 +1199,196 @@ const Profile = () => {
                                         <div className="d-flex justify-content-center">
                                             <Link to="/islands" className="btn btn-sm btn-success text-white rounded-pill px-4 fw-bold shadow-2xs">
                                                 <i className="fa-solid fa-compass me-1"></i>Browse Treasure Islands
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── TAB: ORDER HISTORY & REORDER ─────────────────────────────────────── */}
+                {activeTab === "orders" && (
+                    <div className="row g-4 animate-fade">
+                        <div className="col-12">
+                            <div className="bg-white rounded-4 shadow-sm border p-4">
+                                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+                                    <div>
+                                        <div className="d-flex align-items-center gap-2">
+                                            <h2 className="h5 ac-font text-dark mb-0">Your Order History</h2>
+                                            <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-black">
+                                                {orders.length} Order{orders.length === 1 ? "" : "s"}
+                                            </span>
+                                        </div>
+                                        <p className="tiny-text text-muted mb-0">
+                                            Saved Order Bot requests. Reorder any previous pocket with 1-click or export items to Command Builder.
+                                        </p>
+                                    </div>
+
+                                    <div className="d-flex gap-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-2xs"
+                                            onClick={loadOrders}
+                                            disabled={ordersLoading}
+                                            title="Refresh order history"
+                                        >
+                                            <i className={`fa-solid fa-arrows-rotate ${ordersLoading ? "fa-spin" : ""}`}></i>
+                                            <span>Refresh</span>
+                                        </button>
+                                        <Link
+                                            to="/order"
+                                            className="btn btn-sm btn-success text-white rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-sm"
+                                        >
+                                            <i className="fa-solid fa-paper-plane"></i>
+                                            <span>Order Bot</span>
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                {ordersLoading && orders.length === 0 ? (
+                                    <div className="text-center py-5 text-muted">
+                                        <span className="spinner-border spinner-border-sm text-success me-2" role="status" aria-hidden="true" />
+                                        <span className="small fw-bold">Loading order history…</span>
+                                    </div>
+                                ) : orders.length > 0 ? (
+                                    <div className="row g-3">
+                                        {orders.map((order) => {
+                                            const parsed = parseItemCodes(order.command, catalogData?.all || []);
+                                            const isCopied = copiedOrderId === order.id;
+                                            const statusColor =
+                                                order.status === "ready" || order.status === "completed"
+                                                    ? "bg-success text-white"
+                                                    : order.status === "preparing"
+                                                    ? "bg-warning text-dark"
+                                                    : order.status === "cancelled" || order.status === "error"
+                                                    ? "bg-danger text-white"
+                                                    : "bg-info text-dark";
+
+                                            return (
+                                                <div key={order.id} className="col-12 col-xl-6">
+                                                    <div className="card rounded-4 p-3 bg-light border border-light-subtle shadow-2xs h-100 d-flex flex-column">
+                                                        {/* Card Top: Order ID + Status + Date */}
+                                                        <div className="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <span className="badge bg-dark text-white rounded-pill font-monospace x-small px-2 py-1">
+                                                                    #{order.id.slice(0, 16)}
+                                                                </span>
+                                                                <span className={`badge rounded-pill x-small fw-black text-uppercase ${statusColor}`}>
+                                                                    {order.status}
+                                                                </span>
+                                                            </div>
+                                                            <span className="tiny-text text-muted">
+                                                                <i className="fa-regular fa-clock me-1"></i>
+                                                                {formatDateTime(order.created_at)}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Island info & Dodo code if ready */}
+                                                        {order.island_name && (
+                                                            <div className="d-flex align-items-center gap-2 mb-2 tiny-text">
+                                                                <span className="fw-bold text-dark">
+                                                                    🏝️ Island: <strong>{order.island_name}</strong>
+                                                                </span>
+                                                                {order.dodo_code && (
+                                                                    <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace">
+                                                                        Dodo: {order.dodo_code}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Parsed Items Preview */}
+                                                        <div className="bg-white rounded-3 p-2 border mb-3 flex-grow-1">
+                                                            <div className="d-flex align-items-center justify-content-between mb-2 tiny-text">
+                                                                <span className="text-muted fw-bold">
+                                                                    {parsed.items.length > 0
+                                                                        ? `${parsed.items.length} item types (${parsed.totalSlots} slots)`
+                                                                        : "Order Command"}
+                                                                </span>
+                                                            </div>
+
+                                                            {parsed.items.length > 0 ? (
+                                                                <div className="d-flex flex-wrap gap-1" style={{ maxHeight: "100px", overflowY: "auto" }}>
+                                                                    {parsed.items.map((item, idx) => (
+                                                                        <span
+                                                                            key={`${item.itemId}-${idx}`}
+                                                                            className="badge bg-light text-dark border rounded-pill px-2 py-1 tiny-text fw-normal d-inline-flex align-items-center gap-1"
+                                                                        >
+                                                                            {item.image && (
+                                                                                <img
+                                                                                    src={item.image}
+                                                                                    alt=""
+                                                                                    style={{ width: 14, height: 14, objectFit: "contain" }}
+                                                                                />
+                                                                            )}
+                                                                            <span>{item.name}</span>
+                                                                            <span className="text-success fw-bold">×{item.quantity}</span>
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="font-monospace text-muted tiny-text text-break select-all" style={{ maxHeight: "60px", overflowY: "auto" }}>
+                                                                    {order.command}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Action Buttons */}
+                                                        <div className="d-flex align-items-center justify-content-between pt-2 border-top mt-auto gap-2 flex-wrap">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-nook text-white rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                                onClick={() => handleReorder(order, "/order")}
+                                                                title="Load this pocket and open Order Bot"
+                                                            >
+                                                                <i className="fa-solid fa-rotate-left"></i>
+                                                                <span>Reorder</span>
+                                                            </button>
+
+                                                            <div className="d-flex gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                                    onClick={() => handleReorder(order, "/command-builder")}
+                                                                    title="Load into Command Builder to edit"
+                                                                >
+                                                                    <i className="fa-solid fa-pencil"></i>
+                                                                    <span className="d-none d-sm-inline">Builder</span>
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className={`btn btn-sm rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1 ${
+                                                                        isCopied ? "btn-success text-white" : "btn-light border text-dark"
+                                                                    }`}
+                                                                    onClick={() => handleCopyOrderCommand(order)}
+                                                                    title="Copy !order command to clipboard"
+                                                                >
+                                                                    <i className={`fa-solid ${isCopied ? "fa-check" : "fa-copy"}`}></i>
+                                                                    <span>{isCopied ? "Copied" : "Copy"}</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="bg-light border rounded-4 p-5 text-center">
+                                        <div className="mb-3" style={{ fontSize: "3rem" }}>📦</div>
+                                        <h3 className="h6 fw-black text-dark mb-1">No Orders Placed Yet</h3>
+                                        <p className="tiny-text text-muted mb-4" style={{ maxWidth: "420px", margin: "0 auto" }}>
+                                            Build your 40-slot pocket loadout in the Command Builder and place an order to get automatic tracking and 1-click reordering here.
+                                        </p>
+                                        <div className="d-flex justify-content-center gap-2">
+                                            <Link to="/command-builder" className="btn btn-sm btn-success text-white rounded-pill px-4 fw-bold shadow-2xs">
+                                                <i className="fa-solid fa-cubes-stacked me-1"></i>Build Pocket
+                                            </Link>
+                                            <Link to="/order" className="btn btn-sm btn-outline-success rounded-pill px-4 fw-bold shadow-2xs">
+                                                <i className="fa-solid fa-box-open me-1"></i>Order Bot
                                             </Link>
                                         </div>
                                     </div>

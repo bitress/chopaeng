@@ -106,10 +106,17 @@ export const useCommandBuilderPockets = () => {
 
     // ── Order pocket operations ────────────────────────────────────────────
     const decreaseOrderQuantity = useCallback((id: string) => {
-        setOrderItems((prev) => prev.map((pocket) => {
-            if (pocket.item.id !== id) return pocket;
-            return { ...pocket, quantity: Math.max(1, pocket.quantity - 1) };
-        }));
+        setOrderItems((prev) => {
+            const existing = prev.find((p) => p.item.id === id);
+            if (!existing) return prev;
+            if (existing.quantity <= 1) {
+                return prev.filter((p) => p.item.id !== id);
+            }
+            return prev.map((pocket) => {
+                if (pocket.item.id !== id) return pocket;
+                return { ...pocket, quantity: pocket.quantity - 1 };
+            });
+        });
     }, []);
 
     const increaseOrderQuantity = useCallback((id: string) => {
@@ -130,10 +137,17 @@ export const useCommandBuilderPockets = () => {
 
     // ── Drop pocket operations ─────────────────────────────────────────────
     const decreaseDropQuantity = useCallback((id: string) => {
-        setDropItems((prev) => prev.map((pocket) => {
-            if (pocket.item.id !== id) return pocket;
-            return { ...pocket, quantity: Math.max(1, pocket.quantity - 1) };
-        }));
+        setDropItems((prev) => {
+            const existing = prev.find((p) => p.item.id === id);
+            if (!existing) return prev;
+            if (existing.quantity <= 1) {
+                return prev.filter((p) => p.item.id !== id);
+            }
+            return prev.map((pocket) => {
+                if (pocket.item.id !== id) return pocket;
+                return { ...pocket, quantity: pocket.quantity - 1 };
+            });
+        });
     }, []);
 
     const increaseDropQuantity = useCallback((id: string) => {
@@ -478,9 +492,53 @@ export const useCommandBuilderPockets = () => {
 
 
     // ── Command text ───────────────────────────────────────────────────────
-    const orderCommandText = useMemo(() => {
-        const itemsList = orderItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
+    const orderItemsOnlyCommand = useMemo(() => {
+        const regularItems = orderItems.filter(p => p.item.entityType !== 'villager');
+        if (regularItems.length === 0) return '';
+        const itemsList = regularItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
         return itemsList ? `!order ${itemsList}` : '';
+    }, [orderItems]);
+
+    const orderVillagerCommand = useMemo(() => {
+        const villagers = orderItems.concat(dropItems).filter(p => p.item.entityType === 'villager');
+        if (villagers.length === 0) return '';
+        const ids = villagers.flatMap((p) => Array(p.quantity).fill(`villager:${p.item.id}`)).join(' ');
+        return `!order ${ids}`;
+    }, [orderItems, dropItems]);
+
+    const injectVillagerCommand = useMemo(() => {
+        const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
+        if (villagers.length === 0) return '';
+        const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
+        return `!injectvillager ${names}`;
+    }, [dropItems, orderItems]);
+
+    const mviVillagerCommand = useMemo(() => {
+        const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
+        if (villagers.length === 0) return '';
+        const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
+        return `!mvi ${names}`;
+    }, [dropItems, orderItems]);
+
+    const dropVillagerCommand = useMemo(() => {
+        const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
+        if (villagers.length === 0) return '';
+        const totalVillagerCount = villagers.reduce((sum, p) => sum + p.quantity, 0);
+        const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
+        return totalVillagerCount === 1 ? `!injectvillager ${names}` : `!mvi ${names}`;
+    }, [dropItems, orderItems]);
+
+    const dropItemsOnlyCommand = useMemo(() => {
+        const regularItems = dropItems.concat(orderItems).filter(p => p.item.entityType !== 'villager');
+        if (regularItems.length === 0) return '';
+        const itemsList = regularItems.slice(0, DROP_BOT_MAX).flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).slice(0, DROP_BOT_MAX).join(' ');
+        return itemsList ? `!drop ${itemsList}` : '';
+    }, [dropItems, orderItems]);
+
+    const orderCommandText = useMemo(() => {
+        if (orderItems.length === 0) return '';
+        const itemsList = orderItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
+        return `!order ${itemsList}`;
     }, [orderItems]);
 
     const dropCommandText = useMemo(() => {
@@ -609,6 +667,12 @@ export const useCommandBuilderPockets = () => {
 
         orderCommandText,
         dropCommandText,
+        orderItemsOnlyCommand,
+        orderVillagerCommand,
+        injectVillagerCommand,
+        mviVillagerCommand,
+        dropItemsOnlyCommand,
+        dropVillagerCommand,
 
         copyOrderStatus,
         copyDropStatus,

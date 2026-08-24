@@ -215,135 +215,103 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
 
                     {/* Action Buttons (Order vs Drop) */}
                     <div className="mt-auto pt-2 w-100" onClick={(e) => e.stopPropagation()}>
-                        {isVillager ? (
-                            /* Villager Actions: Order Only (1 Max) */
-                            <div className="w-100">
-                                {orderQty > 0 ? (
+                        <div className="d-flex gap-1">
+                            {/* Order Button Group (Green) */}
+                            {orderQty > 0 ? (
+                                <div
+                                    className="btn-group rounded-pill flex-grow-1 border border-success overflow-hidden"
+                                    style={{ backgroundColor: '#f0fdf4' }}
+                                >
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-success text-white rounded-pill w-100 fw-bold border-0 shadow-2xs d-flex align-items-center justify-content-center gap-1 py-1"
-                                        style={{ fontSize: "0.75rem" }}
+                                        className="btn btn-sm text-success px-2 py-1 fw-bold border-0 hover-bg-success hover-text-white transition-all"
                                         onClick={() => decreaseOrderQuantity(item.id)}
-                                        title="Click to remove villager from order"
+                                        aria-label={`Decrease order quantity for ${item.name}`}
+                                        title="Decrease quantity"
                                     >
-                                        <i className="fa-solid fa-check x-small"></i>
-                                        <span>In Order (1/1)</span>
-                                        <i className="fa-solid fa-xmark x-small ms-1 opacity-75"></i>
+                                        −
                                     </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        className="btn btn-sm btn-outline-success rounded-pill w-100 fw-bold d-flex align-items-center justify-content-center gap-1 py-1 transition-all"
-                                        style={{ fontSize: "0.75rem" }}
-                                        onClick={handleInitialOrderClick}
-                                        disabled={totalOrderCount >= 40}
-                                        title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : 'Order villager into delivery'}
-                                    >
-                                        <i className="fa-solid fa-box x-small"></i>
-                                        <span>Order Villager</span>
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
-                            /* Standard Item Actions: Order (40 max) & Drop (9 max) */
-                            <div className="d-flex gap-1">
-                                {/* Order Button Group (Green) */}
-                                {orderQty > 0 ? (
                                     <div
-                                        className="btn-group rounded-pill flex-grow-1 border border-success overflow-hidden"
-                                        style={{ backgroundColor: '#f0fdf4' }}
+                                        className="d-flex align-items-center justify-content-center fw-bold px-1 text-success font-monospace"
+                                        style={{ fontSize: "0.75rem", minWidth: "22px" }}
+                                        title={`Order: ${orderQty} items`}
                                     >
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm text-success px-2 py-1 fw-bold border-0 hover-bg-success hover-text-white transition-all"
-                                            onClick={() => decreaseOrderQuantity(item.id)}
-                                            aria-label={`Decrease order quantity for ${item.name}`}
-                                            title="Decrease quantity"
-                                        >
-                                            −
-                                        </button>
-                                        <div
-                                            className="d-flex align-items-center justify-content-center fw-bold px-1 text-success font-monospace"
-                                            style={{ fontSize: "0.75rem", minWidth: "22px" }}
-                                            title={`Order: ${orderQty} items`}
-                                        >
-                                            {orderQty}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm text-success px-2 py-1 fw-bold border-0 hover-bg-success hover-text-white transition-all"
-                                            onClick={() => increaseOrderQuantity(item.id)}
-                                            disabled={!canIncreaseOrder}
-                                            aria-label={`Increase order quantity for ${item.name}`}
-                                            title={!canIncreaseOrder ? 'Order bot full (40/40)' : 'Increase quantity'}
-                                        >
-                                            +
-                                        </button>
+                                        {orderQty}
                                     </div>
-                                ) : (
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
-                                        style={{ fontSize: "0.75rem" }}
-                                        onClick={handleInitialOrderClick}
-                                        disabled={totalOrderCount >= 40}
-                                        title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : hasMultipleVariants && hideVariants ? 'Choose variant to order' : 'Add to Order ($order)'}
+                                        className="btn btn-sm text-success px-2 py-1 fw-bold border-0 hover-bg-success hover-text-white transition-all"
+                                        onClick={() => increaseOrderQuantity(item.id)}
+                                        disabled={!canIncreaseOrder}
+                                        aria-label={`Increase order quantity for ${item.name}`}
+                                        title={!canIncreaseOrder ? 'Order bot full (40/40)' : 'Increase quantity'}
                                     >
-                                        <i className="fa-solid fa-box x-small"></i>
-                                        <span>Order</span>
+                                        +
                                     </button>
-                                )}
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
+                                    style={{ fontSize: "0.75rem" }}
+                                    onClick={handleInitialOrderClick}
+                                    disabled={totalOrderCount >= 40}
+                                    title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : hasMultipleVariants && hideVariants ? 'Choose variant to order' : 'Add to Order ($order)'}
+                                >
+                                    <i className="fa-solid fa-box x-small"></i>
+                                    <span>Order</span>
+                                </button>
+                            )}
 
-                                {/* Drop Button Group (Cyan/Blue) */}
-                                {dropQty > 0 ? (
-                                    <div
-                                        className="btn-group rounded-pill flex-grow-1 border border-info overflow-hidden"
-                                        style={{ backgroundColor: '#f0f9ff', borderColor: '#0284c7' }}
-                                    >
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm text-info px-2 py-1 fw-bold border-0 hover-bg-info hover-text-white transition-all"
-                                            style={{ color: '#0284c7' }}
-                                            onClick={() => decreaseDropQuantity(item.id)}
-                                            aria-label={`Decrease drop quantity for ${item.name}`}
-                                            title="Decrease quantity"
-                                        >
-                                            −
-                                        </button>
-                                        <div
-                                            className="d-flex align-items-center justify-content-center fw-bold px-1 font-monospace"
-                                            style={{ fontSize: "0.75rem", minWidth: "22px", color: '#0284c7' }}
-                                            title={`Drop: ${dropQty} items`}
-                                        >
-                                            {dropQty}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm text-info px-2 py-1 fw-bold border-0 hover-bg-info hover-text-white transition-all"
-                                            style={{ color: '#0284c7' }}
-                                            onClick={() => increaseDropQuantity(item.id)}
-                                            disabled={!canIncreaseDrop}
-                                            aria-label={`Increase drop quantity for ${item.name}`}
-                                            title={!canIncreaseDrop ? 'Drop bot full (9/9)' : 'Increase quantity'}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                ) : (
+                            {/* Drop Button Group (Cyan/Blue) */}
+                            {dropQty > 0 ? (
+                                <div
+                                    className="btn-group rounded-pill flex-grow-1 border border-info overflow-hidden"
+                                    style={{ backgroundColor: '#f0f9ff', borderColor: '#0284c7' }}
+                                >
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
-                                        style={{ fontSize: "0.75rem", color: '#0284c7', borderColor: '#0284c7' }}
-                                        onClick={handleInitialDropClick}
-                                        disabled={totalDropCount >= 9}
-                                        title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : hasMultipleVariants && hideVariants ? 'Choose variant to drop' : 'Add to Drop ($drop)'}
+                                        className="btn btn-sm text-info px-2 py-1 fw-bold border-0 hover-bg-info hover-text-white transition-all"
+                                        style={{ color: '#0284c7' }}
+                                        onClick={() => decreaseDropQuantity(item.id)}
+                                        aria-label={`Decrease drop quantity for ${item.name}`}
+                                        title="Decrease quantity"
                                     >
-                                        <i className="fa-solid fa-plane-arrival x-small"></i>
-                                        <span>Drop</span>
+                                        −
                                     </button>
-                                )}
-                            </div>
-                        )}
+                                    <div
+                                        className="d-flex align-items-center justify-content-center fw-bold px-1 font-monospace"
+                                        style={{ fontSize: "0.75rem", minWidth: "22px", color: '#0284c7' }}
+                                        title={`Drop: ${dropQty} items`}
+                                    >
+                                        {dropQty}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm text-info px-2 py-1 fw-bold border-0 hover-bg-info hover-text-white transition-all"
+                                        style={{ color: '#0284c7' }}
+                                        onClick={() => increaseDropQuantity(item.id)}
+                                        disabled={!canIncreaseDrop}
+                                        aria-label={`Increase drop quantity for ${item.name}`}
+                                        title={!canIncreaseDrop ? 'Drop bot full (9/9)' : 'Increase quantity'}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
+                                    style={{ fontSize: "0.75rem", color: '#0284c7', borderColor: '#0284c7' }}
+                                    onClick={handleInitialDropClick}
+                                    disabled={totalDropCount >= 9}
+                                    title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : hasMultipleVariants && hideVariants ? 'Choose variant to drop' : 'Add to Drop ($drop)'}
+                                >
+                                    <i className="fa-solid fa-plane-arrival x-small"></i>
+                                    <span>Drop</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

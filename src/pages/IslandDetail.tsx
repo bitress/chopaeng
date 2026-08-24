@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useIslandData } from "../context/useIslandData";
 import { useAuth } from "../context/useAuth";
 import { getAuthToken } from "../context/authToken";
 import { useFavoriteIslands } from "../hooks/useFavoriteIslands";
+import { fetchBotStatus, type BotStatusResponse } from "../utils/orderBotApi";
 import RevealErrorPopup from "../components/RevealErrorPopup";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import { DODO_API_BASE } from "../config/api";
@@ -81,6 +82,8 @@ const IslandDetail = () => {
     const [isRevealing, setIsRevealing] = useState(false);
     const [copied, setCopied] = useState(false);
     const [revealError, setRevealError] = useState<string | null>(null);
+    const [botStatus, setBotStatus] = useState<BotStatusResponse | null>(null);
+    const [botLoading, setBotLoading] = useState(false);
     const revealInFlightRef = useRef(false);
     const isMountedRef = useRef(true);
 
@@ -88,6 +91,34 @@ const IslandDetail = () => {
         isMountedRef.current = true;
         return () => {
             isMountedRef.current = false;
+        };
+    }, []);
+
+    // Fetch Order Bot status for live queue and bot health
+    useEffect(() => {
+        let timer: ReturnType<typeof setInterval> | null = null;
+        let isMounted = true;
+
+        const loadBotStatus = async () => {
+            try {
+                const token = getAuthToken();
+                const res = await fetchBotStatus(token);
+                if (isMounted) {
+                    setBotStatus(res);
+                    setBotLoading(false);
+                }
+            } catch {
+                if (isMounted) setBotLoading(false);
+            }
+        };
+
+        setBotLoading(true);
+        loadBotStatus();
+        timer = setInterval(loadBotStatus, 20_000);
+
+        return () => {
+            isMounted = false;
+            if (timer) clearInterval(timer);
         };
     }, []);
 
@@ -387,7 +418,9 @@ const IslandDetail = () => {
                             island={island} 
                             live={live} 
                             loading={loading} 
-                            isOrderIsland={isOrderIsland} 
+                            isOrderIsland={isOrderIsland}
+                            botStatus={botStatus}
+                            botLoading={botLoading}
                         />
                     </div>
 
@@ -445,7 +478,7 @@ const IslandDetail = () => {
                                 </div>
 
                                 {!isOrderIsland && (
-                                <div className="mb-5">
+                                <div className="mb-4">
                                     <h5 className="notebook-heading">
                                         <i className="fa-solid fa-house-user me-2 text-nook"></i>
                                         Current Residents
@@ -468,8 +501,44 @@ const IslandDetail = () => {
                                 </div>
                                 )}
 
+                                {/* Subtle Order Bot banner for regular treasure islands */}
+                                {!isOrderIsland && (
+                                    <div className="card rounded-4 p-3 bg-light border border-success border-opacity-25 shadow-2xs mb-4">
+                                        <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span
+                                                    className="rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success flex-shrink-0"
+                                                    style={{ width: 36, height: 36 }}
+                                                >
+                                                    <i className="fa-solid fa-box-open"></i>
+                                                </span>
+                                                <div>
+                                                    <strong className="d-block small text-dark fw-bold">Need Specific Items Delivered?</strong>
+                                                    <span className="tiny-text text-muted">Use our 40-slot Order Bot for custom item & villager delivery.</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="d-flex gap-2 align-items-center">
+                                                <Link
+                                                    to="/command-builder"
+                                                    className="btn btn-xs btn-outline-success rounded-pill fw-bold px-3 py-1 shadow-2xs"
+                                                >
+                                                    <i className="fa-solid fa-cubes-stacked me-1"></i>Build
+                                                </Link>
+                                                <Link
+                                                    to="/order"
+                                                    className="btn btn-xs btn-nook text-white rounded-pill fw-bold px-3 py-1 shadow-2xs"
+                                                >
+                                                    <i className="fa-solid fa-paper-plane me-1"></i>Order Bot
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="action-area">
                                     <IslandActionArea 
+                                        islandName={island.name}
                                         isOrderIsland={isOrderIsland}
                                         canShowDodo={canShowDodo}
                                         needsAuth={needsAuth}
@@ -478,6 +547,8 @@ const IslandDetail = () => {
                                         isRevealableState={isRevealableState}
                                         user={user}
                                         login={login}
+                                        botStatus={botStatus}
+                                        botLoading={botLoading}
                                     />
                                 </div>
                             </div>

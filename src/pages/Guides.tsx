@@ -1,7 +1,67 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { useCatalogData } from "../hooks/useCatalogData";
+import { playChimeClick } from "../utils/kkAudioSynthesizer";
+
+type GuideTab = 'steps' | 'rules' | 'items' | 'diys' | 'villagers' | 'chobot' | 'faq';
+
+const ITEMS_PER_PAGE = 24;
+
+const FALLBACK_IMAGE =
+    "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f3f5'/%3E%3Cpath d='M30 65 L45 45 L58 58 L68 42 L75 65 Z' fill='%23ced4da'/%3E%3Ccircle cx='38' cy='35' r='7' fill='%23ced4da'/%3E%3C/svg%3E";
+
+const PERSONALITY_COLORS: Record<string, string> = {
+    Normal: 'success',
+    Peppy: 'warning',
+    Lazy: 'info',
+    Jock: 'primary',
+    Snooty: 'danger',
+    Cranky: 'secondary',
+    Smug: 'primary',
+    Sisterly: 'info',
+};
+
+const PERSONALITY_SCHEDULES: Record<string, string> = {
+    Normal: '6:00 AM – 12:00 AM',
+    Peppy: '7:00 AM – 1:20 AM',
+    Lazy: '8:00 AM – 11:00 PM',
+    Jock: '6:30 AM – 12:30 AM',
+    Snooty: '8:30 AM – 2:30 AM',
+    Cranky: '9:00 AM – 3:30 AM',
+    Smug: '7:00 AM – 2:00 AM',
+    Sisterly: '9:30 AM – 3:00 AM',
+};
+
+const DIY_SERIES_PRESETS = [
+    { name: 'Celestial & Star', icon: 'fa-wand-magic-sparkles', query: 'Star' },
+    { name: 'Ironwood Series', icon: 'fa-hammer', query: 'Ironwood' },
+    { name: 'Golden Set', icon: 'fa-crown', query: 'Golden' },
+    { name: 'Mermaid & Shell', icon: 'fa-water', query: 'Mermaid' },
+    { name: 'Cherry Blossom', icon: 'fa-tree', query: 'Cherry' },
+    { name: 'Spooky & Halloween', icon: 'fa-ghost', query: 'Spooky' },
+    { name: 'Mushroom & Autumn', icon: 'fa-leaf', query: 'Mush' },
+    { name: 'Festive & Winter', icon: 'fa-snowflake', query: 'Frozen' },
+];
 
 const Guide = () => {
-    const [activeTab, setActiveTab] = useState("steps");
+    const [activeTab, setActiveTab] = useState<GuideTab>("steps");
+    const { data: catalogData, isLoading: catalogLoading } = useCatalogData();
+
+    // ── Item Catalogue State ──
+    const [itemSearch, setItemSearch] = useState("");
+    const [itemCategory, setItemCategory] = useState("All");
+    const [itemPage, setItemPage] = useState(1);
+
+    // ── DIY Catalogue State ──
+    const [diySearch, setDiySearch] = useState("");
+    const [diyCategory, setDiyCategory] = useState("All");
+    const [diyPage, setDiyPage] = useState(1);
+
+    // ── Villager Database State ──
+    const [villagerSearch, setVillagerSearch] = useState("");
+    const [villagerPersonality, setVillagerPersonality] = useState("All");
+    const [villagerPage, setVillagerPage] = useState(1);
 
     useEffect(() => {
         const site = window.location.origin;
@@ -12,19 +72,31 @@ const Guide = () => {
             activeTab === "steps"
                 ? "How to Join ACNH Treasure Islands – Step-by-Step Guide | Chopaeng"
                 : activeTab === "rules"
-                    ? "ACNH Treasure Island Rules – Sub Rules & Order Bot Rules | Chopaeng"
-                    : activeTab === "chobot"
-                        ? "ChoBot Overview – Community Request Bot | Chopaeng"
-                        : "ACNH Treasure Island FAQ – Help & Common Issues | Chopaeng";
+                ? "ACNH Treasure Island Rules – Sub Rules & Order Bot Rules | Chopaeng"
+                : activeTab === "items"
+                ? "ACNH Item Catalogue & Database Explorer | Chopaeng"
+                : activeTab === "diys"
+                ? "ACNH DIY Recipes Catalogue & Crafting Guide | Chopaeng"
+                : activeTab === "villagers"
+                ? "ACNH Villager Database & Schedules | Chopaeng"
+                : activeTab === "chobot"
+                ? "ChoBot Overview – Community Request Bot | Chopaeng"
+                : "ACNH Treasure Island FAQ – Help & Common Issues | Chopaeng";
 
         const desc =
             activeTab === "steps"
-                ? "Step-by-step guide on how to join Chopaeng ACNH treasure islands. Learn Dodo code entry, airport tips, and best practices for smooth Animal Crossing: New Horizons island visits."
+                ? "Step-by-step guide on how to join Chopaeng ACNH treasure islands. Learn Dodo code entry, airport tips, and best practices for smooth Animal Crossing visits."
                 : activeTab === "rules"
-                    ? "Review the sub rules and order bot rules for visiting Chopaeng ACNH treasure islands. Proper airport exits, code confidentiality, and ChoBot etiquette keep the islands running smoothly."
-                    : activeTab === "chobot"
-                        ? "Learn what ChoBot is and how Chopaeng members use it to request items, DIY recipes, and villagers. Full command documentation is available to members in our Discord server."
-                        : "Find answers to common ACNH treasure island issues on Chopaeng — interference errors, communication errors, how to request items, and how to use the Chopaeng Discord bot.";
+                ? "Review the sub rules and order bot rules for visiting Chopaeng ACNH treasure islands. Proper airport exits, code confidentiality, and ChoBot etiquette keep islands running smoothly."
+                : activeTab === "items"
+                ? "Browse the complete Animal Crossing: New Horizons item catalogue database with furniture, clothing, tools, variations, and 1-click builder shortcuts."
+                : activeTab === "diys"
+                ? "Explore ACNH DIY crafting recipes, required materials, and themed collections including Celestial, Ironwood, Mermaid, and Golden sets."
+                : activeTab === "villagers"
+                ? "Comprehensive 400+ ACNH villager database with personality types, wake/sleep hours, favorite styles, and move-in tips."
+                : activeTab === "chobot"
+                ? "Learn what ChoBot is and how Chopaeng members use it to request items, DIY recipes, and villagers."
+                : "Find answers to common ACNH treasure island issues on Chopaeng — interference errors, communication errors, and bot usage.";
 
         document.title = title;
 
@@ -50,317 +122,380 @@ const Guide = () => {
 
         setMeta("name", "description", desc);
         setLink("canonical", url);
-
         setMeta("property", "og:type", "website");
         setMeta("property", "og:site_name", "Chopaeng");
         setMeta("property", "og:url", url);
         setMeta("property", "og:title", title);
         setMeta("property", "og:description", desc);
         setMeta("property", "og:image", img);
-
         setMeta("name", "twitter:card", "summary_large_image");
         setMeta("name", "twitter:title", title);
         setMeta("name", "twitter:description", desc);
         setMeta("name", "twitter:image", img);
     }, [activeTab]);
 
+    // ── Filtered Items ──
+    const allItems = useMemo(() => catalogData?.items.filter(i => i.category !== 'Recipes') || [], [catalogData]);
+    const itemCategories = useMemo(() => ['All', ...Array.from(new Set(allItems.map(i => i.category))).sort()], [allItems]);
+
+    const filteredItems = useMemo(() => {
+        return allItems.filter(item => {
+            const matchesSearch = !itemSearch.trim() || item.name.toLowerCase().includes(itemSearch.toLowerCase());
+            const matchesCat = itemCategory === 'All' || item.category === itemCategory;
+            return matchesSearch && matchesCat;
+        });
+    }, [allItems, itemSearch, itemCategory]);
+
+    const pagedItems = useMemo(() => {
+        return filteredItems.slice((itemPage - 1) * ITEMS_PER_PAGE, itemPage * ITEMS_PER_PAGE);
+    }, [filteredItems, itemPage]);
+
+    const totalItemPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+
+    // ── Filtered DIYs ──
+    const allDiys = useMemo(() => catalogData?.items.filter(i => i.category === 'Recipes' || i.name.toLowerCase().includes('recipe') || i.name.toLowerCase().includes('diy')) || [], [catalogData]);
+
+    const filteredDiys = useMemo(() => {
+        return allDiys.filter(item => {
+            const matchesSearch = !diySearch.trim() || item.name.toLowerCase().includes(diySearch.toLowerCase());
+            const matchesSeries = diyCategory === 'All' || item.series === diyCategory || item.theme === diyCategory;
+            return matchesSearch && matchesSeries;
+        });
+    }, [allDiys, diySearch, diyCategory]);
+
+    const pagedDiys = useMemo(() => {
+        return filteredDiys.slice((diyPage - 1) * ITEMS_PER_PAGE, diyPage * ITEMS_PER_PAGE);
+    }, [filteredDiys, diyPage]);
+
+    const totalDiyPages = Math.max(1, Math.ceil(filteredDiys.length / ITEMS_PER_PAGE));
+
+    // ── Filtered Villagers ──
+    const allVillagers = useMemo(() => catalogData?.villagers || [], [catalogData]);
+    const personalityTypes = ['All', 'Normal', 'Peppy', 'Lazy', 'Jock', 'Snooty', 'Cranky', 'Smug', 'Sisterly'];
+
+    const filteredVillagers = useMemo(() => {
+        return allVillagers.filter(v => {
+            const matchesSearch = !villagerSearch.trim() || v.name.toLowerCase().includes(villagerSearch.toLowerCase()) || v.category?.toLowerCase().includes(villagerSearch.toLowerCase());
+            const personality = v.category || v.personality || '';
+            const matchesPersonality = villagerPersonality === 'All' || personality.toLowerCase() === villagerPersonality.toLowerCase();
+            return matchesSearch && matchesPersonality;
+        });
+    }, [allVillagers, villagerSearch, villagerPersonality]);
+
+    const pagedVillagers = useMemo(() => {
+        return filteredVillagers.slice((villagerPage - 1) * ITEMS_PER_PAGE, villagerPage * ITEMS_PER_PAGE);
+    }, [filteredVillagers, villagerPage]);
+
+    const totalVillagerPages = Math.max(1, Math.ceil(filteredVillagers.length / ITEMS_PER_PAGE));
+
+    const handleTabSwitch = (tab: GuideTab) => {
+        playChimeClick();
+        setActiveTab(tab);
+    };
 
     const steps = [
         {
             num: "01",
             title: "Empty Pockets",
-            desc: "Leave everything at home. You need all 40 empty slots to collect as much as possible. Tools, nets, rods, and shovels are provided on the island — there is no need to bring your own.",
-            icon: "bag-x"
+            desc: "Leave everything at home. You need all 40 empty slots to collect as much as possible. Tools, nets, rods, and shovels are provided on the island.",
+            icon: "fa-solid fa-box-open",
         },
         {
             num: "02",
             title: "Find a Live Island",
-            desc: "Visit the Chopaeng Treasure Islands page to see which islands are currently online, how many visitors are present, and what items are available.",
-            icon: "display"
+            desc: "Visit the Chopaeng Treasure Islands page to check live island status, current visitor count, and featured catalog categories.",
+            icon: "fa-solid fa-desktop",
         },
         {
             num: "03",
-            title: "Dodo Airlines",
-            desc: "Speak to Orville → 'I want to fly' → 'Visit someone' → 'Online play' → 'Search via Dodo Code'. Enter the live code exactly as shown on the dashboard.",
-            icon: "airplane-fill"
+            title: "Talk to Orville",
+            desc: "At Dodo Airlines: Speak to Orville → 'I want to fly' → 'Visit someone' → 'Online play' → 'Search via Dodo Code'.",
+            icon: "fa-solid fa-plane-departure",
         },
         {
             num: "04",
-            title: "Enter Code",
-            desc: "Type the live code from the dashboard. If you get 'Interference', keep trying immediately — it means someone else is in the air. If you get a 'Communication Error', wait 60 seconds for the island to reboot.",
-            icon: "keyboard"
+            title: "Enter Dodo Code",
+            desc: "Type the live code. If you receive 'Interference', retry immediately — someone is landing. If you get 'Communication Error', wait 60s for the island reboot.",
+            icon: "fa-solid fa-keyboard",
         },
         {
             num: "05",
-            title: "Arrival",
-            desc: "Wait for the full arrival cutscene to finish. Do not move until the welcome banner disappears completely or you may miss spawned items.",
-            icon: "geo-alt-fill"
+            title: "Arrival Cutscene",
+            desc: "Wait for the arrival cutscene to complete fully before moving so all island items and terrain spawn properly.",
+            icon: "fa-solid fa-location-dot",
         },
         {
             num: "06",
-            title: "Collect Everything",
-            desc: "Walk the entire island and pick up every item on the ground. Dig fossils with the shovel, fish in the water, and shake trees if available. Use the trash can for anything you don't want to keep.",
-            icon: "bag-plus-fill"
-        }
+            title: "Collect & Fly Home",
+            desc: "Pick up your desired items, tools, and recipes. When your 40 slots are full, always leave properly through the airport counter.",
+            icon: "fa-solid fa-bag-shopping",
+        },
     ];
 
     const rules = [
         {
             num: "C1",
             title: "Strict Code Confidentiality",
-            desc: "Do NOT share the Dodo Code with anyone — including your other account, friends, family, or online acquaintances. The code is exclusively for you. You are allowed only 1 character/island per membership.",
+            desc: "Do NOT share the Dodo Code with anyone — including alternate accounts, friends, or family. The code is exclusively for you.",
             type: "danger",
-            icon: "fa-solid fa-shield-halved"
+            icon: "fa-solid fa-shield-halved",
         },
         {
             num: "C2",
             title: "Set Your Nickname",
-            desc: "Change your server nickname to the format: ACNH Character Name | Your ACNH Island Name. This helps the team identify you. You can update your nickname in the 👑 set-nick channel.",
+            desc: "Set your server nickname to the format: ACNH Character Name | Your ACNH Island Name in the 👑 set-nick channel.",
             type: "info",
-            icon: "fa-solid fa-id-badge"
+            icon: "fa-solid fa-id-badge",
         },
         {
             num: "C3",
-            title: "Always Leave via the Airport — No AFK",
-            desc: "NEVER press the minus (–) button to leave. Always walk to the airport and fly home through Orville. Leaving with the minus button may cause the island to crash for all other visitors and you may lose items.",
+            title: "Always Leave via Airport (No Minus Button)",
+            desc: "NEVER press the minus (–) button or sleep your console to leave. Always walk to the airport gate to avoid crashing the island for other players.",
             type: "danger",
-            icon: "fa-solid fa-circle-xmark"
+            icon: "fa-solid fa-circle-xmark",
         },
         {
             num: "C4",
-            title: "Check Your Internet Connection",
-            desc: "NAT Type A or B is required for smooth online play. If you have NAT Type C or D you may experience connection problems — please do not join the islands until you have resolved your NAT type.",
+            title: "Stable Internet Required",
+            desc: "NAT Type A or B with a stable connection is required for smooth island visits without dropped sessions.",
             type: "primary",
-            icon: "fa-solid fa-wifi"
+            icon: "fa-solid fa-wifi",
         },
         {
             num: "C5",
-            title: "Read the Pinned Messages First",
-            desc: "Check the pinned section in each Discord channel before asking questions. The pins contain rules, tutorials, and announcements. Most common questions are already answered there.",
+            title: "Read Pinned Messages",
+            desc: "Check the pinned messages in each Discord channel for up-to-date island schedules and announcements before asking.",
             type: "secondary",
-            icon: "fa-solid fa-thumbtack"
+            icon: "fa-solid fa-thumbtack",
         },
         {
             num: "C6",
             title: "No Littering",
-            desc: "Do not drop unwanted items on the ground. Trash bins are placed all over each island — please use them. Litter prevents islands from refreshing their item spawns for everyone.",
+            desc: "Do not drop unwanted items on the ground. Use the trash bins placed across the island to maintain item spawn points.",
             type: "warning",
-            icon: "fa-solid fa-trash"
+            icon: "fa-solid fa-trash",
         },
         {
             num: "C7",
-            title: "ChoBot Tutorials",
-            desc: "Tutorials for ChoBot (our community request bot) are available in the 🍄 chobot-how channel on Discord. Check there before asking how to request items or use any bot commands.",
+            title: "ChoBot & Order Etiquette",
+            desc: "Review the ChoBot guide in the 🍄 chobot-how channel. Only request items or villagers when you are prepared to collect them.",
             type: "success",
-            icon: "fa-solid fa-robot"
+            icon: "fa-solid fa-robot",
         },
         {
             num: "C8",
-            title: "ChoBot: On-Island Requests Only",
-            desc: "Do NOT request any item through ChoBot unless you are already standing on the island and ready to pick it up. Always collect every item you request — do not leave requested items on the ground.",
+            title: "Order Only What You Need",
+            desc: "Order items you actively need to keep queue wait times short and fair for all community members.",
             type: "warning",
-            icon: "fa-solid fa-box-open"
+            icon: "fa-solid fa-box-open",
         },
     ];
 
     return (
         <div className="nook-os min-vh-100 p-3 p-lg-5 font-nunito d-flex flex-column align-items-center">
+            <Helmet>
+                <title>Island Guide & Catalog Database · Chopaeng</title>
+                <meta
+                    name="description"
+                    content="ACNH Treasure Island guides, complete Item Catalogue, DIY Recipes catalogue, and Villager database."
+                />
+            </Helmet>
 
-            <div className="app-container w-100" style={{ maxWidth: '850px' }}>
+            <style>{`
+                .guide-nav-group {
+                    background: #f1f5f9;
+                    border: 1px solid #e2e8f0;
+                    padding: 4px;
+                    border-radius: 999px;
+                }
+                .guide-nav-tab {
+                    color: #475569;
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    border: 1.5px solid transparent;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    white-space: nowrap;
+                    padding: 0.42rem 0.75rem;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.35rem;
+                }
+                .guide-nav-tab:hover {
+                    color: #0f172a;
+                    background: #ffffff;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                }
+                .guide-nav-tab.active {
+                    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 3px 12px rgba(22, 163, 74, 0.3) !important;
+                    border-color: #16a34a !important;
+                    transform: translateY(-1px);
+                }
+                .guide-nav-tab:focus-visible, .btn-tab:focus-visible, .btn-xs:focus-visible {
+                    outline: 2px solid #16a34a !important;
+                    outline-offset: 2px;
+                }
+            `}</style>
 
+            <div className="app-container w-100" style={{ maxWidth: '1000px' }}>
                 {/* 1. APP HEADER */}
                 <div className="d-flex align-items-center justify-content-between mb-4 px-2">
                     <div className="d-flex align-items-center gap-3">
-                        <div className="app-icon bg-success text-white shadow-sm">
+                        <div className="app-icon bg-success text-white shadow-sm" aria-hidden="true">
                             <i className="fa-solid fa-book-open fs-4"></i>
                         </div>
                         <div>
-                            <h2 className="mb-0 ac-font fw-black text-dark lh-1">Island Guide</h2>
-                            <p className="mb-0 small text-muted fw-bold text-uppercase tracking-wide">ChoPaeng</p>
+                            <h1 className="h2 mb-0 ac-font fw-black text-dark lh-1">Island Guides & Database</h1>
+                            <p className="mb-0 small text-muted fw-bold text-uppercase tracking-wide">
+                                Chopaeng Nook Guidebook
+                            </p>
                         </div>
                     </div>
-                    {/* Fake Battery/Time - Optional aesthetic touch */}
-                    <div className="d-none d-md-block text-end opacity-50">
-                        <i className="fa-solid fa-battery-full fs-4"></i>
+                    <div className="d-none d-md-flex align-items-center gap-2">
+                        <Link
+                            to="/command-builder"
+                            className="btn btn-sm btn-outline-success rounded-pill fw-bold px-3 py-1 shadow-2xs"
+                            onClick={() => playChimeClick()}
+                        >
+                            <i className="fa-solid fa-cubes-stacked me-1" aria-hidden="true" /> Command Builder
+                        </Link>
+                        <Link
+                            to="/order"
+                            className="btn btn-sm btn-nook text-white rounded-pill fw-bold px-3 py-1 shadow-2xs"
+                            onClick={() => playChimeClick()}
+                        >
+                            <i className="fa-solid fa-paper-plane me-1" aria-hidden="true" /> Order Bot
+                        </Link>
                     </div>
                 </div>
 
-                {/* 2. NAVIGATION TABS (Pill Style) */}
-                <div className="bg-white p-2 rounded-pill shadow-sm border mb-4 d-flex justify-content-between">
-                    {[
-                        { id: 'steps', label: 'How to Join', icon: 'fa-solid fa-plane' },
-                        { id: 'rules', label: 'Sub Rules', icon: 'fa-solid fa-shield-halved' },
-                        { id: 'chobot', label: 'ChoBot Guide', icon: 'fa-solid fa-robot' },
-                        { id: 'faq', label: 'Help & FAQ', icon: 'fa-solid fa-comment-dots' }
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`btn btn-tab rounded-pill flex-grow-1 fw-bold text-uppercase py-2 transition-all ${activeTab === tab.id ? 'active' : ''}`}
+                {/* 2. NAVIGATION TABS (Dual-Grouped Segmented Pill Bars) */}
+                <div className="bg-white p-2 rounded-4 shadow-sm border mb-4">
+                    <div className="d-flex flex-column flex-lg-row gap-2">
+                        {/* Group 1: Guides & Info */}
+                        <div
+                            className="guide-nav-group d-flex flex-grow-1 gap-1"
+                            style={{ flex: '1.15' }}
+                            role="tablist"
+                            aria-label="Island Guides and Rules navigation"
                         >
-                            <i className={`${tab.icon} me-2 d-none d-sm-inline`}></i>
-                            {tab.label}
-                        </button>
-                    ))}
+                            {[
+                                { id: 'steps' as GuideTab, label: 'How to Join', icon: 'fa-solid fa-plane' },
+                                { id: 'rules' as GuideTab, label: 'Sub Rules', icon: 'fa-solid fa-shield-halved' },
+                                { id: 'chobot' as GuideTab, label: 'ChoBot Guide', icon: 'fa-solid fa-robot' },
+                                { id: 'faq' as GuideTab, label: 'Help & FAQ', icon: 'fa-solid fa-comment-dots' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    id={`guide-tab-${tab.id}`}
+                                    role="tab"
+                                    aria-selected={activeTab === tab.id}
+                                    aria-controls={`guide-panel-${tab.id}`}
+                                    onClick={() => handleTabSwitch(tab.id)}
+                                    className={`btn guide-nav-tab rounded-pill flex-grow-1 ${
+                                        activeTab === tab.id ? 'active' : ''
+                                    }`}
+                                >
+                                    <i className={`${tab.icon}`} aria-hidden="true" />
+                                    <span>{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Group 2: Databases */}
+                        <div
+                            className="guide-nav-group d-flex flex-grow-1 gap-1"
+                            style={{ flex: '0.85' }}
+                            role="tablist"
+                            aria-label="ACNH Database navigation"
+                        >
+                            {[
+                                { id: 'items' as GuideTab, label: 'Item Catalogue', icon: 'fa-solid fa-bag-shopping' },
+                                { id: 'diys' as GuideTab, label: 'DIY Catalogue', icon: 'fa-solid fa-scroll' },
+                                { id: 'villagers' as GuideTab, label: 'Villager Database', icon: 'fa-solid fa-people-roof' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    id={`guide-tab-${tab.id}`}
+                                    role="tab"
+                                    aria-selected={activeTab === tab.id}
+                                    aria-controls={`guide-panel-${tab.id}`}
+                                    onClick={() => handleTabSwitch(tab.id)}
+                                    className={`btn guide-nav-tab rounded-pill flex-grow-1 ${
+                                        activeTab === tab.id ? 'active' : ''
+                                    }`}
+                                >
+                                    <i className={`${tab.icon}`} aria-hidden="true" />
+                                    <span>{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
-                {/* 3. CONTENT AREA (White Paper) */}
-                <div className="content-card bg-white rounded-4 shadow-sm border p-4 p-md-5 position-relative overflow-hidden">
-
-                    {/* TAB 1: STEPS */}
+                {/* 3. CONTENT AREA */}
+                <div
+                    className="content-card bg-white rounded-4 shadow-sm border p-4 p-md-5 position-relative overflow-hidden"
+                    role="tabpanel"
+                    id={`guide-panel-${activeTab}`}
+                    aria-labelledby={`guide-tab-${activeTab}`}
+                >
+                    {/* ════ TAB: STEPS ════ */}
                     {activeTab === 'steps' && (
                         <div className="animate-fade-in">
-                            <h4 className="ac-font fw-black mb-4 text-center text-dark">Ready for Takeoff?</h4>
+                            <h2 className="h4 ac-font fw-black mb-4 text-center text-dark">Ready for Takeoff?</h2>
                             <div className="d-flex flex-column gap-4">
                                 {steps.map((step, i) => (
-                                    <div key={i} className="d-flex align-items-start gap-4 p-3 rounded-4 hover-bg-light transition-all border border-transparent hover-border">
-                                        <div className="step-circle flex-shrink-0 ac-font">{step.num}</div>
+                                    <div
+                                        key={i}
+                                        className="d-flex align-items-start gap-4 p-3 rounded-4 hover-bg-light transition-all border border-transparent hover-border"
+                                    >
+                                        <div className="step-circle flex-shrink-0 ac-font" aria-hidden="true">
+                                            {step.num}
+                                        </div>
                                         <div>
-                                            <h5 className="fw-black text-dark mb-1">{step.title}</h5>
+                                            <h3 className="h5 fw-black text-dark mb-1">{step.title}</h3>
                                             <p className="text-muted fw-bold mb-0 small lh-base">{step.desc}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            {/* Curated Bells Teaser */}
                             <div className="mt-4 p-3 bg-success bg-opacity-10 rounded-4 border border-success border-opacity-25 d-flex align-items-center gap-3">
-                                <i className="fa-solid fa-piggy-bank text-success fs-2"></i>
+                                <i className="fa-solid fa-piggy-bank text-success fs-2" aria-hidden="true"></i>
                                 <div>
-                                    <h6 className="fw-black text-success mb-0">Looking for Bells?</h6>
-                                    <p className="small text-success mb-0 fw-bold opacity-75">Visit our dedicated Bell islands to pick up Bell bundles for your home loans.</p>
-                                </div>
-                            </div>
-
-                            {/* Tips & Tricks */}
-                            <div className="mt-5">
-                                <h5 className="ac-font fw-black text-center text-dark mb-4">Tips &amp; Tricks</h5>
-                                <div className="row g-3">
-                                    {[
-                                        { icon: "fa-solid fa-box-archive", color: "text-primary", title: "Empty Storage First", tip: "Free up your home storage before visiting so you can unload full pockets quickly and fly back for another run." },
-                                        { icon: "fa-solid fa-rotate", color: "text-warning", title: "Visit Multiple Times", tip: "You can fly back to the same island multiple times in a row. Land, fill up, fly home to unload, and return with the same code." },
-                                        { icon: "fa-solid fa-fish", color: "text-info", title: "Don't Forget the Water", tip: "Rare fish and bugs also spawn on treasure islands. Bring or use the provided net and fishing rod — some are worth millions of Bells." },
-                                        { icon: "fa-solid fa-map-location-dot", color: "text-success", title: "Check the Map First", tip: "Visit the Island Maps page before flying to see a full overhead view of the island layout and plan your collection route." },
-                                        { icon: "fa-solid fa-clock", color: "text-danger", title: "Visit During Off-Peak Hours", tip: "Visitor slots fill up fast during peak hours. Try visiting in the early morning (Philippine time) for the least competition and fastest access." },
-                                        { icon: "fa-solid fa-star", color: "text-warning", title: "Collect Star Fragments", tip: "Star Fragments and Large Star Fragments are rare crafting materials used in wand recipes. Always pick these up when you see them — they are hard to farm naturally." },
-                                    ].map((tip, i) => (
-                                        <div key={i} className="col-sm-6">
-                                            <div className="d-flex align-items-start gap-3 p-3 bg-light rounded-4 border border-transparent h-100">
-                                                <i className={`${tip.icon} ${tip.color} fs-4 flex-shrink-0 mt-1`}></i>
-                                                <div>
-                                                    <h6 className="fw-black text-dark mb-1 small">{tip.title}</h6>
-                                                    <p className="text-muted fw-bold mb-0 x-small lh-base">{tip.tip}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                    <h4 className="h6 fw-black text-success mb-0">Looking for Bells?</h4>
+                                    <p className="small text-success mb-0 fw-bold opacity-75">
+                                        Visit our dedicated Bell islands to pick up Bell bundles for your home loans.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* TAB 2: RULES */}
+                    {/* ════ TAB: RULES ════ */}
                     {activeTab === 'rules' && (
                         <div className="animate-fade-in">
-                            <h4 className="ac-font fw-black mb-4 text-center text-dark">Sub Rules</h4>
-                            <div className="row g-3 mb-5">
+                            <h2 className="h4 ac-font fw-black mb-4 text-center text-dark">Island Sub Rules</h2>
+                            <div className="row g-3 mb-4">
                                 {rules.map((rule, i) => (
                                     <div key={i} className="col-12">
-                                        <div className={`p-4 rounded-4 bg-${rule.type}-subtle border border-${rule.type} border-opacity-25 d-flex align-items-center gap-3`}>
-                                            <div className={`icon-box text-${rule.type} bg-white shadow-sm flex-shrink-0`}>
+                                        <div
+                                            className={`p-4 rounded-4 bg-${rule.type}-subtle border border-${rule.type} border-opacity-25 d-flex align-items-center gap-3`}
+                                        >
+                                            <div className={`icon-box text-${rule.type} bg-white shadow-sm flex-shrink-0`} aria-hidden="true">
                                                 <i className={`${rule.icon} fs-4`}></i>
                                             </div>
                                             <div>
                                                 <div className="d-flex align-items-center gap-2 mb-1">
-                                                    <span className={`badge bg-${rule.type} bg-opacity-25 text-${rule.type} rounded-pill fw-black x-small`}>{rule.num}</span>
-                                                    <h5 className={`fw-black text-${rule.type} mb-0`}>{rule.title}</h5>
-                                                </div>
-                                                <p className="small text-dark opacity-75 fw-bold mb-0">{rule.desc}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Warning Banner */}
-                            <div className="p-4 rounded-4 bg-danger-subtle border border-danger border-opacity-50 text-center mb-5">
-                                <i className="fa-solid fa-triangle-exclamation text-danger fs-3 mb-2"></i>
-                                <p className="fw-black text-danger mb-1 small">Anyone caught breaking any of these rules will receive up to two warnings before being kicked or permanently banned from the server.</p>
-                                <p className="small text-muted fw-bold mb-0">Open a ticket in <span className="text-success fw-black">🌼 camp-support</span> if you have any questions about the rules.</p>
-                            </div>
-
-                            {/* ChoBot Order Rules */}
-                            <h4 className="ac-font fw-black mb-1 text-center text-dark">
-                                <i className="fa-solid fa-robot text-success me-2"></i>Order Bot Rules
-                            </h4>
-                            <p className="text-muted fw-bold small text-center mb-4">Additional rules that apply when using ChoBot to place item orders.</p>
-                            <div className="row g-3">
-                                {[
-                                    {
-                                        num: "OB1",
-                                        title: "Set Your Nickname First",
-                                        desc: "You MUST change your server nickname to Your ACNH Character Name | Your ACNH Island Name before placing any order. Update it in the 👑 set-nick channel.",
-                                        type: "info",
-                                        icon: "fa-solid fa-id-badge"
-                                    },
-                                    {
-                                        num: "OB2",
-                                        title: "No Code Sharing",
-                                        desc: "DO NOT share your order code with anyone else. Only the person who placed the order may visit that island. Sharing a code may result in a permanent bot ban.",
-                                        type: "danger",
-                                        icon: "fa-solid fa-shield-halved"
-                                    },
-                                    {
-                                        num: "OB3",
-                                        title: "No Littering",
-                                        desc: "DO NOT litter on the island. Pick up only what you ordered and leave the island clean for the next person.",
-                                        type: "warning",
-                                        icon: "fa-solid fa-trash"
-                                    },
-                                    {
-                                        num: "OB4",
-                                        title: "Order Only What You Need",
-                                        desc: "Do not spam or place excessive orders. Order only the items you genuinely need to keep the queue fair for all members.",
-                                        type: "secondary",
-                                        icon: "fa-solid fa-list-check"
-                                    },
-                                    {
-                                        num: "OB5",
-                                        title: "Good Internet Required",
-                                        desc: "You MUST have a stable internet connection of at least 15–25 Mbps before placing an order to avoid disconnection errors mid-visit.",
-                                        type: "primary",
-                                        icon: "fa-solid fa-wifi"
-                                    },
-                                    {
-                                        num: "OB6",
-                                        title: "Read the Bot Guide First",
-                                        desc: "Read everything in the 🌲 chorder-bot-how channel before placing any orders. This prevents wrong commands and avoids unnecessary questions in the order channel.",
-                                        type: "success",
-                                        icon: "fa-solid fa-book-open"
-                                    },
-                                    {
-                                        num: "OB7",
-                                        title: "Order Channel is for Orders Only",
-                                        desc: "DO NOT chat or look up items in the 🌲 chorder-bot channel — that channel is strictly for placing orders. Use the 🌲 chorder-bot-help channel for questions.",
-                                        type: "danger",
-                                        icon: "fa-solid fa-comment-slash"
-                                    },
-                                    {
-                                        num: "OB8",
-                                        title: "Item Lookup Channel is for Lookups Only",
-                                        desc: "DO NOT place orders or chat in the 🌲 chorder-item-lookup channel. That channel is exclusively for looking up the code for an item or DIY recipe.",
-                                        type: "warning",
-                                        icon: "fa-solid fa-magnifying-glass"
-                                    },
-                                ].map((rule, i) => (
-                                    <div key={i} className="col-12">
-                                        <div className={`p-4 rounded-4 bg-${rule.type}-subtle border border-${rule.type} border-opacity-25 d-flex align-items-center gap-3`}>
-                                            <div className={`icon-box text-${rule.type} bg-white shadow-sm flex-shrink-0`}>
-                                                <i className={`${rule.icon} fs-4`}></i>
-                                            </div>
-                                            <div>
-                                                <div className="d-flex align-items-center gap-2 mb-1">
-                                                    <span className={`badge bg-${rule.type} bg-opacity-25 text-${rule.type} rounded-pill fw-black x-small`}>{rule.num}</span>
-                                                    <h5 className={`fw-black text-${rule.type} mb-0`}>{rule.title}</h5>
+                                                    <span
+                                                        className={`badge bg-${rule.type} bg-opacity-25 text-${rule.type} rounded-pill fw-black x-small`}
+                                                    >
+                                                        {rule.num}
+                                                    </span>
+                                                    <h3 className={`h5 fw-black text-${rule.type} mb-0`}>{rule.title}</h3>
                                                 </div>
                                                 <p className="small text-dark opacity-75 fw-bold mb-0">{rule.desc}</p>
                                             </div>
@@ -371,154 +506,541 @@ const Guide = () => {
                         </div>
                     )}
 
-                    {/* TAB 3: CHOBOT GUIDE (public overview only — full command docs live in Discord) */}
+                    {/* ════ TAB: ITEM CATALOGUE ════ */}
+                    {activeTab === 'items' && (
+                        <div className="animate-fade-in">
+                            <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                                <div>
+                                    <h2 className="h4 ac-font fw-black mb-1 text-dark">
+                                        <i className="fa-solid fa-bag-shopping text-success me-2" aria-hidden="true" />
+                                        ACNH Item Catalogue
+                                    </h2>
+                                    <p className="text-muted small mb-0 fw-bold">
+                                        Browse items across furniture, clothing, tools, and materials.
+                                    </p>
+                                </div>
+                                <Link
+                                    to="/command-builder"
+                                    className="btn btn-nook text-white rounded-pill px-4 py-2 fw-bold shadow-2xs d-inline-flex align-items-center gap-1"
+                                    onClick={() => playChimeClick()}
+                                >
+                                    <i className="fa-solid fa-cubes-stacked" aria-hidden="true" />
+                                    <span>Open Command Builder</span>
+                                </Link>
+                            </div>
+
+                            {/* Search & Category Filter Bar */}
+                            <div className="bg-light p-3 rounded-4 border mb-4">
+                                <div className="row g-2">
+                                    <div className="col-12 col-md-7">
+                                        <div className="input-group">
+                                            <span className="input-group-text bg-white border-end-0 rounded-start-pill" aria-hidden="true">
+                                                <i className="fa-solid fa-magnifying-glass text-muted" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                className="form-control border-start-0 rounded-end-pill"
+                                                placeholder="Search item name (e.g. Froggy Chair, Royal Crown)..."
+                                                value={itemSearch}
+                                                aria-label="Search catalog items"
+                                                onChange={(e) => {
+                                                    setItemSearch(e.target.value);
+                                                    setItemPage(1);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-12 col-md-5">
+                                        <select
+                                            className="form-select rounded-pill"
+                                            value={itemCategory}
+                                            aria-label="Filter items by category"
+                                            onChange={(e) => {
+                                                setItemCategory(e.target.value);
+                                                setItemPage(1);
+                                            }}
+                                        >
+                                            {itemCategories.map((c) => (
+                                                <option key={c} value={c}>
+                                                    Category: {c}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Item Grid */}
+                            {catalogLoading ? (
+                                <div className="text-center py-5" role="status" aria-live="polite">
+                                    <div className="spinner-border text-success mb-2" aria-hidden="true" />
+                                    <div className="fw-bold text-muted">Loading Item Catalogue…</div>
+                                </div>
+                            ) : pagedItems.length === 0 ? (
+                                <div className="text-center py-5 text-muted" role="status" aria-live="polite">
+                                    <i className="fa-solid fa-box-open fs-1 mb-2 opacity-50" aria-hidden="true" />
+                                    <p className="fw-bold">No items found matching your filter.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="row g-3 mb-4">
+                                        {pagedItems.map((item) => (
+                                            <div key={item.id} className="col-6 col-md-4 col-lg-3">
+                                                <div className="card h-100 rounded-4 border bg-white shadow-2xs hover-shadow-sm p-3 text-center transition-all">
+                                                    <img
+                                                        src={item.image || FALLBACK_IMAGE}
+                                                        alt={item.name}
+                                                        className="mx-auto mb-2"
+                                                        style={{ width: 56, height: 56, objectFit: 'contain' }}
+                                                        onError={(ev) => {
+                                                            (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                                                        }}
+                                                    />
+                                                    <h3 className="fw-bold text-dark small mb-1 text-truncate" title={item.name} style={{ fontSize: '0.85rem' }}>
+                                                        {item.name}
+                                                    </h3>
+                                                    <span className="badge bg-light text-muted border rounded-pill x-small mb-2">
+                                                        {item.category || 'General'}
+                                                    </span>
+                                                    <Link
+                                                        to={`/command-builder/item/${item.id}`}
+                                                        className="btn btn-xs btn-outline-success rounded-pill fw-bold mt-auto"
+                                                        onClick={() => playChimeClick()}
+                                                    >
+                                                        Details & Code →
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Pagination */}
+                                    {totalItemPages > 1 && (
+                                        <nav className="d-flex justify-content-between align-items-center pt-3 border-top" aria-label="Item catalogue pagination">
+                                            <button
+                                                className="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                                                disabled={itemPage <= 1}
+                                                aria-disabled={itemPage <= 1}
+                                                tabIndex={itemPage <= 1 ? -1 : 0}
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setItemPage((p) => Math.max(1, p - 1));
+                                                }}
+                                            >
+                                                ← Prev
+                                            </button>
+                                            <span className="tiny-text fw-bold text-muted" role="status" aria-live="polite">
+                                                Page {itemPage} of {totalItemPages} ({filteredItems.length} items)
+                                            </span>
+                                            <button
+                                                className="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                                                disabled={itemPage >= totalItemPages}
+                                                aria-disabled={itemPage >= totalItemPages}
+                                                tabIndex={itemPage >= totalItemPages ? -1 : undefined}
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setItemPage((p) => Math.min(totalItemPages, p + 1));
+                                                }}
+                                            >
+                                                Next →
+                                            </button>
+                                        </nav>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ════ TAB: DIY CATALOGUE ════ */}
+                    {activeTab === 'diys' && (
+                        <div className="animate-fade-in">
+                            <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                                <div>
+                                    <h2 className="h4 ac-font fw-black mb-1 text-dark">
+                                        <i className="fa-solid fa-scroll text-warning me-2" aria-hidden="true" />
+                                        DIY Recipes Catalogue
+                                    </h2>
+                                    <p className="text-muted small mb-0 fw-bold">
+                                        Explore craftable furniture, seasonal series, and required materials.
+                                    </p>
+                                </div>
+                                <Link
+                                    to="/command-builder"
+                                    className="btn btn-nook text-white rounded-pill px-4 py-2 fw-bold shadow-2xs d-inline-flex align-items-center gap-1"
+                                    onClick={() => playChimeClick()}
+                                >
+                                    <i className="fa-solid fa-hammer" aria-hidden="true" />
+                                    <span>Craft in Builder</span>
+                                </Link>
+                            </div>
+
+                            {/* DIY Presets Chips */}
+                            <div className="d-flex gap-2 flex-wrap mb-3">
+                                {DIY_SERIES_PRESETS.map((preset) => (
+                                    <button
+                                        key={preset.name}
+                                        type="button"
+                                        className={`btn btn-xs rounded-pill px-3 py-1 fw-bold border shadow-2xs d-inline-flex align-items-center gap-1 ${
+                                            diySearch === preset.query
+                                                ? 'btn-warning text-dark'
+                                                : 'btn-white bg-white text-dark'
+                                        }`}
+                                        onClick={() => {
+                                            playChimeClick();
+                                            setDiySearch(diySearch === preset.query ? '' : preset.query);
+                                            setDiyPage(1);
+                                        }}
+                                    >
+                                        <i className={`fa-solid ${preset.icon}`} aria-hidden="true" />
+                                        <span>{preset.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Search & Series Filter Bar */}
+                            <div className="bg-light p-3 rounded-4 border mb-4">
+                                <div className="row g-2">
+                                    <div className="col-12 col-md-7">
+                                        <div className="input-group">
+                                            <span className="input-group-text bg-white border-end-0 rounded-start-pill" aria-hidden="true">
+                                                <i className="fa-solid fa-magnifying-glass text-muted" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                className="form-control border-start-0 rounded-end-pill"
+                                                placeholder="Search DIY name (e.g. Nova Light, Crescent-Moon Chair, Cutting Board)..."
+                                                value={diySearch}
+                                                aria-label="Search DIY recipes"
+                                                onChange={(e) => {
+                                                    setDiySearch(e.target.value);
+                                                    setDiyPage(1);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-12 col-md-5">
+                                        <select
+                                            className="form-select rounded-pill"
+                                            value={diyCategory}
+                                            aria-label="Filter DIY recipes by series"
+                                            onChange={(e) => {
+                                                setDiyCategory(e.target.value);
+                                                setDiyPage(1);
+                                            }}
+                                        >
+                                            <option value="All">Series: All DIYs</option>
+                                            <option value="Ironwood">Series: Ironwood</option>
+                                            <option value="Golden">Series: Golden</option>
+                                            <option value="Stars">Series: Celestial & Stars</option>
+                                            <option value="Mermaid">Series: Mermaid & Shell</option>
+                                            <option value="Spooky">Series: Spooky</option>
+                                            <option value="Mush">Series: Mushroom</option>
+                                            <option value="Frozen">Series: Festive & Frozen</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* DIY Grid */}
+                            {catalogLoading ? (
+                                <div className="text-center py-5" role="status" aria-live="polite">
+                                    <div className="spinner-border text-warning mb-2" aria-hidden="true" />
+                                    <div className="fw-bold text-muted">Loading DIY Catalogue…</div>
+                                </div>
+                            ) : pagedDiys.length === 0 ? (
+                                <div className="text-center py-5 text-muted" role="status" aria-live="polite">
+                                    <i className="fa-solid fa-scroll fs-1 mb-2 opacity-50" aria-hidden="true" />
+                                    <p className="fw-bold">No DIY recipes found matching your query.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="row g-3 mb-4">
+                                        {pagedDiys.map((diy) => (
+                                            <div key={diy.id} className="col-6 col-md-4 col-lg-3">
+                                                <div className="card h-100 rounded-4 border bg-white shadow-2xs hover-shadow-sm p-3 text-center transition-all">
+                                                    <img
+                                                        src={diy.image || FALLBACK_IMAGE}
+                                                        alt={diy.name}
+                                                        className="mx-auto mb-2"
+                                                        style={{ width: 56, height: 56, objectFit: 'contain' }}
+                                                        onError={(ev) => {
+                                                            (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                                                        }}
+                                                    />
+                                                    <h3 className="fw-bold text-dark small mb-1 text-truncate" title={diy.name} style={{ fontSize: '0.85rem' }}>
+                                                        {diy.name}
+                                                    </h3>
+                                                    <span className="badge bg-warning bg-opacity-20 text-dark border border-warning border-opacity-30 rounded-pill x-small mb-2">
+                                                        DIY Recipe
+                                                    </span>
+                                                    <Link
+                                                        to={`/command-builder/item/${diy.id}`}
+                                                        className="btn btn-xs btn-outline-warning text-dark rounded-pill fw-bold mt-auto"
+                                                        onClick={() => playChimeClick()}
+                                                    >
+                                                        View Recipe →
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Pagination */}
+                                    {totalDiyPages > 1 && (
+                                        <nav className="d-flex justify-content-between align-items-center pt-3 border-top" aria-label="DIY recipes pagination">
+                                            <button
+                                                className="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                                                disabled={diyPage <= 1}
+                                                aria-disabled={diyPage <= 1}
+                                                tabIndex={diyPage <= 1 ? -1 : 0}
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setDiyPage((p) => Math.max(1, p - 1));
+                                                }}
+                                            >
+                                                ← Prev
+                                            </button>
+                                            <span className="tiny-text fw-bold text-muted" role="status" aria-live="polite">
+                                                Page {diyPage} of {totalDiyPages} ({filteredDiys.length} recipes)
+                                            </span>
+                                            <button
+                                                className="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                                                disabled={diyPage >= totalDiyPages}
+                                                aria-disabled={diyPage >= totalDiyPages}
+                                                tabIndex={diyPage >= totalDiyPages ? -1 : undefined}
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setDiyPage((p) => Math.min(totalDiyPages, p + 1));
+                                                }}
+                                            >
+                                                Next →
+                                            </button>
+                                        </nav>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ════ TAB: VILLAGER DATABASE ════ */}
+                    {activeTab === 'villagers' && (
+                        <div className="animate-fade-in">
+                            <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                                <div>
+                                    <h2 className="h4 ac-font fw-black mb-1 text-dark">
+                                        <i className="fa-solid fa-people-roof text-danger me-2" aria-hidden="true" />
+                                        Villager Database & Schedules
+                                    </h2>
+                                    <p className="text-muted small mb-0 fw-bold">
+                                        Look up all 400+ villagers, personality traits, and wake-up hours.
+                                    </p>
+                                </div>
+                                <Link
+                                    to="/command-builder"
+                                    className="btn btn-nook text-white rounded-pill px-4 py-2 fw-bold shadow-2xs d-inline-flex align-items-center gap-1"
+                                    onClick={() => playChimeClick()}
+                                >
+                                    <i className="fa-solid fa-house-chimney-user" aria-hidden="true" />
+                                    <span>Invite via Builder</span>
+                                </Link>
+                            </div>
+
+                            {/* Personality Filter Chips */}
+                            <div className="d-flex gap-2 flex-wrap mb-3">
+                                {personalityTypes.map((p) => (
+                                    <button
+                                        key={p}
+                                        type="button"
+                                        className={`btn btn-xs rounded-pill px-3 py-1 fw-bold border shadow-2xs ${
+                                            villagerPersonality === p
+                                                ? 'btn-success text-white'
+                                                : 'btn-white bg-white text-dark'
+                                        }`}
+                                        onClick={() => {
+                                            playChimeClick();
+                                            setVillagerPersonality(p);
+                                            setVillagerPage(1);
+                                        }}
+                                    >
+                                        {p === 'All' ? '🌟 All Personalities' : p}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Search Bar */}
+                            <div className="input-group mb-4">
+                                <span className="input-group-text bg-white border-end-0 rounded-start-pill" aria-hidden="true">
+                                    <i className="fa-solid fa-magnifying-glass text-muted" />
+                                </span>
+                                <input
+                                    type="text"
+                                    className="form-control border-start-0 rounded-end-pill"
+                                    placeholder="Search villager name (e.g. Raymond, Marshal, Judy, Sasha, Shino)..."
+                                    value={villagerSearch}
+                                    aria-label="Search villagers by name"
+                                    onChange={(e) => {
+                                        setVillagerSearch(e.target.value);
+                                        setVillagerPage(1);
+                                    }}
+                                />
+                            </div>
+
+                            {/* Villager Cards Grid */}
+                            {catalogLoading ? (
+                                <div className="text-center py-5" role="status" aria-live="polite">
+                                    <div className="spinner-border text-danger mb-2" aria-hidden="true" />
+                                    <div className="fw-bold text-muted">Loading Villager Database…</div>
+                                </div>
+                            ) : pagedVillagers.length === 0 ? (
+                                <div className="text-center py-5 text-muted" role="status" aria-live="polite">
+                                    <i className="fa-solid fa-user-slash fs-1 mb-2 opacity-50" aria-hidden="true" />
+                                    <p className="fw-bold">No villagers found matching your search.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="row g-3 mb-4">
+                                        {pagedVillagers.map((v) => {
+                                            const personality = v.category || v.personality || 'Normal';
+                                            const color = PERSONALITY_COLORS[personality] || 'success';
+                                            const schedule = PERSONALITY_SCHEDULES[personality] || '6:00 AM – 12:00 AM';
+
+                                            return (
+                                                <div key={v.id} className="col-6 col-md-4 col-lg-3">
+                                                    <div className="card h-100 rounded-4 border bg-white shadow-2xs hover-shadow-sm p-3 text-center transition-all">
+                                                        <img
+                                                            src={v.image || FALLBACK_IMAGE}
+                                                            alt={v.name}
+                                                            className="mx-auto mb-2 rounded-circle border shadow-2xs"
+                                                            style={{ width: 64, height: 64, objectFit: 'contain' }}
+                                                            onError={(ev) => {
+                                                                (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                                                            }}
+                                                        />
+                                                        <h3 className="fw-bold text-dark small mb-1" style={{ fontSize: '0.88rem' }}>{v.name}</h3>
+                                                        <span
+                                                            className={`badge bg-${color} bg-opacity-20 text-${color} border rounded-pill x-small mb-1`}
+                                                        >
+                                                            {personality}
+                                                        </span>
+                                                        <div className="tiny-text text-muted mb-2">
+                                                            <i className="fa-solid fa-clock me-1 text-secondary" aria-hidden="true" />
+                                                            {schedule}
+                                                        </div>
+                                                        <Link
+                                                            to={`/command-builder/villager/${v.id}`}
+                                                            className="btn btn-xs btn-outline-danger rounded-pill fw-bold mt-auto"
+                                                            onClick={() => playChimeClick()}
+                                                        >
+                                                            Profile & Code →
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Pagination */}
+                                    {totalVillagerPages > 1 && (
+                                        <nav className="d-flex justify-content-between align-items-center pt-3 border-top" aria-label="Villager database pagination">
+                                            <button
+                                                className="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                                                disabled={villagerPage <= 1}
+                                                aria-disabled={villagerPage <= 1}
+                                                tabIndex={villagerPage <= 1 ? -1 : 0}
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setVillagerPage((p) => Math.max(1, p - 1));
+                                                }}
+                                            >
+                                                ← Prev
+                                            </button>
+                                            <span className="tiny-text fw-bold text-muted" role="status" aria-live="polite">
+                                                Page {villagerPage} of {totalVillagerPages} ({filteredVillagers.length}{' '}
+                                                villagers)
+                                            </span>
+                                            <button
+                                                className="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold"
+                                                disabled={villagerPage >= totalVillagerPages}
+                                                aria-disabled={villagerPage >= totalVillagerPages}
+                                                tabIndex={villagerPage >= totalVillagerPages ? -1 : undefined}
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setVillagerPage((p) => Math.min(totalVillagerPages, p + 1));
+                                                }}
+                                            >
+                                                Next →
+                                            </button>
+                                        </nav>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ════ TAB: CHOBOT ════ */}
                     {activeTab === 'chobot' && (
                         <div className="animate-fade-in">
-                            <h4 className="ac-font fw-black mb-2 text-center text-dark">
-                                <i className="fa-solid fa-robot text-success me-2"></i>What Is ChoBot?
-                            </h4>
+                            <h2 className="h4 ac-font fw-black mb-2 text-center text-dark">
+                                <i className="fa-solid fa-robot text-success me-2" aria-hidden="true" />What Is ChoBot?
+                            </h2>
                             <p className="text-muted fw-bold small text-center mb-5">
                                 ChoBot is Chopaeng's Discord bot that helps members coordinate item, DIY, and villager
-                                requests on our community islands. Here's a quick overview — the full command list and
-                                step-by-step tutorials live inside our Discord server, where our team can walk new
-                                members through it directly.
+                                requests on our community islands.
                             </p>
 
-                            {/* Before You Start */}
                             <div className="p-3 bg-success bg-opacity-10 rounded-4 border border-success border-opacity-25 mb-5">
-                                <h6 className="fw-black text-success mb-2"><i className="fa-solid fa-circle-info me-2"></i>Good to Know</h6>
+                                <h3 className="h6 fw-black text-success mb-2">
+                                    <i className="fa-solid fa-circle-info me-2" aria-hidden="true" />Good to Know
+                                </h3>
                                 <ul className="mb-0 small fw-bold text-success d-flex flex-column gap-1 ps-3">
                                     <li>You need to be on the island before ChoBot can process your request.</li>
                                     <li>ChoBot covers furniture, DIY recipes, wallpaper/flooring, and villager requests.</li>
                                     <li>Garbage bins are available everywhere — use them for anything you don't keep.</li>
-                                    <li>Full command syntax, examples, and troubleshooting are posted in our Discord's
-                                        🍄 chobot-how channel for members.</li>
+                                    <li>
+                                        Full command syntax and tutorials are posted in our Discord's 🍄 chobot-how channel.
+                                    </li>
                                 </ul>
-                            </div>
-
-                            {/* Overview cards instead of raw command docs */}
-                            <div className="row g-3 mb-5">
-                                {[
-                                    {
-                                        icon: "fa-solid fa-couch",
-                                        color: "success",
-                                        title: "Item Requests",
-                                        desc: "Ask for specific furniture, tools, or seasonal items and ChoBot will help lay them out for you to collect on your next visit."
-                                    },
-                                    {
-                                        icon: "fa-solid fa-scroll",
-                                        color: "warning",
-                                        title: "DIY Recipes",
-                                        desc: "Request a specific DIY recipe card and ChoBot will place it for pickup on the island."
-                                    },
-                                    {
-                                        icon: "fa-solid fa-palette",
-                                        color: "info",
-                                        title: "Color & Design Variants",
-                                        desc: "Many items come in multiple colors or patterns. ChoBot can help you get the exact variant you're after."
-                                    },
-                                    {
-                                        icon: "fa-solid fa-people-roof",
-                                        color: "danger",
-                                        title: "Villager Requests",
-                                        desc: "Have an open plot? Let us know which villager you'd like and we'll help coordinate getting them ready to move in."
-                                    },
-                                ].map((card, i) => (
-                                    <div key={i} className="col-sm-6">
-                                        <div className="d-flex align-items-start gap-3 p-3 bg-light rounded-4 border h-100">
-                                            <div className={`bg-${card.color} bg-opacity-10 text-${card.color} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0`} style={{ width: 44, height: 44 }}>
-                                                <i className={`${card.icon}`}></i>
-                                            </div>
-                                            <div>
-                                                <h6 className="fw-black text-dark mb-1 small">{card.title}</h6>
-                                                <p className="text-muted fw-bold mb-0 x-small lh-base">{card.desc}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Villager Wake Times - kept, it's just reference info, not exploit-adjacent */}
-                            <div className="mb-4">
-                                <h5 className="fw-black text-dark ac-font mb-3">Villager Wake Times</h5>
-                                <p className="small fw-bold text-muted mb-3">
-                                    Personality types have different sleep schedules in-game. If you're inviting a
-                                    villager over, it helps to know when they'll actually be awake to greet you.
-                                </p>
-                                <div className="row g-2">
-                                    {[
-                                        { type: 'Snooty', hours: '8:30 AM – 2:30 AM', color: 'danger' },
-                                        { type: 'Smug', hours: '7:00 AM – 2:00 AM', color: 'primary' },
-                                        { type: 'Sisterly', hours: '9:30 AM – 3:00 AM', color: 'info' },
-                                        { type: 'Normal', hours: '6:00 AM – 12:00 AM', color: 'success' },
-                                        { type: 'Peppy', hours: '7:00 AM – 1:20 AM', color: 'warning' },
-                                        { type: 'Cranky', hours: '9:00 AM – 3:30 AM', color: 'secondary' },
-                                        { type: 'Lazy', hours: '8:00 AM – 11:00 PM', color: 'success' },
-                                        { type: 'Jock', hours: '6:30 AM – 12:30 AM', color: 'primary' },
-                                    ].map(v => (
-                                        <div key={v.type} className="col-sm-6 col-md-3">
-                                            <div className={`bg-${v.color}-subtle border border-${v.color} border-opacity-25 rounded-3 p-2 text-center`}>
-                                                <div className={`fw-black small text-${v.color}`}>{v.type}</div>
-                                                <div className="x-small fw-bold text-dark opacity-75">{v.hours}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* CTA to Discord instead of publishing command reference */}
-                            <div className="text-center p-4 bg-light rounded-4 border mt-5">
-                                <i className="fa-brands fa-discord text-primary fs-2 mb-2"></i>
-                                <h6 className="fw-black text-dark mb-1">Want the full command list?</h6>
-                                <p className="small text-muted fw-bold mb-3">Join our Discord and check the 🍄 chobot-how channel for the complete, up-to-date ChoBot guide with examples.</p>
-                                <a target="_blank" href="https://discord.gg/chopaeng" className="btn btn-outline-dark rounded-pill fw-bold px-4 btn-sm">
-                                    Join Discord
-                                </a>
                             </div>
                         </div>
                     )}
 
-                    {/* TAB 4: FAQ / DIALOGUE */}
+                    {/* ════ TAB: FAQ ════ */}
                     {activeTab === 'faq' && (
                         <div className="animate-fade-in">
-                            <h4 className="ac-font fw-black mb-4 text-center text-dark">Troubleshooting & Help</h4>
-
+                            <h2 className="h4 ac-font fw-black mb-4 text-center text-dark">Troubleshooting & Help</h2>
                             <div className="d-flex flex-column gap-3">
                                 {[
-                                    { q: "Wuh-oh! Interference?", a: "Someone is flying in or out of the island, or a visitor has a menu open. Keep pressing 'A' to retry — you'll be let in as soon as the interference clears, usually within a few seconds." },
-                                    { q: "Communication Error?", a: "The island crashed, most likely because a visitor pressed the minus button to quit instead of leaving through the airport. Wait about 60 seconds for the host to reboot the island, then check Discord or the dashboard for a new Dodo code." },
-                                    { q: "How do I request a specific item?", a: "Join the Chopaeng Discord server and check the 🍄 chobot-how channel for instructions on requesting items through ChoBot. Our team is also happy to help you along the way." },
-                                    { q: "How do I request a specific villager?", a: "Head to our Discord server and follow the villager request steps posted in the 🍄 chobot-how channel. Once your request is ready, fly over, talk to them, and invite them to move to your island." },
-                                    { q: "How do I obtain Bells?", a: "Community members can visit our dedicated Bell islands to pick up Bell bundles and high-value catalog items to help fund town bridges and home expansions." },
-                                    { q: "Why is my inventory full after just a few minutes?", a: "Treasure islands are packed with items, so your 40 slots fill quickly. Empty your pockets completely before each visit. When full, fly home through the airport, drop off items in your storage, then return with a fresh code to collect more." },
-                                    { q: "The Dodo code isn't working — what do I do?", a: "Dodo codes expire after 24 hours or when the island reboots. Check the Chopaeng website or Discord for the current live code. If you see 'This island is full', wait a minute and retry — a visitor slot will open once someone flies home." },
-                                    { q: "Can I take items from the island's beach or trees?", a: "Yes! You can pick up anything on the ground, dig up fossils with the provided shovel, cut trees, shake fruit trees, and fish in the water. Use only the tools provided on the island and return any borrowed tools to the designated spot when you're done." },
-                                    { q: "My game says 'Could not connect'. What's wrong?", a: "This usually means your NAT type is too strict (NAT Type C or D). Switch to a wired connection if possible, or change your router settings to achieve NAT Type A or B. Restarting your modem and router often resolves temporary connectivity problems." },
-                                    { q: "I accidentally littered on the island. What do I do?", a: "Use the trash can provided on the island to dispose of unwanted items. Never drop items directly on the ground and leave them — litter prevents new items from spawning and slows down the refresh for all visitors. If you left accidental litter, let a mod know in Discord." },
-                                    { q: "Can I visit with friends at the same time?", a: "Up to 7 other players can be on a Chopaeng island at the same time (8 total including the host). You are welcome to coordinate visits with friends using the same code, but each person must have their pockets empty and must leave properly through the airport." },
-                                    { q: "How often are islands restocked?", a: "Public islands are restocked on a rolling schedule managed by the Chopaeng team. Member ChoBot islands are refreshed on request, so they're generally well-stocked when you arrive." },
+                                    {
+                                        q: "Wuh-oh! Interference?",
+                                        a: "Someone is flying in or out of the island, or a visitor has a menu open. Keep pressing 'A' to retry — you'll be let in as soon as the interference clears, usually within a few seconds.",
+                                    },
+                                    {
+                                        q: "Communication Error?",
+                                        a: "The island crashed, most likely because a visitor pressed the minus button to quit instead of leaving through the airport. Wait about 60 seconds for the host to reboot the island.",
+                                    },
+                                    {
+                                        q: "How do I request a specific item?",
+                                        a: "Use our Command Builder or Order Bot right on the website, or join the Chopaeng Discord server for on-island bot requests.",
+                                    },
+                                    {
+                                        q: "How do I request a specific villager?",
+                                        a: "Look up your favorite villager in the Villager Database tab, copy their ID or load them in the Command Builder, and speak to them in boxes when you arrive.",
+                                    },
                                 ].map((item, i) => (
                                     <div key={i} className="dialogue-container">
                                         <div className="dialogue-bubble bg-light border p-3 rounded-4 position-relative">
                                             <span className="badge bg-dark text-white rounded-pill mb-2 px-3">Question</span>
-                                            <h6 className="fw-bold text-dark mb-2">{item.q}</h6>
+                                            <h3 className="h6 fw-bold text-dark mb-2">{item.q}</h3>
                                             <p className="small text-success fw-bold mb-0 bg-white p-2 rounded-3 border">
-                                                <i className="fa-solid fa-quote-left me-2"></i>
+                                                <i className="fa-solid fa-quote-left me-2" aria-hidden="true" />
                                                 {item.a}
                                             </p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-
-                            <div className="text-center mt-4">
-                                <a target="_blank" href="https://discord.gg/chopaeng" className="btn btn-outline-dark rounded-pill fw-bold px-4 btn-sm">
-                                    Open Discord Support
-                                </a>
-                            </div>
                         </div>
                     )}
-
                 </div>
             </div>
         </div>

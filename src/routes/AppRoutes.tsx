@@ -21,6 +21,7 @@ const PocketInventory = lazy(() => import("../pages/PocketInventory.tsx"));
 const CatalogDetail   = lazy(() => import("../pages/CatalogDetail.tsx"));
 const Contact         = lazy(() => import("../pages/Contact.tsx"));
 const DodoDecryptor   = lazy(() => import("../pages/DodoDecryptor.tsx"));
+const OrderBot        = lazy(() => import("../pages/OrderBot.tsx"));
 const Profile         = lazy(() => import("../pages/Profile.tsx"));
 const AuthCallback    = lazy(() => import("../pages/AuthCallback.tsx"));
 const BlogList        = lazy(() => import("../pages/BlogList.tsx"));
@@ -72,6 +73,7 @@ const AppRoutes = () => {
                     <Route path="/command-builder/:entityType/:id" element={<CatalogDetail />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/dodo" element={<DodoDecryptor />} />
+                    <Route path="/order" element={<OrderBot />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
 
