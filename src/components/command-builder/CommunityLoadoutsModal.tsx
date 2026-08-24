@@ -7,6 +7,8 @@ import {
     upvoteCommunityLoadout,
     isLoadoutUpvoted,
 } from '../../utils/communityLoadoutsApi';
+import { fetchPocketBundles } from '../../utils/pocketBundleApi';
+import { playChimeClick } from '../../utils/kkAudioSynthesizer';
 import type { PocketEntry } from '../../hooks/useCommandBuilderPockets';
 import { getAuthToken } from '../../context/authToken';
 
@@ -58,12 +60,62 @@ export const CommunityLoadoutsModal = ({
 
     const token = getAuthToken();
 
-    // Load community loadouts
+    // Load community loadouts + official pocket bundles (merged)
     const refreshLoadouts = async () => {
         setLoading(true);
         try {
-            const data = await fetchCommunityLoadouts(token);
-            setLoadouts(data);
+            // Fetch from both APIs in parallel
+            const [communityData, bundlesData] = await Promise.all([
+                fetchCommunityLoadouts(token).catch(() => [] as CommunityLoadout[]),
+                fetchPocketBundles(token).catch(() => []),
+            ]);
+
+            // Normalize pocket bundles into CommunityLoadout shape with unique STAFF- codes
+            const bundleLoadouts: CommunityLoadout[] = bundlesData
+                .filter((b) => b.isOfficial)
+                .map((bundle) => {
+                    const cleanSlug = bundle.id.replace(/[^a-zA-Z0-9]/g, '').substring(0, 6).toUpperCase();
+                    const staffCode = `STAFF-${cleanSlug || 'SET'}`;
+                    return {
+                        id: `bundle-${bundle.id}`,
+                        shortCode: staffCode,
+                        name: bundle.title,
+                        description: bundle.description || 'Official Staff Curated Pocket Build',
+                        category: (bundle.category === 'Wealth' ? 'Wealth & Currencies'
+                            : bundle.category === 'Tools & Materials' ? 'Materials & DIY'
+                            : bundle.category === 'Seasonal' ? 'Seasonal & Events'
+                            : bundle.category === 'Popular' ? 'Starter Kits'
+                            : bundle.category === 'Aesthetic' ? 'Aesthetic & Themes'
+                            : 'Custom Builds') as LoadoutCategory,
+                        tags: [bundle.category?.toLowerCase() || 'bundle', 'official', 'staff'],
+                        orderItems: bundle.items.map((item) => ({
+                            itemId: item.itemId,
+                            name: item.name,
+                            quantity: item.quantity,
+                            category: item.category,
+                            variantId: item.variantId,
+                            variantLabel: item.variantLabel,
+                            image: item.image,
+                        })),
+                        dropItems: [],
+                        author: 'Chopaeng Staff',
+                        upvotes: 0,
+                        views: 0,
+                        isOfficial: true,
+                        hasUpvoted: false,
+                        createdAt: bundle.createdAt || new Date().toISOString(),
+                        updatedAt: bundle.updatedAt || new Date().toISOString(),
+                    };
+                });
+
+            // Merge: official bundles first, then community loadouts
+            // De-duplicate by checking if a community loadout already has the same name
+            const existingNames = new Set(communityData.map((l) => l.name.toLowerCase()));
+            const uniqueBundleLoadouts = bundleLoadouts.filter(
+                (b) => !existingNames.has(b.name.toLowerCase())
+            );
+
+            setLoadouts([...uniqueBundleLoadouts, ...communityData]);
         } catch {
             // Ignore
         } finally {
@@ -102,10 +154,14 @@ export const CommunityLoadoutsModal = ({
         });
     }, [loadouts, activeTab, selectedCategory, searchQuery]);
 
-    // Handle Upvoting
+    // Handle Upvoting with optimistic state & sound
     const handleUpvote = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        const result = await upvoteCommunityLoadout(id, token);
+        playChimeClick();
+        const currentTarget = loadouts.find((l) => l.id === id);
+        const currentCount = currentTarget?.upvotes || 0;
+
+        const result = await upvoteCommunityLoadout(id, token, currentCount);
         if (result.success) {
             setLoadouts((prev) =>
                 prev.map((l) => (l.id === id ? { ...l, upvotes: result.newCount, hasUpvoted: result.upvoted } : l))

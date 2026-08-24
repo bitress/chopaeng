@@ -83,7 +83,6 @@ export const CommandBuilderSummary = ({
     onFillRemaining,
     onSortPockets,
     showTerminal = true,
-    onOpenBundlesModal,
     onOpenShareModal,
     onOpenCommunityLoadoutsModal,
 }: CommandBuilderSummaryProps) => {
@@ -346,12 +345,11 @@ export const CommandBuilderSummary = ({
 
             {/* ── Quick Action Toolbar (Bundles, Smart Tools & Share) ─────────────────────────── */}
             <div className="d-flex flex-wrap gap-2 mb-3">
-                {(onOpenCommunityLoadoutsModal || onOpenBundlesModal) && (
+                {onOpenCommunityLoadoutsModal && (
                     <button
                         type="button"
                         onClick={() => {
-                            if (onOpenCommunityLoadoutsModal) onOpenCommunityLoadoutsModal();
-                            else if (onOpenBundlesModal) onOpenBundlesModal();
+                            onOpenCommunityLoadoutsModal();
                             playChimeClick();
                         }}
                         className="btn btn-sm text-white rounded-pill fw-bold px-3 py-2 shadow-sm flex-grow-1 transition-all d-flex align-items-center justify-content-center gap-2"

@@ -6,7 +6,7 @@ import { useCatalogData } from '../hooks/useCatalogData';
 import { VisualPocketGrid } from '../components/command-builder/VisualPocketGrid';
 import { parseItemCodes } from '../utils/itemCodeParser';
 import { playChimeClick } from '../utils/kkAudioSynthesizer';
-import { CommandBuilderPocketBundlesModal } from '../components/command-builder/CommandBuilderPocketBundlesModal';
+import { CommunityLoadoutsModal } from '../components/command-builder/CommunityLoadoutsModal';
 import { CommandBuilderShareModal } from '../components/command-builder/CommandBuilderShareModal';
 import { QuickAddItemModal } from '../components/command-builder/QuickAddItemModal';
 import { SmartFillDropdown } from '../components/command-builder/SmartFillDropdown';
@@ -183,13 +183,16 @@ export const PocketInventory: React.FC = () => {
 
                         <button
                             type="button"
-                            className="btn btn-outline-secondary rounded-pill fw-bold btn-sm shadow-2xs d-inline-flex align-items-center gap-1 px-3"
+                            className="btn btn-outline-success rounded-pill fw-bold btn-sm shadow-2xs d-inline-flex align-items-center gap-1 px-3"
                             style={{ minHeight: '36px' }}
-                            onClick={() => setBundlesModalOpen(true)}
-                            aria-label="Open pocket bundles"
+                            onClick={() => {
+                                setBundlesModalOpen(true);
+                                playChimeClick();
+                            }}
+                            aria-label="Open community loadouts and bundles"
                         >
-                            <i className="fa-solid fa-box-open" aria-hidden="true"></i>
-                            <span>Bundles</span>
+                            <i className="fa-solid fa-box-open text-warning" aria-hidden="true"></i>
+                            <span>Loadouts & Bundles</span>
                         </button>
 
                         <button
@@ -723,14 +726,13 @@ export const PocketInventory: React.FC = () => {
                 dropItems={dropItems}
             />
 
-            {/* POCKET BUNDLES MODAL */}
-            <CommandBuilderPocketBundlesModal
+            {/* COMMUNITY LOADOUTS & OFFICIAL BUNDLES MODAL */}
+            <CommunityLoadoutsModal
                 isOpen={bundlesModalOpen}
                 onClose={() => setBundlesModalOpen(false)}
+                onLoadItems={(items, mode) => loadBundleIntoOrder(items, mode)}
                 currentOrderPockets={orderItems}
                 currentDropPockets={dropItems}
-                onApplyBundleToOrder={(items, mode) => loadBundleIntoOrder(items, mode)}
-                onApplyBundleToDrop={(items, mode) => loadBundleIntoDrop(items, mode)}
             />
 
             {/* SHARE POCKETS MODAL */}

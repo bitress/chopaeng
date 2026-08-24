@@ -54,14 +54,7 @@ const QUICK_PRESETS = [
         icon: 'https://dodo.ac/np/images/1/1e/99k_Bells_NH_Inv_Icon.png',
         desc: '3.96 Million Bells in cash',
         fillType: 'bells',
-    },
-    {
-        id: 'gold-40',
-        name: '40× Gold Nuggets',
-        icon: 'https://dodo.ac/np/images/2/26/Gold_Nugget_NH_Inv_Icon.png',
-        desc: '1,200 Crafting Gold Nuggets',
-        fillType: 'gold',
-    },
+    }
 ];
 
 type Stage = 'submit' | 'tracker';
@@ -197,13 +190,12 @@ const QueueList: React.FC<{ queue: QueueEntry[]; myOrderId?: string }> = ({ queu
                             <div className="text-muted tiny-text">{fmtEta(e.estimated_minutes)}</div>
                         </div>
                         <span
-                            className={`badge rounded-pill ${
-                                e.status === 'ready'
+                            className={`badge rounded-pill ${e.status === 'ready'
                                     ? 'bg-success text-white'
                                     : e.status === 'preparing'
-                                    ? 'bg-warning text-dark'
-                                    : 'bg-light text-secondary border'
-                            }`}
+                                        ? 'bg-warning text-dark'
+                                        : 'bg-light text-secondary border'
+                                }`}
                             style={{ fontSize: '.65rem' }}
                         >
                             {e.status}
@@ -500,7 +492,7 @@ const OrderBot: React.FC = () => {
     // ── Copy Command ──
     const handleCopyCommand = () => {
         if (!orderCommandText) return;
-        navigator.clipboard.writeText(orderCommandText).catch(() => {});
+        navigator.clipboard.writeText(orderCommandText).catch(() => { });
         playChimeClick();
         setCommandCopied(true);
         setTimeout(() => setCommandCopied(false), 2500);
@@ -508,7 +500,7 @@ const OrderBot: React.FC = () => {
 
     const handleCopySpecific = (cmd: string, label: string) => {
         if (!cmd) return;
-        navigator.clipboard.writeText(cmd).catch(() => {});
+        navigator.clipboard.writeText(cmd).catch(() => { });
         playChimeClick();
         triggerInAppToast({
             type: 'info',
@@ -679,29 +671,29 @@ const OrderBot: React.FC = () => {
                         <div className="col-12 col-lg-8">
                             {/* ── OFFLINE BANNER ── */}
                             {botUnavailable && (
-                                 <div className="ob-offline-banner mb-4 animate-fade" role="alert">
-                                     <div className="d-flex align-items-center gap-3 flex-grow-1">
-                                         <div className="ob-pulse red" aria-hidden="true" />
-                                         <div>
-                                             <span className="fw-bold text-dark me-2">Order Bot is Currently Offline</span>
-                                             <span className="text-muted small">
-                                                 You can still prepare your 40-slot pocket loadout below.
-                                             </span>
-                                         </div>
-                                     </div>
-                                     <button
-                                         type="button"
-                                         className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 flex-shrink-0 hover-shadow-sm transition-all"
-                                         onClick={() => {
-                                             playChimeClick();
-                                             refreshStatus();
-                                         }}
-                                         title="Refresh status"
-                                     >
-                                         <i className={`fa-solid fa-arrows-rotate ${statusLoading ? 'fa-spin text-success' : 'text-muted'}`} aria-hidden="true" />
-                                         <span>Refresh</span>
-                                     </button>
-                                 </div>
+                                <div className="ob-offline-banner mb-4 animate-fade" role="alert">
+                                    <div className="d-flex align-items-center gap-3 flex-grow-1">
+                                        <div className="ob-pulse red" aria-hidden="true" />
+                                        <div>
+                                            <span className="fw-bold text-dark me-2">Order Bot is Currently Offline</span>
+                                            <span className="text-muted small">
+                                                You can still prepare your 40-slot pocket loadout below.
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 flex-shrink-0 hover-shadow-sm transition-all"
+                                        onClick={() => {
+                                            playChimeClick();
+                                            refreshStatus();
+                                        }}
+                                        title="Refresh status"
+                                    >
+                                        <i className={`fa-solid fa-arrows-rotate ${statusLoading ? 'fa-spin text-success' : 'text-muted'}`} aria-hidden="true" />
+                                        <span>Refresh</span>
+                                    </button>
+                                </div>
                             )}
 
                             {/* ══════════════════════════════════════
@@ -831,9 +823,8 @@ const OrderBot: React.FC = () => {
                                         style={{ height: '8px', borderRadius: '10px', background: '#e5e7eb' }}
                                     >
                                         <div
-                                            className={`progress-bar transition-all ${
-                                                capacityPct === 100 ? 'bg-success' : 'bg-success bg-opacity-75'
-                                            }`}
+                                            className={`progress-bar transition-all ${capacityPct === 100 ? 'bg-success' : 'bg-success bg-opacity-75'
+                                                }`}
                                             role="progressbar"
                                             style={{ width: `${capacityPct}%` }}
                                             aria-valuenow={totalOrderCount}
@@ -1032,9 +1023,8 @@ const OrderBot: React.FC = () => {
                                                         onClick={handleCopyCommand}
                                                     >
                                                         <i
-                                                            className={`fa-solid ${
-                                                                commandCopied ? 'fa-check text-success' : 'fa-copy'
-                                                            } me-1`}
+                                                            className={`fa-solid ${commandCopied ? 'fa-check text-success' : 'fa-copy'
+                                                                } me-1`}
                                                         />
                                                         {commandCopied ? 'Copied' : 'Copy All'}
                                                     </button>
@@ -1190,11 +1180,10 @@ const OrderBot: React.FC = () => {
                                             <span className="ob-prog-text">Submitted</span>
                                         </div>
                                         <div
-                                            className={`ob-prog-step ${
-                                                ['queued', 'preparing', 'ready', 'completed'].includes(statusStr)
+                                            className={`ob-prog-step ${['queued', 'preparing', 'ready', 'completed'].includes(statusStr)
                                                     ? 'active'
                                                     : ''
-                                            }`}
+                                                }`}
                                         >
                                             <div className="ob-prog-dot">
                                                 {statusStr === 'queued' ? (
@@ -1210,9 +1199,8 @@ const OrderBot: React.FC = () => {
                                             </span>
                                         </div>
                                         <div
-                                            className={`ob-prog-step ${
-                                                ['preparing', 'ready', 'completed'].includes(statusStr) ? 'active' : ''
-                                            }`}
+                                            className={`ob-prog-step ${['preparing', 'ready', 'completed'].includes(statusStr) ? 'active' : ''
+                                                }`}
                                         >
                                             <div className="ob-prog-dot">
                                                 {statusStr === 'preparing' ? (
@@ -1226,9 +1214,8 @@ const OrderBot: React.FC = () => {
                                             <span className="ob-prog-text">Preparing Items</span>
                                         </div>
                                         <div
-                                            className={`ob-prog-step ${
-                                                isReady || statusStr === 'completed' ? 'active ready-step' : ''
-                                            }`}
+                                            className={`ob-prog-step ${isReady || statusStr === 'completed' ? 'active ready-step' : ''
+                                                }`}
                                         >
                                             <div className="ob-prog-dot">
                                                 {isReady ? (
@@ -1304,9 +1291,8 @@ const OrderBot: React.FC = () => {
                                                 <div className="d-flex justify-content-center gap-2 mt-3">
                                                     <button
                                                         id="ob-copy-dodo-btn"
-                                                        className={`btn btn-lg rounded-pill fw-black px-5 py-3 shadow-sm d-inline-flex align-items-center gap-2 ${
-                                                            dodoCopied ? 'btn-success text-white' : 'btn-nook text-white'
-                                                        }`}
+                                                        className={`btn btn-lg rounded-pill fw-black px-5 py-3 shadow-sm d-inline-flex align-items-center gap-2 ${dodoCopied ? 'btn-success text-white' : 'btn-nook text-white'
+                                                            }`}
                                                         onClick={handleCopyDodo}
                                                         aria-label={
                                                             dodoCopied
@@ -1626,11 +1612,10 @@ const OrderBot: React.FC = () => {
                                                             #{order.id.slice(0, 14)}
                                                         </span>
                                                         <span
-                                                            className={`badge rounded-pill x-small ${
-                                                                order.status === 'ready' || order.status === 'completed'
+                                                            className={`badge rounded-pill x-small ${order.status === 'ready' || order.status === 'completed'
                                                                     ? 'bg-success text-white'
                                                                     : 'bg-light text-dark border'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {order.status}
                                                         </span>
@@ -1720,9 +1705,8 @@ const OrderBot: React.FC = () => {
                                 <div className="mt-2">
                                     <button
                                         type="button"
-                                        className={`btn btn-xs rounded-pill fw-bold px-3 py-1 ${
-                                            inAppToast.type === 'dodo' ? 'btn-light text-dark' : 'btn-success text-white'
-                                        }`}
+                                        className={`btn btn-xs rounded-pill fw-bold px-3 py-1 ${inAppToast.type === 'dodo' ? 'btn-light text-dark' : 'btn-success text-white'
+                                            }`}
                                         onClick={() => {
                                             inAppToast.onAction?.();
                                             dismissInAppToast();

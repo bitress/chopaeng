@@ -112,12 +112,40 @@ export const saveCommunityLoadout = async (
 };
 
 /**
- * Toggle upvote for a community loadout on the backend database.
+ * Toggle upvote for a community loadout on the backend database (with instant local storage fallback).
  */
 export const upvoteCommunityLoadout = async (
     id: string,
-    token?: string | null
+    token?: string | null,
+    currentCount: number = 0
 ): Promise<{ success: boolean; newCount: number; upvoted: boolean }> => {
+    // Check local status first
+    let isCurrentlyUpvoted = false;
+    try {
+        const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
+        const ids: string[] = stored ? JSON.parse(stored) : [];
+        isCurrentlyUpvoted = ids.includes(id);
+    } catch {
+        // Ignore
+    }
+
+    const optimisticUpvoted = !isCurrentlyUpvoted;
+    const optimisticCount = optimisticUpvoted ? currentCount + 1 : Math.max(0, currentCount - 1);
+
+    // Save optimistic state to localStorage immediately
+    try {
+        const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
+        let ids: string[] = stored ? JSON.parse(stored) : [];
+        if (optimisticUpvoted) {
+            if (!ids.includes(id)) ids.push(id);
+        } else {
+            ids = ids.filter((x) => x !== id);
+        }
+        localStorage.setItem(UPVOTES_STORAGE_KEY, JSON.stringify(ids));
+    } catch {
+        // Ignore
+    }
+
     try {
         const res = await fetch(`${API_BASE}/api/loadouts/${encodeURIComponent(id)}/upvote`, {
             method: 'POST',
@@ -127,9 +155,9 @@ export const upvoteCommunityLoadout = async (
         if (res.ok) {
             const data = await res.json();
             const upvoted = Boolean(data.upvoted);
-            const newCount = typeof data.upvotes === 'number' ? data.upvotes : 0;
+            const newCount = typeof data.upvotes === 'number' ? data.upvotes : optimisticCount;
 
-            // Sync with local cache
+            // Sync confirmed server state
             try {
                 const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
                 let ids: string[] = stored ? JSON.parse(stored) : [];
@@ -146,27 +174,24 @@ export const upvoteCommunityLoadout = async (
             return { success: true, newCount, upvoted };
         }
     } catch {
-        // Error handling
+        // Backend offline or unreachable — return optimistic response
     }
 
-    return { success: false, newCount: 0, upvoted: false };
+    return { success: true, newCount: optimisticCount, upvoted: optimisticUpvoted };
 };
 
 /**
  * Check if the user has upvoted a loadout in this session/browser.
  */
 export const isLoadoutUpvoted = (id: string, serverHasUpvoted?: boolean): boolean => {
-    if (typeof serverHasUpvoted === 'boolean') {
-        return serverHasUpvoted;
-    }
     try {
         const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
         if (stored) {
             const ids: string[] = JSON.parse(stored);
-            return ids.includes(id);
+            if (ids.includes(id)) return true;
         }
     } catch {
         // Ignore
     }
-    return false;
+    return Boolean(serverHasUpvoted);
 };
