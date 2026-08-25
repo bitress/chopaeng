@@ -79,11 +79,16 @@ export const maximizePocketStacks = (
     entries: PocketEntry[],
     maxCapacity: number = 40
 ): PocketEntry[] => {
-    const currentTotal = entries.reduce((sum, e) => sum + e.quantity, 0);
+    const currentTotal = entries.reduce((sum, e) => sum + (e.item.entityType === 'villager' ? 1 : e.quantity), 0);
     let remainingCapacity = maxCapacity - currentTotal;
-    if (remainingCapacity <= 0) return entries;
+    if (remainingCapacity <= 0) {
+        return entries.map(e => e.item.entityType === 'villager' ? { ...e, quantity: 1 } : e);
+    }
 
     return entries.map((entry) => {
+        if (entry.item.entityType === 'villager') {
+            return { ...entry, quantity: 1 };
+        }
         const itemMax = getItemMaxStack(entry.item);
         if (itemMax <= 1 || entry.quantity >= itemMax || remainingCapacity <= 0) {
             return entry;
@@ -108,17 +113,18 @@ export const fillRemainingPockets = (
     type: 'nmt' | 'crowns' | 'bells' | 'gold' | 'repeat',
     maxCapacity: number = 40
 ): PocketEntry[] => {
-    const currentTotal = entries.reduce((sum, e) => sum + e.quantity, 0);
+    const currentTotal = entries.reduce((sum, e) => sum + (e.item.entityType === 'villager' ? 1 : e.quantity), 0);
     const remaining = maxCapacity - currentTotal;
     if (remaining <= 0) return entries;
 
     if (type === 'repeat') {
-        if (entries.length === 0) return entries;
-        const newEntries = [...entries];
+        const repeatableEntries = entries.filter(e => e.item.entityType !== 'villager');
+        if (repeatableEntries.length === 0) return entries;
+        const newEntries = entries.map(e => e.item.entityType === 'villager' ? { ...e, quantity: 1 } : { ...e });
         let added = 0;
         let idx = 0;
         while (added < remaining) {
-            const sourceEntry = entries[idx % entries.length];
+            const sourceEntry = repeatableEntries[idx % repeatableEntries.length];
             const targetIdx = newEntries.findIndex(e => e.item.id === sourceEntry.item.id);
             if (targetIdx >= 0) {
                 newEntries[targetIdx] = {

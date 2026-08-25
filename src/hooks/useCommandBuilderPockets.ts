@@ -39,7 +39,7 @@ const parsePocketEntries = (key: string): PocketEntry[] => {
         }
         return parsed.map((entry: PocketEntry) => ({
             item: entry.item,
-            quantity: typeof entry.quantity === 'number' ? entry.quantity : 1,
+            quantity: entry.item?.entityType === 'villager' ? 1 : (typeof entry.quantity === 'number' ? Math.max(1, entry.quantity) : 1),
         }));
     } catch {
         return [];
@@ -502,30 +502,29 @@ export const useCommandBuilderPockets = () => {
     const orderVillagerCommand = useMemo(() => {
         const villagers = orderItems.concat(dropItems).filter(p => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const ids = villagers.flatMap((p) => Array(p.quantity).fill(`villager:${p.item.id}`)).join(' ');
-        return `!order ${ids}`;
+        const uniqueIds = Array.from(new Set(villagers.map(p => p.item.id)));
+        return `!order ${uniqueIds.map(id => `villager:${id}`).join(' ')}`;
     }, [orderItems, dropItems]);
 
     const injectVillagerCommand = useMemo(() => {
         const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
-        return `!injectvillager ${names}`;
+        const uniqueNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        return `!injectvillager ${uniqueNames.join(' ')}`;
     }, [dropItems, orderItems]);
 
     const mviVillagerCommand = useMemo(() => {
         const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
-        return `!mvi ${names}`;
+        const uniqueNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        return `!mvi ${uniqueNames.join(' ')}`;
     }, [dropItems, orderItems]);
 
     const dropVillagerCommand = useMemo(() => {
         const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const totalVillagerCount = villagers.reduce((sum, p) => sum + p.quantity, 0);
-        const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
-        return totalVillagerCount === 1 ? `!injectvillager ${names}` : `!mvi ${names}`;
+        const uniqueNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        return uniqueNames.length === 1 ? `!injectvillager ${uniqueNames[0]}` : `!mvi ${uniqueNames.join(' ')}`;
     }, [dropItems, orderItems]);
 
     const dropItemsOnlyCommand = useMemo(() => {
@@ -537,8 +536,16 @@ export const useCommandBuilderPockets = () => {
 
     const orderCommandText = useMemo(() => {
         if (orderItems.length === 0) return '';
-        const itemsList = orderItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
-        return `!order ${itemsList}`;
+        const seenVillagers = new Set<string>();
+        const itemsList = orderItems.flatMap((p) => {
+            if (p.item.entityType === 'villager') {
+                if (seenVillagers.has(p.item.id)) return [];
+                seenVillagers.add(p.item.id);
+                return [`villager:${p.item.id}`];
+            }
+            return Array(p.quantity).fill(getItemCommandId(p.item));
+        }).join(' ');
+        return itemsList ? `!order ${itemsList}` : '';
     }, [orderItems]);
 
     const dropCommandText = useMemo(() => {
@@ -552,12 +559,11 @@ export const useCommandBuilderPockets = () => {
         }
 
         let villagerPart = '';
-        const villagerTotalQuantity = villagers.reduce((acc, curr) => acc + curr.quantity, 0);
-        if (villagerTotalQuantity === 1) {
-            villagerPart = `!injectvillager ${villagers[0].item.name}`;
-        } else if (villagerTotalQuantity > 1) {
-            const names = villagers.flatMap((p) => Array(p.quantity).fill(p.item.name)).join(' ');
-            villagerPart = `!mvi ${names}`;
+        const uniqueVillagerNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        if (uniqueVillagerNames.length === 1) {
+            villagerPart = `!injectvillager ${uniqueVillagerNames[0]}`;
+        } else if (uniqueVillagerNames.length > 1) {
+            villagerPart = `!mvi ${uniqueVillagerNames.join(' ')}`;
         }
 
         if (dropPart && villagerPart) return `${dropPart}\n${villagerPart}`;

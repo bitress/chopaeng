@@ -100,8 +100,8 @@ export const CommandBuilderSummary = ({
     };
     const [listSearchQuery, setListSearchQuery] = useState('');
 
-    const orderCount = useMemo(() => orderPockets.reduce((sum, p) => sum + p.quantity, 0), [orderPockets]);
-    const dropCount = useMemo(() => dropPockets.reduce((sum, p) => sum + p.quantity, 0), [dropPockets]);
+    const orderCount = useMemo(() => orderPockets.reduce((sum, p) => sum + (p.item.entityType === 'villager' ? 1 : p.quantity), 0), [orderPockets]);
+    const dropCount = useMemo(() => dropPockets.reduce((sum, p) => sum + (p.item.entityType === 'villager' ? 1 : p.quantity), 0), [dropPockets]);
     const totalCount = orderCount + dropCount;
     const isEmpty = orderPockets.length === 0 && dropPockets.length === 0;
 
@@ -170,12 +170,12 @@ export const CommandBuilderSummary = ({
         return list ? `!order ${list}` : '';
     }, [orderPockets]);
 
-    // 2. Copy Villager Order Command (!order villager:<id>)
+    // 2. Copy Villager Order Command (!order villager:<id>) - Deduplicated
     const orderVillagerOnlyCmd = useMemo(() => {
         const villagers = orderPockets.concat(dropPockets).filter(p => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const ids = villagers.flatMap(p => Array(p.quantity).fill(`villager:${p.item.id}`)).join(' ');
-        return `!order ${ids}`;
+        const uniqueIds = Array.from(new Set(villagers.map(p => p.item.id)));
+        return `!order ${uniqueIds.map(id => `villager:${id}`).join(' ')}`;
     }, [orderPockets, dropPockets]);
 
     // 3. Copy Drop Item Command (!drop <hexes>)
@@ -186,19 +186,21 @@ export const CommandBuilderSummary = ({
         return list ? `!drop ${list}` : '';
     }, [dropPockets, orderPockets]);
 
-    // 4. Copy Drop Villager Command (!injectvillager if 1, !mvi if 2+)
+    // 4. Copy Drop Villager Command (!injectvillager if 1, !mvi if 2+) - Deduplicated
     const dropVillagerOnlyCmd = useMemo(() => {
         const villagers = dropPockets.concat(orderPockets).filter(p => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const totalVillagerCount = villagers.reduce((sum, p) => sum + p.quantity, 0);
-        const names = villagers.flatMap(p => Array(p.quantity).fill(p.item.name)).join(' ');
-        return totalVillagerCount === 1 ? `!injectvillager ${names}` : `!mvi ${names}`;
+        const uniqueNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        return uniqueNames.length === 1 ? `!injectvillager ${uniqueNames[0]}` : `!mvi ${uniqueNames.join(' ')}`;
     }, [dropPockets, orderPockets]);
 
     const villagerCount = useMemo(() => {
-        return dropPockets.concat(orderPockets)
-            .filter(p => p.item.entityType === 'villager')
-            .reduce((sum, p) => sum + p.quantity, 0);
+        const uniqueVillagerIds = new Set(
+            dropPockets.concat(orderPockets)
+                .filter(p => p.item.entityType === 'villager')
+                .map(p => p.item.id)
+        );
+        return uniqueVillagerIds.size;
     }, [dropPockets, orderPockets]);
 
     // Keyboard shortcuts: Ctrl+Shift+O = Copy Order, Ctrl+Shift+D = Copy Drop
