@@ -11,6 +11,7 @@ import Chopaeng404 from "../errors/404.tsx";
 const Home            = lazy(() => import("../pages/Home.tsx"));
 const About           = lazy(() => import("../pages/About.tsx"));
 const Guides          = lazy(() => import("../pages/Guides.tsx"));
+const Catalogue       = lazy(() => import("../pages/Catalogue.tsx"));
 const Maps            = lazy(() => import("../pages/Maps.tsx"));
 const TreasureIslands = lazy(() => import("../pages/TreasureIslands.tsx"));
 const IslandDetail    = lazy(() => import("../pages/IslandDetail.tsx"));
@@ -62,6 +63,8 @@ const AppRoutes = () => {
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/guides" element={<Guides />} />
+                    <Route path="/catalog" element={<Catalogue />} />
+                    <Route path="/catalogue" element={<Catalogue />} />
                     <Route path="/maps" element={<Maps />} />
                     <Route path="/islands" element={<TreasureIslands />} />
                     <Route path="/island/:id" element={<IslandDetail />} />
@@ -70,6 +73,9 @@ const AppRoutes = () => {
                     <Route path="/command-builder" element={<CommandBuilder />} />
                     <Route path="/pockets" element={<PocketInventory />} />
                     <Route path="/pocket-inventory" element={<PocketInventory />} />
+                    <Route path="/item/:id" element={<CatalogDetail />} />
+                    <Route path="/villager/:id" element={<CatalogDetail />} />
+                    <Route path="/catalog/:entityType/:id" element={<CatalogDetail />} />
                     <Route path="/command-builder/:entityType/:id" element={<CatalogDetail />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/dodo" element={<DodoDecryptor />} />

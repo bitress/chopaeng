@@ -1,40 +1,70 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { storeAuthToken } from "../context/authToken";
+import { useAuth } from "../context/useAuth";
 
 const AuthCallback = () => {
     const navigate = useNavigate();
+    const { refreshAuth } = useAuth();
     const [status, setStatus] = useState<"loading" | "error">("loading");
     const [errorMsg, setErrorMsg] = useState("");
     const [errorCode, setErrorCode] = useState<string | null>(null);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
-        const error = params.get("error");
+        let isMounted = true;
 
-        if (error) {
-            setErrorCode(error);
-            const messages: Record<string, string> = {
-                not_a_member: "You are not a member of the Chopaeng Discord server.",
-                roles_fetch_failed: "Could not fetch your Discord roles. Please try again.",
-                token_exchange_failed: "Authorization failed. Please try again.",
-                invalid_state: "Invalid session state. Please try again.",
-            };
-            setErrorMsg(messages[error] ?? "Discord login failed. Please try again.");
-            setStatus("error");
-            return;
-        }
+        const handleAuth = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get("token");
+            const error = params.get("error");
 
-        if (token) {
-            storeAuthToken(token);
-            // Redirect back to islands (or wherever they came from)
-            navigate("/islands", { replace: true });
-        } else {
-            setErrorMsg("No token received. Please try again.");
-            setStatus("error");
-        }
-    }, [navigate]);
+            if (error) {
+                if (!isMounted) return;
+                setErrorCode(error);
+                const messages: Record<string, string> = {
+                    not_a_member: "You are not a member of the Chopaeng Discord server.",
+                    roles_fetch_failed: "Could not fetch your Discord roles. Please try again.",
+                    token_exchange_failed: "Authorization failed. Please try again.",
+                    invalid_state: "Invalid session state. Please try again.",
+                };
+                setErrorMsg(messages[error] ?? "Discord login failed. Please try again.");
+                setStatus("error");
+                return;
+            }
+
+            if (token) {
+                storeAuthToken(token);
+                const ok = await refreshAuth(token);
+                if (!ok && isMounted) {
+                    setErrorMsg("Failed to verify user session with Discord. Please try again.");
+                    setStatus("error");
+                    return;
+                }
+
+                // Redirect back to return_to destination or /islands
+                let returnTo = "/islands";
+                try {
+                    const saved = sessionStorage.getItem("chopaeng_auth_return_to");
+                    if (saved && saved.startsWith("/") && !saved.startsWith("/auth/")) {
+                        returnTo = saved;
+                    }
+                    sessionStorage.removeItem("chopaeng_auth_return_to");
+                } catch {}
+
+                navigate(returnTo, { replace: true });
+            } else {
+                if (!isMounted) return;
+                setErrorMsg("No token received. Please try again.");
+                setStatus("error");
+            }
+        };
+
+        handleAuth();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [navigate, refreshAuth]);
 
     if (status === "error") {
         const isNotMember = errorCode === "not_a_member";

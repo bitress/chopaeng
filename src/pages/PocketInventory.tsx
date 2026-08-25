@@ -145,20 +145,20 @@ export const PocketInventory: React.FC = () => {
                                 </li>
                             </ol>
                         </nav>
-                        <h1 className="h2 fw-black text-dark mb-1 ac-font d-flex align-items-center gap-2">
+                        <h1 className="h3 h2-md fw-black text-dark mb-1 ac-font d-flex align-items-center gap-2">
                             <i className="fa-solid fa-boxes-packing text-success" aria-hidden="true"></i>
                             Pocket Inventory Manager
                         </h1>
                         <p className="small text-muted mb-0">
-                            Full-screen visual Animal Crossing inventory grid. Manage your 40-slot Order Bot pockets, 9-slot Drop Bot radius, and Villager adoptions.
+                            Full visual Animal Crossing inventory grid. Manage your 40-slot Order Bot pockets, 9-slot Drop Bot radius, and Villagers.
                         </p>
                     </div>
 
-                    {/* Toolbar Actions */}
-                    <div className="d-flex flex-wrap align-items-center gap-2" role="toolbar" aria-label="Pocket Inventory Actions">
+                    {/* Toolbar Actions (Horizontal scrollable on mobile) */}
+                    <div className="pocket-toolbar-actions d-flex align-items-center gap-2" role="toolbar" aria-label="Pocket Inventory Actions">
                         <button
                             type="button"
-                            className="btn btn-nook text-white rounded-pill fw-bold btn-sm shadow-sm d-inline-flex align-items-center gap-1 px-3"
+                            className="btn btn-nook text-white rounded-pill fw-bold btn-sm shadow-sm d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                             style={{ minHeight: '36px' }}
                             onClick={() => {
                                 setQuickAddTarget('order');
@@ -173,7 +173,7 @@ export const PocketInventory: React.FC = () => {
 
                         <button
                             type="button"
-                            className="btn btn-outline-success rounded-pill fw-bold btn-sm shadow-xs d-inline-flex align-items-center gap-1 px-3"
+                            className="btn btn-outline-success rounded-pill fw-bold btn-sm shadow-xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                             style={{ minHeight: '36px' }}
                             onClick={() => setBatchPasteModalOpen(true)}
                             aria-label="Batch paste item codes"
@@ -184,7 +184,7 @@ export const PocketInventory: React.FC = () => {
 
                         <button
                             type="button"
-                            className="btn btn-outline-success rounded-pill fw-bold btn-sm shadow-2xs d-inline-flex align-items-center gap-1 px-3"
+                            className="btn btn-outline-success rounded-pill fw-bold btn-sm shadow-2xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                             style={{ minHeight: '36px' }}
                             onClick={() => {
                                 setBundlesModalOpen(true);
@@ -193,12 +193,12 @@ export const PocketInventory: React.FC = () => {
                             aria-label="Open community loadouts and bundles"
                         >
                             <i className="fa-solid fa-box-open text-warning" aria-hidden="true"></i>
-                            <span>Loadouts & Bundles</span>
+                            <span>Loadouts</span>
                         </button>
 
                         <button
                             type="button"
-                            className="btn btn-outline-primary rounded-pill fw-bold btn-sm shadow-xs d-inline-flex align-items-center gap-1 px-3"
+                            className="btn btn-outline-primary rounded-pill fw-bold btn-sm shadow-xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                             style={{ minHeight: '36px' }}
                             onClick={() => setShareModalOpen(true)}
                             aria-label="Share current pockets"
@@ -209,7 +209,7 @@ export const PocketInventory: React.FC = () => {
 
                         <Link
                             to="/command-builder"
-                            className="btn btn-outline-dark rounded-pill fw-bold btn-sm d-inline-flex align-items-center gap-1 px-3"
+                            className="btn btn-outline-dark rounded-pill fw-bold btn-sm d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                             style={{ minHeight: '36px' }}
                             aria-label="Go to catalog command builder"
                         >
@@ -219,7 +219,7 @@ export const PocketInventory: React.FC = () => {
 
                         <Link
                             to="/order"
-                            className="btn rounded-pill fw-bold btn-sm d-inline-flex align-items-center gap-1 px-3 text-white"
+                            className="btn rounded-pill fw-bold btn-sm d-inline-flex align-items-center gap-1 px-3 text-white text-nowrap"
                             style={{
                                 background: 'linear-gradient(135deg, #16a34a, #15803d)',
                                 boxShadow: '0 2px 8px rgba(22,163,74,.3)',
@@ -351,10 +351,10 @@ export const PocketInventory: React.FC = () => {
 
                         {/* Smart Tools & Presets Card */}
                         <div className="card rounded-4 border p-3 shadow-2xs bg-white mt-3">
-                            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
                                 <div className="d-flex align-items-center gap-2">
                                     <span
-                                        className="d-inline-flex align-items-center justify-content-center rounded-circle"
+                                        className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
                                         style={{ width: 28, height: 28, backgroundColor: '#fef3c7', color: '#d97706' }}
                                         aria-hidden="true"
                                     >
@@ -366,7 +366,7 @@ export const PocketInventory: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="d-flex flex-wrap gap-2 align-items-center">
+                                <div className="smart-fill-actions d-flex align-items-center gap-2">
                                     <SmartFillDropdown
                                         onFillNmt={handleFillTickets}
                                         onFillCrowns={handleFillCrowns}
@@ -380,7 +380,7 @@ export const PocketInventory: React.FC = () => {
                                     />
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3"
+                                        className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                                         style={{ minHeight: '32px' }}
                                         onClick={() => {
                                             handleMaximizeStacks();
@@ -394,7 +394,7 @@ export const PocketInventory: React.FC = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3"
+                                        className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                                         style={{ minHeight: '32px' }}
                                         onClick={() => {
                                             handleSortPockets();
@@ -408,7 +408,7 @@ export const PocketInventory: React.FC = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3"
+                                        className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
                                         style={{ minHeight: '32px' }}
                                         onClick={() => {
                                             handleFlipOrderAndDrop();
@@ -757,6 +757,96 @@ export const PocketInventory: React.FC = () => {
                 orderPockets={orderItems}
                 dropPockets={dropItems}
             />
+
+            {/* MOBILE FLOATING STICKY ACTION BAR (VISIBLE ON MOBILE ONLY) */}
+            {(totalOrderCount > 0 || totalDropCount > 0) && (
+                <aside
+                    className="pocket-mobile-sticky-bar d-lg-none position-fixed bottom-0 start-0 end-0 bg-white border-top shadow-lg p-2 px-3 d-flex align-items-center justify-content-between gap-2"
+                    style={{ zIndex: 1030 }}
+                    aria-label="Mobile Pocket Quick Actions"
+                >
+                    <div className="d-flex align-items-center gap-2">
+                        <span className="badge bg-success rounded-pill fw-bold font-monospace px-2 py-1">
+                            {totalOrderCount}/40
+                        </span>
+                        <span className="tiny-text fw-bold text-dark text-truncate" style={{ maxWidth: '100px' }}>
+                            {totalOrderCount} Items
+                        </span>
+                    </div>
+
+                    <div className="d-flex align-items-center gap-2">
+                        {orderCommandText && (
+                            <button
+                                type="button"
+                                className="btn btn-nook text-white rounded-pill btn-sm fw-bold px-3 py-1 d-flex align-items-center gap-1 shadow-sm"
+                                onClick={handleCopyOrderWithFlow}
+                                title="Copy !order command to clipboard"
+                                aria-label="Copy order command"
+                            >
+                                <i className={`fa-solid ${copyOrderStatus === 'Copied!' ? 'fa-check' : 'fa-copy'}`} aria-hidden="true" />
+                                <span>{copyOrderStatus === 'Copied!' ? 'Copied!' : 'Copy !order'}</span>
+                            </button>
+                        )}
+
+                        <Link
+                            to="/order"
+                            className="btn btn-outline-success rounded-pill btn-sm fw-bold px-3 py-1 d-flex align-items-center gap-1"
+                            title="Go to Order Bot"
+                        >
+                            <i className="fa-solid fa-paper-plane" aria-hidden="true" />
+                            <span>Order</span>
+                        </Link>
+                    </div>
+                </aside>
+            )}
+
+            {/* Injected Styles for Pocket Inventory Responsiveness */}
+            <style>{`
+                @media (max-width: 991px) {
+                    .pocket-inventory-page {
+                        padding-bottom: 75px !important;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .pocket-toolbar-actions {
+                        overflow-x: auto;
+                        flex-wrap: nowrap !important;
+                        padding-bottom: 6px;
+                        scrollbar-width: none;
+                        -webkit-overflow-scrolling: touch;
+                        width: 100%;
+                    }
+                    .pocket-toolbar-actions::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .pocket-toolbar-actions > * {
+                        flex-shrink: 0;
+                    }
+                    .smart-fill-actions {
+                        overflow-x: auto;
+                        flex-wrap: nowrap !important;
+                        padding-bottom: 4px;
+                        scrollbar-width: none;
+                        -webkit-overflow-scrolling: touch;
+                        width: 100%;
+                    }
+                    .smart-fill-actions::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .smart-fill-actions > * {
+                        flex-shrink: 0;
+                    }
+                }
+                .pocket-mobile-sticky-bar {
+                    animation: slideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    backdrop-filter: blur(8px);
+                    background-color: rgba(255, 255, 255, 0.96) !important;
+                }
+                @keyframes slideUpMobile {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 };

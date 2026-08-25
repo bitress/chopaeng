@@ -333,7 +333,7 @@ const CommandBuilder = () => {
         const [, itemVariantId] = item.id.split(":");
         const effectiveVariant = variantKey || (itemVariantId && itemVariantId !== 'NA' ? itemVariantId : '');
         const query = effectiveVariant ? `?variantId=${encodeURIComponent(effectiveVariant)}` : '';
-        navigate(`/command-builder/${item.entityType}/${baseId}${query}`);
+        navigate(`/${item.entityType}/${baseId}${query}`);
     };
 
     const goToPage = (page: number) => {

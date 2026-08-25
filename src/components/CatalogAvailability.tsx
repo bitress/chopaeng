@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { FINDER_API_BASE } from "../config/api";
 import { useIslandData } from "../context/useIslandData";
 import type { IslandData, IslandCategory, IslandStatus } from "../data/islands";
+import { playChimeClick } from "../utils/kkAudioSynthesizer";
 
 type FinderMode = "item" | "villager";
 
@@ -39,10 +40,10 @@ const statusClass: Record<IslandStatus, string> = {
 };
 
 const categoryMeta: Record<IslandCategory | "sub", { label: string; icon: string; className: string }> = {
-    public: { label: "Free", icon: "fa-lock-open", className: "border-success-subtle bg-success-subtle text-success" },
-    member: { label: "Member", icon: "fa-crown", className: "border-warning-subtle bg-warning-subtle text-warning-emphasis" },
+    public: { label: "Public", icon: "fa-lock-open", className: "border-success-subtle bg-success-subtle text-success" },
+    member: { label: "Sub", icon: "fa-crown", className: "border-warning-subtle bg-warning-subtle text-warning-emphasis" },
     order: { label: "Order", icon: "fa-box-open", className: "border-info-subtle bg-info-subtle text-info-emphasis" },
-    sub: { label: "Member", icon: "fa-crown", className: "border-warning-subtle bg-warning-subtle text-warning-emphasis" },
+    sub: { label: "Sub", icon: "fa-crown", className: "border-warning-subtle bg-warning-subtle text-warning-emphasis" },
 };
 
 const normalizeName = (value: string) => value.trim().toLowerCase();
@@ -56,66 +57,79 @@ const findIsland = (islands: IslandData[], name: string) => {
     );
 };
 
-const groupLabels: Array<{ key: "free" | "sub" | "order"; label: string; icon: string }> = [
-    { key: "free", label: "Free Islands", icon: "fa-lock-open" },
-    { key: "sub", label: "Sub Islands", icon: "fa-crown" },
-];
+const IslandAvailabilityCard: React.FC<{ island?: IslandData; name: string; group: "free" | "sub" }> = ({
+    island,
+    name,
+    group,
+}) => {
+    const meta = island
+        ? categoryMeta[island.cat]
+        : categoryMeta[group === "sub" ? "sub" : "public"];
+    const visitors = island ? `${island.visitors}/7` : "0/7";
 
-const IslandAvailabilityCard = ({ island, name, group }: { island?: IslandData; name: string; group: "free" | "sub" | "order" }) => {
-    const meta = island ? categoryMeta[island.cat] : categoryMeta[group === "sub" ? "sub" : group === "free" ? "public" : "order"];
-    const visitors = island ? `${island.visitors}/7` : "unknown";
-
-    const content = (
-        <div className="h-100 rounded-4 border bg-white p-3 shadow-sm transition-all hover-scale">
-            <div className="d-flex align-items-start justify-content-between gap-2 mb-2">
-                <div className="min-w-0">
-                    <div className="fw-black text-dark text-truncate">{island?.name || name}</div>
-                    <div className="tiny-text text-muted text-truncate">{island?.type || "Island match"}</div>
-                </div>
-                <span className={`badge rounded-pill border flex-shrink-0 ${meta.className}`} title={meta.label}>
-                    <i className={`fa-solid ${meta.icon}`}></i>
-                    <span className="visually-hidden">{meta.label}</span>
-                </span>
-            </div>
-            <div className="d-flex flex-wrap align-items-center gap-2">
-                <span className={`badge rounded-pill border ${island ? statusClass[island.status] : "bg-light text-muted border-light"}`}>
-                    {island?.status || "Listed"}
-                </span>
-                <span className="badge rounded-pill bg-light text-dark border">
-                    <i className="fa-solid fa-user-group me-1"></i>{visitors}
-                </span>
-                {island && (
-                    <span className="ms-auto tiny-text text-muted fw-bold d-none d-sm-inline">
-                        View <i className="fa-solid fa-chevron-right ms-1 small"></i>
+    const cardContent = (
+        <div className="h-100 rounded-4 border bg-white p-3 shadow-2xs hover-shadow-sm transition-all hover-translate-y d-flex flex-column justify-content-between overflow-hidden">
+            <div>
+                <div className="d-flex align-items-start justify-content-between gap-2 mb-2">
+                    <div className="min-w-0 flex-grow-1 pe-1">
+                        <div className="fw-black text-dark text-truncate" title={island?.name || name} style={{ fontSize: '0.92rem', letterSpacing: '-0.01em' }}>
+                            {island?.name || name}
+                        </div>
+                        <div className="tiny-text text-muted text-truncate">
+                            {island?.type || (group === "sub" ? "Sub Island" : "Public Island")}
+                        </div>
+                    </div>
+                    <span className={`badge rounded-pill border flex-shrink-0 px-2 py-1 ${meta.className}`} title={meta.label}>
+                        <i className={`fa-solid ${meta.icon} me-1`} aria-hidden="true"></i>
+                        <span className="x-small fw-bold">{meta.label}</span>
                     </span>
-                )}
+                </div>
+            </div>
+
+            <div className="d-flex align-items-center justify-content-between gap-2 mt-2 pt-2 border-top">
+                <div className="d-flex align-items-center gap-1">
+                    <span className={`badge rounded-pill border x-small ${island ? statusClass[island.status] : "bg-light text-muted border-light"}`}>
+                        {island?.status || "ONLINE"}
+                    </span>
+                    <span className="badge rounded-pill bg-light text-dark border x-small">
+                        <i className="fa-solid fa-users me-1 text-muted" aria-hidden="true"></i>
+                        {visitors}
+                    </span>
+                </div>
+
+                <span className="tiny-text text-success fw-bold d-inline-flex align-items-center gap-1 text-nowrap">
+                    <span>Fly</span>
+                    <i className="fa-solid fa-arrow-right small" aria-hidden="true"></i>
+                </span>
             </div>
         </div>
     );
 
-    if (!island) return content;
+    if (island) {
+        return (
+            <Link
+                to={`/island/${island.id}`}
+                className="text-decoration-none d-block h-100"
+                onClick={() => playChimeClick()}
+                aria-label={`View island details for ${island.name}`}
+            >
+                {cardContent}
+            </Link>
+        );
+    }
 
-    return (
-        <Link to={`/island/${island.id}`} className="text-decoration-none d-block h-100" aria-label={`View details for ${island.name}`}>
-            {content}
-        </Link>
-    );
+    return cardContent;
 };
 
-const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
+const CatalogAvailability: React.FC<CatalogAvailabilityProps> = ({ mode, query }) => {
     const { islands, loading: islandsLoading } = useIslandData();
-    const [lookupQuery, setLookupQuery] = useState(query);
     const [state, setState] = useState<AvailabilityState>({ data: null, error: null });
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        setLookupQuery(query);
-    }, [query]);
-
     const endpoint = mode === "item" ? "find" : "villager";
 
-    const runLookup = useCallback(async (nextQuery: string, force = false) => {
-        const trimmed = nextQuery.trim();
+    const runLookup = useCallback(async (targetQuery: string, force = false) => {
+        const trimmed = targetQuery.trim();
         if (!trimmed) return;
 
         const nextCacheKey = `${mode}:${trimmed.toLowerCase()}`;
@@ -136,8 +150,8 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
             finderCache.set(nextCacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, value: nextState });
             setState(nextState);
         } catch (error) {
-            console.error(error);
-            const nextState = { data: null, error: "Could not check island availability right now." };
+            console.error("Island Finder Error:", error);
+            const nextState = { data: null, error: "Could not check live island layout right now." };
             finderCache.set(nextCacheKey, { expiresAt: Date.now() + 30_000, value: nextState });
             setState(nextState);
         } finally {
@@ -149,184 +163,175 @@ const CatalogAvailability = ({ mode, query }: CatalogAvailabilityProps) => {
         runLookup(query);
     }, [query, runLookup]);
 
-    const groupedResults = useMemo(() => {
-        const results = state.data?.results || {};
-        return groupLabels.map((group) => ({
-            ...group,
-            islands: (results[group.key] || []).map((name) => ({
-                name,
-                island: findIsland(islands, name),
-            })),
+    const freeMatches = useMemo(() => {
+        const list = state.data?.results?.free || [];
+        return list.map((name) => ({
+            name,
+            island: findIsland(islands, name),
         }));
     }, [islands, state.data]);
 
-    const foundCount = groupedResults.reduce((sum, group) => sum + group.islands.length, 0);
+    const subMatches = useMemo(() => {
+        const list = state.data?.results?.sub || [];
+        return list.map((name) => ({
+            name,
+            island: findIsland(islands, name),
+        }));
+    }, [islands, state.data]);
+
+    const totalMatches = freeMatches.length + subMatches.length;
 
     return (
-        <section className="bg-white rounded-4 border shadow-sm p-3 p-sm-4">
-
-            <div className="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
-                <div className="min-w-0">
-                    <div className="d-inline-flex align-items-center bg-nook-green text-white rounded-pill px-3 py-1 mb-3 fw-black small shadow-sm">
-                        <i className="fa-solid fa-satellite-dish me-2"></i> Live Island Finder
-                    </div>
-                    <h2 className="ac-font mb-1 text-dark" style={{ fontSize: 'clamp(1.35rem, 4vw, 1.8rem)' }}>Availability Check</h2>
-                    <p className="text-muted fw-bold mb-0">Searching for <span className="text-nook">{mode === "item" ? "items" : "villagers"}</span> across the network.</p>
-                </div>
-                <div className="d-flex flex-wrap gap-2 w-100 w-lg-auto">
-                    <button type="button" className="btn btn-white border rounded-pill fw-black px-3 px-sm-4 shadow-sm hover-nook flex-fill flex-sm-grow-0" onClick={() => runLookup(lookupQuery, true)} disabled={loading}>
-                        <i className={`fa-solid ${loading ? "fa-spinner fa-spin" : "fa-rotate-right"} me-2`}></i> Retry
-                    </button>
-                    <Link to="/islands" className="btn btn-nook rounded-pill fw-black px-3 px-sm-4 flex-fill flex-sm-grow-0 text-center">
-                        View Network <i className="fa-solid fa-arrow-up-right-from-square ms-2 small"></i>
-                    </Link>
-                </div>
-            </div>
-
-            <div className="search-wrapper mb-5 w-100 justify-content-start">
-                <div className="search-box w-100 max-w-100 shadow-sm focus-within-green transition-all m-0 gap-2" style={{ maxWidth: '100%' }}>
-                    <i className="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input
-                        className="font-nunito fw-bold flex-grow-1"
-                        style={{ minWidth: 0 }}
-                        value={lookupQuery}
-                        onChange={(e) => setLookupQuery(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") runLookup(lookupQuery, true); }}
-                        placeholder={`Search for a ${mode}...`}
-                        aria-label="Availability search"
-                    />
-                    <button
-                        className="btn btn-nook-primary rounded-pill px-3 px-sm-4 fw-black border-0 py-2 flex-shrink-0"
-                        type="button"
-                        onClick={() => runLookup(lookupQuery, true)}
-                        disabled={loading || !lookupQuery.trim()}
+        <section className="bg-white rounded-4 border shadow-sm p-3 p-sm-4 animate-up">
+            {/* Header */}
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                <div className="d-flex align-items-center gap-2">
+                    <div
+                        className="rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center flex-shrink-0"
+                        style={{ width: 36, height: 36 }}
+                        aria-hidden="true"
                     >
-                        {loading ? (
-                            <>
-                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                <span className="d-none d-sm-inline">Searching</span>
-                            </>
-                        ) : (
-                            "Search"
-                        )}
-                    </button>
+                        <i className="fa-solid fa-satellite-dish small" />
+                    </div>
+                    <div>
+                        <h2 className="h6 fw-black text-dark mb-0 ac-font d-flex align-items-center gap-2">
+                            <span>Island Availability</span>
+                            {loading && (
+                                <span className="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true" />
+                            )}
+                        </h2>
+                        <p className="tiny-text text-muted mb-0 fw-bold">
+                            Live on-ground spawn locations for <span className="text-dark">"{query}"</span>
+                        </p>
+                    </div>
                 </div>
+
+                <button
+                    type="button"
+                    className="btn btn-xs btn-light border rounded-pill fw-bold text-muted d-inline-flex align-items-center gap-1 px-3"
+                    onClick={() => {
+                        playChimeClick();
+                        runLookup(query, true);
+                    }}
+                    disabled={loading}
+                    title="Refresh live island availability"
+                    aria-label="Refresh availability"
+                >
+                    <i className={`fa-solid ${loading ? "fa-spinner fa-spin" : "fa-rotate-right"}`} aria-hidden="true" />
+                    <span>Refresh</span>
+                </button>
             </div>
 
+            {/* Content Area */}
             <div aria-live="polite" aria-busy={loading || islandsLoading}>
-
+                {/* Loading State */}
                 {(loading || islandsLoading) && (
-                    <div className="rounded-4 bg-cream p-4 p-sm-5 text-center border shadow-sm animate-fade-in" role="status">
-                        <i className="fa-solid fa-plane-departure fa-bounce fa-2x mb-3 text-nook-green"></i>
-                        <div className="ac-font fs-5 text-dark">Contacting Orville...</div>
-                        <div className="small text-muted fw-bold mt-1 text-truncate px-2">Scanning the skies for {lookupQuery || "matches"}</div>
-                        <div className="progress mt-3 mx-auto rounded-pill" style={{ maxWidth: '220px', height: '6px' }}>
-                            <div
-                                className="progress-bar progress-bar-striped progress-bar-animated bg-nook-green rounded-pill"
-                                role="progressbar"
-                                style={{ width: '100%' }}
-                                aria-valuenow={100}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                            ></div>
-                        </div>
+                    <div className="rounded-4 bg-light p-4 text-center border">
+                        <div className="spinner-border text-success mb-2" role="status" aria-hidden="true" />
+                        <div className="small fw-bold text-dark">Scanning Island Radars…</div>
+                        <p className="tiny-text text-muted mb-0">Checking live island spawns for {query}</p>
                     </div>
                 )}
 
+                {/* Error State */}
                 {!loading && state.error && (
-                    <div className="alert bg-danger-subtle border-danger rounded-4 d-flex flex-column flex-sm-row align-items-sm-center shadow-sm animate-fade-in mb-0 gap-3" role="alert">
-                        <div className="d-flex align-items-center gap-3 flex-grow-1 min-w-0">
-                            <div className="icon-circle bg-white text-danger shadow-sm flex-shrink-0">
-                                <i className="fa-solid fa-triangle-exclamation fs-4"></i>
-                            </div>
-                            <div className="min-w-0">
-                                <strong className="d-block text-danger fw-black fs-6">Communication Error</strong>
-                                <span className="small text-danger fw-bold">{state.error}</span>
-                            </div>
+                    <div className="alert bg-danger-subtle border-danger rounded-4 d-flex align-items-center justify-content-between gap-3 mb-0" role="alert">
+                        <div className="d-flex align-items-center gap-2">
+                            <i className="fa-solid fa-triangle-exclamation text-danger" aria-hidden="true" />
+                            <span className="small text-danger fw-bold">{state.error}</span>
                         </div>
                         <button
                             type="button"
-                            className="btn btn-sm btn-outline-danger rounded-pill fw-black px-3 flex-shrink-0 w-100 w-sm-auto"
-                            onClick={() => runLookup(lookupQuery, true)}
+                            className="btn btn-xs btn-outline-danger rounded-pill fw-bold"
+                            onClick={() => runLookup(query, true)}
                         >
-                            <i className="fa-solid fa-rotate-right me-1"></i> Retry
+                            Retry
                         </button>
                     </div>
                 )}
 
-                {!loading && !state.error && state.data && !state.data.found && (
-                    <div className="map-polaroid mx-auto mt-4 w-100" style={{ maxWidth: '400px' }}>
-                        <div className="tape-strip"></div>
-                        <div className="bg-light p-4 rounded-3 text-center border-2 border-dashed border-secondary-subtle">
-                            <i className="fa-regular fa-face-frown-open fa-3x text-muted mb-3 opacity-50"></i>
-                            <div className="ac-font mb-1 fs-5 text-dark">No exact matches found</div>
-                            <p className="small text-muted mb-0 fw-bold">{state.data.message || "Double-check your spelling or click a suggestion below."}</p>
-                        </div>
-                    </div>
-                )}
-
-                {!loading && !state.error && (state.data?.suggestions?.length ?? 0) > 0 && (
-                    <div className="mt-4 p-3 p-sm-4 bg-cream rounded-4 border shadow-sm animate-fade-in">
-                        <div className="small fw-black text-uppercase tracking-wide text-muted mb-3">
-                            <i className="fa-solid fa-lightbulb text-warning me-2"></i> Did you mean?
-                        </div>
-                        <div className="d-flex flex-wrap gap-2">
-                            {state.data?.suggestions?.map((suggestion) => (
-                                <button
-                                    key={suggestion}
-                                    type="button"
-                                    className="item-pill hover-scale cursor-pointer"
-                                    onClick={() => {
-                                        setLookupQuery(suggestion);
-                                        runLookup(suggestion, true);
-                                    }}
-                                >
-                                    <span className="dot bg-nook-green"></span>
-                                    {suggestion}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {!loading && !state.error && state.data?.found && (
-                    <div className="d-flex flex-column gap-4">
-                        <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                            <div className="small fw-bold text-muted text-truncate">
-                                Found <span className="text-success">{state.data.query}</span> on {foundCount} island{foundCount === 1 ? "" : "s"}.
-                            </div>
-                            <span className="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2 flex-shrink-0">
-                                <i className="fa-solid fa-check me-1"></i> Match found
+                {/* Matches Found */}
+                {!loading && !state.error && state.data?.found && totalMatches > 0 && (
+                    <div className="d-flex flex-column gap-3">
+                        <div className="d-flex align-items-center justify-content-between gap-2">
+                            <span className="tiny-text fw-bold text-muted">
+                                Available on <strong className="text-dark">{totalMatches}</strong> island{totalMatches === 1 ? "" : "s"}
+                            </span>
+                            <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill x-small px-2 py-1">
+                                <i className="fa-solid fa-check me-1" aria-hidden="true" /> Spawning Live
                             </span>
                         </div>
-                        {groupedResults.map((group) => (
-                            <div key={group.key}>
+
+                        {/* Free Public Islands Group */}
+                        {freeMatches.length > 0 && (
+                            <div>
                                 <div className="d-flex align-items-center gap-2 mb-2">
-                                    <span className="badge bg-light text-dark border rounded-pill px-3 py-2">
-                                        <i className={`fa-solid ${group.icon} me-1`}></i>{group.label}
+                                    <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 x-small fw-bold">
+                                        <i className="fa-solid fa-lock-open me-1" aria-hidden="true" /> Public Free Islands ({freeMatches.length})
                                     </span>
-                                    <span className="tiny-text text-muted fw-bold">{group.islands.length}</span>
                                 </div>
-                                {group.islands.length > 0 ? (
-                                    <div className="row g-3">
-                                        {group.islands.map(({ name, island }) => (
-                                            <div className="col-12 col-sm-6 col-lg-4" key={`${group.key}-${name}`}>
-                                                <IslandAvailabilityCard
-                                                    name={name}
-                                                    island={island}
-                                                    group={group.key}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-4 bg-light border p-3 text-muted small text-center">
-                                        <i className="fa-solid fa-circle-info me-2 opacity-50"></i>
-                                        No current matches in this group.
-                                    </div>
-                                )}
+                                <div className="row g-2">
+                                    {freeMatches.map(({ name, island }) => (
+                                        <div className="col-12 col-sm-6" key={`free-${name}`}>
+                                            <IslandAvailabilityCard name={name} island={island} group="free" />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        ))}
+                        )}
+
+                        {/* Sub Member Islands Group */}
+                        {subMatches.length > 0 && (
+                            <div>
+                                <div className="d-flex align-items-center gap-2 mb-2">
+                                    <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 x-small fw-bold">
+                                        <i className="fa-solid fa-crown me-1" aria-hidden="true" /> Sub Member Islands ({subMatches.length})
+                                    </span>
+                                </div>
+                                <div className="row g-2">
+                                    {subMatches.map(({ name, island }) => (
+                                        <div className="col-12 col-sm-6" key={`sub-${name}`}>
+                                            <IslandAvailabilityCard name={name} island={island} group="sub" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Not Found on Island Ground State */}
+                {!loading && !state.error && (!state.data?.found || totalMatches === 0) && (
+                    <div className="rounded-4 bg-light p-3 p-sm-4 text-center border">
+                        <div
+                            className="rounded-circle bg-white border d-inline-flex align-items-center justify-content-center text-muted mb-2 shadow-2xs"
+                            style={{ width: 44, height: 44 }}
+                            aria-hidden="true"
+                        >
+                            <i className="fa-solid fa-boxes-packing fs-5 text-warning" />
+                        </div>
+                        <h3 className="h6 fw-black text-dark mb-1 ac-font">Not currently on ground layout</h3>
+                        <p className="tiny-text text-muted mb-3 fw-bold mx-auto" style={{ maxWidth: '420px' }}>
+                            "{query}" is not placed on public ground grids right now, but you can spawn it instantly via Order Bot or Drop Bot!
+                        </p>
+                        <div className="d-flex flex-wrap justify-content-center gap-2">
+                            <Link
+                                to="/order"
+                                className="btn btn-xs btn-nook text-white rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
+                                onClick={() => playChimeClick()}
+                            >
+                                <i className="fa-solid fa-paper-plane" aria-hidden="true" />
+                                <span>Order Bot (40 Slots)</span>
+                            </Link>
+                            <Link
+                                to="/command-builder"
+                                className="btn btn-xs btn-outline-success rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
+                                onClick={() => playChimeClick()}
+                            >
+                                <i className="fa-solid fa-cubes-stacked" aria-hidden="true" />
+                                <span>Command Builder</span>
+                            </Link>
+                        </div>
                     </div>
                 )}
             </div>

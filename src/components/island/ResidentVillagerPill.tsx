@@ -71,7 +71,7 @@ export const ResidentVillagerPill = ({ villagerName }: { villagerName: string })
 
     const handleClick = () => {
         const pathId = matched ? matched.id : encodeURIComponent(villagerName.toLowerCase());
-        navigate(`/command-builder/villager/${pathId}`);
+        navigate(`/villager/${pathId}`);
     };
 
     return (

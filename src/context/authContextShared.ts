@@ -1,4 +1,4 @@
-﻿import { createContext } from "react";
+import { createContext } from "react";
 
 export interface AuthUser {
     user_id: string;
@@ -12,8 +12,9 @@ export interface AuthUser {
 export interface AuthContextType {
     user: AuthUser | null;
     loading: boolean;
-    login: () => void;
+    login: (returnPath?: string | React.MouseEvent) => void;
     logout: () => Promise<void>;
+    refreshAuth: (tokenOverride?: string) => Promise<boolean>;
     hasRole: (roleIds: string[]) => boolean;
     canAccessIsland: (requiredRoles: string[]) => boolean;
 }

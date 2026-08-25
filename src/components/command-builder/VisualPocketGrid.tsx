@@ -329,11 +329,6 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
                     >
                         <div
                             className="inventory-grid"
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(10, minmax(0, 1fr))',
-                                gap: '6px',
-                            }}
                         >
                             {orderGridSlots.map((slot, idx) => {
                                 const isSelected = selectedSlotIndex === idx && slot !== null;
@@ -845,6 +840,27 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
 
             {/* Injected Styles */}
             <style>{`
+                .inventory-grid {
+                    display: grid;
+                    grid-template-columns: repeat(5, minmax(0, 1fr));
+                    gap: 6px;
+                }
+                @media (min-width: 576px) {
+                    .inventory-grid {
+                        grid-template-columns: repeat(8, minmax(0, 1fr));
+                        gap: 7px;
+                    }
+                }
+                @media (min-width: 992px) {
+                    .inventory-grid {
+                        grid-template-columns: repeat(10, minmax(0, 1fr));
+                        gap: 8px;
+                    }
+                }
+                .pocket-slot-tile {
+                    touch-action: manipulation;
+                    -webkit-tap-highlight-color: transparent;
+                }
                 .pocket-slot-tile:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 4px 12px rgba(55, 176, 109, 0.25);
@@ -869,6 +885,11 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
                 }
                 .pocket-slot-tile:hover .drag-grip-icon {
                     opacity: 1;
+                }
+                @media (max-width: 576px) {
+                    .pocket-slot-tile {
+                        min-height: 48px;
+                    }
                 }
             `}</style>
         </div>

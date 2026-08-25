@@ -88,12 +88,17 @@ const CatalogDetail = () => {
         loadData();
         return () => { mounted = false; };
     }, []);
-    const type = entityType === 'villager' ? 'villager' : 'item';
+    const type = entityType
+        ? (entityType === 'villager' ? 'villager' : 'item')
+        : (location.pathname.startsWith('/villager') ? 'villager' : 'item');
+
     const entry = useMemo<CatalogEntity | null>(() => {
         if (!id) return null;
-        return (type === 'villager'
-            ? villagers.find((villager) => villager.id === id)
-            : items.find((item) => item.id === id)) || null;
+        const primaryList = type === 'villager' ? villagers : items;
+        const fallbackList = type === 'villager' ? items : villagers;
+        return primaryList.find((entity) => entity.id === id) ||
+            fallbackList.find((entity) => entity.id === id) ||
+            null;
     }, [id, type, items, villagers]);
 
     const [detailStatus, setDetailStatus] = useState('');
@@ -245,7 +250,7 @@ const CatalogDetail = () => {
 
     const handleVariantSelect = (variantKey: string) => {
         setSelectedVariantKey(variantKey);
-        const basePath = `/command-builder/${entry.entityType}/${entry.id}`;
+        const basePath = `/${entry.entityType}/${entry.id}`;
         const query = variantKey && variantKey !== 'NA' ? `?variantId=${encodeURIComponent(variantKey)}` : '';
         navigate(`${basePath}${query}`, { replace: true });
     };
@@ -298,7 +303,7 @@ const CatalogDetail = () => {
         if (window.history.length > 1) {
             navigate(-1);
         } else {
-            navigate('/command-builder');
+            navigate(entry.entityType === 'villager' ? '/catalog?tab=villagers' : '/catalog');
         }
     };
 
@@ -313,9 +318,9 @@ const CatalogDetail = () => {
                                     type="button"
                                     onClick={handleBackToCatalog}
                                     className="btn btn-link text-decoration-none text-nook transition-all p-0 fw-bold d-inline-flex align-items-center"
-                                    title="Return to catalog (saves your spot)"
+                                    title="Return to catalogue"
                                 >
-                                    <i className="fa-solid fa-arrow-left me-2"></i>Command Builder
+                                    <i className="fa-solid fa-arrow-left me-2"></i>Catalogue
                                 </button>
                             </li>
                             <li className="breadcrumb-item text-muted" aria-current="page">
@@ -330,11 +335,10 @@ const CatalogDetail = () => {
                         <button
                             type="button"
                             onClick={(e) => toggleFavorite(entry.id, e)}
-                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-flex align-items-center gap-2 ${
-                                isItemFavorited 
-                                    ? 'btn-warning text-white' 
-                                    : 'btn-white bg-white text-muted border'
-                            }`}
+                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-flex align-items-center gap-2 ${isItemFavorited
+                                ? 'btn-warning text-white'
+                                : 'btn-white bg-white text-muted border'
+                                }`}
                             title={isItemFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
                             aria-label={isItemFavorited ? `Remove ${entry.name} from favorites` : `Add ${entry.name} to favorites`}
                         >
@@ -361,7 +365,7 @@ const CatalogDetail = () => {
                 </div>
 
                 <div className="row gy-4">
-                    <div className="col-lg-8">
+                    <div className="col-lg-7">
                         <div className="bg-cream rounded-4 border-0 shadow-sm overflow-hidden mb-4" style={{ borderTop: '4px solid var(--nook-green)' }}>
                             <div className="row g-0 align-items-stretch">
                                 <div className="col-12 col-md-5 col-lg-4 bg-light p-4 position-relative d-flex align-items-center justify-content-center border-end">
@@ -732,7 +736,7 @@ const CatalogDetail = () => {
                         </div>
                     </div>
 
-                    <aside className="col-lg-4">
+                    <aside className="col-lg-5">
                         <div className="sticky-top" style={{ top: '90px' }}>
                             <CommandBuilderSummary
                                 orderPockets={orderItems}

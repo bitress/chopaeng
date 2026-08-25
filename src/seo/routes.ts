@@ -20,6 +20,11 @@ export const ROUTE_SEO: Record<string, RouteSEO> = {
     description: "Read practical Animal Crossing: New Horizons guides. Learn to navigate treasure islands, use drop bots, and optimize your ACNH gameplay.",
   },
 
+  "/catalog": {
+    title: "ACNH Item Catalogue, DIY Recipes & Villager Database | Chopaeng",
+    description: "Search the complete Animal Crossing: New Horizons database of 7,000+ furniture, clothing, tools, DIY crafting recipes, and 400+ villagers.",
+  },
+
   "/maps": {
     title: "ACNH Treasure Island Maps & Item Locations | Chopaeng",
     description: "View complete maps of all Chopaeng ACNH Treasure Islands. Locate exact grid spots for DIYs, furniture, clothing, and materials before flying.",

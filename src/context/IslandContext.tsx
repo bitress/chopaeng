@@ -143,6 +143,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 };
             });
 
+
             const now = Date.now();
             setIslands(updatedIslands);
             setVillagersMap(villagerData.islands);
@@ -163,6 +164,16 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     useEffect(() => {
         refreshData();
+
+        const handleAuthChange = () => {
+            // Clear cached scope to force live re-fetch with new token/permissions
+            sessionStorage.removeItem(STORAGE_KEY_ISLANDS);
+            sessionStorage.removeItem(STORAGE_KEY_TIMESTAMP);
+            sessionStorage.removeItem(STORAGE_KEY_AUTH_SCOPE);
+            refreshData();
+        };
+
+        window.addEventListener("chopaeng_auth_change", handleAuthChange);
 
         let intervalId: number;
 
@@ -197,6 +208,7 @@ export const IslandProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return () => {
             clearInterval(intervalId);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("chopaeng_auth_change", handleAuthChange);
         };
     }, [refreshData]);
 
