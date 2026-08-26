@@ -21,7 +21,8 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            'react-helmet-async': path.resolve(__dirname, 'node_modules/react-helmet-async/lib/index.js')
+            'react-helmet-async': path.resolve(__dirname, 'node_modules/react-helmet-async/lib/index.js'),
+            '@bitress/animal-crossing': path.resolve(__dirname, 'node_modules/@bitress/animal-crossing/lib/index.js')
         }
     },
     plugins: [react()],
@@ -38,6 +39,10 @@ export default defineConfig({
                         id.includes('node_modules/react-is/')
                     ) {
                         return 'vendor-react';
+                    }
+                    // Animal Crossing Database
+                    if (id.includes('@bitress/animal-crossing')) {
+                        return 'animal-crossing-data';
                     }
                     // Router
                     if (id.includes('node_modules/react-router')) {

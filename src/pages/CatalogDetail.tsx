@@ -6,6 +6,8 @@ import type { CatalogEntity } from "../data/commandBuilderData";
 import { getVariantCommandParts, getVariantKey, getVariantLabel } from "../utils/commandBuilderHex";
 import { useCommandBuilderPockets } from "../hooks/useCommandBuilderPockets";
 import { useFavorites } from "../hooks/useFavorites";
+import { useCollection } from "../hooks/useCollection";
+import { findBestGifts, PERSONALITY_COMPATIBILITY } from "../utils/giftMatcher";
 import CommandBuilderSummary from "../components/CommandBuilderSummary";
 import CatalogAvailability from "../components/CatalogAvailability";
 import { FINDER_API_BASE } from "../config/api";
@@ -94,11 +96,15 @@ const CatalogDetail = () => {
 
     const entry = useMemo<CatalogEntity | null>(() => {
         if (!id) return null;
+        const lowerId = id.toLowerCase();
         const primaryList = type === 'villager' ? villagers : items;
         const fallbackList = type === 'villager' ? items : villagers;
-        return primaryList.find((entity) => entity.id === id) ||
-            fallbackList.find((entity) => entity.id === id) ||
-            null;
+        const matcher = (entity: CatalogEntity) =>
+            entity.id.toLowerCase() === lowerId ||
+            entity.name.toLowerCase() === lowerId ||
+            entity.name.toLowerCase().replace(/[^a-z0-9]/g, '') === lowerId;
+
+        return primaryList.find(matcher) || fallbackList.find(matcher) || null;
     }, [id, type, items, villagers]);
 
     const [detailStatus, setDetailStatus] = useState('');
@@ -176,6 +182,32 @@ const CatalogDetail = () => {
 
     const { isFavorite, toggleFavorite } = useFavorites();
     const isItemFavorited = entry ? (isFavorite(entry.id) || isFavorite(entry.id.split(':')[0])) : false;
+
+    const { isCollected, toggleCollected } = useCollection();
+    const isItemCollected = entry ? isCollected(entry.id) : false;
+
+    const bestGifts = useMemo(() => {
+        if (!entry || entry.entityType !== 'villager') return [];
+        const vStyles = entry.styles || villagerData?.nh_details?.fav_styles || [];
+        const vColors = entry.favoriteColors || villagerData?.nh_details?.fav_colors || [];
+        return findBestGifts(items, vStyles, vColors, 8);
+    }, [entry, items, villagerData]);
+
+    const compatibility = useMemo(() => {
+        if (!entry) return null;
+        const pers = entry.personality || villagerData?.personality || entry.category || '';
+        return PERSONALITY_COMPATIBILITY[pers] || null;
+    }, [entry, villagerData]);
+
+    // K.K. Jukebox: find villagers whose favorite song matches this item
+    const songFans = useMemo(() => {
+        if (!entry || entry.entityType !== 'item') return [];
+        const songName = entry.name?.toLowerCase();
+        if (!songName) return [];
+        return villagers.filter(v =>
+            v.favoriteSong?.toLowerCase() === songName
+        ).slice(0, 20);
+    }, [entry, villagers]);
 
     useEffect(() => {
         if (entry?.entityType !== 'item') {
@@ -347,6 +379,19 @@ const CatalogDetail = () => {
                         </button>
                         <button
                             type="button"
+                            onClick={(e) => toggleCollected(entry.id, e)}
+                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-flex align-items-center gap-2 ${isItemCollected
+                                ? 'btn-success text-white'
+                                : 'btn-white bg-white text-muted border'
+                                }`}
+                            title={isItemCollected ? 'Remove from Collection' : 'Mark as Collected'}
+                            aria-label={isItemCollected ? `Remove ${entry.name} from collection` : `Mark ${entry.name} as collected`}
+                        >
+                            <i className={`fa-solid ${isItemCollected ? 'fa-check' : 'fa-plus'}`} />
+                            <span>{isItemCollected ? 'Collected' : 'Collect'}</span>
+                        </button>
+                        <button
+                            type="button"
                             onClick={handleBackToCatalog}
                             className="btn btn-sm btn-outline-success bg-white rounded-pill fw-bold px-3 shadow-sm transition-all"
                             title="Return to catalog (saves your spot)"
@@ -432,52 +477,55 @@ const CatalogDetail = () => {
                                         </div>
                                     )}
 
-                                    <div className="d-flex flex-column flex-sm-row gap-2 mb-2">
-                                        {/* Add to Order */}
-                                        <button
-                                            type="button"
-                                            onClick={addToOrder}
-                                            className="btn rounded-pill px-4 py-2 fw-black flex-grow-1 transition-all"
-                                            disabled={totalOrderCount >= 40}
-                                            style={{
-                                                background: totalOrderCount >= 40
-                                                    ? '#f8f9fa'
-                                                    : 'linear-gradient(135deg, #37b06d 0%, #2ea466 100%)',
-                                                color: totalOrderCount >= 40 ? '#adb5bd' : 'white',
-                                                border: 'none',
-                                                boxShadow: totalOrderCount >= 40 ? 'none' : '0 4px 12px rgba(55,176,109,0.3)',
-                                                cursor: totalOrderCount >= 40 ? 'not-allowed' : 'pointer',
-                                                fontSize: '0.95rem'
-                                            }}
-                                            onMouseEnter={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(55,176,109,0.4)'; } }}
-                                            onMouseLeave={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(55,176,109,0.3)'; } }}
-                                        >
-                                            <i className="fa-solid fa-basket-shopping me-2"></i>
-                                            {totalOrderCount >= 40 ? 'Order Full (40/40)' : `Add to Order${inOrderQty > 0 && entry.entityType !== 'villager' ? ` (${inOrderQty})` : ''}`}
-                                        </button>
-                                        {/* Add to Drop */}
-                                        <button
-                                            type="button"
-                                            onClick={addToDrop}
-                                            className="btn rounded-pill px-4 py-2 fw-black flex-grow-1 transition-all"
-                                            disabled={totalDropCount >= 9}
-                                            style={{
-                                                background: totalDropCount >= 9
-                                                    ? '#f8f9fa'
-                                                    : 'linear-gradient(135deg, #5bc0de 0%, #31b0d5 100%)',
-                                                color: totalDropCount >= 9 ? '#adb5bd' : 'white',
-                                                border: 'none',
-                                                boxShadow: totalDropCount >= 9 ? 'none' : '0 4px 12px rgba(91,192,222,0.3)',
-                                                cursor: totalDropCount >= 9 ? 'not-allowed' : 'pointer',
-                                                fontSize: '0.95rem'
-                                            }}
-                                            onMouseEnter={(e) => { if (totalDropCount < 9) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(91,192,222,0.4)'; } }}
-                                            onMouseLeave={(e) => { if (totalDropCount < 9) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(91,192,222,0.3)'; } }}
-                                        >
-                                            <i className="fa-solid fa-box-open me-2"></i>
-                                            {totalDropCount >= 9 ? 'Drop Full (9/9)' : `Add to Drop${inDropQty > 0 && entry.entityType !== 'villager' ? ` (${inDropQty})` : ''}`}
-                                        </button>
-                                    </div>
+                                    {entry.unorderable ? (
+                                        <div className="p-3 rounded-4 bg-light border text-center text-muted mb-2 shadow-2xs">
+                                            <i className="fa-solid fa-circle-info me-2 text-info"></i>
+                                            <span className="small fw-bold">This {entry.entityType === 'villager' ? 'character' : 'item'} is for reference and cannot be ordered into pockets.</span>
+                                        </div>
+                                    ) : (
+                                        <div className="d-flex flex-column flex-sm-row gap-2 mb-2">
+                                            {/* Add to Order */}
+                                            <button
+                                                type="button"
+                                                onClick={addToOrder}
+                                                className="btn rounded-pill px-4 py-2 fw-black flex-grow-1 transition-all"
+                                                disabled={totalOrderCount >= 40}
+                                                style={{
+                                                    backgroundColor: totalOrderCount >= 40 ? '#f8f9fa' : 'var(--nook-green, #37b06d)',
+                                                    color: totalOrderCount >= 40 ? '#adb5bd' : '#ffffff',
+                                                    border: 'none',
+                                                    boxShadow: totalOrderCount >= 40 ? 'none' : '0 3px 10px rgba(55,176,109,0.3)',
+                                                    cursor: totalOrderCount >= 40 ? 'not-allowed' : 'pointer',
+                                                    fontSize: '0.95rem'
+                                                }}
+                                                onMouseEnter={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+                                                onMouseLeave={(e) => { if (totalOrderCount < 40) { e.currentTarget.style.transform = 'translateY(0)'; } }}
+                                            >
+                                                <i className="fa-solid fa-basket-shopping me-2"></i>
+                                                {totalOrderCount >= 40 ? 'Order Full (40/40)' : `Add to Order${inOrderQty > 0 && entry.entityType !== 'villager' ? ` (${inOrderQty})` : ''}`}
+                                            </button>
+                                            {/* Add to Drop */}
+                                            <button
+                                                type="button"
+                                                onClick={addToDrop}
+                                                className="btn rounded-pill px-4 py-2 fw-black flex-grow-1 transition-all"
+                                                disabled={totalDropCount >= 9}
+                                                style={{
+                                                    backgroundColor: totalDropCount >= 9 ? '#f8f9fa' : '#0ea5e9',
+                                                    color: totalDropCount >= 9 ? '#adb5bd' : '#ffffff',
+                                                    border: 'none',
+                                                    boxShadow: totalDropCount >= 9 ? 'none' : '0 3px 10px rgba(14,165,233,0.3)',
+                                                    cursor: totalDropCount >= 9 ? 'not-allowed' : 'pointer',
+                                                    fontSize: '0.95rem'
+                                                }}
+                                                onMouseEnter={(e) => { if (totalDropCount < 9) { e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+                                                onMouseLeave={(e) => { if (totalDropCount < 9) { e.currentTarget.style.transform = 'translateY(0)'; } }}
+                                            >
+                                                <i className="fa-solid fa-box-open me-2"></i>
+                                                {totalDropCount >= 9 ? 'Drop Full (9/9)' : `Add to Drop${inDropQty > 0 && entry.entityType !== 'villager' ? ` (${inDropQty})` : ''}`}
+                                            </button>
+                                        </div>
+                                    )}
 
                                     <div className="text-center mt-2">
                                         <button
@@ -552,37 +600,151 @@ const CatalogDetail = () => {
                                         </div>
                                     )}
 
-                                    <div className="bg-white rounded-4 p-4 mb-2 border shadow-sm">
-                                        <h3 className="h6 fw-black text-nook mb-2 text-uppercase tracking-wide" style={{ fontSize: '0.8rem' }}>
-                                            <i className="fa-solid fa-list-ul me-2 opacity-75"></i>Item Properties
+                                    <div className="bg-white rounded-4 p-4 mb-3 border shadow-sm">
+                                        <h3 className="h6 fw-black text-nook mb-3 text-uppercase tracking-wide" style={{ fontSize: '0.8rem' }}>
+                                            <i className="fa-solid fa-list-ul me-2 opacity-75"></i>Item Properties & Details
                                         </h3>
-                                        <div className="row g-4">
+                                        <div className="row g-3">
                                             <div className="col-6 col-md-3">
                                                 <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                     <i className="fa-solid fa-tag opacity-50"></i>Category
                                                 </span>
-                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '1rem' }} title={entry.category}>{entry.category || 'None'}</div>
+                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '0.95rem' }} title={entry.category}>{entry.category || 'None'}</div>
                                             </div>
                                             <div className="col-6 col-md-3">
                                                 <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                     <i className="fa-solid fa-palette opacity-50"></i>Theme
                                                 </span>
-                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '1rem' }} title={entry.theme}>{entry.theme || 'None'}</div>
+                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '0.95rem' }} title={entry.theme}>{entry.theme || 'None'}</div>
                                             </div>
                                             <div className="col-6 col-md-3">
                                                 <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                     <i className="fa-solid fa-layer-group opacity-50"></i>Series
                                                 </span>
-                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '1rem' }} title={entry.series}>{entry.series || 'None'}</div>
+                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '0.95rem' }} title={entry.series}>{entry.series || 'None'}</div>
                                             </div>
                                             <div className="col-6 col-md-3">
                                                 <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
                                                     <i className="fa-solid fa-swatchbook opacity-50"></i>Colour
                                                 </span>
-                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '1rem' }} title={entry.colour}>{entry.colour || 'None'}</div>
+                                                <div className="fw-black text-nook text-truncate" style={{ fontSize: '0.95rem' }} title={entry.colour}>{entry.colour || 'None'}</div>
                                             </div>
+
+                                            {/* Buy & Sell Pricing */}
+                                            {(entry.buy != null || entry.sell != null) && (
+                                                <>
+                                                    {entry.buy != null && entry.buy > 0 && (
+                                                        <div className="col-6 col-md-3">
+                                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                                <i className="fa-solid fa-coins text-warning opacity-75"></i>Buy Price
+                                                            </span>
+                                                            <div className="fw-black text-dark" style={{ fontSize: '0.95rem' }}>{entry.buy.toLocaleString()} Bells</div>
+                                                        </div>
+                                                    )}
+                                                    {entry.sell != null && entry.sell > 0 && (
+                                                        <div className="col-6 col-md-3">
+                                                            <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                                <i className="fa-solid fa-sack-dollar text-success opacity-75"></i>Sell Price
+                                                            </span>
+                                                            <div className="fw-black text-dark" style={{ fontSize: '0.95rem' }}>{entry.sell.toLocaleString()} Bells</div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {/* Size, Surface & Tag */}
+                                            {entry.size && (
+                                                <div className="col-6 col-md-3">
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-ruler-combined opacity-50"></i>Size
+                                                    </span>
+                                                    <div className="fw-black text-dark" style={{ fontSize: '0.95rem' }}>{entry.size}{entry.surface ? ' (Surface)' : ''}</div>
+                                                </div>
+                                            )}
+
+                                            {/* Source / How to Obtain */}
+                                            {entry.source && entry.source.length > 0 && (
+                                                <div className="col-12 col-md-6">
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-map-location-dot opacity-50"></i>Source / How to Obtain
+                                                    </span>
+                                                    <div className="fw-black text-nook text-truncate" style={{ fontSize: '0.95rem' }}>{entry.source.join(', ')}</div>
+                                                </div>
+                                            )}
+
+                                            {/* Creature details: Shadow, Movement, Catchphrase */}
+                                            {entry.shadow && (
+                                                <div className="col-6 col-md-3">
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-fish opacity-50"></i>Shadow Size
+                                                    </span>
+                                                    <div className="fw-black text-dark" style={{ fontSize: '0.95rem' }}>{entry.shadow}</div>
+                                                </div>
+                                            )}
+                                            {entry.movementSpeed && (
+                                                <div className="col-6 col-md-3">
+                                                    <span className="x-small fw-bold text-muted d-flex align-items-center gap-1 mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                                        <i className="fa-solid fa-gauge-high opacity-50"></i>Movement Speed
+                                                    </span>
+                                                    <div className="fw-black text-dark" style={{ fontSize: '0.95rem' }}>{entry.movementSpeed}</div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
+
+                                    {/* Crafting Recipe Materials Breakdown */}
+                                    {entry.materials && Object.keys(entry.materials).length > 0 && (
+                                        <div className="bg-white rounded-4 p-4 mb-3 border shadow-sm">
+                                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                                <h3 className="h6 fw-black text-nook mb-0 text-uppercase tracking-wide" style={{ fontSize: '0.8rem' }}>
+                                                    <i className="fa-solid fa-hammer me-2 opacity-75"></i>Required Crafting Materials
+                                                </h3>
+                                                <span className="badge rounded-pill bg-nook-green text-white px-3 py-1 fw-bold">
+                                                    {Object.keys(entry.materials).length} Ingredients
+                                                </span>
+                                            </div>
+                                            <div className="d-flex flex-wrap gap-2">
+                                                {Object.entries(entry.materials).map(([mat, qty]) => (
+                                                    <div key={mat} className="d-flex align-items-center gap-2 bg-light px-3 py-2 rounded-pill border">
+                                                        <span className="badge rounded-circle bg-success text-white fw-black" style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem' }}>
+                                                            {qty}
+                                                        </span>
+                                                        <span className="fw-bold small text-dark">{mat}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* K.K. Jukebox: Villagers who love this song */}
+                                    {songFans.length > 0 && (
+                                        <div className="bg-white rounded-4 p-4 mb-4 border shadow-sm">
+                                            <span className="fw-black small text-nook text-uppercase tracking-wide d-block mb-3">
+                                                <i className="fa-solid fa-music me-2"></i>Villagers Who Love This Song ({songFans.length})
+                                            </span>
+                                            <p className="x-small text-muted mb-3">
+                                                These villagers have this track as their favorite K.K. song and will play it in their home.
+                                            </p>
+                                            <div className="d-flex flex-wrap gap-2">
+                                                {songFans.map(v => (
+                                                    <Link key={v.id} to={`/villager/${v.id}`} className="text-decoration-none">
+                                                        <div className="d-flex align-items-center gap-2 bg-light rounded-pill border px-3 py-2 hover-shadow-sm transition-all">
+                                                            <img
+                                                                src={v.image || ''}
+                                                                alt={v.name}
+                                                                style={{ width: 28, height: 28, objectFit: 'contain' }}
+                                                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                            <span className="fw-bold small text-dark">{v.name}</span>
+                                                            {v.personality && (
+                                                                <span className="badge bg-primary-subtle text-primary rounded-pill" style={{ fontSize: '0.6rem' }}>{v.personality}</span>
+                                                            )}
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </>
                             ) : (
                                 <>
@@ -591,31 +753,43 @@ const CatalogDetail = () => {
                                         <div className="row g-4">
                                             {/* Column 1: Core Info & Personality */}
                                             <div className="col-12 col-md-6">
-                                                <h3 className="h6 fw-black text-nook mb-3 text-uppercase tracking-wide" style={{ fontSize: '0.8rem' }}><i className="fa-solid fa-address-card me-2 opacity-75"></i>Profile</h3>
+                                                <h3 className="h6 fw-black text-nook mb-3 text-uppercase tracking-wide" style={{ fontSize: '0.8rem' }}><i className="fa-solid fa-address-card me-2 opacity-75"></i>Profile & Gifting</h3>
                                                 <ul className="list-unstyled mb-0 d-flex flex-column gap-2 small">
                                                     <li className="d-flex justify-content-between border-bottom pb-2">
                                                         <span className="text-muted fw-semibold">Species</span>
-                                                        <span className="fw-black text-dark">{villagerData?.species || entry.theme || 'Unknown'}</span>
+                                                        <span className="fw-black text-dark">{entry.species || villagerData?.species || entry.theme || 'Unknown'}</span>
                                                     </li>
                                                     <li className="d-flex justify-content-between border-bottom pb-2">
                                                         <span className="text-muted fw-semibold">Personality</span>
                                                         <span className="fw-black text-dark">
-                                                            {villagerData?.personality || entry.category}
-                                                            {villagerData?.nh_details?.['sub-personality'] ? ` (Sub ${villagerData.nh_details['sub-personality']})` : ''}
+                                                            {entry.personality || villagerData?.personality || entry.category}
+                                                            {entry.subtype ? ` (Subtype ${entry.subtype})` : villagerData?.nh_details?.['sub-personality'] ? ` (Sub ${villagerData.nh_details['sub-personality']})` : ''}
                                                         </span>
                                                     </li>
                                                     <li className="d-flex justify-content-between border-bottom pb-2">
                                                         <span className="text-muted fw-semibold">Gender</span>
-                                                        <span className="fw-black text-dark">{villagerData?.gender || entry.interactivity || 'Unknown'}</span>
+                                                        <span className="fw-black text-dark">{entry.gender || villagerData?.gender || entry.interactivity || 'Unknown'}</span>
                                                     </li>
                                                     <li className="d-flex justify-content-between border-bottom pb-2">
                                                         <span className="text-muted fw-semibold">Catchphrase</span>
-                                                        <span className="fw-black text-nook">"{villagerData?.phrase || villagerData?.nh_details?.catchphrase || 'arfer'}"</span>
+                                                        <span className="fw-black text-nook">"{villagerData?.phrase || villagerData?.nh_details?.catchphrase || 'hello'}"</span>
                                                     </li>
-                                                    {(villagerData?.birthday_month || villagerData?.birthday_day) && (
-                                                        <li className="d-flex justify-content-between pb-1">
+                                                    {(entry.birthday || villagerData?.birthday_month) && (
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
                                                             <span className="text-muted fw-semibold">Birthday</span>
-                                                            <span className="fw-black text-dark">{villagerData.birthday_month} {villagerData.birthday_day}</span>
+                                                            <span className="fw-black text-dark">{entry.birthday || `${villagerData?.birthday_month} ${villagerData?.birthday_day}`}</span>
+                                                        </li>
+                                                    )}
+                                                    {(entry.styles && entry.styles.length > 0) && (
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
+                                                            <span className="text-muted fw-semibold">Favorite Styles</span>
+                                                            <span className="fw-black text-success">{entry.styles.join(', ')}</span>
+                                                        </li>
+                                                    )}
+                                                    {(entry.favoriteColors && entry.favoriteColors.length > 0) && (
+                                                        <li className="d-flex justify-content-between pb-1">
+                                                            <span className="text-muted fw-semibold">Favorite Colors</span>
+                                                            <span className="fw-black text-primary">{entry.favoriteColors.join(', ')}</span>
                                                         </li>
                                                     )}
                                                 </ul>
@@ -625,59 +799,148 @@ const CatalogDetail = () => {
                                             <div className="col-12 col-md-6">
                                                 <h3 className="h6 fw-black text-nook mb-3 text-uppercase tracking-wide" style={{ fontSize: '0.8rem' }}><i className="fa-solid fa-house me-2 opacity-75"></i>Details & House</h3>
                                                 <ul className="list-unstyled mb-0 d-flex flex-column gap-2 small">
-                                                    {villagerData?.nh_details?.hobby && (
+                                                    {(entry.hobby || villagerData?.nh_details?.hobby) && (
                                                         <li className="d-flex justify-content-between border-bottom pb-2">
                                                             <span className="text-muted fw-semibold">Hobby</span>
-                                                            <span className="fw-black text-dark">{villagerData.nh_details.hobby}</span>
+                                                            <span className="fw-black text-dark">{entry.hobby || villagerData?.nh_details?.hobby}</span>
                                                         </li>
                                                     )}
-                                                    {villagerData?.nh_details?.house_flooring && (
+                                                    {(entry.favoriteSong || villagerData?.nh_details?.house_music) && (
                                                         <li className="d-flex justify-content-between border-bottom pb-2">
-                                                            <span className="text-muted fw-semibold">Flooring</span>
-                                                            <span className="fw-black text-dark">{villagerData.nh_details.house_flooring}</span>
-                                                        </li>
-                                                    )}
-                                                    {villagerData?.nh_details?.house_wallpaper && (
-                                                        <li className="d-flex justify-content-between border-bottom pb-2">
-                                                            <span className="text-muted fw-semibold">Wallpaper</span>
-                                                            <span className="fw-black text-dark">{villagerData.nh_details.house_wallpaper}</span>
-                                                        </li>
-                                                    )}
-                                                    {villagerData?.nh_details?.house_music && (
-                                                        <li className="d-flex justify-content-between border-bottom pb-2">
-                                                            <span className="text-muted fw-semibold">Music</span>
+                                                            <span className="text-muted fw-semibold">Favorite Song</span>
                                                             <span className="fw-black text-dark">
                                                                 <i className="fa-solid fa-music me-1 text-primary"></i>
-                                                                {villagerData.nh_details.house_music}
+                                                                {entry.favoriteSong || villagerData?.nh_details?.house_music}
                                                             </span>
                                                         </li>
                                                     )}
-                                                    {villagerData?.nh_details?.fav_colors && villagerData.nh_details.fav_colors.length > 0 && (
+                                                    {(entry.flooring || villagerData?.nh_details?.house_flooring) && (
                                                         <li className="d-flex justify-content-between border-bottom pb-2">
-                                                            <span className="text-muted fw-semibold">Colors</span>
-                                                            <span className="fw-black text-dark">{villagerData.nh_details.fav_colors.join(', ')}</span>
+                                                            <span className="text-muted fw-semibold">Flooring</span>
+                                                            <span className="fw-black text-dark">{entry.flooring || villagerData?.nh_details?.house_flooring}</span>
                                                         </li>
                                                     )}
-                                                    {villagerData?.nh_details?.fav_styles && villagerData.nh_details.fav_styles.length > 0 && (
+                                                    {(entry.wallpaper || villagerData?.nh_details?.house_wallpaper) && (
+                                                        <li className="d-flex justify-content-between border-bottom pb-2">
+                                                            <span className="text-muted fw-semibold">Wallpaper</span>
+                                                            <span className="fw-black text-dark">{entry.wallpaper || villagerData?.nh_details?.house_wallpaper}</span>
+                                                        </li>
+                                                    )}
+                                                    {entry.defaultClothing && (
                                                         <li className="d-flex justify-content-between pb-1">
-                                                            <span className="text-muted fw-semibold">Styles</span>
-                                                            <span className="fw-black text-dark">{villagerData.nh_details.fav_styles.join(', ')}</span>
+                                                            <span className="text-muted fw-semibold">Default Clothing</span>
+                                                            <span className="fw-black text-dark">{entry.defaultClothing}</span>
                                                         </li>
                                                     )}
                                                 </ul>
                                             </div>
                                         </div>
+
+                                        {/* House Furniture Checklist */}
+                                        {entry.furnitureNameList && entry.furnitureNameList.length > 0 && (
+                                            <div className="mt-4 pt-3 border-top">
+                                                <span className="x-small fw-black text-nook text-uppercase tracking-wide d-block mb-2">
+                                                    <i className="fa-solid fa-couch me-2"></i>House Interior Furniture ({entry.furnitureNameList.length})
+                                                </span>
+                                                <div className="d-flex flex-wrap gap-1">
+                                                    {entry.furnitureNameList.map((fName, idx) => (
+                                                        <span key={`${fName}-${idx}`} className="badge rounded-pill bg-light text-dark border px-3 py-1 fw-bold" style={{ fontSize: '0.75rem' }}>
+                                                            {fName}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
+                                    {/* Best Gift Recommendations */}
+                                    {bestGifts.length > 0 && (
+                                        <div className="mb-4 p-4 rounded-4 bg-white border shadow-sm">
+                                            <span className="fw-black small text-nook text-uppercase tracking-wide d-block mb-3">
+                                                <i className="fa-solid fa-gift me-2"></i>Best Gift Recommendations
+                                            </span>
+                                            <p className="x-small text-muted mb-3">Items matching {entry.name}'s preferred styles and colors, ranked by compatibility score.</p>
+                                            <div className="row g-2">
+                                                {bestGifts.map((gs, idx) => (
+                                                    <div key={gs.item.id + idx} className="col-6 col-md-3">
+                                                        <Link to={`/item/${gs.item.id}`} className="text-decoration-none">
+                                                            <div className="bg-light rounded-3 border p-2 text-center h-100 hover-shadow-sm transition-all">
+                                                                <img
+                                                                    src={gs.item.image || ''}
+                                                                    alt={gs.item.name}
+                                                                    className="mb-1"
+                                                                    style={{ width: 40, height: 40, objectFit: 'contain' }}
+                                                                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                                                />
+                                                                <div className="tiny-text fw-bold text-dark text-truncate" title={gs.item.name}>{gs.item.name}</div>
+                                                                <div className="d-flex justify-content-center gap-1 mt-1 flex-wrap">
+                                                                    {gs.matchedStyles.map(s => (
+                                                                        <span key={s} className="badge bg-primary-subtle text-primary rounded-pill" style={{ fontSize: '0.6rem' }}>{s}</span>
+                                                                    ))}
+                                                                    {gs.matchedColors.map(c => (
+                                                                        <span key={c} className="badge bg-warning-subtle text-warning rounded-pill" style={{ fontSize: '0.6rem' }}>{c}</span>
+                                                                    ))}
+                                                                </div>
+                                                                <span className="tiny-text text-success fw-bold">Score: {gs.score}</span>
+                                                            </div>
+                                                        </Link>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Personality Compatibility */}
+                                    {compatibility && (
+                                        <div className="mb-4 p-4 rounded-4 bg-white border shadow-sm">
+                                            <span className="fw-black small text-nook text-uppercase tracking-wide d-block mb-3">
+                                                <i className="fa-solid fa-people-arrows me-2"></i>Personality Compatibility
+                                            </span>
+                                            <div className="row g-3">
+                                                <div className="col-6">
+                                                    <span className="x-small fw-bold text-success d-block mb-2">
+                                                        <i className="fa-solid fa-heart me-1"></i>Gets Along With
+                                                    </span>
+                                                    <div className="d-flex flex-wrap gap-1">
+                                                        {compatibility.friends.map(f => (
+                                                            <span key={f} className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-bold" style={{ fontSize: '0.7rem' }}>{f}</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                {compatibility.conflicts.length > 0 && (
+                                                    <div className="col-6">
+                                                        <span className="x-small fw-bold text-danger d-block mb-2">
+                                                            <i className="fa-solid fa-bolt me-1"></i>May Clash With
+                                                        </span>
+                                                        <div className="d-flex flex-wrap gap-1">
+                                                            {compatibility.conflicts.map(c => (
+                                                                <span key={c} className="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 fw-bold" style={{ fontSize: '0.7rem' }}>{c}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Image Previews Tabs (Interior / Exterior / Photo) */}
-                                    {(villagerData?.nh_details?.house_interior_url || villagerData?.nh_details?.house_exterior_url || villagerData?.nh_details?.photo_url) && (
+                                    {(entry.houseImage || entry.photoImage || villagerData?.nh_details?.house_interior_url || villagerData?.nh_details?.house_exterior_url || villagerData?.nh_details?.photo_url) && (
                                         <div className="mb-4 p-4 rounded-4 bg-white border shadow-sm">
                                             <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                                 <span className="fw-black small text-nook text-uppercase tracking-wide">
-                                                    <i className="fa-solid fa-images me-2"></i>Image Previews
+                                                    <i className="fa-solid fa-images me-2"></i>Image Previews & Photos
                                                 </span>
                                                 <div className="btn-group btn-group-sm rounded-pill p-1 bg-light border" role="group" aria-label="House image previews">
-                                                    {villagerData.nh_details?.house_interior_url && (
+                                                    {(entry.houseImage || villagerData?.nh_details?.house_exterior_url) && (
+                                                        <button
+                                                            type="button"
+                                                            className={`btn rounded-pill px-3 fw-bold ${activeHouseTab === 'exterior' ? 'bg-nook-green text-white border-0 shadow-sm' : 'btn-light text-muted border-0'}`}
+                                                            onClick={() => setActiveHouseTab('exterior')}
+                                                        >
+                                                            House Exterior
+                                                        </button>
+                                                    )}
+                                                    {villagerData?.nh_details?.house_interior_url && (
                                                         <button
                                                             type="button"
                                                             className={`btn rounded-pill px-3 fw-bold ${activeHouseTab === 'interior' ? 'bg-nook-green text-white border-0 shadow-sm' : 'btn-light text-muted border-0'}`}
@@ -686,22 +949,13 @@ const CatalogDetail = () => {
                                                             Interior
                                                         </button>
                                                     )}
-                                                    {villagerData.nh_details?.house_exterior_url && (
-                                                        <button
-                                                            type="button"
-                                                            className={`btn rounded-pill px-3 fw-bold ${activeHouseTab === 'exterior' ? 'bg-nook-green text-white border-0 shadow-sm' : 'btn-light text-muted border-0'}`}
-                                                            onClick={() => setActiveHouseTab('exterior')}
-                                                        >
-                                                            Exterior
-                                                        </button>
-                                                    )}
-                                                    {villagerData.nh_details?.photo_url && (
+                                                    {(entry.photoImage || villagerData?.nh_details?.photo_url) && (
                                                         <button
                                                             type="button"
                                                             className={`btn rounded-pill px-3 fw-bold ${activeHouseTab === 'photo' ? 'bg-nook-green text-white border-0 shadow-sm' : 'btn-light text-muted border-0'}`}
                                                             onClick={() => setActiveHouseTab('photo')}
                                                         >
-                                                            Photo
+                                                            Framed Photo
                                                         </button>
                                                     )}
                                                 </div>
@@ -711,10 +965,10 @@ const CatalogDetail = () => {
                                                 <img
                                                     src={
                                                         activeHouseTab === 'interior'
-                                                            ? villagerData.nh_details?.house_interior_url
+                                                            ? (villagerData?.nh_details?.house_interior_url || entry.houseImage || entry.image)
                                                             : activeHouseTab === 'exterior'
-                                                                ? villagerData.nh_details?.house_exterior_url
-                                                                : villagerData.nh_details?.photo_url
+                                                                ? (entry.houseImage || villagerData?.nh_details?.house_exterior_url || entry.image)
+                                                                : (entry.photoImage || villagerData?.nh_details?.photo_url || entry.image)
                                                     }
                                                     alt={`${entry.name} ${activeHouseTab}`}
                                                     className="w-100 h-100 object-fit-contain p-2"

@@ -23,6 +23,43 @@ export interface CatalogEntity {
         uniqueEntryId?: string;
     }>;
     personality?: string;
+    unorderable?: boolean;
+
+    // Rich ACNH Metadata
+    buy?: number | null;
+    sell?: number | null;
+    source?: string[];
+    sourceNotes?: string[];
+    seasonEvent?: string | null;
+    tag?: string;
+    size?: string;
+    surface?: boolean;
+    diy?: boolean;
+    materials?: Record<string, number>;
+    craftedItemName?: string;
+    cardColor?: string;
+
+    // Creature details
+    shadow?: string;
+    movementSpeed?: string;
+    catchPhrase?: string;
+
+    // Villager details
+    species?: string;
+    gender?: string;
+    birthday?: string;
+    hobby?: string;
+    subtype?: string;
+    favoriteSaying?: string;
+    favoriteSong?: string;
+    defaultClothing?: string;
+    wallpaper?: string;
+    flooring?: string;
+    furnitureNameList?: string[];
+    styles?: string[];
+    favoriteColors?: string[];
+    houseImage?: string;
+    photoImage?: string;
 }
 
 const IMAGE_FALLBACK = banner;

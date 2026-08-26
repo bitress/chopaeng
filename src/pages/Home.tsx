@@ -7,6 +7,7 @@ import DisclaimerBanner from "../components/DisclaimerBanner";
 import { BLOGS_API_BASE } from "../config/api";
 import { useIslandData } from "../context/useIslandData";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
+import TodaySnapshot from "../components/TodaySnapshot";
 
 interface BlogPost {
     id: string;
@@ -393,6 +394,11 @@ const Home = () => {
                         </div>
                     </div>
                 </div>
+            </section>
+
+            {/* ════════════════ TODAY'S SNAPSHOT ════════════════ */}
+            <section className="container py-4">
+                <TodaySnapshot />
             </section>
 
             {/* ════════════════ 4-PILLAR SIGNATURE ECOSYSTEM ════════════════ */}

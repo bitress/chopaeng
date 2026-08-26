@@ -31,6 +31,13 @@ const PrivacyPolicy   = lazy(() => import("../pages/PrivacyPolicy.tsx"));
 const TermsOfService  = lazy(() => import("../pages/TermsOfService.tsx"));
 const CookiesPolicy   = lazy(() => import("../pages/CookiesPolicy.tsx"));
 
+// --- Phase 2 pages (lazy-loaded) ---
+const Critters        = lazy(() => import("../pages/Critters.tsx"));
+const Events          = lazy(() => import("../pages/Events.tsx"));
+const NPCs            = lazy(() => import("../pages/NPCs.tsx"));
+const MyCollection    = lazy(() => import("../pages/MyCollection.tsx"));
+const Wishlist        = lazy(() => import("../pages/Wishlist.tsx"));
+
 // --- Dashboard pages (lazy-loaded) ---
 const DashboardHome          = lazy(() => import("../pages/dashboard/DashboardHome.tsx"));
 const DashboardIslands       = lazy(() => import("../pages/dashboard/DashboardIslands.tsx"));
@@ -85,6 +92,13 @@ const AppRoutes = () => {
 
                     <Route path="/blog" element={<BlogList />} />
                     <Route path="/blog/:id" element={<BlogPost />} />
+
+                    {/* Phase 2 pages */}
+                    <Route path="/critters" element={<Critters />} />
+                    <Route path="/events" element={<Events />} />
+                    <Route path="/npcs" element={<NPCs />} />
+                    <Route path="/my-collection" element={<MyCollection />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
 
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />

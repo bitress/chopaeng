@@ -90,9 +90,9 @@ const CommandBuilder = () => {
 
     // --- Data State ---
     const { data, isLoading: isLoadingData } = useCatalogData();
-    const catalogEntities = data?.all || [];
-    const explorerItems = data?.items || [];
-    const villagerEntities = data?.villagers || [];
+    const catalogEntities = useMemo(() => (data?.all || []).filter(item => !item.unorderable), [data?.all]);
+    const explorerItems = useMemo(() => (data?.items || []).filter(item => !item.unorderable), [data?.items]);
+    const villagerEntities = useMemo(() => (data?.villagers || []).filter(item => !item.unorderable), [data?.villagers]);
 
     const {
         orderItems,

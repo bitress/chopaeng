@@ -493,7 +493,7 @@ export const DashboardBundles = () => {
                         Official Pocket Bundles Manager
                     </h1>
                     <p className="small text-muted mb-0">
-                        Create, customize, and manage official community 1-click pocket presets with explorer.json items in the database.
+                        Create, customize, and manage official community 1-click pocket presets with items from the Animal Crossing database.
                     </p>
                 </div>
 
@@ -686,7 +686,7 @@ export const DashboardBundles = () => {
                                         <h2 className="modal-title h5 fw-black text-dark mb-0 ac-font">
                                             {editingBundle ? 'Edit Official Bundle' : 'Visual Official Bundle Builder'}
                                         </h2>
-                                        <p className="tiny-text text-muted mb-0">Browse explorer.json items and build 1-click community presets</p>
+                                        <p className="tiny-text text-muted mb-0">Browse Animal Crossing items and build 1-click community presets</p>
                                     </div>
                                 </div>
                                 <button type="button" className="btn-close" onClick={() => setEditModalOpen(false)} aria-label="Close" />
@@ -949,7 +949,7 @@ export const DashboardBundles = () => {
                                                         <input
                                                             type="text"
                                                             className="form-control form-control-sm rounded-pill ps-4 border"
-                                                            placeholder="Search items from explorer.json (e.g. Royal Crown, Golden Tool)..."
+                                                            placeholder="Search items from catalog (e.g. Royal Crown, Golden Tool)..."
                                                             value={explorerSearch}
                                                             onChange={(e) => setExplorerSearch(e.target.value)}
                                                         />
@@ -1007,11 +1007,11 @@ export const DashboardBundles = () => {
                                                     {catalogLoading ? (
                                                         <div className="text-center py-5 text-muted">
                                                             <div className="spinner-border spinner-border-sm text-success me-2" />
-                                                            Loading explorer.json catalog...
+                                                            Loading catalog items...
                                                         </div>
                                                     ) : filteredCatalogItems.length === 0 ? (
                                                         <div className="text-center py-5 text-muted">
-                                                            No matching items found in explorer.json.
+                                                            No matching items found.
                                                         </div>
                                                     ) : (
                                                         <div className="row g-2">

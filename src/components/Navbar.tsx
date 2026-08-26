@@ -13,9 +13,12 @@ export const Navbar: React.FC = () => {
     const [currentTheme, setCurrentTheme] = useState<ThemeMode>(getStoredTheme);
     const [showThemeDropdown, setShowThemeDropdown] = useState(false);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [showExploreDropdown, setShowExploreDropdown] = useState(false);
 
     const themeDropdownRef = useRef<HTMLDivElement>(null);
     const userDropdownRef = useRef<HTMLDivElement>(null);
+    const exploreDropdownRef = useRef<HTMLDivElement>(null);
+    const exploreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const { pathname } = useLocation();
     const navigate = useNavigate();
@@ -38,6 +41,7 @@ export const Navbar: React.FC = () => {
         setIsMobileMenuOpen(false);
         setShowThemeDropdown(false);
         setShowUserDropdown(false);
+        setShowExploreDropdown(false);
     }, [pathname]);
 
     // Handle body scroll locking on mobile menu open
@@ -58,6 +62,9 @@ export const Navbar: React.FC = () => {
             }
             if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
                 setShowUserDropdown(false);
+            }
+            if (exploreDropdownRef.current && !exploreDropdownRef.current.contains(e.target as Node)) {
+                setShowExploreDropdown(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -81,15 +88,55 @@ export const Navbar: React.FC = () => {
         return `https://cdn.discordapp.com/avatars/${user.user_id}/${user.avatar}.png?size=64`;
     }, [user]);
 
-    const navLinks = useMemo(() => [
+    // Primary nav links — always visible in the pill
+    const primaryLinks = useMemo(() => [
         { name: "Home", path: "/", icon: "fa-house" },
-        { name: "Islands", path: "/islands", icon: "fa-island-tropical" },
-        { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
+        { name: "Islands", path: "/islands", icon: "fa-map-location-dot" },
         { name: "Catalogue", path: "/catalog", icon: "fa-boxes-stacked" },
         { name: "Builder", path: "/command-builder", icon: "fa-cubes-stacked" },
-        { name: "Pockets", path: "/pockets", icon: "fa-boxes-packing" },
+    ], []);
+
+    // "Explore" dropdown links — secondary features
+    const exploreLinks = useMemo(() => [
+        { name: "Find Items", path: "/find", icon: "fa-magnifying-glass", color: "#6366f1", desc: "Instant item search" },
+        { name: "Critters", path: "/critters", icon: "fa-fish", color: "#0ea5e9", desc: "Availability calendar" },
+        { name: "Events", path: "/events", icon: "fa-calendar-days", color: "#f59e0b", desc: "Seasons & holidays" },
+        { name: "NPCs", path: "/npcs", icon: "fa-users", color: "#ec4899", desc: "Villager gallery" },
+        { name: "Guides", path: "/guides", icon: "fa-book-open", color: "#8b5cf6", desc: "Tips & tutorials" },
+    ], []);
+
+    // User-only quick links for the dropdown
+    const userQuickLinks = useMemo(() => [
+        { name: "My Profile", path: "/profile", icon: "fa-user", color: "#16a34a" },
+        { name: "My Wishlist", path: "/wishlist", icon: "fa-heart", color: "#ef4444" },
+        { name: "My Collection", path: "/my-collection", icon: "fa-clipboard-check", color: "#f59e0b" },
+        { name: "Pocket Inventory", path: "/pockets", icon: "fa-boxes-packing", color: "#3b82f6" },
+        { name: "Order Bot", path: "/order", icon: "fa-paper-plane", color: "#06b6d4" },
+    ], []);
+
+    // All links for mobile
+    const allNavLinks = useMemo(() => [
+        { name: "Home", path: "/", icon: "fa-house" },
+        { name: "Islands", path: "/islands", icon: "fa-map-location-dot" },
+        { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
+        { name: "Catalogue", path: "/catalog", icon: "fa-boxes-stacked" },
+        { name: "Critters", path: "/critters", icon: "fa-fish" },
+        { name: "Events", path: "/events", icon: "fa-calendar-days" },
+        { name: "NPCs", path: "/npcs", icon: "fa-users" },
+        { name: "Builder", path: "/command-builder", icon: "fa-cubes-stacked" },
         { name: "Guides", path: "/guides", icon: "fa-book-open" },
     ], []);
+
+    // Is the current route one of the "Explore" dropdown routes?
+    const isExploreActive = exploreLinks.some(l => pathname === l.path || pathname.startsWith(l.path + '/'));
+
+    const handleExploreEnter = () => {
+        if (exploreTimeoutRef.current) clearTimeout(exploreTimeoutRef.current);
+        setShowExploreDropdown(true);
+    };
+    const handleExploreLeave = () => {
+        exploreTimeoutRef.current = setTimeout(() => setShowExploreDropdown(false), 200);
+    };
 
     return (
         <>
@@ -99,35 +146,37 @@ export const Navbar: React.FC = () => {
                 }
 
                 .chopaeng-navbar.scrolled {
-                    background-color: var(--nav-scrolled-bg, rgba(255, 255, 255, 0.9));
-                    border-bottom: 1px solid var(--card-border, rgba(0, 0, 0, 0.07));
-                    backdrop-filter: blur(14px);
-                    -webkit-backdrop-filter: blur(14px);
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+                    background-color: var(--nav-scrolled-bg, rgba(255, 255, 255, 0.92));
+                    border-bottom: 1px solid var(--card-border, rgba(0, 0, 0, 0.06));
+                    backdrop-filter: blur(18px) saturate(180%);
+                    -webkit-backdrop-filter: blur(18px) saturate(180%);
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.03);
                 }
 
                 .chopaeng-nav-pill-container {
-                    background: var(--nav-pill-bg, rgba(255, 255, 255, 0.8));
-                    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.07));
+                    background: var(--nav-pill-bg, rgba(255, 255, 255, 0.85));
+                    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.06));
                     backdrop-filter: blur(10px);
                     -webkit-backdrop-filter: blur(10px);
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-                    padding: 4px;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+                    padding: 3px;
                     border-radius: 50px;
+                    gap: 1px;
                 }
 
                 .chopaeng-nav-item {
                     display: inline-flex;
                     align-items: center;
                     gap: 6px;
-                    padding: 6px 14px;
+                    padding: 7px 14px;
                     border-radius: 50px;
-                    font-size: 0.84rem;
+                    font-size: 0.82rem;
                     font-weight: 700;
                     color: var(--text-muted, #64748b);
                     text-decoration: none;
-                    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     white-space: nowrap;
+                    position: relative;
                 }
 
                 .chopaeng-nav-item:hover {
@@ -138,39 +187,134 @@ export const Navbar: React.FC = () => {
                 .chopaeng-nav-item.active {
                     color: #ffffff !important;
                     background: linear-gradient(135deg, #16a34a, #15803d);
-                    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+                    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
                 }
 
                 .chopaeng-nav-item.active i {
                     color: #ffffff !important;
                 }
 
+                /* Explore "More" trigger */
+                .chopaeng-explore-trigger {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    padding: 7px 12px;
+                    border-radius: 50px;
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    color: var(--text-muted, #64748b);
+                    cursor: pointer;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    white-space: nowrap;
+                    border: none;
+                    background: transparent;
+                }
+
+                .chopaeng-explore-trigger:hover,
+                .chopaeng-explore-trigger.open {
+                    color: var(--text-dark, #1e293b);
+                    background-color: rgba(0, 0, 0, 0.04);
+                }
+
+                .chopaeng-explore-trigger.has-active {
+                    color: #16a34a;
+                }
+
+                .chopaeng-explore-trigger .chevron-icon {
+                    font-size: 0.6rem;
+                    transition: transform 0.2s ease;
+                }
+
+                .chopaeng-explore-trigger.open .chevron-icon {
+                    transform: rotate(180deg);
+                }
+
+                /* Explore mega dropdown */
+                .chopaeng-explore-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    margin-top: 10px;
+                    width: 340px;
+                    background: var(--card-bg, #ffffff);
+                    border: 1px solid var(--card-border, rgba(0,0,0,0.08));
+                    border-radius: 16px;
+                    box-shadow: 0 12px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.04);
+                    padding: 6px;
+                    z-index: 1060;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateX(-50%) translateY(4px);
+                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+
+                .chopaeng-explore-dropdown.show {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateX(-50%) translateY(0);
+                }
+
+                .chopaeng-explore-link {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 10px 12px;
+                    border-radius: 12px;
+                    text-decoration: none;
+                    color: var(--text-dark, #1e293b);
+                    transition: all 0.15s ease;
+                }
+
+                .chopaeng-explore-link:hover {
+                    background: var(--bg-cream, #f8faf6);
+                    transform: translateX(2px);
+                }
+
+                .chopaeng-explore-link.active-link {
+                    background: rgba(22, 163, 74, 0.08);
+                }
+
+                .chopaeng-explore-link .explore-icon {
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 10px;
+                    font-size: 0.85rem;
+                    flex-shrink: 0;
+                }
+
                 .chopaeng-action-btn {
-                    width: 38px;
-                    height: 38px;
+                    width: 36px;
+                    height: 36px;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     border-radius: 50%;
                     background: var(--card-bg, #ffffff);
-                    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.08));
+                    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.07));
                     color: var(--text-dark, #334155);
                     transition: all 0.18s ease;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+                    font-size: 0.85rem;
                 }
 
                 .chopaeng-action-btn:hover {
                     transform: translateY(-1px);
-                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
                     color: var(--nook-green, #16a34a);
+                    border-color: rgba(22, 163, 74, 0.2);
                 }
 
                 /* Mobile Flyout Navigation */
                 .chopaeng-mobile-overlay {
                     position: fixed;
                     inset: 0;
-                    background: rgba(0, 0, 0, 0.45);
-                    backdrop-filter: blur(4px);
+                    background: rgba(0, 0, 0, 0.4);
+                    backdrop-filter: blur(6px);
                     z-index: 1040;
                     opacity: 0;
                     visibility: hidden;
@@ -187,10 +331,10 @@ export const Navbar: React.FC = () => {
                     top: 0;
                     right: 0;
                     bottom: 0;
-                    width: 85%;
+                    width: 88%;
                     max-width: 380px;
                     background: var(--card-bg, #ffffff);
-                    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+                    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.12);
                     z-index: 1045;
                     transform: translateX(100%);
                     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -203,42 +347,52 @@ export const Navbar: React.FC = () => {
                     transform: translateX(0);
                 }
 
-                .mobile-grid-link {
-                    background: var(--bg-cream, #f8faf6);
-                    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.06));
-                    border-radius: 16px;
-                    padding: 12px;
+                .mobile-nav-link {
                     display: flex;
-                    flex-direction: column;
                     align-items: center;
-                    justify-content: center;
-                    gap: 6px;
+                    gap: 12px;
+                    padding: 12px 16px;
+                    border-radius: 12px;
                     text-decoration: none;
                     color: var(--text-dark, #1e293b);
-                    transition: all 0.2s ease;
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                    transition: all 0.15s ease;
                 }
 
-                .mobile-grid-link:hover {
-                    background: #ffffff;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                .mobile-nav-link:hover {
+                    background: rgba(0, 0, 0, 0.03);
                 }
 
-                .mobile-grid-link.active {
+                .mobile-nav-link.active {
                     background: linear-gradient(135deg, #16a34a, #15803d);
                     color: #ffffff !important;
-                    border-color: transparent;
                 }
 
-                .mobile-grid-link.active i,
-                .mobile-grid-link.active span {
+                .mobile-nav-link.active i {
                     color: #ffffff !important;
+                }
+
+                .mobile-nav-link .mobile-nav-icon {
+                    width: 34px;
+                    height: 34px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 10px;
+                    background: var(--bg-cream, #f1f5f0);
+                    font-size: 0.85rem;
+                    flex-shrink: 0;
+                }
+
+                .mobile-nav-link.active .mobile-nav-icon {
+                    background: rgba(255, 255, 255, 0.2);
                 }
 
                 /* Hamburger Button */
                 .chopaeng-hamburger {
-                    width: 38px;
-                    height: 38px;
+                    width: 36px;
+                    height: 36px;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
@@ -254,7 +408,7 @@ export const Navbar: React.FC = () => {
 
                 .chopaeng-hamburger span {
                     display: block;
-                    width: 18px;
+                    width: 16px;
                     height: 2px;
                     background: var(--text-dark, #334155);
                     border-radius: 2px;
@@ -273,15 +427,125 @@ export const Navbar: React.FC = () => {
                 .chopaeng-hamburger.open span:nth-child(3) {
                     transform: translateY(-7px) rotate(-45deg);
                 }
+
+                /* User pill button */
+                .chopaeng-user-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 3px 10px 3px 3px;
+                    border-radius: 50px;
+                    background: var(--card-bg, #ffffff);
+                    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.07));
+                    cursor: pointer;
+                    transition: all 0.18s ease;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+                    height: 36px;
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    color: var(--text-dark, #1e293b);
+                }
+
+                .chopaeng-user-pill:hover {
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+                    border-color: rgba(22, 163, 74, 0.2);
+                }
+
+                /* User dropdown menu */
+                .chopaeng-user-dropdown {
+                    position: absolute;
+                    right: 0;
+                    top: 100%;
+                    margin-top: 8px;
+                    width: 240px;
+                    background: var(--card-bg, #ffffff);
+                    border: 1px solid var(--card-border, rgba(0,0,0,0.08));
+                    border-radius: 16px;
+                    box-shadow: 0 12px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.04);
+                    padding: 6px;
+                    z-index: 1060;
+                    animation: dropdownSlideUp 0.18s ease;
+                }
+
+                .chopaeng-user-dropdown-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 9px 12px;
+                    border-radius: 10px;
+                    text-decoration: none;
+                    color: var(--text-dark, #1e293b);
+                    font-weight: 600;
+                    font-size: 0.84rem;
+                    transition: all 0.12s ease;
+                    border: none;
+                    background: none;
+                    width: 100%;
+                    text-align: left;
+                    cursor: pointer;
+                }
+
+                .chopaeng-user-dropdown-item:hover {
+                    background: var(--bg-cream, #f8faf6);
+                }
+
+                .chopaeng-user-dropdown-item.danger {
+                    color: #ef4444;
+                }
+
+                .chopaeng-user-dropdown-item .dropdown-icon {
+                    width: 28px;
+                    height: 28px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    font-size: 0.75rem;
+                    flex-shrink: 0;
+                }
+
+                @keyframes dropdownSlideUp {
+                    from { opacity: 0; transform: translateY(4px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                /* Mobile user quick links grid */
+                .mobile-quick-links {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 6px;
+                }
+
+                .mobile-quick-link {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 4px;
+                    padding: 12px 6px;
+                    border-radius: 12px;
+                    text-decoration: none;
+                    color: var(--text-dark, #1e293b);
+                    font-weight: 600;
+                    font-size: 0.7rem;
+                    background: var(--bg-cream, #f8faf6);
+                    border: 1px solid var(--card-border, rgba(0,0,0,0.05));
+                    transition: all 0.15s ease;
+                }
+
+                .mobile-quick-link:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                }
             `}</style>
 
             <nav
-                className={`navbar sticky-top py-2.5 chopaeng-navbar ${isScrolled || isMobileMenuOpen ? "scrolled" : ""}`}
+                className={`navbar sticky-top py-2 chopaeng-navbar ${isScrolled || isMobileMenuOpen ? "scrolled" : ""}`}
                 style={{ zIndex: 1050 }}
                 role="navigation"
                 aria-label="Main Navigation"
             >
-                <div className="container-xl d-flex align-items-center justify-content-between gap-3">
+                <div className="container-xl d-flex align-items-center justify-content-between gap-2">
                     {/* Brand Logo */}
                     <Link
                         to="/"
@@ -294,23 +558,23 @@ export const Navbar: React.FC = () => {
                     >
                         <div
                             className="logo-box shadow-xs rounded-circle overflow-hidden bg-white p-1 d-flex align-items-center justify-content-center"
-                            style={{ width: 38, height: 38, border: '2px solid rgba(22, 163, 74, 0.2)' }}
+                            style={{ width: 34, height: 34, border: '2px solid rgba(22, 163, 74, 0.15)' }}
                         >
                             <img src={logo} alt="Chopaeng Leaf Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </div>
-                        <div className="d-flex flex-column">
-                            <span className="ac-font text-dark fw-black fs-5 lh-1" style={{ letterSpacing: '0.02em' }}>
+                        <div className="d-flex flex-column d-none d-sm-flex">
+                            <span className="ac-font text-dark fw-black lh-1" style={{ letterSpacing: '0.02em', fontSize: '1.1rem' }}>
                                 CHOPAENG
                             </span>
-                            <span className="tiny-text fw-bold text-success text-uppercase" style={{ letterSpacing: '0.06em', fontSize: '0.65rem' }}>
+                            <span className="fw-bold text-success text-uppercase" style={{ letterSpacing: '0.06em', fontSize: '0.58rem' }}>
                                 Treasure Islands
                             </span>
                         </div>
                     </Link>
 
-                    {/* Desktop Navigation Links Pill */}
+                    {/* Desktop Navigation — Primary Pills + Explore Dropdown */}
                     <div className="d-none d-lg-flex align-items-center chopaeng-nav-pill-container" role="menubar">
-                        {navLinks.map((link) => (
+                        {primaryLinks.map((link) => (
                             <NavLink
                                 key={link.name}
                                 to={link.path}
@@ -319,22 +583,76 @@ export const Navbar: React.FC = () => {
                                 onClick={() => playChimeClick()}
                                 role="menuitem"
                             >
-                                <i className={`fa-solid ${link.icon} x-small`} aria-hidden="true" />
+                                <i className={`fa-solid ${link.icon}`} style={{ fontSize: '0.72rem' }} aria-hidden="true" />
                                 <span>{link.name}</span>
                             </NavLink>
                         ))}
+
+                        {/* Explore "More" Dropdown Trigger */}
+                        <div
+                            className="position-relative"
+                            ref={exploreDropdownRef}
+                            onMouseEnter={handleExploreEnter}
+                            onMouseLeave={handleExploreLeave}
+                        >
+                            <button
+                                type="button"
+                                className={`chopaeng-explore-trigger ${showExploreDropdown ? 'open' : ''} ${isExploreActive ? 'has-active' : ''}`}
+                                onClick={() => {
+                                    playChimeClick();
+                                    setShowExploreDropdown(prev => !prev);
+                                }}
+                                aria-expanded={showExploreDropdown}
+                                aria-label="More navigation options"
+                            >
+                                <i className="fa-solid fa-compass" style={{ fontSize: '0.72rem' }} aria-hidden="true" />
+                                <span>Explore</span>
+                                <i className="fa-solid fa-chevron-down chevron-icon" aria-hidden="true" />
+                            </button>
+
+                            <div
+                                className={`chopaeng-explore-dropdown ${showExploreDropdown ? 'show' : ''}`}
+                                onMouseEnter={handleExploreEnter}
+                                onMouseLeave={handleExploreLeave}
+                            >
+                                {exploreLinks.map((link) => (
+                                    <NavLink
+                                        key={link.name}
+                                        to={link.path}
+                                        className={({ isActive }) => `chopaeng-explore-link ${isActive ? 'active-link' : ''}`}
+                                        onClick={() => {
+                                            playChimeClick();
+                                            setShowExploreDropdown(false);
+                                        }}
+                                    >
+                                        <div
+                                            className="explore-icon"
+                                            style={{ backgroundColor: `${link.color}15`, color: link.color }}
+                                        >
+                                            <i className={`fa-solid ${link.icon}`} />
+                                        </div>
+                                        <div>
+                                            <div className="fw-bold" style={{ fontSize: '0.84rem' }}>{link.name}</div>
+                                            <div className="text-muted" style={{ fontSize: '0.7rem' }}>{link.desc}</div>
+                                        </div>
+                                    </NavLink>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Right Action Controls */}
-                    <div className="d-flex align-items-center gap-2 flex-shrink-0">
-                        {/* User Account / Profile Button */}
+                    <div className="d-flex align-items-center gap-1.5 flex-shrink-0">
+                        {/* User Account */}
                         {user ? (
                             <div className="position-relative" ref={userDropdownRef}>
                                 <button
                                     type="button"
-                                    onClick={() => setShowUserDropdown((prev) => !prev)}
-                                    className="btn btn-sm rounded-pill fw-bold bg-white border shadow-2xs d-inline-flex align-items-center gap-2 p-1 pe-3 transition-all"
-                                    style={{ height: '38px' }}
+                                    onClick={() => {
+                                        playChimeClick();
+                                        setShowUserDropdown((prev) => !prev);
+                                    }}
+                                    className="chopaeng-user-pill"
                                     aria-expanded={showUserDropdown}
                                     aria-label="User Account Menu"
                                 >
@@ -348,69 +666,50 @@ export const Navbar: React.FC = () => {
                                     ) : (
                                         <div
                                             className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
-                                            style={{ width: 28, height: 28, fontSize: '0.75rem' }}
+                                            style={{ width: 28, height: 28, fontSize: '0.72rem' }}
                                         >
                                             {user.username.charAt(0).toUpperCase()}
                                         </div>
                                     )}
-                                    <span className="small text-dark fw-bold text-truncate d-none d-md-inline" style={{ maxWidth: '100px' }}>
+                                    <span className="d-none d-md-inline text-truncate" style={{ maxWidth: '80px' }}>
                                         {user.username}
                                     </span>
-                                    <i className="fa-solid fa-chevron-down tiny-text text-muted" aria-hidden="true" />
+                                    <i className={`fa-solid fa-chevron-down text-muted`} style={{ fontSize: '0.55rem', transition: 'transform 0.2s', transform: showUserDropdown ? 'rotate(180deg)' : 'none' }} aria-hidden="true" />
                                 </button>
 
-                                {/* User Profile Dropdown */}
+                                {/* User Dropdown */}
                                 {showUserDropdown && (
-                                    <div
-                                        className="position-absolute end-0 mt-2 p-2 rounded-4 shadow-lg border animate-up"
-                                        style={{
-                                            width: '230px',
-                                            backgroundColor: 'var(--card-bg, #ffffff)',
-                                            borderColor: 'var(--card-border, rgba(0,0,0,0.08))',
-                                            zIndex: 1060,
-                                        }}
-                                    >
-                                        <div className="p-2 border-bottom mb-1">
-                                            <div className="fw-black text-dark text-truncate small">{user.username}</div>
-                                            <div className="tiny-text text-muted text-truncate">
+                                    <div className="chopaeng-user-dropdown">
+                                        <div className="px-3 py-2 border-bottom mb-1" style={{ borderColor: 'var(--card-border, rgba(0,0,0,0.06))' }}>
+                                            <div className="fw-black text-dark text-truncate" style={{ fontSize: '0.85rem' }}>{user.username}</div>
+                                            <div className="text-muted text-truncate" style={{ fontSize: '0.7rem' }}>
                                                 {user.is_admin ? "Administrator" : user.is_mod ? "Moderator" : "Member"}
                                             </div>
                                         </div>
 
-                                        <Link
-                                            to="/profile"
-                                            className="btn btn-sm w-100 text-start d-flex align-items-center gap-2 p-2 rounded-3 text-dark mb-1 hover-bg-light"
-                                            onClick={() => setShowUserDropdown(false)}
-                                        >
-                                            <i className="fa-solid fa-user text-success" aria-hidden="true" />
-                                            <span>My Profile</span>
-                                        </Link>
+                                        {userQuickLinks.map((link) => (
+                                            <Link
+                                                key={link.path}
+                                                to={link.path}
+                                                className="chopaeng-user-dropdown-item"
+                                                onClick={() => setShowUserDropdown(false)}
+                                            >
+                                                <div className="dropdown-icon" style={{ backgroundColor: `${link.color}12`, color: link.color }}>
+                                                    <i className={`fa-solid ${link.icon}`} />
+                                                </div>
+                                                <span>{link.name}</span>
+                                            </Link>
+                                        ))}
 
-                                        <Link
-                                            to="/pockets"
-                                            className="btn btn-sm w-100 text-start d-flex align-items-center gap-2 p-2 rounded-3 text-dark mb-1 hover-bg-light"
-                                            onClick={() => setShowUserDropdown(false)}
-                                        >
-                                            <i className="fa-solid fa-boxes-packing text-primary" aria-hidden="true" />
-                                            <span>Pocket Inventory</span>
-                                        </Link>
-
-                                        <Link
-                                            to="/order"
-                                            className="btn btn-sm w-100 text-start d-flex align-items-center gap-2 p-2 rounded-3 text-dark mb-1 hover-bg-light"
-                                            onClick={() => setShowUserDropdown(false)}
-                                        >
-                                            <i className="fa-solid fa-paper-plane text-info" aria-hidden="true" />
-                                            <span>Order Bot</span>
-                                        </Link>
-
-                                        <div className="border-top pt-1 mt-1">
+                                        <div className="border-top mt-1 pt-1" style={{ borderColor: 'var(--card-border, rgba(0,0,0,0.06))' }}>
                                             <button
                                                 type="button"
                                                 onClick={handleLogout}
-                                                className="btn btn-sm w-100 text-start d-flex align-items-center gap-2 p-2 rounded-3 text-danger hover-bg-light"
+                                                className="chopaeng-user-dropdown-item danger"
                                             >
-                                                <i className="fa-solid fa-right-from-bracket" aria-hidden="true" />
+                                                <div className="dropdown-icon" style={{ backgroundColor: '#ef444412', color: '#ef4444' }}>
+                                                    <i className="fa-solid fa-right-from-bracket" />
+                                                </div>
                                                 <span>Logout</span>
                                             </button>
                                         </div>
@@ -421,31 +720,31 @@ export const Navbar: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={login}
-                                className="btn btn-nook text-white rounded-pill fw-bold btn-sm shadow-2xs d-none d-md-inline-flex align-items-center gap-2 px-3.5"
-                                style={{ height: '38px' }}
+                                className="btn btn-nook text-white rounded-pill fw-bold btn-sm shadow-2xs d-none d-md-inline-flex align-items-center gap-2 px-3"
+                                style={{ height: '36px', fontSize: '0.82rem' }}
                                 title="Login with Discord"
                             >
-                                <i className="fa-brands fa-discord fs-6" aria-hidden="true" />
+                                <i className="fa-brands fa-discord" style={{ fontSize: '0.95rem' }} aria-hidden="true" />
                                 <span>Login</span>
                             </button>
                         )}
 
-                        {/* K.K. Slider Jukebox Launcher */}
+                        {/* K.K. Slider Jukebox */}
                         <button
                             type="button"
                             onClick={() => {
                                 playChimeClick();
                                 window.dispatchEvent(new CustomEvent('chopaeng_toggle_jukebox'));
                             }}
-                            className="chopaeng-action-btn"
-                            title="K.K. Slider Jukebox Player"
+                            className="chopaeng-action-btn d-none d-sm-inline-flex"
+                            title="K.K. Slider Jukebox"
                             aria-label="Open K.K. Slider Jukebox"
                         >
-                            <i className="fa-solid fa-guitar text-success fs-6" aria-hidden="true" />
+                            <i className="fa-solid fa-guitar text-success" aria-hidden="true" />
                         </button>
 
-                        {/* Theme Switcher Button */}
-                        <div className="position-relative" ref={themeDropdownRef}>
+                        {/* Theme Switcher */}
+                        <div className="position-relative d-none d-sm-block" ref={themeDropdownRef}>
                             <button
                                 type="button"
                                 onClick={() => {
@@ -461,21 +760,18 @@ export const Navbar: React.FC = () => {
                                     currentTheme === 'celeste' ? 'fa-star text-warning' :
                                     currentTheme === 'roost' ? 'fa-mug-hot text-amber' :
                                     'fa-leaf text-success'
-                                } fs-6`} aria-hidden="true" />
+                                }`} aria-hidden="true" />
                             </button>
 
                             {showThemeDropdown && (
                                 <div
-                                    className="position-absolute end-0 mt-2 p-2 rounded-4 shadow-lg border animate-up"
-                                    style={{
-                                        width: '240px',
-                                        backgroundColor: 'var(--card-bg, #ffffff)',
-                                        borderColor: 'var(--card-border, rgba(0,0,0,0.08))',
-                                        zIndex: 1060,
-                                    }}
+                                    className="chopaeng-user-dropdown"
+                                    style={{ width: '230px' }}
                                 >
-                                    <div className="tiny-text fw-bold text-muted px-2 py-1 text-uppercase tracking-wider">
-                                        Island Theme
+                                    <div className="px-3 py-2 mb-1">
+                                        <div className="fw-bold text-muted text-uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.08em' }}>
+                                            Island Theme
+                                        </div>
                                     </div>
                                     {THEME_OPTIONS.map((opt) => (
                                         <button
@@ -487,23 +783,17 @@ export const Navbar: React.FC = () => {
                                                 setCurrentTheme(opt.id);
                                                 setShowThemeDropdown(false);
                                             }}
-                                            className={`btn w-100 text-start d-flex align-items-center gap-2 p-2 rounded-3 border-0 transition-all mb-1 ${
-                                                currentTheme === opt.id ? 'bg-light fw-bold text-dark' : 'text-muted'
-                                            }`}
+                                            className={`chopaeng-user-dropdown-item ${currentTheme === opt.id ? 'fw-bold' : ''}`}
                                         >
-                                            <div
-                                                className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
-                                                style={{ width: '28px', height: '28px', backgroundColor: `${opt.badgeColor}20`, color: opt.badgeColor }}
-                                                aria-hidden="true"
-                                            >
-                                                <i className={`fa-solid ${opt.icon} x-small`} />
+                                            <div className="dropdown-icon" style={{ backgroundColor: `${opt.badgeColor}15`, color: opt.badgeColor }}>
+                                                <i className={`fa-solid ${opt.icon}`} />
                                             </div>
-                                            <div className="flex-grow-1 text-truncate">
-                                                <div className="small text-truncate" style={{ fontSize: '0.85rem' }}>{opt.name}</div>
-                                                <div className="tiny-text text-muted text-truncate" style={{ fontSize: '0.68rem' }}>{opt.description}</div>
+                                            <div className="flex-grow-1">
+                                                <div style={{ fontSize: '0.82rem' }}>{opt.name}</div>
+                                                <div className="text-muted" style={{ fontSize: '0.65rem' }}>{opt.description}</div>
                                             </div>
                                             {currentTheme === opt.id && (
-                                                <i className="fa-solid fa-check text-success x-small" aria-hidden="true" />
+                                                <i className="fa-solid fa-circle-check text-success" style={{ fontSize: '0.75rem' }} aria-hidden="true" />
                                             )}
                                         </button>
                                     ))}
@@ -511,19 +801,19 @@ export const Navbar: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Discord Server Link */}
+                        {/* Discord Link */}
                         <a
                             href="https://discord.gg/chopaeng"
                             target="_blank"
                             rel="noreferrer"
-                            className="chopaeng-action-btn d-none d-sm-inline-flex"
+                            className="chopaeng-action-btn d-none d-md-inline-flex"
                             title="Join our Discord Community"
                             aria-label="Discord Community"
                         >
-                            <i className="fa-brands fa-discord text-primary fs-6" aria-hidden="true" />
+                            <i className="fa-brands fa-discord text-primary" aria-hidden="true" />
                         </a>
 
-                        {/* Mobile Menu Toggle Hamburger */}
+                        {/* Mobile Menu Toggle */}
                         <button
                             type="button"
                             className={`chopaeng-hamburger d-lg-none ${isMobileMenuOpen ? 'open' : ''}`}
@@ -542,29 +832,30 @@ export const Navbar: React.FC = () => {
                 </div>
             </nav>
 
-            {/* Mobile Drawer Backdrop Overlay */}
+            {/* Mobile Drawer Backdrop */}
             <div
                 className={`chopaeng-mobile-overlay ${isMobileMenuOpen ? 'open' : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 aria-hidden="true"
             />
 
-            {/* Mobile Drawer Panel */}
+            {/* Mobile Drawer */}
             <aside
                 className={`chopaeng-mobile-drawer ${isMobileMenuOpen ? 'open' : ''}`}
                 aria-label="Mobile Navigation Drawer"
             >
                 {/* Drawer Header */}
-                <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-light">
+                <div className="p-3 border-bottom d-flex align-items-center justify-content-between" style={{ background: 'var(--bg-cream, #f8faf6)' }}>
                     <div className="d-flex align-items-center gap-2">
-                        <img src={logo} alt="Logo" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                        <span className="ac-font fw-black fs-6 text-dark">CHOPAENG</span>
+                        <img src={logo} alt="Logo" style={{ width: 26, height: 26, objectFit: 'contain' }} />
+                        <span className="ac-font fw-black text-dark" style={{ fontSize: '1rem' }}>CHOPAENG</span>
                     </div>
                     <button
                         type="button"
                         className="btn-close"
                         onClick={() => setIsMobileMenuOpen(false)}
                         aria-label="Close menu"
+                        style={{ fontSize: '0.7rem' }}
                     />
                 </div>
 
@@ -574,21 +865,24 @@ export const Navbar: React.FC = () => {
                         <div className="d-flex align-items-center justify-content-between gap-2">
                             <div className="d-flex align-items-center gap-2 min-w-0">
                                 {userAvatarUrl ? (
-                                    <img src={userAvatarUrl} alt={user.username} className="rounded-circle" style={{ width: 36, height: 36 }} />
+                                    <img src={userAvatarUrl} alt={user.username} className="rounded-circle" style={{ width: 34, height: 34 }} />
                                 ) : (
-                                    <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style={{ width: 36, height: 36 }}>
+                                    <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style={{ width: 34, height: 34, fontSize: '0.75rem' }}>
                                         {user.username.charAt(0).toUpperCase()}
                                     </div>
                                 )}
                                 <div className="min-w-0">
-                                    <strong className="d-block text-dark small text-truncate">{user.username}</strong>
-                                    <span className="tiny-text text-muted">Signed In</span>
+                                    <strong className="d-block text-dark text-truncate" style={{ fontSize: '0.85rem' }}>{user.username}</strong>
+                                    <span className="text-muted" style={{ fontSize: '0.68rem' }}>
+                                        {user.is_admin ? "Admin" : user.is_mod ? "Moderator" : "Member"}
+                                    </span>
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={handleLogout}
                                 className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2.5 py-1"
+                                style={{ fontSize: '0.72rem' }}
                             >
                                 Logout
                             </button>
@@ -608,32 +902,52 @@ export const Navbar: React.FC = () => {
                     )}
                 </div>
 
-                {/* Drawer Navigation Links Grid */}
-                <div className="p-3 flex-grow-1">
-                    <div className="tiny-text fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.05em' }}>
-                        Explore Islands
-                    </div>
-                    <div className="row g-2 mb-3">
-                        {navLinks.map((link) => (
-                            <div className="col-6" key={link.name}>
-                                <NavLink
+                {/* User Quick Links (mobile) */}
+                {user && (
+                    <div className="px-3 pt-3">
+                        <div className="mobile-quick-links">
+                            {userQuickLinks.slice(0, 3).map((link) => (
+                                <Link
+                                    key={link.path}
                                     to={link.path}
-                                    end={link.path === "/"}
-                                    className={({ isActive }) => `mobile-grid-link ${isActive ? "active" : ""}`}
-                                    onClick={() => {
-                                        playChimeClick();
-                                        setIsMobileMenuOpen(false);
-                                    }}
+                                    className="mobile-quick-link"
+                                    onClick={() => { playChimeClick(); setIsMobileMenuOpen(false); }}
                                 >
-                                    <i className={`fa-solid ${link.icon} fs-5 text-success`} aria-hidden="true" />
-                                    <span className="tiny-text fw-bold">{link.name}</span>
-                                </NavLink>
-                            </div>
+                                    <i className={`fa-solid ${link.icon}`} style={{ color: link.color, fontSize: '0.9rem' }} />
+                                    <span>{link.name.replace('My ', '')}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Drawer Navigation List */}
+                <div className="p-3 flex-grow-1">
+                    <div className="fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.06em', fontSize: '0.62rem' }}>
+                        Navigation
+                    </div>
+                    <div className="d-flex flex-column gap-1 mb-3">
+                        {allNavLinks.map((link) => (
+                            <NavLink
+                                key={link.name}
+                                to={link.path}
+                                end={link.path === "/"}
+                                className={({ isActive }) => `mobile-nav-link ${isActive ? "active" : ""}`}
+                                onClick={() => {
+                                    playChimeClick();
+                                    setIsMobileMenuOpen(false);
+                                }}
+                            >
+                                <div className="mobile-nav-icon">
+                                    <i className={`fa-solid ${link.icon} text-success`} aria-hidden="true" />
+                                </div>
+                                <span>{link.name}</span>
+                            </NavLink>
                         ))}
                     </div>
 
-                    {/* Theme Selector */}
-                    <div className="tiny-text fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.05em' }}>
+                    {/* Theme Selector (mobile) */}
+                    <div className="fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.06em', fontSize: '0.62rem' }}>
                         Theme
                     </div>
                     <div className="d-flex gap-1 mb-3">
@@ -651,40 +965,42 @@ export const Navbar: React.FC = () => {
                                 }`}
                                 style={{ fontSize: '0.72rem' }}
                             >
-                                <i className={`fa-solid ${opt.icon} x-small`} aria-hidden="true" />
+                                <i className={`fa-solid ${opt.icon}`} style={{ fontSize: '0.65rem' }} aria-hidden="true" />
                                 <span>{opt.name.split(' ')[0]}</span>
                             </button>
                         ))}
                     </div>
 
-                    {/* Feedback / Suggestion Button */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setIsMobileMenuOpen(false);
-                            openSuggestionModal();
-                        }}
-                        className="btn btn-warning bg-opacity-10 text-dark border border-warning border-opacity-50 w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 shadow-2xs mb-2"
-                        style={{ backgroundColor: '#fffbeb', fontSize: '0.82rem' }}
-                    >
-                        <i className="fa-solid fa-lightbulb text-warning" aria-hidden="true" />
-                        <span>Suggest Feature / Feedback</span>
-                    </button>
+                    {/* Feedback / Discord */}
+                    <div className="d-flex flex-column gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                openSuggestionModal();
+                            }}
+                            className="btn btn-sm w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 border"
+                            style={{ backgroundColor: '#fffbeb', borderColor: '#fbbf2440', fontSize: '0.8rem', color: '#92400e' }}
+                        >
+                            <i className="fa-solid fa-lightbulb text-warning" aria-hidden="true" />
+                            <span>Suggest Feature</span>
+                        </button>
 
-                    <a
-                        href="https://discord.gg/chopaeng"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-light border w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none text-dark"
-                        style={{ fontSize: '0.82rem' }}
-                    >
-                        <i className="fa-brands fa-discord text-primary" aria-hidden="true" />
-                        <span>Join Discord Community</span>
-                    </a>
+                        <a
+                            href="https://discord.gg/chopaeng"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-sm btn-light border w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none text-dark"
+                            style={{ fontSize: '0.8rem' }}
+                        >
+                            <i className="fa-brands fa-discord text-primary" aria-hidden="true" />
+                            <span>Join Discord</span>
+                        </a>
+                    </div>
                 </div>
             </aside>
 
-            {/* Background K.K. Slider Jukebox Audio */}
+            {/* K.K. Slider Jukebox Audio */}
             <KKSliderJukebox />
         </>
     );

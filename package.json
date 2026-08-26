@@ -1,7 +1,7 @@
 {
   "name": "chopaeng",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@bitress/animal-crossing": "^8.2.1",
     "@tanstack/react-query": "^5.101.4",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",

@@ -1,40 +1,87 @@
 import type { CatalogEntity } from './commandBuilderData';
-import { fetchExplorerData } from './explorerDataLoader';
 
-type VillagerJson = {
-    id: string;
-    name: string;
-    emoji?: string;
-    species?: string;
-    gender?: string;
-    personality?: string;
-    altName?: string;
-    isRestricted?: boolean;
-};
-
-const toVillagerEntity = (villager: VillagerJson): CatalogEntity => ({
-    id: villager.id,
-    name: villager.name,
-    entityType: 'villager',
-    category: villager.personality || 'Villager',
-    theme: villager.species || 'Villager',
-    series: 'Villager',
-    interactivity: villager.gender || 'Unknown',
-    colour: 'Various',
-    image: `https://www.pange.ca/itemsearch/villagers/${villager.id}.png`,
-    description: `Request ${villager.name}${villager.personality ? `, a ${villager.personality.toLowerCase()} ${villager.species?.toLowerCase() || 'villager'}` : ' as your requested villager'}.`,
-    variations: [],
-    personality: villager.personality
-});
+let _cachedVillagers: CatalogEntity[] | null = null;
 
 export const loadVillagers = async (): Promise<CatalogEntity[]> => {
+    if (_cachedVillagers) {
+        return _cachedVillagers;
+    }
+
     try {
-        const data = await fetchExplorerData();
-        const villagers: VillagerJson[] = Array.isArray(data) ? data : data.villagers || [];
-        return Array.isArray(villagers) ? villagers.map(toVillagerEntity) : [];
+        const { villagers, npcs } = await import('@bitress/animal-crossing');
+
+        const allCharacters: CatalogEntity[] = [];
+
+        // 1. Standard Island Villagers (413 - Orderable/Injectable with filename ID: e.g. cat23 for Raymond)
+        if (Array.isArray(villagers)) {
+            for (const v of villagers) {
+                const villagerId = v.filename || v.catchphrases?.id || v.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const primaryImage = v.iconImage || v.photoImage || `https://acnhcdn.com/latest/NpcIcon/${v.filename}.png`;
+
+                allCharacters.push({
+                    id: villagerId,
+                    name: v.name,
+                    entityType: 'villager',
+                    category: v.personality ? String(v.personality) : 'Villager',
+                    theme: v.species ? String(v.species) : 'Villager',
+                    series: 'Villager',
+                    interactivity: v.gender ? String(v.gender) : 'Unknown',
+                    colour: v.colors?.[0] ? String(v.colors[0]) : 'Various',
+                    image: primaryImage,
+                    description: `Adopt ${v.name}, a ${v.personality?.toLowerCase() || 'wonderful'} ${v.species?.toLowerCase() || 'villager'} for your island. Favorite saying: "${v.favoriteSaying || v.catchphrase || 'Hello!'}".`,
+                    variations: [],
+                    personality: v.personality ? String(v.personality) : undefined,
+                    unorderable: false,
+                    species: v.species ? String(v.species) : undefined,
+                    gender: v.gender ? String(v.gender) : undefined,
+                    birthday: v.birthday ? String(v.birthday) : undefined,
+                    hobby: v.hobby ? String(v.hobby) : undefined,
+                    subtype: v.subtype ? String(v.subtype) : undefined,
+                    favoriteSaying: v.favoriteSaying ? String(v.favoriteSaying) : undefined,
+                    favoriteSong: v.favoriteSong ? String(v.favoriteSong) : undefined,
+                    defaultClothing: v.defaultClothing ? String(v.defaultClothing) : undefined,
+                    wallpaper: v.wallpaper ? String(v.wallpaper) : undefined,
+                    flooring: v.flooring ? String(v.flooring) : undefined,
+                    furnitureNameList: Array.isArray(v.furnitureNameList) ? v.furnitureNameList : [],
+                    styles: Array.isArray(v.styles) ? v.styles.map(String) : [],
+                    favoriteColors: Array.isArray(v.colors) ? v.colors.map(String) : [],
+                    houseImage: v.houseImage || undefined,
+                    photoImage: v.photoImage || undefined,
+                });
+            }
+        }
+
+        // 2. Special NPCs (65 - Reference only, unorderable)
+        if (Array.isArray(npcs)) {
+            for (const npc of npcs) {
+                const npcInternalId = npc.npcId || npc.iconFilename || npc.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const primaryImage = npc.iconImage || npc.photoImage || `https://acnhcdn.com/latest/NpcIcon/${npc.iconFilename || npc.npcId}.png`;
+
+                allCharacters.push({
+                    id: npcInternalId,
+                    name: npc.name,
+                    entityType: 'villager',
+                    category: 'Special NPC',
+                    theme: 'NPC',
+                    series: 'Special NPC',
+                    interactivity: npc.gender ? String(npc.gender) : 'Special',
+                    colour: npc.nameColor ? String(npc.nameColor) : 'Gold',
+                    image: primaryImage,
+                    description: `${npc.name} is a special character in Animal Crossing: New Horizons (Birthday: ${npc.birthday || 'N/A'}).`,
+                    variations: [],
+                    personality: 'Special NPC',
+                    unorderable: true,
+                    gender: npc.gender ? String(npc.gender) : undefined,
+                    birthday: npc.birthday ? String(npc.birthday) : undefined,
+                    photoImage: npc.photoImage || undefined,
+                });
+            }
+        }
+
+        _cachedVillagers = allCharacters;
+        return allCharacters;
     } catch (error) {
-        console.error('Failed to load villagers from explorer.json:', error);
+        console.error('Failed to load villagers from @bitress/animal-crossing:', error);
         return [];
     }
 };
-
