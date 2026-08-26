@@ -1,0 +1,355 @@
+/* ═══════════════════════════════════════════════════════════════
+   CHOPAENG RESIDENT PASSPORT & PROFILE - DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+.profile-page-wrapper {
+    --pf-green-dark: #1b4332;
+    --pf-green: #2d6a4f;
+    --pf-green-light: #52b788;
+    --pf-green-subtle: #d8f3dc;
+    --pf-green-tint: #f0fdf4;
+    
+    --pf-sand: #fefae0;
+    --pf-sand-card: #fdfbf7;
+    --pf-sand-border: #e9e4cf;
+    
+    --pf-wood: #78350f;
+    --pf-wood-subtle: #fef3c7;
+    
+    --pf-sky: #0284c7;
+    --pf-sky-subtle: #e0f2fe;
+    
+    --pf-sun: #d97706;
+    --pf-sun-subtle: #fef3c7;
+    
+    --pf-text-main: #1e293b;
+    --pf-text-muted: #64748b;
+    --pf-border-subtle: #e2e8f0;
+    --pf-card-bg: #ffffff;
+    
+    /* Standardized 2-level elevation system */
+    --pf-shadow-1: 0 4px 20px -2px rgba(45, 106, 79, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    --pf-shadow-2: 0 12px 30px -4px rgba(45, 106, 79, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+    
+    min-height: 100vh;
+    font-family: var(--font-main, 'Quicksand', 'Nunito', sans-serif);
+    color: var(--pf-text-main);
+    background-color: var(--nook-bg, #f2f4e6);
+}
+
+/* ── HERO PASSPORT HEADER ─────────────────────────────────────── */
+.pf-hero-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    border: 2px solid var(--pf-sand-border);
+    box-shadow: var(--pf-shadow-2);
+    position: relative;
+    overflow: hidden;
+}
+
+.pf-passport-watermark {
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+    width: 80px;
+    height: 80px;
+    border: 2px dashed rgba(45, 106, 79, 0.35);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--pf-green);
+    transform: rotate(12deg);
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.pf-avatar-frame {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 4px solid var(--pf-green-light);
+    box-shadow: 0 4px 14px rgba(45, 106, 79, 0.2);
+    position: relative;
+    overflow: hidden;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.pf-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Two-Zone Stats Ribbon */
+.pf-stats-ribbon {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    background: var(--pf-green-tint);
+    border: 1px solid var(--pf-green-subtle);
+    border-radius: 1rem;
+    padding: 0.85rem 1rem;
+}
+
+.pf-stat-item {
+    text-align: center;
+    padding: 0.25rem 0.5rem;
+}
+
+.pf-stat-item:not(:last-child) {
+    border-right: 1px solid rgba(45, 106, 79, 0.15);
+}
+
+.pf-stat-value {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    color: var(--pf-green-dark);
+}
+
+.pf-stat-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pf-text-muted);
+}
+
+/* ── TAB NAVIGATION ───────────────────────────────────────────── */
+.pf-tab-scroller {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0;
+}
+.pf-tab-scroller::-webkit-scrollbar {
+    display: none;
+}
+
+.pf-tab-btn {
+    border: 1px solid var(--pf-border-subtle);
+    background: #ffffff;
+    color: var(--pf-text-muted);
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 9999px;
+    padding: 0.55rem 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pf-tab-btn:hover {
+    color: var(--pf-green-dark);
+    background: var(--pf-green-tint);
+    border-color: var(--pf-green-light);
+    transform: translateY(-1px);
+}
+
+.pf-tab-btn.active {
+    background: var(--pf-green);
+    color: #ffffff !important;
+    border-color: var(--pf-green);
+    box-shadow: 0 4px 14px rgba(45, 106, 79, 0.28);
+}
+
+.pf-tab-btn.active .pf-tab-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+.pf-tab-count {
+    background: var(--pf-border-subtle);
+    color: var(--pf-text-main);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    transition: all 0.2s;
+}
+
+/* ── CARDS & SECTIONS ─────────────────────────────────────────── */
+.pf-card {
+    background: var(--pf-card-bg);
+    border-radius: 1.25rem;
+    border: 1px solid var(--pf-border-subtle);
+    box-shadow: var(--pf-shadow-1);
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pf-card:hover {
+    box-shadow: var(--pf-shadow-2);
+}
+
+.pf-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--pf-border-subtle);
+}
+
+/* Character Card */
+.pf-char-card {
+    background: #ffffff;
+    border: 2px solid var(--pf-border-subtle);
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
+}
+
+.pf-char-card.primary {
+    border-color: var(--pf-green);
+    background: linear-gradient(180deg, #ffffff 0%, var(--pf-green-tint) 100%);
+    box-shadow: 0 6px 20px -2px rgba(45, 106, 79, 0.15);
+}
+
+.pf-char-icon-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--pf-green-tint);
+    border: 2px solid var(--pf-green-light);
+    color: var(--pf-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.pf-char-card.primary .pf-char-icon-circle {
+    background: var(--pf-green);
+    color: #ffffff;
+    border-color: var(--pf-green);
+}
+
+/* Island Card in Access/Favorites */
+.pf-island-card {
+    background: #ffffff;
+    border: 1px solid var(--pf-border-subtle);
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.pf-island-card:hover {
+    border-color: var(--pf-green-light);
+    transform: translateY(-2px);
+    box-shadow: var(--pf-shadow-2);
+}
+
+/* Order History Card */
+.pf-order-card {
+    background: #ffffff;
+    border: 1px solid var(--pf-border-subtle);
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+.pf-order-card:hover {
+    border-color: var(--pf-green-light);
+    box-shadow: var(--pf-shadow-2);
+}
+
+.pf-order-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--pf-green-tint);
+    border: 1px solid var(--pf-green-subtle);
+    border-radius: 9999px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--pf-green-dark);
+}
+
+/* ── EMPTY STATES ─────────────────────────────────────────────── */
+.pf-empty-state {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background: #ffffff;
+    border-radius: 1.5rem;
+    border: 2px dashed var(--pf-border-subtle);
+}
+
+.pf-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    display: inline-block;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
+}
+
+.pf-empty-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--pf-text-main);
+    margin-bottom: 0.35rem;
+}
+
+.pf-empty-desc {
+    font-size: 0.88rem;
+    color: var(--pf-text-muted);
+    max-width: 420px;
+    margin: 0 auto 1.25rem;
+}
+
+/* ── RESPONSIVE ADAPTATIONS ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .pf-stats-ribbon {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .pf-stat-item:nth-child(2) {
+        border-right: none;
+    }
+    
+    .pf-stat-item:nth-child(1),
+    .pf-stat-item:nth-child(2) {
+        border-bottom: 1px solid rgba(45, 106, 79, 0.15);
+        padding-bottom: 0.5rem;
+    }
+
+    .pf-passport-watermark {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .pf-stats-ribbon {
+        grid-template-columns: 1fr;
+    }
+    
+    .pf-stat-item {
+        border-right: none !important;
+        border-bottom: 1px solid rgba(45, 106, 79, 0.15);
+        padding-bottom: 0.4rem;
+    }
+    .pf-stat-item:last-child {
+        border-bottom: none;
+    }
+}

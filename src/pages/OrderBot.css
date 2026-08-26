@@ -123,9 +123,11 @@
     0% {
         box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
     }
+
     70% {
         box-shadow: 0 0 0 7px rgba(74, 222, 128, 0);
     }
+
     100% {
         box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
     }
@@ -234,7 +236,7 @@
     position: relative;
 }
 
-.ob-step + .ob-step::before {
+.ob-step+.ob-step::before {
     content: '';
     position: absolute;
     top: 17px;
@@ -246,8 +248,8 @@
     transition: background 0.4s ease;
 }
 
-.ob-step.done + .ob-step::before,
-.ob-step.active + .ob-step::before {
+.ob-step.done+.ob-step::before,
+.ob-step.active+.ob-step::before {
     background: var(--ob-green);
 }
 
@@ -519,9 +521,12 @@
 }
 
 @keyframes ob-ready-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.1);
     }
@@ -859,7 +864,7 @@
 .ob-island-banner-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.7) 100%);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.7) 100%);
 }
 
 /* ── Golden Dodo Flight Pass (DAL Airline Style) ── */
@@ -988,8 +993,17 @@
 }
 
 @keyframes ob-radar-blink {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.35; transform: scale(0.85); }
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.35;
+        transform: scale(0.85);
+    }
 }
 
 .ob-radar-hud-box {

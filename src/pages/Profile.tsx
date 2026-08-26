@@ -6,12 +6,26 @@ import { useAuth } from "../context/useAuth";
 import { useIslandData } from "../context/useIslandData";
 import { useCatalogData } from "../hooks/useCatalogData";
 import { useFavoriteIslands, getStoredFavoriteIslands, saveStoredFavoriteIslands } from "../hooks/useFavoriteIslands";
-import { useSavedCharacters } from "../hooks/useSavedCharacters";
-import { getUserActivityStats } from "../utils/userStats";
-import { getUserPreferences, saveUserPreferences } from "../utils/userPreferences";
+import { useSavedCharacters, type SavedCharacter } from "../hooks/useSavedCharacters";
 import { parseItemCodes } from "../utils/itemCodeParser";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
 import { fetchUserOrderHistory, type OrderHistoryItem } from "../utils/orderBotApi";
+import "./Profile.css";
+
+const CHARACTER_ICONS = [
+    { id: "fa-leaf", label: "Leaf" },
+    { id: "fa-crown", label: "Crown" },
+    { id: "fa-star", label: "Star" },
+    { id: "fa-heart", label: "Heart" },
+    { id: "fa-compass", label: "Compass" },
+    { id: "fa-plane", label: "Plane" },
+    { id: "fa-fish", label: "Fish" },
+    { id: "fa-wand-magic-sparkles", label: "Magic" },
+    { id: "fa-user", label: "Resident" },
+    { id: "fa-tree", label: "Tree" },
+    { id: "fa-gem", label: "Gem" },
+    { id: "fa-house", label: "House" },
+];
 
 interface ProfileUser {
     id: string;
@@ -132,7 +146,6 @@ const Profile = () => {
     const [profile, setProfile] = useState<ProfileResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [preferences, setPreferences] = useState(getUserPreferences);
     const [prefNotice, setPrefNotice] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"passport" | "access" | "favorites" | "orders" | "history">("passport");
     const [accessFilter, setAccessFilter] = useState<"all" | "public" | "member" | "order">("all");
@@ -224,25 +237,87 @@ const Profile = () => {
         characters,
         activeCharacter,
         maxSlots,
+        remainingSlots,
+        isSyncingDb,
+        addCharacter,
+        updateCharacter,
+        deleteCharacter,
         setDefaultCharacter,
         syncFromDiscordNickname,
     } = useSavedCharacters(rawDiscordName);
 
-    // User activity statistics
-    const stats = getUserActivityStats(
-        profile?.visits.total || 0,
-        profile?.visits.authorized || 0
-    );
+    // Saved in-game character creation / editing state
+    const [characterModalOpen, setCharacterModalOpen] = useState(false);
+    const [editingCharId, setEditingCharId] = useState<string | null>(null);
+    const [charIgn, setCharIgn] = useState("");
+    const [charIsland, setCharIsland] = useState("");
+    const [charTitle, setCharTitle] = useState("Island Resident");
+    const [charIcon, setCharIcon] = useState("fa-leaf");
+    const [charError, setCharError] = useState("");
 
-    const handleToggleSilentOrder = (checked: boolean) => {
-        const updated = saveUserPreferences({ enableSilentOrder: checked });
-        setPreferences(updated);
-        setPrefNotice(
-            checked
-                ? "1-Click Silent Order & Drop enabled!"
-                : "1-Click Silent Order & Drop disabled (Manual Copy Mode active)."
-        );
+    const handleOpenAddCharacter = () => {
+        setEditingCharId(null);
+        setCharIgn("");
+        setCharIsland("");
+        setCharTitle("Island Resident");
+        setCharIcon("fa-leaf");
+        setCharError("");
+        setCharacterModalOpen(true);
+        playChimeClick();
+    };
+
+    const handleOpenEditCharacter = (char: SavedCharacter) => {
+        setEditingCharId(char.id);
+        setCharIgn(char.ign);
+        setCharIsland(char.islandName);
+        setCharTitle(char.title || "Island Resident");
+        setCharIcon(char.icon || "fa-leaf");
+        setCharError("");
+        setCharacterModalOpen(true);
+        playChimeClick();
+    };
+
+    const handleSaveCharacterModal = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!charIgn.trim()) {
+            setCharError("In-Game Name (IGN) is required.");
+            return;
+        }
+        if (!charIsland.trim()) {
+            setCharError("Island Name is required.");
+            return;
+        }
+
+        if (editingCharId) {
+            updateCharacter(editingCharId, {
+                ign: charIgn.trim(),
+                islandName: charIsland.trim(),
+                title: charTitle.trim() || "Island Resident",
+                icon: charIcon,
+            });
+            playChimeClick();
+            setPrefNotice(`Character "${charIgn.trim()}" updated and synced to database!`);
+        } else {
+            const ok = addCharacter(charIgn.trim(), charIsland.trim(), charTitle.trim() || "Island Resident", charIcon);
+            if (!ok) {
+                setCharError(`Maximum ${maxSlots} character slots reached.`);
+                return;
+            }
+            playChimeClick();
+            setPrefNotice(`New character "${charIgn.trim()}" created and saved to database!`);
+        }
+
         setTimeout(() => setPrefNotice(null), 3500);
+        setCharacterModalOpen(false);
+    };
+
+    const handleDeleteCharacter = (char: SavedCharacter) => {
+        if (window.confirm(`Are you sure you want to delete character "${char.ign}"?`)) {
+            deleteCharacter(char.id);
+            playChimeClick();
+            setPrefNotice(`Character "${char.ign}" deleted.`);
+            setTimeout(() => setPrefNotice(null), 3500);
+        }
     };
 
     useEffect(() => {
@@ -377,44 +452,6 @@ const Profile = () => {
                             Login with Discord
                         </button>
                     </div>
-
-                    {/* Preferences for logged out users */}
-                    <div className="bg-white rounded-4 shadow-sm border p-4">
-                        <div className="d-flex align-items-center gap-3 mb-3">
-                            <div className="icon-bubble bg-success bg-opacity-10 text-success">
-                                <i className="fa-solid fa-sliders" aria-hidden="true"></i>
-                            </div>
-                            <h2 className="h5 ac-font text-dark mb-0">Order & Command Builder Preferences</h2>
-                        </div>
-
-                        <div className="bg-light rounded-4 p-3 border">
-                            <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
-                                <div className="me-sm-3">
-                                    <div className="d-flex align-items-center gap-2 mb-1">
-                                        <i className="fa-solid fa-paper-plane text-success"></i>
-                                        <strong className="text-dark small">
-                                            Direct "Send to Bot Queue / Drop to Island" (1-Click Silent Order)
-                                        </strong>
-                                    </div>
-                                    <p className="tiny-text text-muted mb-0">
-                                        Enable direct 1-click silent queuing in Command Builder.
-                                    </p>
-                                </div>
-
-                                <div className="form-check form-switch ms-sm-auto">
-                                    <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        role="switch"
-                                        id="silentOrderToggleLoggedOut"
-                                        style={{ width: "48px", height: "26px", cursor: "pointer" }}
-                                        checked={preferences.enableSilentOrder}
-                                        onChange={(e) => handleToggleSilentOrder(e.target.checked)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         );
@@ -436,34 +473,31 @@ const Profile = () => {
     }
 
     return (
-        <div className="nook-bg min-vh-100 font-nunito pb-5">
+        <div className="profile-page-wrapper font-nunito pb-5">
             {/* ── 1. PASSPORT HERO HEADER ────────────────────────────────────────── */}
-            <div className="bg-white border-bottom shadow-sm">
+            <div className="bg-white border-bottom shadow-xs">
                 <div className="container py-4 py-lg-5">
                     {/* Animal Crossing Passport Card Container */}
-                    <div className="card rounded-4 border-2 border-success border-opacity-25 bg-light p-4 p-md-4 shadow-sm position-relative overflow-hidden mb-4">
+                    <div className="pf-hero-card p-4 p-md-5 mb-4">
                         {/* Passport Watermark Stamp */}
                         <div
-                            className="position-absolute top-0 end-0 m-3 d-none d-md-flex flex-column align-items-center justify-content-center border border-success border-opacity-50 text-success rounded-circle p-2 opacity-50 pointer-events-none"
-                            style={{ width: "90px", height: "90px", transform: "rotate(12deg)" }}
+                            className="pf-passport-watermark"
+                            aria-hidden="true"
                         >
                             <i className="fa-solid fa-passport fs-4 mb-1"></i>
                             <span className="tiny-text fw-black text-uppercase font-monospace">Verified</span>
                         </div>
 
                         <div className="row align-items-center gy-4">
-                            {/* Passport Photo & Main Info */}
+                            {/* Left Zone: Passport Identity */}
                             <div className="col-lg-7 d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-4 text-center text-sm-start">
                                 <div className="position-relative">
-                                    <div
-                                        className="rounded-4 border border-3 border-white shadow-sm overflow-hidden bg-white flex-shrink-0"
-                                        style={{ width: 104, height: 104 }}
-                                    >
+                                    <div className="pf-avatar-frame">
                                         {profileUser?.avatar ? (
                                             <img
                                                 src={profileUser.avatar}
                                                 alt={`${displayName}'s avatar`}
-                                                className="w-100 h-100 object-fit-cover"
+                                                className="pf-avatar-img"
                                             />
                                         ) : (
                                             <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success">
@@ -472,9 +506,10 @@ const Profile = () => {
                                         )}
                                     </div>
                                     <span
-                                        className="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle"
-                                        title="Discord Connected"
-                                        style={{ width: "16px", height: "16px" }}
+                                        className="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle shadow-xs"
+                                        title="Discord Connected & Verified"
+                                        aria-label="Discord Connected & Verified"
+                                        style={{ width: "18px", height: "18px" }}
                                     ></span>
                                 </div>
 
@@ -492,9 +527,9 @@ const Profile = () => {
                                         {activeCharacter.ign || displayName}
                                     </h1>
 
-                                    <div className="d-flex align-items-center justify-content-center justify-content-sm-start gap-2 text-muted fw-bold small mb-2">
+                                    <div className="d-flex flex-wrap align-items-center justify-content-center justify-content-sm-start gap-2 text-muted fw-bold small mb-2">
                                         <span>
-                                            <i className="fa-solid fa-umbrella-beach text-success me-1"></i>
+                                            <i className="fa-solid fa-tree text-success me-1"></i>
                                             Island: <strong className="text-dark">{activeCharacter.islandName || "Island"}</strong>
                                         </span>
                                         <span>•</span>
@@ -504,7 +539,7 @@ const Profile = () => {
                                         </span>
                                     </div>
 
-                                    {/* Role Badges & Member Since */}
+                                    {/* Unified Role Badges & Member Since */}
                                     <div className="d-flex flex-wrap align-items-center justify-content-center justify-content-sm-start gap-2">
                                         {profileUser?.is_admin && <span className="badge rounded-pill bg-danger px-3 py-1">Admin</span>}
                                         {profileUser?.is_mod && <span className="badge rounded-pill bg-success px-3 py-1">Moderator</span>}
@@ -516,127 +551,101 @@ const Profile = () => {
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="badge rounded-pill bg-light text-muted border px-3 py-1">
+                                            <span className="badge rounded-pill bg-light text-muted border px-3 py-1 fw-bold">
                                                 Free Member
                                             </span>
                                         )}
-                                        <span className="badge rounded-pill bg-white text-dark border px-3 py-1 shadow-2xs">
+                                        <span className="badge rounded-pill bg-white text-muted border px-3 py-1 shadow-2xs font-monospace small">
                                             <i className="fa-solid fa-calendar-check text-primary me-1"></i>
-                                            Member since {formatDate(profileUser?.joined_at ?? profileUser?.joined_timestamp)}
+                                            Joined {formatDate(profileUser?.joined_at ?? profileUser?.joined_timestamp)}
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Stat Stamps (Key Metrics) */}
+                            {/* Right Zone: Key Stats Ribbon */}
                             <div className="col-lg-5">
-                                <div className="row g-2 text-center">
-                                    <div className="col-6">
-                                        <div className="bg-white rounded-3 border p-3 shadow-2xs h-100">
-                                            <i className="fa-solid fa-box-open text-primary mb-1 fs-5"></i>
-                                            <div className="h4 ac-font text-dark mb-0 fw-black">
-                                                {formatNumber(stats.ordersPlaced)}
-                                            </div>
-                                            <div className="tiny-text text-muted fw-black text-uppercase">Orders Placed</div>
-                                        </div>
+                                <div className="pf-stats-ribbon">
+                                    <div className="pf-stat-item">
+                                        <div className="pf-stat-value">{formatNumber(orders.length)}</div>
+                                        <div className="pf-stat-label">Orders</div>
                                     </div>
-                                    <div className="col-6">
-                                        <div className="bg-white rounded-3 border p-3 shadow-2xs h-100">
-                                            <i className="fa-solid fa-parachute-box text-success mb-1 fs-5"></i>
-                                            <div className="h4 ac-font text-dark mb-0 fw-black">
-                                                {formatNumber(stats.dropsPlaced)}
-                                            </div>
-                                            <div className="tiny-text text-muted fw-black text-uppercase">Drops Placed</div>
-                                        </div>
+                                    <div className="pf-stat-item">
+                                        <div className="pf-stat-value">0</div>
+                                        <div className="pf-stat-label">Drops</div>
                                     </div>
-                                    <div className="col-6">
-                                        <div className="bg-white rounded-3 border p-3 shadow-2xs h-100">
-                                            <i className="fa-solid fa-plane-arrival text-warning mb-1 fs-5"></i>
-                                            <div className="h4 ac-font text-dark mb-0 fw-black">
-                                                {formatNumber(profile?.visits.total)}
-                                            </div>
-                                            <div className="tiny-text text-muted fw-black text-uppercase">Island Visits</div>
-                                        </div>
+                                    <div className="pf-stat-item">
+                                        <div className="pf-stat-value">{formatNumber(profile?.visits.total)}</div>
+                                        <div className="pf-stat-label">Visits</div>
                                     </div>
-                                    <div className="col-6">
-                                        <div className="bg-white rounded-3 border p-3 shadow-2xs h-100">
-                                            <i className="fa-solid fa-circle-check text-success mb-1 fs-5"></i>
-                                            <div className="h4 ac-font text-dark mb-0 fw-black">
-                                                {formatNumber(profile?.visits.authorized)}
-                                            </div>
-                                            <div className="tiny-text text-muted fw-black text-uppercase">Authorized Flights</div>
-                                        </div>
+                                    <div className="pf-stat-item">
+                                        <div className="pf-stat-value">{formatNumber(userUnlockedIslands.length)}</div>
+                                        <div className="pf-stat-label">Unlocked</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Navigation Tabs */}
-                    <div className="d-flex align-items-center gap-2 border-bottom pb-2 overflow-x-auto">
+                    {/* Modern Tab Navigation with Attached Counts */}
+                    <div className="pf-tab-scroller" role="tablist" aria-label="Profile navigation tabs">
                         <button
                             type="button"
-                            className={`btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 transition-all ${
-                                activeTab === "passport"
-                                    ? "btn-success text-white shadow-sm"
-                                    : "btn-light bg-light text-muted border"
-                            }`}
+                            role="tab"
+                            aria-selected={activeTab === "passport"}
+                            className={`pf-tab-btn ${activeTab === "passport" ? "active" : ""}`}
                             onClick={() => setActiveTab("passport")}
                         >
                             <i className="fa-solid fa-address-card"></i>
-                            <span>Saved Characters ({characters.length}/{maxSlots})</span>
+                            <span>Saved Characters</span>
+                            <span className="pf-tab-count">{characters.length}/{maxSlots}</span>
                         </button>
 
                         <button
                             type="button"
-                            className={`btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 transition-all ${
-                                activeTab === "access"
-                                    ? "btn-success text-white shadow-sm"
-                                    : "btn-light bg-light text-muted border"
-                            }`}
+                            role="tab"
+                            aria-selected={activeTab === "access"}
+                            className={`pf-tab-btn ${activeTab === "access" ? "active" : ""}`}
                             onClick={() => setActiveTab("access")}
                         >
                             <i className="fa-solid fa-key"></i>
-                            <span>Your Access & Islands ({userUnlockedIslands.length})</span>
+                            <span>Your Access &amp; Islands</span>
+                            <span className="pf-tab-count">{userUnlockedIslands.length}</span>
                         </button>
 
                         <button
                             type="button"
-                            className={`btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 transition-all ${
-                                activeTab === "favorites"
-                                    ? "btn-success text-white shadow-sm"
-                                    : "btn-light bg-light text-muted border"
-                            }`}
+                            role="tab"
+                            aria-selected={activeTab === "favorites"}
+                            className={`pf-tab-btn ${activeTab === "favorites" ? "active" : ""}`}
                             onClick={() => setActiveTab("favorites")}
                         >
                             <i className="fa-solid fa-star text-warning"></i>
-                            <span>Favorite Islands ({favoriteIslands.length})</span>
+                            <span>Favorite Islands</span>
+                            <span className="pf-tab-count">{favoriteIslands.length}</span>
                         </button>
 
                         <button
                             type="button"
-                            className={`btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 transition-all ${
-                                activeTab === "orders"
-                                    ? "btn-success text-white shadow-sm"
-                                    : "btn-light bg-light text-muted border"
-                            }`}
+                            role="tab"
+                            aria-selected={activeTab === "orders"}
+                            className={`pf-tab-btn ${activeTab === "orders" ? "active" : ""}`}
                             onClick={() => setActiveTab("orders")}
                         >
-                            <i className="fa-solid fa-box-open text-success"></i>
-                            <span>Order History {orders.length > 0 ? `(${orders.length})` : ""}</span>
+                            <i className="fa-solid fa-box-open"></i>
+                            <span>Order History</span>
+                            {orders.length > 0 && <span className="pf-tab-count">{orders.length}</span>}
                         </button>
 
                         <button
                             type="button"
-                            className={`btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 transition-all ${
-                                activeTab === "history"
-                                    ? "btn-success text-white shadow-sm"
-                                    : "btn-light bg-light text-muted border"
-                            }`}
+                            role="tab"
+                            aria-selected={activeTab === "history"}
+                            className={`pf-tab-btn ${activeTab === "history" ? "active" : ""}`}
                             onClick={() => setActiveTab("history")}
                         >
                             <i className="fa-solid fa-clock-rotate-left"></i>
-                            <span>Flight History & Logs</span>
+                            <span>Flight History &amp; Logs</span>
                         </button>
                     </div>
                 </div>
@@ -646,24 +655,39 @@ const Profile = () => {
             <div className="container py-4">
                 {/* ── TAB 1: SAVED CHARACTERS (MULTI-SLOT PASSPORTS) ──────────────── */}
                 {activeTab === "passport" && (
-                    <div className="row g-4 animate-fade">
+                    <div className="row g-4 animate-fade" role="tabpanel" aria-label="Saved Characters">
                         <div className="col-lg-8">
-                            <div className="bg-white rounded-4 shadow-sm border p-4">
-                                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 mb-3 pb-3 border-bottom">
+                            <div className="pf-card">
+                                <div className="pf-section-header">
                                     <div>
-                                        <div className="d-flex align-items-center gap-2">
+                                        <div className="d-flex align-items-center gap-2 mb-1">
                                             <h2 className="h5 ac-font text-dark mb-0">Saved In-Game Characters</h2>
                                             <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-black">
                                                 {characters.length} / {maxSlots} Slots
                                             </span>
+                                            <span className="badge bg-light text-success border border-success-subtle rounded-pill x-small fw-bold d-inline-flex align-items-center gap-1">
+                                                <i className={isSyncingDb ? "fa-solid fa-spinner fa-spin text-primary" : "fa-solid fa-cloud-arrow-up text-success"}></i>
+                                                <span>{isSyncingDb ? "Syncing..." : "Saved to Database"}</span>
+                                            </span>
                                         </div>
                                         <p className="tiny-text text-muted mb-0">
-                                            Active character will auto-fill your IGN & Island Name across Command Builder, Silent Order, and Drop Selector.
+                                            Active character will auto-fill your IGN &amp; Island Name across Order Bot, Command Builder, and Drop Selector.
                                         </p>
                                     </div>
 
                                     {/* Action buttons */}
                                     <div className="d-flex align-items-center gap-2 flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenAddCharacter}
+                                            disabled={remainingSlots <= 0}
+                                            className="btn btn-sm btn-success rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-xs"
+                                            title={remainingSlots > 0 ? "Add a new in-game character" : `Max ${maxSlots} slots used`}
+                                        >
+                                            <i className="fa-solid fa-plus"></i>
+                                            <span>Add Character</span>
+                                        </button>
+
                                         {rawDiscordName && (
                                             <button
                                                 type="button"
@@ -676,38 +700,27 @@ const Profile = () => {
                                                     );
                                                     setTimeout(() => setPrefNotice(null), 3500);
                                                 }}
-                                                className="btn btn-sm btn-outline-success rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-2xs"
+                                                className="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-2xs"
                                                 title={`Parse IGN & Island from Discord: "${rawDiscordName}"`}
                                             >
                                                 <i className="fa-brands fa-discord text-primary"></i>
-                                                <span>Sync from Discord Nickname</span>
+                                                <span>Sync from Discord</span>
                                             </button>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Characters Grid */}
-                                <div className="row g-3 mb-4">
+                                <div className="row g-3">
                                     {characters.map((char) => {
                                         const isSelected = char.isDefault;
 
                                         return (
                                             <div key={char.id} className="col-md-6">
-                                                <div
-                                                    className={`card rounded-4 p-3 transition-all position-relative h-100 ${
-                                                        isSelected
-                                                            ? "border-2 border-success bg-success bg-opacity-10 shadow-sm"
-                                                            : "bg-light border-light-subtle shadow-2xs"
-                                                    }`}
-                                                >
+                                                <div className={`pf-char-card ${isSelected ? "primary" : ""}`}>
                                                     <div className="d-flex align-items-start justify-content-between mb-2">
                                                         <div className="d-flex align-items-center gap-2">
-                                                            <div
-                                                                className={`rounded-circle d-flex align-items-center justify-content-center ${
-                                                                    isSelected ? "bg-success text-white" : "bg-white text-muted border"
-                                                                }`}
-                                                                style={{ width: "36px", height: "36px" }}
-                                                            >
+                                                            <div className="pf-char-icon-circle">
                                                                 <i className={`fa-solid ${char.icon || "fa-leaf"}`}></i>
                                                             </div>
                                                             <div>
@@ -729,6 +742,7 @@ const Profile = () => {
                                                                 type="button"
                                                                 className="btn btn-xs btn-light rounded-pill border fw-bold tiny-text"
                                                                 onClick={() => setDefaultCharacter(char.id)}
+                                                                aria-label={`Set ${char.ign} as active character`}
                                                             >
                                                                 Set Active
                                                             </button>
@@ -745,19 +759,44 @@ const Profile = () => {
                                                     </div>
 
                                                     <div className="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
-                                                        <span className="tiny-text text-muted font-monospace d-flex align-items-center gap-1">
-                                                            <i className="fa-brands fa-discord text-primary"></i>
-                                                            <span>Discord Synced</span>
+                                                        <span className="tiny-text text-success font-monospace d-flex align-items-center gap-1 fw-bold">
+                                                            <i className="fa-solid fa-cloud-check"></i>
+                                                            <span>Cloud Synced</span>
                                                         </span>
-                                                        {characters.length > 1 && !isSelected && (
+
+                                                        <div className="d-flex align-items-center gap-1">
                                                             <button
                                                                 type="button"
-                                                                className="btn btn-xs btn-outline-success rounded-pill fw-bold"
-                                                                onClick={() => setDefaultCharacter(char.id)}
+                                                                className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-2 py-1 tiny-text d-flex align-items-center gap-1"
+                                                                onClick={() => handleOpenEditCharacter(char)}
+                                                                title="Edit character details"
+                                                                aria-label={`Edit ${char.ign}`}
                                                             >
-                                                                Set Primary
+                                                                <i className="fa-solid fa-pen"></i>
+                                                                <span>Edit</span>
                                                             </button>
-                                                        )}
+                                                            {characters.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2 py-1 tiny-text d-flex align-items-center gap-1"
+                                                                    onClick={() => handleDeleteCharacter(char)}
+                                                                    title="Delete character"
+                                                                    aria-label={`Delete ${char.ign}`}
+                                                                >
+                                                                    <i className="fa-solid fa-trash"></i>
+                                                                </button>
+                                                            )}
+                                                            {!isSelected && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 tiny-text"
+                                                                    onClick={() => setDefaultCharacter(char.id)}
+                                                                    aria-label={`Set ${char.ign} as primary`}
+                                                                >
+                                                                    Set Primary
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -768,14 +807,14 @@ const Profile = () => {
                             </div>
                         </div>
 
-                        {/* Preferences Column */}
+                        {/* Account Information Column */}
                         <div className="col-lg-4">
-                            <div className="bg-white rounded-4 shadow-sm border p-4 h-100">
+                            <div className="pf-card h-100">
                                 <div className="d-flex align-items-center gap-3 mb-3">
                                     <div className="icon-bubble bg-success bg-opacity-10 text-success">
-                                        <i className="fa-solid fa-sliders"></i>
+                                        <i className="fa-solid fa-user-shield"></i>
                                     </div>
-                                    <h2 className="h5 ac-font text-dark mb-0">Delivery Preferences</h2>
+                                    <h2 className="h5 ac-font text-dark mb-0">Account Information</h2>
                                 </div>
 
                                 {prefNotice && (
@@ -785,28 +824,12 @@ const Profile = () => {
                                     </div>
                                 )}
 
-                                <div className="bg-light rounded-3 p-3 border mb-3">
-                                    <div className="d-flex align-items-center justify-content-between mb-2">
-                                        <strong className="text-dark small">1-Click Silent Order</strong>
-                                        <div className="form-check form-switch m-0">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                role="switch"
-                                                id="silentOrderToggleDash"
-                                                checked={preferences.enableSilentOrder}
-                                                onChange={(e) => handleToggleSilentOrder(e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <p className="tiny-text text-muted mb-0">
-                                        Directly queues orders and drop requests to Bot without manual copy-paste commands.
-                                    </p>
-                                </div>
-
                                 <div className="passport-field mb-3">
                                     <div className="tiny-text text-muted fw-black text-uppercase mb-1">Active Discord Account</div>
-                                    <div className="fw-bold text-dark font-monospace small">{profileUser?.discord_name || authUser?.username}</div>
+                                    <div className="fw-bold text-dark font-monospace small d-flex align-items-center gap-2">
+                                        <i className="fa-brands fa-discord text-primary"></i>
+                                        <span>{profileUser?.discord_name || authUser?.username}</span>
+                                    </div>
                                 </div>
 
                                 <div className="passport-field mb-0">
@@ -822,17 +845,17 @@ const Profile = () => {
 
                 {/* ── TAB 2: YOUR ACCESS & SUBSCRIPTION ISLANDS ────────────────────── */}
                 {activeTab === "access" && (
-                    <div className="row g-4 animate-fade">
+                    <div className="row g-4 animate-fade" role="tabpanel" aria-label="Your Access & Islands">
                         <div className="col-lg-12">
-                            <div className="bg-white rounded-4 shadow-sm border p-4">
+                            <div className="pf-card">
                                 {/* Header Row */}
-                                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+                                <div className="pf-section-header flex-column flex-sm-row align-items-start align-items-sm-center">
                                     <div>
                                         <div className="d-flex align-items-center gap-2 mb-1">
                                             <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold">
                                                 <i className="fa-solid fa-passport me-1"></i>Tier Passport
                                             </span>
-                                            <h2 className="h5 ac-font text-dark mb-0">Your Subscription & Island Access</h2>
+                                            <h2 className="h5 ac-font text-dark mb-0">Your Subscription &amp; Island Access</h2>
                                         </div>
                                         <p className="tiny-text text-muted mb-0">
                                             Real-time overview of your membership status, Discord tier roles, and unlocked Animal Crossing treasure islands.
@@ -844,23 +867,23 @@ const Profile = () => {
                                             <i className="fa-solid fa-plane-departure me-1"></i>Live Flight Board
                                         </Link>
                                         <Link to="/membership" className="btn btn-sm btn-outline-warning text-dark border-warning rounded-pill px-3 fw-bold">
-                                            <i className="fa-solid fa-crown text-warning me-1"></i>Perks & Tiers
+                                            <i className="fa-solid fa-crown text-warning me-1"></i>Perks &amp; Tiers
                                         </Link>
                                     </div>
                                 </div>
 
                                 {/* Subscription Tier Status Overview Banner */}
-                                <div className="bg-light bg-opacity-75 rounded-4 p-4 border mb-4">
+                                <div className="bg-light rounded-4 p-4 border mb-4">
                                     <div className="row g-3 align-items-center">
                                         <div className="col-lg-6">
                                             <div className="d-flex align-items-center gap-3">
                                                 <div
-                                                    className="rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                                                    className="rounded-circle d-flex align-items-center justify-content-center shadow-xs"
                                                     style={{
-                                                        width: 54,
-                                                        height: 54,
-                                                        background: subscriptionRoleNames.length > 0 ? "#fff3cd" : "#d1e7dd",
-                                                        color: subscriptionRoleNames.length > 0 ? "#997404" : "#0f5132",
+                                                        width: 52,
+                                                        height: 52,
+                                                        background: subscriptionRoleNames.length > 0 ? "#fef3c7" : "#d8f3dc",
+                                                        color: subscriptionRoleNames.length > 0 ? "#92400e" : "#1b4332",
                                                     }}
                                                 >
                                                     <i className={`fa-solid ${subscriptionRoleNames.length > 0 ? "fa-crown fa-lg" : "fa-leaf fa-lg"}`}></i>
@@ -879,7 +902,7 @@ const Profile = () => {
                                                     <div className="d-flex flex-wrap gap-1 align-items-center">
                                                         {subscriptionRoleNames.length > 0 ? (
                                                             subscriptionRoleNames.map((role) => (
-                                                                <span key={role} className="badge bg-white text-dark border rounded-pill px-2 py-1 x-small fw-bold shadow-xs">
+                                                                <span key={role} className="badge bg-white text-dark border rounded-pill px-2 py-1 x-small fw-bold shadow-2xs">
                                                                     <i className="fa-solid fa-check text-success me-1"></i>{role}
                                                                 </span>
                                                             ))
@@ -929,7 +952,7 @@ const Profile = () => {
                                             type="button"
                                             onClick={() => setAccessFilter("all")}
                                             className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${
-                                                accessFilter === "all" ? "btn-dark shadow-sm" : "btn-light border text-muted"
+                                                accessFilter === "all" ? "btn-dark shadow-xs" : "btn-light border text-muted"
                                             }`}
                                         >
                                             All Unlocked ({userUnlockedIslands.length})
@@ -938,7 +961,7 @@ const Profile = () => {
                                             type="button"
                                             onClick={() => setAccessFilter("public")}
                                             className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${
-                                                accessFilter === "public" ? "btn-success text-white shadow-sm" : "btn-light border text-muted"
+                                                accessFilter === "public" ? "btn-success text-white shadow-xs" : "btn-light border text-muted"
                                             }`}
                                         >
                                             <i className="fa-solid fa-lock-open me-1"></i>Free Public ({userUnlockedIslands.filter(i => i.cat === "public").length})
@@ -947,7 +970,7 @@ const Profile = () => {
                                             type="button"
                                             onClick={() => setAccessFilter("member")}
                                             className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${
-                                                accessFilter === "member" ? "btn-warning text-dark shadow-sm" : "btn-light border text-muted"
+                                                accessFilter === "member" ? "btn-warning text-dark shadow-xs" : "btn-light border text-muted"
                                             }`}
                                         >
                                             <i className="fa-solid fa-crown me-1"></i>VIP / Sub ({userUnlockedIslands.filter(i => i.cat === "member").length})
@@ -956,7 +979,7 @@ const Profile = () => {
                                             type="button"
                                             onClick={() => setAccessFilter("order")}
                                             className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${
-                                                accessFilter === "order" ? "btn-info text-dark shadow-sm" : "btn-light border text-muted"
+                                                accessFilter === "order" ? "btn-info text-dark shadow-xs" : "btn-light border text-muted"
                                             }`}
                                         >
                                             <i className="fa-solid fa-box-open me-1"></i>Order Bot ({userUnlockedIslands.filter(i => i.cat === "order").length})
@@ -977,7 +1000,7 @@ const Profile = () => {
 
                                             return (
                                                 <div key={island.id} className="col-12 col-md-6 col-lg-4">
-                                                    <div className="card rounded-4 p-3 bg-white border border-light-subtle shadow-xs hover-shadow-sm transition-all h-100 d-flex flex-column">
+                                                    <div className="pf-island-card">
                                                         <div className="d-flex align-items-center justify-content-between mb-2">
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <span className={`badge rounded-pill x-small fw-bold ${
@@ -1010,8 +1033,9 @@ const Profile = () => {
                                                                 className={`btn btn-sm border rounded-circle shadow-2xs d-flex align-items-center justify-content-center transition-all ${
                                                                     isFav ? "btn-warning text-dark border-warning" : "btn-light text-muted"
                                                                 }`}
-                                                                style={{ width: 28, height: 28 }}
+                                                                style={{ width: 30, height: 30 }}
                                                                 title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                                                                aria-label={isFav ? `Remove ${island.name} from Favorites` : `Add ${island.name} to Favorites`}
                                                             >
                                                                 <i className={`${isFav ? "fa-solid text-dark" : "fa-regular text-muted"} fa-star x-small`}></i>
                                                             </button>
@@ -1053,7 +1077,7 @@ const Profile = () => {
                                                             </span>
                                                             <Link
                                                                 to={`/island/${encodeURIComponent(island.id)}`}
-                                                                className="btn btn-sm btn-nook rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1 shadow-2xs"
+                                                                className="btn btn-sm btn-nook rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1 shadow-xs"
                                                             >
                                                                 <span>Fly to Island</span>
                                                                 <i className="fa-solid fa-plane-departure x-small"></i>
@@ -1065,10 +1089,10 @@ const Profile = () => {
                                         })}
                                     </div>
                                 ) : (
-                                    <div className="bg-light border rounded-4 p-4 text-center mb-4">
-                                        <i className="fa-solid fa-magnifying-glass text-muted fs-3 mb-2"></i>
-                                        <div className="fw-bold text-dark mb-1">No islands found for this category</div>
-                                        <p className="tiny-text text-muted mb-0">Try selecting "All Unlocked" to view all your destinations.</p>
+                                    <div className="pf-empty-state mb-4">
+                                        <div className="pf-empty-icon">🏝️</div>
+                                        <div className="pf-empty-title">No Islands Found</div>
+                                        <p className="pf-empty-desc">Try selecting "All Unlocked" to view all available destinations.</p>
                                     </div>
                                 )}
 
@@ -1115,12 +1139,12 @@ const Profile = () => {
 
                 {/* ── TAB 3: FAVOURITE TREASURE ISLANDS ────────────────────────────── */}
                 {activeTab === "favorites" && (
-                    <div className="row g-4 animate-fade">
+                    <div className="row g-4 animate-fade" role="tabpanel" aria-label="Favorite Islands">
                         <div className="col-lg-12">
-                            <div className="bg-white rounded-4 shadow-sm border p-4">
-                                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+                            <div className="pf-card">
+                                <div className="pf-section-header">
                                     <div>
-                                        <div className="d-flex align-items-center gap-2">
+                                        <div className="d-flex align-items-center gap-2 mb-1">
                                             <h2 className="h5 ac-font text-dark mb-0">Favorite Treasure Islands</h2>
                                             <span className="badge bg-warning bg-opacity-25 text-dark rounded-pill x-small fw-black">
                                                 {favoriteIslands.length} Starred
@@ -1143,11 +1167,11 @@ const Profile = () => {
 
                                             return (
                                                 <div key={island.id} className="col-md-6 col-lg-4">
-                                                    <div className="card rounded-4 p-3 bg-light border border-light-subtle shadow-2xs h-100 d-flex flex-column">
+                                                    <div className="pf-island-card">
                                                         <div className="d-flex align-items-center justify-content-between mb-2">
                                                             <div className="d-flex align-items-center gap-1">
                                                                 <span
-                                                                    className={`p-1 rounded-circle ${isOnline ? "bg-success" : "bg-secondary"}`}
+                                                                    className={`status-dot ${isOnline ? "bg-success pulse-ring" : "bg-secondary"}`}
                                                                     style={{ width: "8px", height: "8px" }}
                                                                 ></span>
                                                                 <span className={`tiny-text fw-black ${isOnline ? "text-success" : "text-muted"}`}>
@@ -1160,6 +1184,7 @@ const Profile = () => {
                                                                 className="btn btn-sm p-1 text-warning border-0"
                                                                 onClick={(e) => toggleFavoriteIsland(island.id, e)}
                                                                 title="Remove from Favorites"
+                                                                aria-label={`Remove ${island.name} from Favorites`}
                                                             >
                                                                 <i className="fa-solid fa-star fs-5"></i>
                                                             </button>
@@ -1179,7 +1204,7 @@ const Profile = () => {
                                                             </span>
                                                             <Link
                                                                 to={`/island/${encodeURIComponent(island.id)}`}
-                                                                className="btn btn-xs btn-success text-white rounded-pill px-3 fw-bold"
+                                                                className="btn btn-xs btn-success text-white rounded-pill px-3 fw-bold shadow-xs"
                                                             >
                                                                 Travel Now
                                                             </Link>
@@ -1190,14 +1215,14 @@ const Profile = () => {
                                         })}
                                     </div>
                                 ) : (
-                                    <div className="bg-light border rounded-4 p-5 text-center">
-                                        <i className="fa-solid fa-star text-muted display-5 mb-3 opacity-25"></i>
-                                        <h3 className="h6 fw-black text-dark mb-1">No Favorite Islands Starred Yet</h3>
-                                        <p className="tiny-text text-muted mb-4" style={{ maxWidth: "420px", margin: "0 auto" }}>
+                                    <div className="pf-empty-state">
+                                        <div className="pf-empty-icon">⭐</div>
+                                        <h3 className="pf-empty-title">No Favorite Islands Starred Yet</h3>
+                                        <p className="pf-empty-desc">
                                             Star your favorite free or subscriber treasure islands to keep track of their live dodo status and fast travel anytime!
                                         </p>
                                         <div className="d-flex justify-content-center">
-                                            <Link to="/islands" className="btn btn-sm btn-success text-white rounded-pill px-4 fw-bold shadow-2xs">
+                                            <Link to="/islands" className="btn btn-sm btn-success text-white rounded-pill px-4 py-2 fw-bold shadow-xs">
                                                 <i className="fa-solid fa-compass me-1"></i>Browse Treasure Islands
                                             </Link>
                                         </div>
@@ -1210,12 +1235,12 @@ const Profile = () => {
 
                 {/* ── TAB: ORDER HISTORY & REORDER ─────────────────────────────────────── */}
                 {activeTab === "orders" && (
-                    <div className="row g-4 animate-fade">
+                    <div className="row g-4 animate-fade" role="tabpanel" aria-label="Order History">
                         <div className="col-12">
-                            <div className="bg-white rounded-4 shadow-sm border p-4">
-                                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+                            <div className="pf-card">
+                                <div className="pf-section-header flex-column flex-sm-row align-items-start align-items-sm-center">
                                     <div>
-                                        <div className="d-flex align-items-center gap-2">
+                                        <div className="d-flex align-items-center gap-2 mb-1">
                                             <h2 className="h5 ac-font text-dark mb-0">Your Order History</h2>
                                             <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-black">
                                                 {orders.length} Order{orders.length === 1 ? "" : "s"}
@@ -1233,13 +1258,14 @@ const Profile = () => {
                                             onClick={loadOrders}
                                             disabled={ordersLoading}
                                             title="Refresh order history"
+                                            aria-label="Refresh order history"
                                         >
                                             <i className={`fa-solid fa-arrows-rotate ${ordersLoading ? "fa-spin" : ""}`}></i>
                                             <span>Refresh</span>
                                         </button>
                                         <Link
                                             to="/order"
-                                            className="btn btn-sm btn-success text-white rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-sm"
+                                            className="btn btn-sm btn-success text-white rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-xs"
                                         >
                                             <i className="fa-solid fa-paper-plane"></i>
                                             <span>Order Bot</span>
@@ -1268,7 +1294,7 @@ const Profile = () => {
 
                                             return (
                                                 <div key={order.id} className="col-12 col-xl-6">
-                                                    <div className="card rounded-4 p-3 bg-light border border-light-subtle shadow-2xs h-100 d-flex flex-column">
+                                                    <div className="pf-order-card h-100 d-flex flex-column">
                                                         {/* Card Top: Order ID + Status + Date */}
                                                         <div className="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
                                                             <div className="d-flex align-items-center gap-2">
@@ -1300,7 +1326,7 @@ const Profile = () => {
                                                         )}
 
                                                         {/* Parsed Items Preview */}
-                                                        <div className="bg-white rounded-3 p-2 border mb-3 flex-grow-1">
+                                                        <div className="bg-light rounded-3 p-2 border mb-3 flex-grow-1">
                                                             <div className="d-flex align-items-center justify-content-between mb-2 tiny-text">
                                                                 <span className="text-muted fw-bold">
                                                                     {parsed.items.length > 0
@@ -1314,7 +1340,7 @@ const Profile = () => {
                                                                     {parsed.items.map((item, idx) => (
                                                                         <span
                                                                             key={`${item.itemId}-${idx}`}
-                                                                            className="badge bg-light text-dark border rounded-pill px-2 py-1 tiny-text fw-normal d-inline-flex align-items-center gap-1"
+                                                                            className="pf-order-pill"
                                                                         >
                                                                             {item.image && (
                                                                                 <img
@@ -1339,9 +1365,10 @@ const Profile = () => {
                                                         <div className="d-flex align-items-center justify-content-between pt-2 border-top mt-auto gap-2 flex-wrap">
                                                             <button
                                                                 type="button"
-                                                                className="btn btn-sm btn-nook text-white rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                                className="btn btn-sm btn-nook text-white rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1 shadow-xs"
                                                                 onClick={() => handleReorder(order, "/order")}
                                                                 title="Load this pocket and open Order Bot"
+                                                                aria-label="Reorder this pocket with Order Bot"
                                                             >
                                                                 <i className="fa-solid fa-rotate-left"></i>
                                                                 <span>Reorder</span>
@@ -1353,6 +1380,7 @@ const Profile = () => {
                                                                     className="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1 shadow-2xs"
                                                                     onClick={() => handleReorder(order, "/command-builder")}
                                                                     title="Load into Command Builder to edit"
+                                                                    aria-label="Open pocket in Command Builder"
                                                                 >
                                                                     <i className="fa-solid fa-pencil"></i>
                                                                     <span className="d-none d-sm-inline">Builder</span>
@@ -1365,6 +1393,7 @@ const Profile = () => {
                                                                     }`}
                                                                     onClick={() => handleCopyOrderCommand(order)}
                                                                     title="Copy !order command to clipboard"
+                                                                    aria-label="Copy order command to clipboard"
                                                                 >
                                                                     <i className={`fa-solid ${isCopied ? "fa-check" : "fa-copy"}`}></i>
                                                                     <span>{isCopied ? "Copied" : "Copy"}</span>
@@ -1377,17 +1406,17 @@ const Profile = () => {
                                         })}
                                     </div>
                                 ) : (
-                                    <div className="bg-light border rounded-4 p-5 text-center">
-                                        <div className="mb-3" style={{ fontSize: "3rem" }}>📦</div>
-                                        <h3 className="h6 fw-black text-dark mb-1">No Orders Placed Yet</h3>
-                                        <p className="tiny-text text-muted mb-4" style={{ maxWidth: "420px", margin: "0 auto" }}>
+                                    <div className="pf-empty-state">
+                                        <div className="pf-empty-icon">📦</div>
+                                        <h3 className="pf-empty-title">No Orders Placed Yet</h3>
+                                        <p className="pf-empty-desc">
                                             Build your 40-slot pocket loadout in the Command Builder and place an order to get automatic tracking and 1-click reordering here.
                                         </p>
                                         <div className="d-flex justify-content-center gap-2">
-                                            <Link to="/command-builder" className="btn btn-sm btn-success text-white rounded-pill px-4 fw-bold shadow-2xs">
+                                            <Link to="/command-builder" className="btn btn-sm btn-success text-white rounded-pill px-4 py-2 fw-bold shadow-xs">
                                                 <i className="fa-solid fa-cubes-stacked me-1"></i>Build Pocket
                                             </Link>
-                                            <Link to="/order" className="btn btn-sm btn-outline-success rounded-pill px-4 fw-bold shadow-2xs">
+                                            <Link to="/order" className="btn btn-sm btn-outline-success rounded-pill px-4 py-2 fw-bold shadow-2xs">
                                                 <i className="fa-solid fa-box-open me-1"></i>Order Bot
                                             </Link>
                                         </div>
@@ -1400,21 +1429,21 @@ const Profile = () => {
 
                 {/* ── TAB 4: FLIGHT HISTORY & VISIT LOGS ────────────────────────────── */}
                 {activeTab === "history" && (
-                    <div className="row g-4 animate-fade">
+                    <div className="row g-4 animate-fade" role="tabpanel" aria-label="Flight History">
                         <div className="col-lg-12">
-                            <div className="bg-white rounded-4 shadow-sm border p-4 mb-4">
-                                <h2 className="h5 ac-font text-dark mb-3">Recent Flights & Visits</h2>
+                            <div className="pf-card mb-4">
+                                <h2 className="h5 ac-font text-dark mb-3">Recent Flights &amp; Visits</h2>
                                 <IslandVisitTable visits={recentVisits} emptyText="No recent flights recorded." showDate />
                             </div>
 
-                            <div className="bg-white rounded-4 shadow-sm border p-4">
+                            <div className="pf-card">
                                 <h2 className="h5 ac-font text-dark mb-3">Top Visited Destinations</h2>
                                 <IslandVisitTable visits={mostVisited} emptyText="No favorite destinations yet." />
                             </div>
 
                             {/* Warnings Summary if any */}
                             {warningSummary && (
-                                <div className="bg-white rounded-4 shadow-sm border p-4 mt-4">
+                                <div className="pf-card mt-4">
                                     <h2 className="h5 ac-font text-dark mb-3">Account Warnings Log</h2>
                                     {Array.isArray(warningSummary) && warningSummary.length > 0 ? (
                                         <PaginatedTable
@@ -1429,7 +1458,9 @@ const Profile = () => {
                                             searchable={false}
                                         />
                                     ) : (
-                                        <p className="text-muted tiny-text mb-0">No warnings recorded on your account.</p>
+                                        <div className="alert alert-success rounded-3 py-2 px-3 small fw-bold mb-0">
+                                            <i className="fa-solid fa-shield-check me-2"></i>Clean record! No active warnings or penalties on this passport.
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -1437,6 +1468,168 @@ const Profile = () => {
                     </div>
                 )}
             </div>
+
+            {/* ── SAVED CHARACTER ADD / EDIT MODAL ── */}
+            {characterModalOpen && (
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.65)",
+                        backdropFilter: "blur(6px)",
+                        WebkitBackdropFilter: "blur(6px)",
+                        zIndex: 9999,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "1rem",
+                        overflowY: "auto",
+                    }}
+                    onClick={() => setCharacterModalOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={editingCharId ? "Edit In-Game Character" : "Add In-Game Character"}
+                >
+                    <div
+                        style={{
+                            background: "#fff",
+                            borderRadius: "1.5rem",
+                            padding: "2rem",
+                            maxWidth: 500,
+                            width: "100%",
+                            boxShadow: "0 32px 80px rgba(0,0,0,0.35)",
+                            position: "relative",
+                            maxHeight: "90vh",
+                            overflowY: "auto",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                            <div className="d-flex align-items-center gap-2">
+                                <div
+                                    className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white"
+                                    style={{ width: 36, height: 36, fontSize: "1rem" }}
+                                >
+                                    <i className={`fa-solid ${charIcon}`}></i>
+                                </div>
+                                <h3 className="h6 ac-font text-dark mb-0 fw-bold">
+                                    {editingCharId ? "Edit In-Game Character" : "Add In-Game Character"}
+                                </h3>
+                            </div>
+                            <button
+                                type="button"
+                                className="btn-close"
+                                aria-label="Close"
+                                onClick={() => setCharacterModalOpen(false)}
+                            />
+                        </div>
+
+                        <form onSubmit={handleSaveCharacterModal}>
+                            {charError && (
+                                <div className="alert alert-danger py-2 px-3 small rounded-3 mb-3 fw-bold">
+                                    <i className="fa-solid fa-circle-exclamation me-1"></i> {charError}
+                                </div>
+                            )}
+
+                            <div className="mb-3">
+                                <label className="form-label fw-bold small text-dark" htmlFor="profileCharIgn">
+                                    In-Game Name (IGN) <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    id="profileCharIgn"
+                                    type="text"
+                                    className="form-control rounded-3 border-2"
+                                    placeholder="e.g. Bitress"
+                                    value={charIgn}
+                                    onChange={(e) => setCharIgn(e.target.value)}
+                                    maxLength={24}
+                                    autoFocus
+                                />
+                                <div className="form-text">Your exact Animal Crossing player name.</div>
+                            </div>
+
+                            <div className="mb-3">
+                                <label className="form-label fw-bold small text-dark" htmlFor="profileCharIsland">
+                                    Island Name <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    id="profileCharIsland"
+                                    type="text"
+                                    className="form-control rounded-3 border-2"
+                                    placeholder="e.g. Cheurnice"
+                                    value={charIsland}
+                                    onChange={(e) => setCharIsland(e.target.value)}
+                                    maxLength={24}
+                                />
+                                <div className="form-text">Your Animal Crossing island name.</div>
+                            </div>
+
+                            <div className="mb-3">
+                                <label className="form-label fw-bold small text-dark" htmlFor="profileCharTitle">
+                                    Resident Title / Role <span className="text-muted fw-normal">(optional)</span>
+                                </label>
+                                <input
+                                    id="profileCharTitle"
+                                    type="text"
+                                    className="form-control rounded-3 border-2"
+                                    placeholder="e.g. Island Representative, Resident, Botanist"
+                                    value={charTitle}
+                                    onChange={(e) => setCharTitle(e.target.value)}
+                                    maxLength={30}
+                                />
+                            </div>
+
+                            {/* Icon Picker */}
+                            <div className="mb-4">
+                                <label className="form-label fw-bold small text-dark d-block mb-2">
+                                    Character Badge Icon
+                                </label>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {CHARACTER_ICONS.map((iconItem) => {
+                                        const isIconActive = charIcon === iconItem.id;
+                                        return (
+                                            <button
+                                                key={iconItem.id}
+                                                type="button"
+                                                className={`btn btn-sm rounded-pill px-2 py-1 d-flex align-items-center gap-1 transition-all ${
+                                                    isIconActive
+                                                        ? "btn-success text-white fw-bold shadow-xs"
+                                                        : "btn-light bg-light text-muted border"
+                                                }`}
+                                                style={{ fontSize: "0.78rem" }}
+                                                onClick={() => {
+                                                    setCharIcon(iconItem.id);
+                                                    playChimeClick();
+                                                }}
+                                            >
+                                                <i className={`fa-solid ${iconItem.id}`}></i>
+                                                <span>{iconItem.label}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="d-flex align-items-center justify-content-end gap-2 pt-2 border-top">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary rounded-pill fw-bold px-4"
+                                    onClick={() => setCharacterModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn btn-success rounded-pill fw-bold px-4 shadow-sm d-flex align-items-center gap-2"
+                                >
+                                    <i className="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>{editingCharId ? "Save Changes & Sync" : "Create & Save to Database"}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

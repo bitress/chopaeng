@@ -120,7 +120,10 @@ export const fetchBotStatus = async (
  */
 export const submitOrderToBot = async (
     commandText: string,
-    token?: string | null
+    token?: string | null,
+    orderFor?: string,
+    displayName?: string,
+    islandName?: string
 ): Promise<SubmitOrderResponse> => {
     const trimmed = commandText.trim();
     if (!trimmed) {
@@ -136,6 +139,9 @@ export const submitOrderToBot = async (
                 command: trimmed,
                 type: 'order',
                 timestamp: Date.now(),
+                ...(orderFor ? { order_for: orderFor } : {}),
+                ...(displayName ? { display_name: displayName } : {}),
+                ...(islandName ? { island_name: islandName } : {}),
             }),
         });
 
