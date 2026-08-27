@@ -176,12 +176,14 @@ const StatusPill: React.FC<{ s: BotStatusResponse | null; loading: boolean }> = 
                 <span className="ob-pulse red" aria-hidden="true" /> Unavailable
             </span>
         );
-    if (s.accepting_commands !== false)
+    if (s.accepting_commands !== false) {
+        const modeLabel = s.is_drop_mode ? 'Drop Mode' : s.is_order_mode ? 'Order Mode' : 'Online';
         return (
             <span className="ob-mode-pill order" role="status" aria-live="polite">
-                <span className="ob-pulse green" aria-hidden="true" /> Online
+                <span className="ob-pulse green" aria-hidden="true" /> {modeLabel}
             </span>
         );
+    }
     return (
         <span className="ob-mode-pill offline" role="status" aria-live="polite">
             <span className="ob-pulse red" aria-hidden="true" /> Offline
@@ -227,10 +229,12 @@ const QueueList: React.FC<{ queue: QueueEntry[]; myOrderId?: string }> = ({ queu
         <ul className="ob-queue-list" aria-label="Live order queue">
             {queue.slice(0, 20).map((e) => {
                 const isMe = e.order_id === myOrderId;
+                const etaDisplay = e.eta || fmtEta(e.estimated_minutes);
+                const statusLabel = e.status === 'preparing' ? 'Preparing' : e.status;
                 return (
                     <li key={e.order_id} className={`ob-queue-row${isMe ? ' is-me' : ''}`}>
                         <div className="ob-queue-badge" aria-hidden="true">
-                            {e.queue_position}
+                            {e.status === 'preparing' ? '⚡' : e.queue_position}
                         </div>
                         <div className="flex-grow-1 min-w-0">
                             <div className="fw-bold small text-truncate d-flex align-items-center gap-1">
@@ -245,18 +249,30 @@ const QueueList: React.FC<{ queue: QueueEntry[]; myOrderId?: string }> = ({ queu
                                     <span>{e.username}</span>
                                 )}
                             </div>
-                            <div className="text-muted tiny-text">{fmtEta(e.estimated_minutes)}</div>
+                            <div className="text-muted tiny-text d-flex align-items-center gap-2">
+                                <span>{e.status === 'preparing' ? 'Dropping items...' : etaDisplay}</span>
+                                {typeof e.item_count === 'number' && (
+                                    <span className="text-muted">· {e.item_count} items</span>
+                                )}
+                            </div>
                         </div>
                         <span
-                            className={`badge rounded-pill ${e.status === 'ready'
+                            className={`badge rounded-pill fw-bold ${e.status === 'ready'
                                 ? 'bg-success text-white'
                                 : e.status === 'preparing'
-                                    ? 'bg-warning text-dark'
+                                    ? 'bg-warning text-dark border-0 d-inline-flex align-items-center gap-1'
                                     : 'bg-light text-secondary border'
                                 }`}
                             style={{ fontSize: '.65rem' }}
                         >
-                            {e.status}
+                            {e.status === 'preparing' ? (
+                                <>
+                                    <i className="fa-solid fa-gears fa-spin" style={{ fontSize: '0.6rem' }} />
+                                    <span>Preparing</span>
+                                </>
+                            ) : (
+                                statusLabel
+                            )}
                         </span>
                     </li>
                 );
@@ -392,6 +408,7 @@ const OrderBot: React.FC = () => {
 
     // ── Mode Switch & Drop State ──
     const [botMode, setBotMode] = useState<'order' | 'drop'>('order');
+    const [modeOverridden, setModeOverridden] = useState(false); // true if user manually switched
     const [selectedDropIsland, setSelectedDropIsland] = useState<IslandData | null>(null);
     const [dropFilter, setDropFilter] = useState<'all' | 'unlocked'>('all');
     const [dropDodoCode, setDropDodoCode] = useState<string | null>(null);
@@ -437,6 +454,7 @@ const OrderBot: React.FC = () => {
     const queueTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const notifiedRef = useRef(false);
+    const preparingNotifiedRef = useRef(false);
 
     const triggerInAppToast = useCallback((notif: {
         type: 'dodo' | 'success' | 'warning' | 'info';
@@ -473,7 +491,13 @@ const OrderBot: React.FC = () => {
         const d = await fetchBotStatus(token);
         setBotStatus(d);
         setStatusLoading(false);
-    }, [token]);
+
+        // Auto-detect mode from Sinta API (unless user manually overrode)
+        if (d.success && !modeOverridden) {
+            if (d.is_drop_mode) setBotMode('drop');
+            else if (d.is_order_mode) setBotMode('order');
+        }
+    }, [token, modeOverridden]);
 
     useEffect(() => {
         refreshStatus();
@@ -514,6 +538,16 @@ const OrderBot: React.FC = () => {
             message: d.message,
             updated_at: Math.floor(Date.now() / 1000),
         });
+
+        if (d.status === 'preparing' && !preparingNotifiedRef.current) {
+            preparingNotifiedRef.current = true;
+            playChimeClick();
+            triggerInAppToast({
+                type: 'info',
+                title: '📦 Preparing Items on Island',
+                message: `Your order is up next! ChoBot is placing items on the island ground. Dodo code arriving shortly!`,
+            });
+        }
 
         if (d.status === 'ready' && !notifiedRef.current) {
             notifiedRef.current = true;
@@ -598,6 +632,7 @@ const OrderBot: React.FC = () => {
         }
 
         notifiedRef.current = false;
+        preparingNotifiedRef.current = false;
         saveOrder(res.orderId);
         setActiveOrderId(res.orderId);
 
@@ -653,6 +688,7 @@ const OrderBot: React.FC = () => {
         setActiveOrderId(null);
         setOrderStatus(null);
         notifiedRef.current = false;
+        preparingNotifiedRef.current = false;
         setDodoCopied(false);
         setStage('submit');
         playChimeClick();
@@ -884,10 +920,12 @@ const OrderBot: React.FC = () => {
     const botAvailable = !!botStatus?.success && botStatus.accepting_commands !== false;
     const botUnavailable = !statusLoading && !botStatus?.success;
     const statusStr = orderStatus?.status ?? 'queued';
-    const isReady = statusStr === 'ready';
     const isDone = ['completed', 'cancelled', 'error'].includes(statusStr);
+    const isReady = statusStr === 'ready' || Boolean(orderStatus?.dodoCode && !isDone);
     const slotsFilled = totalOrderCount;
     const capacityPct = Math.min(100, Math.round((slotsFilled / ORDER_MAX) * 100));
+    const sintaIsDropMode = botStatus?.is_drop_mode === true;
+    const canSubmitOrder = botAvailable && !sintaIsDropMode;
 
     const subMemberIslands = useMemo(() => {
         return islands.filter((isl) => isl.cat === 'member');
@@ -909,100 +947,51 @@ const OrderBot: React.FC = () => {
                     <title>Order Bot · Chopaeng</title>
                     <meta name="description" content="Login with Discord to submit orders to the Chopaeng Order Bot." />
                 </Helmet>
-                <div style={{
-                    minHeight: '100vh',
-                    background: 'linear-gradient(135deg, #0a1628 0%, #0f2744 50%, #0a1f3d 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '2rem',
-                    position: 'relative',
-                    overflow: 'hidden',
-                }}>
-                    {/* Background decorative blobs */}
-                    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                        <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '55vw', height: '55vw', borderRadius: '50%', background: 'radial-gradient(circle, rgba(74,222,128,0.08) 0%, transparent 70%)' }} />
-                        <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '50vw', height: '50vw', borderRadius: '50%', background: 'radial-gradient(circle, rgba(88,101,242,0.1) 0%, transparent 70%)' }} />
-                    </div>
+                <div className="nook-bg min-vh-100 py-5 px-3 d-flex align-items-center justify-content-center">
+                    <div className="container" style={{ maxWidth: 640 }}>
+                        <div className="bg-white rounded-5 shadow-sm border p-4 p-md-5 text-center mb-4 animate-fade">
+                            {/* Discord Logo Icon */}
+                            <div
+                                className="d-inline-flex align-items-center justify-content-center rounded-circle text-white mb-4 shadow-sm"
+                                style={{ width: 76, height: 76, backgroundColor: '#5865F2' }}
+                            >
+                                <i className="fa-brands fa-discord fa-2x" />
+                            </div>
 
-                    <div style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        backdropFilter: 'blur(24px)',
-                        WebkitBackdropFilter: 'blur(24px)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '2rem',
-                        padding: '3rem 2.5rem',
-                        maxWidth: 480,
-                        width: '100%',
-                        textAlign: 'center',
-                        boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
-                        position: 'relative',
-                        zIndex: 1,
-                    }}>
-                        {/* Icon */}
-                        <div style={{
-                            width: 80, height: 80,
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            margin: '0 auto 1.5rem',
-                            boxShadow: '0 8px 32px rgba(74,222,128,0.35)',
-                            fontSize: '2rem',
-                        }}>
-                            <i className="fa-solid fa-box-open text-white" />
+                            <h1 className="ac-font h2 text-dark mb-2 fw-black">
+                                Order Bot &amp; Pocket Delivery
+                            </h1>
+                            <p className="text-muted fw-bold mb-4" style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
+                                Connect your Discord account to submit custom 40-slot item orders, track your personal Dodo code in real-time, and manage in-island item drops.
+                            </p>
+
+                            {/* Feature Pills */}
+                            <div className="d-flex gap-2 flex-wrap justify-content-center mb-4">
+                                {['🛍️ 40-Slot Pocket', '✈️ Live Dodo Tracker', '📦 Order History', '🔔 Real-time Alerts'].map((f) => (
+                                    <span key={f} className="badge bg-light text-dark border rounded-pill px-3 py-2 fw-bold">
+                                        {f}
+                                    </span>
+                                ))}
+                            </div>
+
+                            {/* Login Button */}
+                            <div className="mb-3">
+                                <button
+                                    id="ob-discord-login-wall-btn"
+                                    type="button"
+                                    onClick={login}
+                                    className="btn btn-success rounded-pill fw-black px-5 py-3 shadow-sm d-inline-flex align-items-center gap-2 hover-scale transition-all"
+                                    style={{ fontSize: '1.05rem' }}
+                                >
+                                    <i className="fa-brands fa-discord me-1" />
+                                    <span>Login with Discord</span>
+                                </button>
+                            </div>
+
+                            <p className="text-muted tiny-text mb-0">
+                                We only read your public Discord identity and verified membership roles.
+                            </p>
                         </div>
-
-                        <h1 style={{
-                            fontFamily: "'Outfit', sans-serif",
-                            fontWeight: 900,
-                            fontSize: 'clamp(1.6rem, 4vw, 2.1rem)',
-                            color: '#fff',
-                            marginBottom: '.5rem',
-                        }}>
-                            Order Bot
-                        </h1>
-                        <p style={{ color: 'rgba(255,255,255,0.55)', marginBottom: '2rem', fontSize: '.95rem', lineHeight: 1.6 }}>
-                            Connect your <strong style={{ color: '#5865f2' }}>Discord</strong> account to submit orders, track your
-                            Dodo code in real-time, and manage your 40-slot pocket delivery.
-                        </p>
-
-                        {/* Feature pills */}
-                        <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '2rem' }}>
-                            {['🛍️ 40-Slot Pocket', '✈️ Live Dodo Tracker', '📦 Order History', '🔔 Real-time Alerts'].map(f => (
-                                <span key={f} style={{
-                                    background: 'rgba(74,222,128,0.12)',
-                                    border: '1px solid rgba(74,222,128,0.25)',
-                                    color: '#86efac',
-                                    borderRadius: '999px',
-                                    padding: '.3rem .9rem',
-                                    fontSize: '.78rem',
-                                    fontWeight: 600,
-                                }}>{f}</span>
-                            ))}
-                        </div>
-
-                        <button
-                            id="ob-discord-login-wall-btn"
-                            className="btn fw-bold rounded-pill px-5 py-3 d-inline-flex align-items-center gap-2"
-                            style={{
-                                background: '#5865f2',
-                                color: '#fff',
-                                fontSize: '1.05rem',
-                                boxShadow: '0 6px 24px rgba(88,101,242,0.45)',
-                                border: 'none',
-                                transition: 'transform .15s, box-shadow .15s',
-                            }}
-                            onClick={login}
-                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 10px 32px rgba(88,101,242,0.55)'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = ''; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 24px rgba(88,101,242,0.45)'; }}
-                        >
-                            <i className="fa-brands fa-discord fs-5" />
-                            <span>Login with Discord</span>
-                        </button>
-
-                        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '.75rem', marginTop: '1.25rem', marginBottom: 0 }}>
-                            We only read your username and avatar. No DM or message permissions are requested.
-                        </p>
                     </div>
                 </div>
             </>
@@ -1012,14 +1001,17 @@ const OrderBot: React.FC = () => {
     // ── Auth loading skeleton ──
     if (authLoading) {
         return (
-            <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span className="spinner-border text-success" style={{ width: '3rem', height: '3rem' }} />
+            <div className="nook-bg min-vh-100 d-flex align-items-center justify-content-center p-4">
+                <div className="text-center bg-white rounded-4 shadow-sm border p-5">
+                    <div className="spinner-border text-success mb-3" role="status" />
+                    <p className="fw-bold text-muted mb-0">Connecting to Chopaeng...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <>
+        <div className="nook-bg min-vh-100 font-nunito pb-5">
             <Helmet>
                 <title>Order Bot · Chopaeng</title>
                 <meta
@@ -1029,16 +1021,18 @@ const OrderBot: React.FC = () => {
                 <link rel="canonical" href={`${window.location.origin}/order`} />
             </Helmet>
 
-            {/* ════════════════ HERO HEADER ════════════════ */}
-            <section className="ob-hero position-relative">
-                <div className="container position-relative" style={{ zIndex: 1 }}>
-                    <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                        <div>
-                            <div className="d-flex align-items-center gap-2 mb-2">
+            {/* ════════════════ AIRPORT / BOT LIVE MONITOR HEADER ════════════════ */}
+            <div className="bg-white shadow-sm border-bottom position-relative z-3 mb-4">
+                <div className="container py-4">
+                    <div className="row align-items-center gy-4">
+
+                        {/* Title & Live Status */}
+                        <div className="col-lg-6 text-center text-lg-start">
+                            <div className="d-inline-flex align-items-center gap-2 mb-2 px-3 py-1 rounded-pill bg-light border">
                                 <StatusPill s={botStatus} loading={statusLoading} />
                                 {!statusLoading && (
                                     <button
-                                        className="btn btn-sm btn-link p-0 text-white-50 hover-text-white"
+                                        className="btn btn-sm btn-link p-0 text-muted hover-text-dark"
                                         onClick={() => {
                                             playChimeClick();
                                             refreshStatus();
@@ -1051,47 +1045,55 @@ const OrderBot: React.FC = () => {
                                     </button>
                                 )}
                             </div>
-                            <h1
-                                className="fw-black mb-1 text-white"
-                                style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontFamily: "'Outfit', sans-serif" }}
-                            >
-                                <i className="fa-solid fa-box-open me-2" style={{ color: '#4ade80' }} aria-hidden="true" />
+                            <h1 className="ac-font h2 text-dark mb-1 d-flex align-items-center justify-content-center justify-content-lg-start gap-2">
+                                <i className="fa-solid fa-box-open text-nook"></i>
                                 Order Bot
                             </h1>
-                            <p
-                                className="mb-0"
-                                style={{ color: 'rgba(255,255,255,0.8)', maxWidth: 500, fontSize: '.93rem' }}
-                            >
+                            <p className="text-muted small fw-bold mb-0">
                                 Load your 40-slot pocket, submit an order, and receive your personal Dodo code right here.
                             </p>
                         </div>
 
                         {/* Top Action Bar & Live Stats */}
-                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                        <div className="col-lg-6 d-flex align-items-center justify-content-center justify-content-lg-end gap-2 flex-wrap">
                             <button
                                 type="button"
-                                className="btn btn-sm btn-light bg-white bg-opacity-10 text-white border-0 rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 shadow-2xs hover-bg-opacity-20"
+                                className="btn btn-sm btn-outline-dark rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 shadow-2xs"
                                 onClick={handleOpenHistoryModal}
                                 title="View past orders & reorder"
                             >
-                                <i className="fa-solid fa-clock-rotate-left" style={{ color: '#4ade80' }} aria-hidden="true" />
+                                <i className="fa-solid fa-clock-rotate-left text-success" aria-hidden="true" />
                                 <span>Recent Orders</span>
                             </button>
 
                             {botStatus?.success && !statusLoading && (
                                 <div className="d-flex gap-2 flex-wrap">
                                     {botStatus.island_name && (
-                                        <div className="ob-hero-stat">
-                                            <div className="ob-hero-stat-val" style={{ fontSize: '0.95rem' }}>
-                                                🏝️ {botStatus.island_name}
+                                        <div className="bg-light border rounded-4 px-3 py-2 text-center shadow-2xs">
+                                            <div className="fw-black text-dark fs-6 lh-1">🏝️ {botStatus.island_name}</div>
+                                            <div className="x-small text-muted text-uppercase fw-bold mt-1">
+                                                {botStatus.layer ? botStatus.layer.replace(/([A-Z])/g, ' $1').trim() : 'Order Island'}
                                             </div>
-                                            <div className="ob-hero-stat-lbl">Order Island</div>
                                         </div>
                                     )}
                                     {typeof botStatus.queue_count === 'number' && (
-                                        <div className="ob-hero-stat">
-                                            <div className="ob-hero-stat-val">{botStatus.queue_count}</div>
-                                            <div className="ob-hero-stat-lbl">In Queue</div>
+                                        <div className="bg-light border rounded-4 px-3 py-2 text-center shadow-2xs">
+                                            <div className="fw-black text-dark fs-6 lh-1">{botStatus.queue_count}</div>
+                                            <div className="x-small text-muted text-uppercase fw-bold mt-1">In Queue</div>
+                                        </div>
+                                    )}
+                                    {typeof botStatus.visitors_count === 'number' && (
+                                        <div className="bg-light border rounded-4 px-3 py-2 text-center shadow-2xs">
+                                            <div className="fw-black text-dark fs-6 lh-1">{botStatus.visitors_count}</div>
+                                            <div className="x-small text-muted text-uppercase fw-bold mt-1">Visitors</div>
+                                        </div>
+                                    )}
+                                    {typeof botStatus.battery_charge === 'number' && (
+                                        <div className="bg-light border rounded-4 px-3 py-2 text-center shadow-2xs">
+                                            <div className="fw-black text-dark fs-6 lh-1">
+                                                {botStatus.battery_charge <= 20 ? '🪫' : '🔋'} {botStatus.battery_charge}%
+                                            </div>
+                                            <div className="x-small text-muted text-uppercase fw-bold mt-1">Battery</div>
                                         </div>
                                     )}
                                 </div>
@@ -1099,1678 +1101,1726 @@ const OrderBot: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
             {/* ════════════════ MAIN BODY ════════════════ */}
-            <div className="ob-page">
-                <div className="container py-4">
+            <div className="container py-2">
 
-                    {/* ── BOT MODE SELECTOR (Order Delivery vs In-Island Drop) ── */}
-                    <div className="d-flex align-items-center justify-content-center mb-4">
-                        <div className="ob-mode-toggle-wrap">
-                            <button
-                                type="button"
-                                onClick={() => { setBotMode('order'); playChimeClick(); }}
-                                className={`ob-mode-btn ${botMode === 'order' ? 'active order' : ''}`}
-                            >
-                                <i className="fa-solid fa-plane-departure"></i>
-                                <span>Order Delivery (40 Slots)</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setBotMode('drop'); playChimeClick(); }}
-                                className={`ob-mode-btn ${botMode === 'drop' ? 'active drop' : ''}`}
-                            >
-                                <i className="fa-solid fa-box-open"></i>
-                                <span>In-Island Drop Bot (9 Slots)</span>
-                            </button>
+                {/* ── BOT MODE SELECTOR (Order Delivery vs In-Island Drop) ── */}
+                <div className="d-flex align-items-center justify-content-center mb-4">
+                    <div className="bg-light rounded-pill p-1 d-flex border shadow-2xs">
+                        <button
+                            type="button"
+                            onClick={() => { setBotMode('order'); setModeOverridden(true); playChimeClick(); }}
+                            className={`btn btn-sm rounded-pill fw-bold px-4 py-2 transition-all d-flex align-items-center gap-2 ${botMode === 'order' ? "btn-dark text-white shadow-2xs" : "text-muted border-0 bg-transparent"
+                                }`}
+                        >
+                            <i className="fa-solid fa-plane-departure"></i>
+                            <span>Order Delivery (40 Slots)</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setBotMode('drop'); setModeOverridden(true); playChimeClick(); }}
+                            className={`btn btn-sm rounded-pill fw-bold px-4 py-2 transition-all d-flex align-items-center gap-2 ${botMode === 'drop' ? "btn-dark text-white shadow-2xs" : "text-muted border-0 bg-transparent"
+                                }`}
+                        >
+                            <i className="fa-solid fa-box-open"></i>
+                            <span>In-Island Drop Bot (9 Slots)</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Drop Mode warning when user tries to order */}
+                {botMode === 'order' && sintaIsDropMode && botAvailable && (
+                    <div className="alert alert-warning border-warning-subtle rounded-4 p-3 mb-4 d-flex align-items-center gap-2 shadow-2xs animate-fade" role="alert">
+                        <i className="fa-solid fa-triangle-exclamation text-warning fs-5" />
+                        <div>
+                            <strong>Drop Mode Active</strong>
+                            <span className="text-muted ms-1 small">
+                                — The bot is currently in Drop Mode. Order submissions are disabled until it switches to Order Mode.
+                                {botStatus?.dodo_code && <> Dodo Code: <strong className="text-success">{botStatus.dodo_code}</strong></>}
+                            </span>
                         </div>
                     </div>
+                )}
 
-                    {botMode === 'order' ? (
-                        <>
-                            {/* Step indicator */}
-                            <StepIndicator stage={stage} />
+                {botMode === 'order' ? (
+                    <>
+                        {/* Step indicator */}
+                        <StepIndicator stage={stage} />
 
-                            {/* Notification Permission Banner */}
-                            {!notifGranted && 'Notification' in window && Notification.permission !== 'denied' && (
-                                <div className="ob-notify-bar mb-4 shadow-2xs animate-fade">
-                                    <i
-                                        className="fa-solid fa-bell fs-5 flex-shrink-0"
-                                        style={{ color: '#f59e0b' }}
-                                        aria-hidden="true"
-                                    />
-                                    <div className="flex-grow-1">
-                                        <span className="fw-bold">Enable Desktop Notifications</span>
-                                        <span className="text-muted ms-1 d-none d-sm-inline">
-                                            — get alerted the instant your Dodo code is ready, even if you browse other tabs.
-                                        </span>
-                                    </div>
-                                    <button
-                                        className="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-2xs"
-                                        onClick={() => {
-                                            playChimeClick();
-                                            requestNotificationPermission().then(setNotifGranted);
-                                        }}
-                                    >
-                                        Allow Notifications
-                                    </button>
+                        {/* Notification Permission Banner */}
+                        {!notifGranted && 'Notification' in window && Notification.permission !== 'denied' && (
+                            <div className="ob-notify-bar mb-4 shadow-2xs animate-fade">
+                                <i
+                                    className="fa-solid fa-bell fs-5 flex-shrink-0"
+                                    style={{ color: '#f59e0b' }}
+                                    aria-hidden="true"
+                                />
+                                <div className="flex-grow-1">
+                                    <span className="fw-bold">Enable Desktop Notifications</span>
+                                    <span className="text-muted ms-1 d-none d-sm-inline">
+                                        — get alerted the instant your Dodo code is ready, even if you browse other tabs.
+                                    </span>
                                 </div>
-                            )}
+                                <button
+                                    className="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-2xs"
+                                    onClick={() => {
+                                        playChimeClick();
+                                        requestNotificationPermission().then(setNotifGranted);
+                                    }}
+                                >
+                                    Allow Notifications
+                                </button>
+                            </div>
+                        )}
 
-                            <div className="row g-4">
-                                {/* ════ MAIN COLUMN ════ */}
-                                <div className="col-12 col-lg-8">
-                                    {/* ── OFFLINE BANNER ── */}
-                                    {botUnavailable && (
-                                        <div className="ob-offline-banner mb-4 animate-fade" role="alert">
-                                            <div className="d-flex align-items-center gap-3 flex-grow-1">
-                                                <div className="ob-pulse red" aria-hidden="true" />
-                                                <div>
-                                                    <span className="fw-bold text-dark me-2">Order Bot is Currently Offline</span>
-                                                    <span className="text-muted small">
-                                                        You can still prepare your 40-slot pocket loadout below.
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 flex-shrink-0 hover-shadow-sm transition-all"
-                                                onClick={() => {
-                                                    playChimeClick();
-                                                    refreshStatus();
-                                                }}
-                                                title="Refresh status"
-                                            >
-                                                <i className={`fa-solid fa-arrows-rotate ${statusLoading ? 'fa-spin text-success' : 'text-muted'}`} aria-hidden="true" />
-                                                <span>Refresh</span>
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {/* ══════════════════════════════════════
-                                STAGE: SUBMIT (BUILD & REVIEW)
-                            ══════════════════════════════════════ */}
-                                    {stage === 'submit' && (
-                                        <div className="ob-card accent-green shadow-sm mb-4">
-                                            {/* Card Header */}
-                                            <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
-                                                <div className="d-flex align-items-center gap-3">
-                                                    <div className="ob-card-icon" aria-hidden="true">
-                                                        <i className="fa-solid fa-bag-shopping" />
-                                                    </div>
-                                                    <div>
-                                                        <h2
-                                                            className="h5 fw-bold mb-0 text-dark"
-                                                            style={{ fontFamily: "'Outfit', sans-serif" }}
-                                                        >
-                                                            Your 40-Slot Pocket
-                                                        </h2>
-                                                        <p className="text-muted mb-0 tiny-text">
-                                                            Synced with your Command Builder & Pocket Grid
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Quick toolbar chips */}
-                                                <div className="d-flex gap-2 flex-wrap align-items-center">
-                                                    <Link
-                                                        to="/command-builder"
-                                                        className="btn btn-xs btn-outline-success rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
-                                                        onClick={() => playChimeClick()}
-                                                    >
-                                                        <i className="fa-solid fa-cubes-stacked" />
-                                                        <span>Builder</span>
-                                                    </Link>
-                                                    <Link
-                                                        to="/pockets"
-                                                        className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
-                                                        onClick={() => playChimeClick()}
-                                                    >
-                                                        <i className="fa-solid fa-grip" />
-                                                        <span>Grid</span>
-                                                    </Link>
-                                                </div>
-                                            </div>
-
-                                            {/* Quick Fill Presets Bar */}
-                                            <div className="bg-light rounded-4 p-3 mb-3 border border-light-subtle">
-                                                <div className="d-flex align-items-center justify-content-between mb-2">
-                                                    <span className="tiny-text fw-bold text-muted text-uppercase tracking-wider">
-                                                        <i className="fa-solid fa-wand-magic-sparkles text-warning me-1" />
-                                                        Quick Presets
-                                                    </span>
-                                                    {totalOrderCount > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-link p-0 text-danger tiny-text fw-bold text-decoration-none"
-                                                            onClick={() => {
-                                                                playChimeClick();
-                                                                setOrderItems([]);
-                                                            }}
-                                                        >
-                                                            <i className="fa-solid fa-trash-can me-1" /> Clear All
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <div className="d-flex gap-2 flex-wrap">
-                                                    {QUICK_PRESETS.map((preset) => (
-                                                        <button
-                                                            key={preset.id}
-                                                            type="button"
-                                                            className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-2 hover-shadow-sm transition-all"
-                                                            onClick={() => handleApplyPreset(preset.fillType)}
-                                                            title={`Fill pockets with ${preset.desc}`}
-                                                        >
-                                                            <img
-                                                                src={preset.icon}
-                                                                alt=""
-                                                                style={{ width: 18, height: 18, objectFit: 'contain' }}
-                                                            />
-                                                            <span className="small fw-bold text-dark">{preset.name}</span>
-                                                        </button>
-                                                    ))}
-                                                    {totalOrderCount > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1 hover-shadow-sm transition-all"
-                                                            onClick={() => {
-                                                                playChimeClick();
-                                                                handleMaximizeStacks();
-                                                            }}
-                                                            title="Maximize item stacks to full quantity"
-                                                        >
-                                                            <i className="fa-solid fa-layer-group text-success" />
-                                                            <span className="small fw-bold text-dark">Max Stacks</span>
-                                                        </button>
-                                                    )}
-                                                    {totalOrderCount > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1 hover-shadow-sm transition-all"
-                                                            onClick={() => {
-                                                                playChimeClick();
-                                                                handleSortPockets();
-                                                            }}
-                                                            title="Sort pockets alphabetically"
-                                                        >
-                                                            <i className="fa-solid fa-arrow-down-a-z text-primary" />
-                                                            <span className="small fw-bold text-dark">Sort</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Capacity Progress Bar */}
-                                            <div className="d-flex align-items-center justify-content-between mb-1 tiny-text fw-bold">
-                                                <span className="text-dark">
-                                                    {totalOrderCount} / {ORDER_MAX} Slots Used
-                                                </span>
-                                                <span className={capacityPct === 100 ? 'text-success fw-black' : 'text-muted'}>
-                                                    {capacityPct}% Full ({ORDER_MAX - totalOrderCount} slots remaining)
-                                                </span>
-                                            </div>
-                                            <div
-                                                className="progress mb-3"
-                                                style={{ height: '8px', borderRadius: '10px', background: '#e5e7eb' }}
-                                            >
-                                                <div
-                                                    className={`progress-bar transition-all ${capacityPct === 100 ? 'bg-success' : 'bg-success bg-opacity-75'
-                                                        }`}
-                                                    role="progressbar"
-                                                    style={{ width: `${capacityPct}%` }}
-                                                    aria-valuenow={totalOrderCount}
-                                                    aria-valuemin={0}
-                                                    aria-valuemax={ORDER_MAX}
-                                                />
-                                            </div>
-
-                                            {/* ── 40-SLOT POCKET GRID ── */}
-                                            {orderItems.length === 0 ? (
-                                                <div className="ob-empty-pocket my-4 text-center py-5">
-                                                    <div style={{ fontSize: '3.2rem', marginBottom: '.5rem' }}>🛍️</div>
-                                                    <h3
-                                                        className="h5 fw-bold mb-1 text-dark"
-                                                        style={{ fontFamily: "'Outfit', sans-serif" }}
-                                                    >
-                                                        Your pocket is empty
-                                                    </h3>
-                                                    <p
-                                                        className="text-muted small mb-4"
-                                                        style={{ maxWidth: 420, margin: '0 auto' }}
-                                                    >
-                                                        Pick one of the quick presets above, or open the Command Builder to
-                                                        search thousands of items, DIYs, and villagers.
-                                                    </p>
-                                                    <div className="d-flex gap-2 justify-content-center flex-wrap">
-                                                        <Link
-                                                            to="/command-builder"
-                                                            className="btn btn-nook text-white rounded-pill px-4 fw-bold shadow-2xs"
-                                                            onClick={() => playChimeClick()}
-                                                        >
-                                                            <i className="fa-solid fa-cubes-stacked me-1" /> Open Command
-                                                            Builder
-                                                        </Link>
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-outline-success rounded-pill px-4 fw-bold shadow-2xs"
-                                                            onClick={() => handleApplyPreset('tickets')}
-                                                        >
-                                                            <i className="fa-solid fa-ticket me-1" /> Load 40× NMTs
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="ob-interactive-pocket-grid mb-3">
-                                                    {orderItems.map((entry) => (
-                                                        <div
-                                                            key={entry.item.id}
-                                                            className="ob-interactive-tile"
-                                                            title={entry.item.name}
-                                                        >
-                                                            <img
-                                                                src={entry.item.image || FALLBACK_IMG}
-                                                                alt={entry.item.name}
-                                                                onError={(ev) => {
-                                                                    (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
-                                                                }}
-                                                            />
-                                                            <span className="ob-tile-label">{entry.item.name}</span>
-                                                            {entry.quantity > 1 && (
-                                                                <span className="ob-tile-qty">×{entry.quantity}</span>
-                                                            )}
-                                                            {/* Inline adjust hover buttons */}
-                                                            <div className="ob-tile-actions">
-                                                                <button
-                                                                    type="button"
-                                                                    className="ob-tile-btn dec"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        playChimeClick();
-                                                                        decreaseOrderQuantity(String(entry.item.id));
-                                                                    }}
-                                                                    title="Decrease quantity"
-                                                                >
-                                                                    -
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className="ob-tile-btn inc"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        playChimeClick();
-                                                                        increaseOrderQuantity(String(entry.item.id));
-                                                                    }}
-                                                                    disabled={totalOrderCount >= ORDER_MAX}
-                                                                    title="Increase quantity"
-                                                                >
-                                                                    +
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className="ob-tile-btn del"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        playChimeClick();
-                                                                        removeOrderItem(String(entry.item.id));
-                                                                    }}
-                                                                    title="Remove item"
-                                                                >
-                                                                    <i className="fa-solid fa-xmark" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            {/* Terminal Command Toggle Preview */}
-                                            {totalOrderCount > 0 && (
-                                                <div className="mb-3">
-                                                    <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-link p-0 text-muted tiny-text fw-bold text-decoration-none d-flex align-items-center gap-1"
-                                                            onClick={() => setShowTerminal((s) => !s)}
-                                                        >
-                                                            <i className={`fa-solid fa-chevron-${showTerminal ? 'down' : 'right'}`} />
-                                                            <span>{showTerminal ? 'Hide' : 'View'} Raw Command Strings</span>
-                                                        </button>
-
-                                                        {/* Multi-Format Copy Chips */}
-                                                        <div className="d-flex align-items-center gap-1 flex-wrap">
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
-                                                                onClick={() => handleCopySpecific(orderItemsOnlyCommand || orderCommandText, '!order items')}
-                                                                title="Copy !order items command"
-                                                            >
-                                                                <i className="fa-solid fa-copy" aria-hidden="true" />
-                                                                <span>!order items</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-xs btn-outline-info rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
-                                                                onClick={() => handleCopySpecific(dropItemsOnlyCommand || dropCommandText, '!drop items')}
-                                                                title="Copy !drop items command"
-                                                            >
-                                                                <i className="fa-solid fa-plane-arrival" aria-hidden="true" />
-                                                                <span>!drop</span>
-                                                            </button>
-                                                            {dropVillagerCommand && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
-                                                                    onClick={() => handleCopySpecific(dropVillagerCommand, '!drop villager')}
-                                                                    title="Copy !drop <villager> command"
-                                                                >
-                                                                    <i className="fa-solid fa-person-falling" aria-hidden="true" />
-                                                                    <span>!drop villager</span>
-                                                                </button>
-                                                            )}
-                                                            {orderVillagerCommand && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-xs btn-outline-warning rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
-                                                                    onClick={() => handleCopySpecific(orderVillagerCommand, '!order villager')}
-                                                                    title="Copy !order villager command"
-                                                                >
-                                                                    <i className="fa-solid fa-user-tag" aria-hidden="true" />
-                                                                    <span>!order villager</span>
-                                                                </button>
-                                                            )}
-                                                            {injectVillagerCommand && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-xs btn-outline-primary rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
-                                                                    onClick={() => handleCopySpecific(injectVillagerCommand, '!injectvillager')}
-                                                                    title="Copy !injectvillager command"
-                                                                >
-                                                                    <i className="fa-solid fa-syringe" aria-hidden="true" />
-                                                                    <span>!injectvillager</span>
-                                                                </button>
-                                                            )}
-                                                            {mviVillagerCommand && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
-                                                                    onClick={() => handleCopySpecific(mviVillagerCommand, '!mvi')}
-                                                                    title="Copy !mvi command"
-                                                                >
-                                                                    <i className="fa-solid fa-house-user" aria-hidden="true" />
-                                                                    <span>!mvi</span>
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {showTerminal && (
-                                                        <div className="bg-dark text-light p-3 rounded-3 font-monospace small position-relative mb-3 select-all">
-                                                            <div className="text-break text-success pe-5">
-                                                                {orderCommandText}
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-xs btn-light position-absolute top-0 end-0 m-2 rounded-pill px-2 py-1 tiny-text fw-bold"
-                                                                onClick={handleCopyCommand}
-                                                            >
-                                                                <i
-                                                                    className={`fa-solid ${commandCopied ? 'fa-check text-success' : 'fa-copy'
-                                                                        } me-1`}
-                                                                />
-                                                                {commandCopied ? 'Copied' : 'Copy All'}
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* ── SUBMIT BAR ── */}
-                                            <div className="border-top pt-3 mt-3">
-                                                {/* Profile Bar */}
-                                                <div className="d-flex align-items-center justify-content-between gap-2 mb-3 p-2 px-3 rounded-4 border bg-light shadow-2xs">
-                                                    <div className="d-flex align-items-center gap-2">
-                                                        <div
-                                                            className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white"
-                                                            style={{ width: 32, height: 32, fontSize: '0.85rem' }}
-                                                        >
-                                                            <i className={`fa-solid ${characters.find(c => c.id === orderProfile?.characterId)?.icon || 'fa-leaf'}`} />
-                                                        </div>
-                                                        <div className="lh-sm">
-                                                            <div className="tiny-text fw-bold text-dark d-flex align-items-center gap-1">
-                                                                <span>In-Game:</span>
-                                                                <span className="text-success fw-black">{orderProfile?.orderFor || user?.username}</span>
-                                                                {orderProfile?.islandName && (
-                                                                    <span className="text-muted fw-normal">🏝️ {orderProfile.islandName}</span>
-                                                                )}
-                                                            </div>
-                                                            <div className="tiny-text text-muted d-flex align-items-center gap-1">
-                                                                <i className="fa-brands fa-discord text-primary" style={{ fontSize: '0.75rem' }} />
-                                                                <span>{orderProfile?.displayName || user?.username}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
-                                                        onClick={handleOpenSetup}
-                                                        title="Change In-Game Character"
-                                                    >
-                                                        <i className="fa-solid fa-address-card" />
-                                                        <span>Switch Character</span>
-                                                    </button>
-                                                </div>
-
-                                                {submitError && (
-                                                    <div
-                                                        className="alert alert-danger py-2 d-flex align-items-center gap-2 mb-3 rounded-3 small"
-                                                        role="alert"
-                                                    >
-                                                        <i
-                                                            className="fa-solid fa-circle-exclamation flex-shrink-0 fs-5"
-                                                            aria-hidden="true"
-                                                        />
-                                                        <span>{submitError}</span>
-                                                    </div>
-                                                )}
-
-                                                <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                                                    <button
-                                                        id="ob-send-order-btn"
-                                                        className="btn btn-nook text-white fw-bold rounded-pill px-4 py-3 shadow-sm d-inline-flex align-items-center gap-2"
-                                                        onClick={!orderProfile ? handleOpenSetup : handleSubmit}
-                                                        disabled={!botAvailable || totalOrderCount === 0 || submitLoading || stage !== 'submit'}
-                                                        aria-busy={submitLoading}
-                                                        style={{ fontSize: '1.05rem', minWidth: 200 }}
-                                                    >
-                                                        {submitLoading ? (
-                                                            <>
-                                                                <span
-                                                                    className="spinner-border spinner-border-sm"
-                                                                    aria-hidden="true"
-                                                                />
-                                                                <span>Submitting Order…</span>
-                                                            </>
-                                                        ) : !orderProfile ? (
-                                                            <>
-                                                                <i className="fa-solid fa-user-gear" aria-hidden="true" />
-                                                                <span>Set Up Profile & Order</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <i className="fa-solid fa-paper-plane" aria-hidden="true" />
-                                                                <span>
-                                                                    Send Order ({totalOrderCount} Item
-                                                                    {totalOrderCount === 1 ? '' : 's'})
-                                                                </span>
-                                                            </>
-                                                        )}
-                                                    </button>
-
-                                                    {!botAvailable && !statusLoading && (
-                                                        <span className="text-dark small fw-bold bg-warning bg-opacity-10 px-3 py-1 rounded-pill border border-warning border-opacity-30">
-                                                            <i className="fa-solid fa-moon text-warning me-1" aria-hidden="true" />
-                                                            Bot is resting • Copy !order command for Discord
-                                                        </span>
-                                                    )}
-                                                    {totalOrderCount === 0 && user && (
-                                                        <span className="text-muted small">
-                                                            <i className="fa-solid fa-info-circle me-1" />
-                                                            Add at least 1 item to submit your order.
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* ══════════════════════════════════════
-                                STAGE: TRACKER (LIVE RADAR & DODO)
-                            ══════════════════════════════════════ */}
-                                    {stage === 'tracker' && (
-                                        <div className="ob-card accent-green shadow-sm mb-4 animate-fade">
-                                            {/* Top status bar */}
-                                            <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
-                                                <div className="d-flex align-items-center gap-3">
-                                                    <div className="ob-card-icon blue" aria-hidden="true">
-                                                        <i className="fa-solid fa-satellite-dish" />
-                                                    </div>
-                                                    <div>
-                                                        <h2
-                                                            className="h5 fw-bold mb-0 text-dark"
-                                                            style={{ fontFamily: "'Outfit', sans-serif" }}
-                                                        >
-                                                            Order Flight Tracker
-                                                        </h2>
-                                                        {activeOrderId && (
-                                                            <p
-                                                                className="text-muted mb-0 font-monospace"
-                                                                style={{ fontSize: '.72rem' }}
-                                                            >
-                                                                Order #{activeOrderId}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {!isDone && !isReady && (
-                                                    <button
-                                                        id="ob-cancel-btn"
-                                                        className="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
-                                                        onClick={handleCancel}
-                                                        disabled={cancelLoading}
-                                                        aria-label="Cancel order"
-                                                    >
-                                                        {cancelLoading ? (
-                                                            <span
-                                                                className="spinner-border spinner-border-sm"
-                                                                aria-hidden="true"
-                                                            />
-                                                        ) : (
-                                                            <>
-                                                                <i className="fa-solid fa-xmark" aria-hidden="true" />
-                                                                <span>Cancel Order</span>
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            {/* Order State Progression Bar */}
-                                            <div className="ob-order-progress-steps mb-4">
-                                                <div className="ob-prog-step active">
-                                                    <div className="ob-prog-dot">
-                                                        <i className="fa-solid fa-check" />
-                                                    </div>
-                                                    <span className="ob-prog-text">Submitted</span>
-                                                </div>
-                                                <div
-                                                    className={`ob-prog-step ${['queued', 'preparing', 'ready', 'completed'].includes(statusStr)
-                                                        ? 'active'
-                                                        : ''
-                                                        }`}
-                                                >
-                                                    <div className="ob-prog-dot">
-                                                        {statusStr === 'queued' ? (
-                                                            <span className="spinner-border spinner-border-sm" />
-                                                        ) : (
-                                                            <i className="fa-solid fa-check" />
-                                                        )}
-                                                    </div>
-                                                    <span className="ob-prog-text">
-                                                        {typeof orderStatus?.queuePosition === 'number'
-                                                            ? `In Queue (#${orderStatus.queuePosition})`
-                                                            : 'In Queue'}
-                                                    </span>
-                                                </div>
-                                                <div
-                                                    className={`ob-prog-step ${['preparing', 'ready', 'completed'].includes(statusStr) ? 'active' : ''
-                                                        }`}
-                                                >
-                                                    <div className="ob-prog-dot">
-                                                        {statusStr === 'preparing' ? (
-                                                            <i className="fa-solid fa-gears fa-spin" />
-                                                        ) : isReady || statusStr === 'completed' ? (
-                                                            <i className="fa-solid fa-check" />
-                                                        ) : (
-                                                            <i className="fa-solid fa-box" />
-                                                        )}
-                                                    </div>
-                                                    <span className="ob-prog-text">Preparing Items</span>
-                                                </div>
-                                                <div
-                                                    className={`ob-prog-step ${isReady || statusStr === 'completed' ? 'active ready-step' : ''
-                                                        }`}
-                                                >
-                                                    <div className="ob-prog-dot">
-                                                        {isReady ? (
-                                                            <i className="fa-solid fa-plane-arrival" />
-                                                        ) : (
-                                                            <i className="fa-solid fa-ticket" />
-                                                        )}
-                                                    </div>
-                                                    <span className="ob-prog-text">Dodo Ready</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Metrics strip */}
-                                            {!isReady && !isDone && orderStatus && (
-                                                <div className="row g-3 mb-4">
-                                                    {typeof orderStatus.queuePosition === 'number' && (
-                                                        <div className="col-6">
-                                                            <div className="bg-light rounded-4 p-3 border text-center">
-                                                                <div className="tiny-text text-muted fw-bold text-uppercase">
-                                                                    Your Position
-                                                                </div>
-                                                                <div
-                                                                    className="h2 fw-black text-success mb-0"
-                                                                    style={{ fontFamily: "'Outfit', sans-serif" }}
-                                                                >
-                                                                    #{orderStatus.queuePosition}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {orderStatus.estimatedMinutes !== undefined && (
-                                                        <div className="col-6">
-                                                            <div className="bg-light rounded-4 p-3 border text-center">
-                                                                <div className="tiny-text text-muted fw-bold text-uppercase">
-                                                                    Estimated Wait
-                                                                </div>
-                                                                <div
-                                                                    className="h2 fw-black text-dark mb-0"
-                                                                    style={{ fontFamily: "'Outfit', sans-serif" }}
-                                                                >
-                                                                    {fmtEta(orderStatus.estimatedMinutes)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* Browser Notification Prompt */}
-                                            {!isReady && !isDone && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
-                                                <div className="alert alert-warning border-warning-subtle rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2 shadow-2xs">
-                                                    <div className="d-flex align-items-center gap-2">
-                                                        <i className="fa-solid fa-bell text-warning fs-5"></i>
-                                                        <div>
-                                                            <strong className="d-block text-dark small fw-bold">Get notified when your Dodo is ready</strong>
-                                                            <span className="tiny-text text-muted">We'll alert your browser so you don't miss your flight.</span>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-sm btn-warning text-dark rounded-pill fw-bold px-3 shadow-2xs"
-                                                        onClick={async () => {
-                                                            playChimeClick();
-                                                            const res = await Notification.requestPermission();
-                                                            setNotifGranted(res === 'granted');
-                                                        }}
-                                                    >
-                                                        <i className="fa-solid fa-bell me-1"></i>Enable Alerts
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {/* ── BOARDING PASS / DODO CODE REVEAL CARD ── */}
-                                            {isReady && orderStatus?.dodoCode && (
-                                                <div className="ob-boarding-pass-card mb-4 shadow-sm" role="status" aria-live="polite">
-                                                    <div className="ob-pass-header d-flex align-items-center justify-content-between">
-                                                        <div className="d-flex align-items-center gap-2">
-                                                            <i className="fa-solid fa-plane-departure text-warning fs-4" />
-                                                            <div>
-                                                                <span className="ob-pass-badge">DODO AIRLINES EXPRESS</span>
-                                                                <h3 className="h5 fw-black text-white mb-0">
-                                                                    🏝️ Fly to {orderStatus.islandName || 'Order Island'}
-                                                                </h3>
-                                                            </div>
-                                                        </div>
-                                                        <span className="badge bg-white text-success rounded-pill fw-black px-3 py-1">
-                                                            READY FOR PICKUP
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="ob-pass-body text-center py-4">
-                                                        <div className="tiny-text text-muted fw-bold text-uppercase tracking-wider mb-1">
-                                                            Your Private Dodo Code™
-                                                        </div>
-                                                        <div className="ob-pass-dodo-display">{orderStatus.dodoCode}</div>
-
-                                                        <div className="d-flex justify-content-center gap-2 mt-3">
-                                                            <button
-                                                                id="ob-copy-dodo-btn"
-                                                                className={`btn btn-lg rounded-pill fw-black px-5 py-3 shadow-sm d-inline-flex align-items-center gap-2 ${dodoCopied ? 'btn-success text-white' : 'btn-nook text-white'
-                                                                    }`}
-                                                                onClick={handleCopyDodo}
-                                                                aria-label={
-                                                                    dodoCopied
-                                                                        ? 'Dodo code copied'
-                                                                        : `Copy Dodo code ${orderStatus.dodoCode}`
-                                                                }
-                                                            >
-                                                                <i
-                                                                    className={`fa-solid ${dodoCopied ? 'fa-check' : 'fa-copy'}`}
-                                                                    aria-hidden="true"
-                                                                />
-                                                                <span>{dodoCopied ? 'Copied to Clipboard!' : 'Copy Dodo Code'}</span>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="ob-pass-footer bg-light p-3 border-top rounded-bottom-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                                        <div className="d-flex align-items-center gap-2 tiny-text text-muted">
-                                                            <i className="fa-solid fa-circle-info text-primary" />
-                                                            <span>Talk to Orville → "I wanna fly!" → "Via online play" → "Dodo Code™"</span>
-                                                        </div>
-                                                        <span className="font-monospace text-muted tiny-text">
-                                                            Gate Pass: #{activeOrderId?.slice(0, 10)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Message alert if any */}
-                                            {orderStatus?.message && (
-                                                <div className="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3 rounded-3">
-                                                    <i className="fa-solid fa-circle-info text-primary flex-shrink-0" />
-                                                    <span>{orderStatus.message}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Polling live ticker */}
-                                            {!isDone && !isReady && (
-                                                <div className="ob-polling d-flex align-items-center gap-2 text-muted tiny-text mb-3">
-                                                    <span
-                                                        className="spinner-border spinner-border-sm text-success"
-                                                        style={{ width: 12, height: 12 }}
-                                                    />
-                                                    <span>Syncing live radar every {POLL_MS / 1000}s…</span>
-                                                </div>
-                                            )}
-
-                                            {/* Completion actions */}
-                                            {(isDone || isReady) && (
-                                                <div className="d-flex gap-2 flex-wrap pt-2 border-top">
-                                                    <button
-                                                        id="ob-new-order-btn"
-                                                        className="btn btn-nook text-white rounded-pill px-4 py-2 fw-bold shadow-2xs"
-                                                        onClick={handleReset}
-                                                    >
-                                                        <i className="fa-solid fa-rotate-left me-1" /> Place Another Order
-                                                    </button>
-                                                    <Link
-                                                        to="/command-builder"
-                                                        className="btn btn-outline-success rounded-pill px-4 py-2 fw-bold shadow-2xs"
-                                                        onClick={() => playChimeClick()}
-                                                    >
-                                                        <i className="fa-solid fa-pencil me-1" /> Edit Pocket
-                                                    </Link>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* ════ SIDEBAR ════ */}
-                                <div className="col-12 col-lg-4">
-                                    {/* ── Quick Tools ── */}
-                                    <div className="ob-card shadow-sm mb-3">
-                                        <div className="ob-card-head mb-3">
-                                            <div className="ob-card-icon" aria-hidden="true">
-                                                <i className="fa-solid fa-compass" />
-                                            </div>
+                        <div className="row g-4">
+                            {/* ════ MAIN COLUMN ════ */}
+                            <div className="col-12 col-lg-8">
+                                {/* ── OFFLINE BANNER ── */}
+                                {botUnavailable && (
+                                    <div className="ob-offline-banner mb-4 animate-fade" role="alert">
+                                        <div className="d-flex align-items-center gap-3 flex-grow-1">
+                                            <div className="ob-pulse red" aria-hidden="true" />
                                             <div>
-                                                <h3
-                                                    className="h6 fw-bold mb-0 text-dark"
-                                                    style={{ fontFamily: "'Outfit', sans-serif" }}
-                                                >
-                                                    Order Tools & Nav
-                                                </h3>
-                                                <p className="text-muted mb-0 tiny-text">Quick island & pocket actions</p>
+                                                <span className="fw-bold text-dark me-2">Order Bot is Currently Offline</span>
+                                                <span className="text-muted small">
+                                                    You can still prepare your 40-slot pocket loadout below.
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="d-flex flex-column gap-2">
-                                            <button
-                                                type="button"
-                                                className="btn ob-tool-link text-start"
-                                                onClick={handleOpenHistoryModal}
-                                            >
-                                                <div className="ob-tool-icon">
-                                                    <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" />
-                                                </div>
-                                                <div>
-                                                    <div className="fw-bold small text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                                                        Order History
-                                                    </div>
-                                                    <div className="tiny-text text-muted">1-click reorder past pockets</div>
-                                                </div>
-                                            </button>
-
-                                            <Link
-                                                to="/command-builder"
-                                                className="ob-tool-link"
-                                                onClick={() => playChimeClick()}
-                                            >
-                                                <div className="ob-tool-icon">
-                                                    <i className="fa-solid fa-cubes-stacked" aria-hidden="true" />
-                                                </div>
-                                                <div>
-                                                    <div className="fw-bold small text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                                                        Command Builder
-                                                    </div>
-                                                    <div className="tiny-text text-muted">Search catalog & add items</div>
-                                                </div>
-                                            </Link>
-
-                                            <Link
-                                                to="/pockets"
-                                                className="ob-tool-link"
-                                                onClick={() => playChimeClick()}
-                                            >
-                                                <div className="ob-tool-icon">
-                                                    <i className="fa-solid fa-grip" aria-hidden="true" />
-                                                </div>
-                                                <div>
-                                                    <div className="fw-bold small text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                                                        Pocket Inventory
-                                                    </div>
-                                                    <div className="tiny-text text-muted">Drag & drop pocket loadouts</div>
-                                                </div>
-                                            </Link>
-
-                                            <Link
-                                                to="/islands"
-                                                className="ob-tool-link"
-                                                onClick={() => playChimeClick()}
-                                            >
-                                                <div className="ob-tool-icon">
-                                                    <i className="fa-solid fa-map-location-dot" aria-hidden="true" />
-                                                </div>
-                                                <div>
-                                                    <div className="fw-bold small text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                                                        Treasure Islands
-                                                    </div>
-                                                    <div className="tiny-text text-muted">Explore free public islands</div>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    {/* ── Live Queue Drawer ── */}
-                                    <div className="ob-card shadow-sm mb-3">
                                         <button
-                                            id="ob-queue-toggle"
-                                            className="d-flex align-items-center justify-content-between w-100 bg-transparent border-0 p-0"
+                                            type="button"
+                                            className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 flex-shrink-0 hover-shadow-sm transition-all"
                                             onClick={() => {
                                                 playChimeClick();
-                                                setQueueOpen((o) => !o);
+                                                refreshStatus();
                                             }}
-                                            aria-expanded={queueOpen}
-                                            aria-controls="ob-queue-panel"
+                                            title="Refresh status"
                                         >
-                                            <div className="d-flex align-items-center gap-2">
-                                                <div
-                                                    className="ob-card-icon"
-                                                    style={{ width: 34, height: 34, borderRadius: 10, fontSize: '.85rem' }}
-                                                >
-                                                    <i className="fa-solid fa-list-ol" />
-                                                </div>
-                                                <div className="text-start">
-                                                    <span
-                                                        className="fw-bold small d-block text-dark"
-                                                        style={{ fontFamily: "'Outfit', sans-serif" }}
-                                                    >
-                                                        Live Order Queue
-                                                    </span>
-                                                    <span className="tiny-text text-muted">
-                                                        {typeof botStatus?.queue_count === 'number'
-                                                            ? `${botStatus.queue_count} players waiting`
-                                                            : 'Check queue'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <i
-                                                className={`fa-solid fa-chevron-${queueOpen ? 'up' : 'down'} text-muted small`}
-                                                aria-hidden="true"
-                                            />
+                                            <i className={`fa-solid fa-arrows-rotate ${statusLoading ? 'fa-spin text-success' : 'text-muted'}`} aria-hidden="true" />
+                                            <span>Refresh</span>
                                         </button>
-
-                                        {queueOpen && (
-                                            <div id="ob-queue-panel" className="mt-3 pt-3 border-top animate-fade">
-                                                {queue.length === 0 ? (
-                                                    <div className="text-center py-3 text-muted small">
-                                                        <span
-                                                            className="spinner-border spinner-border-sm me-1 text-success"
-                                                            aria-hidden="true"
-                                                        />
-                                                        Loading queue list…
-                                                    </div>
-                                                ) : (
-                                                    <QueueList queue={queue} myOrderId={activeOrderId ?? undefined} />
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* ── Flight Steps Guide ── */}
-                                    <div className="ob-card shadow-sm">
-                                        <div className="ob-card-head mb-3">
-                                            <div
-                                                className="ob-card-icon"
-                                                style={{ width: 34, height: 34, borderRadius: 10, fontSize: '.85rem' }}
-                                            >
-                                                <i className="fa-solid fa-circle-question" />
-                                            </div>
-                                            <span
-                                                className="fw-bold small text-dark"
-                                                style={{ fontFamily: "'Outfit', sans-serif" }}
-                                            >
-                                                How Ordering Works
-                                            </span>
-                                        </div>
-                                        {[
-                                            {
-                                                icon: 'fa-cubes-stacked',
-                                                title: '1. Build Pockets',
-                                                text: 'Pick up to 40 items in Command Builder or load presets.',
-                                            },
-                                            {
-                                                icon: 'fa-paper-plane',
-                                                title: '2. Send Order',
-                                                text: 'Click Send Order to join the live bot dispatch queue.',
-                                            },
-                                            {
-                                                icon: 'fa-satellite-dish',
-                                                title: '3. Track Radar',
-                                                text: 'Watch your queue position & estimated wait time.',
-                                            },
-                                            {
-                                                icon: 'fa-plane',
-                                                title: '4. Fly In',
-                                                text: 'Enter your personal Dodo code at Dodo Airlines to collect.',
-                                            },
-                                        ].map((step, i) => (
-                                            <div key={i} className="d-flex align-items-start gap-2 mb-2">
-                                                <div className="ob-how-num" aria-hidden="true">
-                                                    {i + 1}
-                                                </div>
-                                                <div>
-                                                    <strong className="d-block tiny-text text-dark">{step.title}</strong>
-                                                    <span className="text-muted tiny-text">{step.text}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        /* ══════════════════════════════════════
-                            IN-ISLAND DROP BOT (9 SLOTS)
-                        ══════════════════════════════════════ */
-                        <div className="row g-4 animate-fade">
-                            {/* ════ MAIN DROP COLUMN ════ */}
-                            <div className="col-12 col-lg-8">
-
-                                {/* ── STEP 1: SELECT DESTINATION SUB MEMBER ISLAND ── */}
-                                <div className="ob-card accent-green shadow-sm mb-4">
-                                    <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
-                                        <div className="d-flex align-items-center gap-3">
-                                            <div className="ob-card-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
-                                                <i className="fa-solid fa-crown" />
-                                            </div>
-                                            <div>
-                                                <h2 className="h5 fw-bold mb-0 text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                                                    1. Select Destination Sub Member Island
-                                                </h2>
-                                                <p className="text-muted mb-0 tiny-text">
-                                                    Select a Sub Member island to receive your in-game item drops
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Filter Pills */}
-                                        <div className="d-flex gap-1 bg-light p-1 rounded-pill border">
-                                            <button
-                                                type="button"
-                                                onClick={() => { setDropFilter('all'); playChimeClick(); }}
-                                                className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${dropFilter === 'all' ? 'btn-dark text-white shadow-2xs' : 'text-muted border-0'
-                                                    }`}
-                                                style={{ fontSize: '0.72rem' }}
-                                            >
-                                                All Sub Islands ({subMemberIslands.length})
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => { setDropFilter('unlocked'); playChimeClick(); }}
-                                                className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${dropFilter === 'unlocked' ? 'btn-dark text-white shadow-2xs' : 'text-muted border-0'
-                                                    }`}
-                                                style={{ fontSize: '0.72rem' }}
-                                            >
-                                                <i className="fa-solid fa-crown me-1 text-warning"></i>
-                                                My Sub Islands ({subMemberIslands.filter(i => !!user && canAccessIsland(i.requiredRoles)).length})
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Sub Requirement Notice for Guest / Non-Sub */}
-                                    {(!user || subMemberIslands.every(i => !user || !canAccessIsland(i.requiredRoles))) && (
-                                        <div className="alert alert-warning rounded-4 border-0 p-3 mb-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 shadow-2xs">
-                                            <div className="d-flex align-items-center gap-2">
-                                                <i className="fa-solid fa-crown text-warning fs-5 flex-shrink-0"></i>
-                                                <span className="small fw-bold text-dark">
-                                                    {user ? 'You do not currently have an active Sub Member subscription tier.' : 'Log in with your Discord account to access your Sub Islands.'}
-                                                </span>
-                                            </div>
-                                            {user ? (
-                                                <Link to="/membership" className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap">
-                                                    View Memberships
-                                                </Link>
-                                            ) : (
-                                                <button type="button" onClick={login} className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap">
-                                                    <i className="fa-brands fa-discord me-1"></i> Log In
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Island Dropdown Selector */}
-                                    {islandsLoading ? (
-                                        <div className="text-center py-4 text-muted">
-                                            <span className="spinner-border spinner-border-sm text-success me-2" />
-                                            <span>Loading Sub Member islands…</span>
-                                        </div>
-                                    ) : (
-                                        <div className="mb-3">
-                                            <label className="form-label small fw-bold text-muted text-uppercase tracking-wider d-flex align-items-center justify-content-between">
-                                                <span>
-                                                    <i className="fa-solid fa-tree text-success me-1"></i> Choose Sub Island:
-                                                </span>
-                                                {selectedDropIsland && (
-                                                    <span className="text-success fw-bold tiny-text">
-                                                        <i className="fa-solid fa-circle-check me-1"></i> Selected: {selectedDropIsland.name}
-                                                    </span>
-                                                )}
-                                            </label>
-                                            <select
-                                                className="form-select form-select-lg rounded-4 border-2 shadow-2xs fw-bold text-dark"
-                                                style={{ fontSize: '0.95rem', borderColor: selectedDropIsland ? '#86efac' : '#e2e8f0' }}
-                                                value={selectedDropIsland?.id || ''}
-                                                onChange={(e) => {
-                                                    const found = subMemberIslands.find((isl) => isl.id === e.target.value);
-                                                    if (found) {
-                                                        const hasAccess = !!user && canAccessIsland(found.requiredRoles);
-                                                        if (!hasAccess) {
-                                                            if (!user) {
-                                                                login();
-                                                            } else {
-                                                                triggerInAppToast({
-                                                                    type: 'warning',
-                                                                    title: 'Sub Pass Required',
-                                                                    message: `You do not have access to ${found.name}. Requires an active Sub Member tier.`,
-                                                                });
-                                                            }
-                                                            return;
-                                                        }
-                                                        setSelectedDropIsland(found);
-                                                        setDropDodoCode(null);
-                                                        setDropDodoError(null);
-                                                        setAlreadyOnIsland(false);
-                                                        setDropSuccessMsg(null);
-                                                        setDropErrorMsg(null);
-                                                        playChimeClick();
-                                                    } else {
-                                                        setSelectedDropIsland(null);
-                                                        setDropDodoCode(null);
-                                                        setDropDodoError(null);
-                                                        setAlreadyOnIsland(false);
-                                                    }
-                                                }}
-                                            >
-                                                <option value="">-- Select a Sub Member Island --</option>
-
-                                                {/* My Accessible group */}
-                                                {availableDropIslands.filter(i => !!user && canAccessIsland(i.requiredRoles)).length > 0 && (
-                                                    <optgroup label="👑 My Sub Member Islands">
-                                                        {availableDropIslands
-                                                            .filter(i => !!user && canAccessIsland(i.requiredRoles))
-                                                            .map(isl => (
-                                                                <option key={isl.id} value={isl.id}>
-                                                                    {isl.name} · {isl.type || 'Treasure Island'} ({isl.visitors ?? 0}/7 Flying)
-                                                                </option>
-                                                            ))}
-                                                    </optgroup>
-                                                )}
-
-                                                {/* Other group if filter is 'all' */}
-                                                {dropFilter === 'all' && availableDropIslands.filter(i => !user || !canAccessIsland(i.requiredRoles)).length > 0 && (
-                                                    <optgroup label="🔒 Other Sub Member Islands (Requires Subscription)">
-                                                        {availableDropIslands
-                                                            .filter(i => !user || !canAccessIsland(i.requiredRoles))
-                                                            .map(isl => (
-                                                                <option key={isl.id} value={isl.id}>
-                                                                    {isl.name} · {isl.type || 'Treasure Island'} ({isl.visitors ?? 0}/7 Flying)
-                                                                </option>
-                                                            ))}
-                                                    </optgroup>
-                                                )}
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    {/* Selected Island Banner Preview */}
-                                    {selectedDropIsland && (
-                                        <div className="animate-up mt-3">
-                                            <div className="ob-island-sub-card selected p-0 overflow-hidden shadow-sm border-2">
-                                                <div className="ob-island-card-banner position-relative" style={{ height: '140px' }}>
-                                                    <img
-                                                        src={selectedDropIsland.mapUrl || `https://cdn.chopaeng.com/maps/${selectedDropIsland.name.toLowerCase()}.png`}
-                                                        alt={selectedDropIsland.name}
-                                                        className="ob-island-card-img w-100 h-100"
-                                                        style={{ objectFit: 'cover' }}
-                                                        onError={(e) => {
-                                                            e.currentTarget.onerror = null;
-                                                            e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f172a'/><text x='50%' y='65%' font-size='40' text-anchor='middle' fill='%2352b788'>MAP</text></svg>";
-                                                        }}
-                                                    />
-                                                    <div className="ob-island-banner-overlay" />
-
-                                                    {/* Floating Badges */}
-                                                    <div className="position-absolute top-0 start-0 m-2 d-flex gap-1">
-                                                        <span className="badge bg-dark bg-opacity-75 text-white rounded-pill x-small fw-bold border border-secondary border-opacity-50">
-                                                            <i className="fa-solid fa-crown text-warning me-1"></i> SUB MEMBER
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="position-absolute top-0 end-0 m-2">
-                                                        <span className="badge bg-success text-white rounded-pill px-2 py-1 shadow-2xs x-small fw-bold">
-                                                            <i className="fa-solid fa-check me-1"></i> TARGET SET
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="position-absolute bottom-0 start-0 m-3">
-                                                        <strong className="text-white h5 mb-0 fw-black text-truncate d-block drop-shadow-sm">
-                                                            {selectedDropIsland.name}
-                                                        </strong>
-                                                        <span className="tiny-text text-white-50">
-                                                            {selectedDropIsland.type || 'Treasure Island'} · {selectedDropIsland.visitors ?? 0}/7 Flying
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="p-3 bg-white d-flex align-items-center justify-content-between">
-                                                    <div className="d-flex align-items-center gap-2">
-                                                        <i className="fa-solid fa-circle-check text-success fs-5"></i>
-                                                        <div>
-                                                            <strong className="d-block text-dark small fw-bold">Ready for Flight Pass</strong>
-                                                            <span className="tiny-text text-muted">Proceed to Step 2 below to retrieve Dodo code</span>
-                                                        </div>
-                                                    </div>
-                                                    <span className="badge bg-success-subtle text-success rounded-pill px-3 py-1 fw-bold x-small border border-success">
-                                                        ACCESS GRANTED
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* ── STEP 2: GET DODO FLIGHT PASS & LOG VIA WEBHOOK ── */}
-                                {selectedDropIsland && (
-                                    <div className="ob-dodo-flight-pass mb-4 animate-up">
-                                        <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                                            <div className="d-flex align-items-center gap-2">
-                                                <div className="rounded-circle bg-success bg-opacity-25 p-2 d-flex align-items-center justify-content-center" style={{ width: 36, height: 36 }}>
-                                                    <i className="fa-solid fa-plane-departure text-warning fs-6" />
-                                                </div>
-                                                <div>
-                                                    <h2 className="h6 fw-black mb-0 text-white" style={{ fontFamily: "'Outfit', sans-serif", letterSpacing: '0.02em' }}>
-                                                        2. Flight Pass & On-Island Presence
-                                                    </h2>
-                                                    <span className="tiny-text text-white-50">Fly in via Dodo Airlines or confirm you're already landed</span>
-                                                </div>
-                                            </div>
-                                            <span className={`badge rounded-pill px-3 py-1 fw-black x-small ${alreadyOnIsland ? 'bg-success text-white' : dropDodoCode ? 'bg-warning text-dark' : 'bg-secondary text-white'
-                                                }`}>
-                                                <i className={`fa-solid ${alreadyOnIsland ? 'fa-circle-check' : 'fa-plane'} me-1`}></i>
-                                                {alreadyOnIsland ? 'ON-SITE CONFIRMED' : dropDodoCode ? 'FLIGHT PASS ACTIVE' : 'LOGGING REQUIRED'}
-                                            </span>
-                                        </div>
-
-                                        <div className="bg-black bg-opacity-30 rounded-4 p-3 border border-white border-opacity-10 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                                            <div>
-                                                <span className="tiny-text text-uppercase text-white-50 fw-bold d-block mb-1 tracking-wider">
-                                                    Destination · {selectedDropIsland.name}
-                                                </span>
-                                                {alreadyOnIsland ? (
-                                                    <div className="d-flex align-items-center gap-2 text-success fw-black py-1">
-                                                        <i className="fa-solid fa-location-dot fs-5 text-success"></i>
-                                                        <span>Landed on {selectedDropIsland.name} (Ready to Drop)</span>
-                                                    </div>
-                                                ) : dropDodoCode ? (
-                                                    <div className="ob-dodo-code-chip">
-                                                        <i className="fa-solid fa-ticket text-warning fs-5"></i>
-                                                        <span>{dropDodoCode}</span>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-white-50 small font-monospace py-1">
-                                                        <i className="fa-solid fa-lock me-1"></i> Get code to fly in, or click if already on island
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="d-flex align-items-center gap-2 flex-wrap">
-                                                {dropDodoCode ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleCopyDropIslandDodo(dropDodoCode)}
-                                                        className={`btn rounded-pill fw-black px-4 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${dropDodoCopied ? 'btn-success text-white' : 'btn-warning text-dark hover-scale'
-                                                            }`}
-                                                    >
-                                                        {dropDodoCopied ? (
-                                                            <><i className="fa-solid fa-check"></i> Copied to Clipboard!</>
-                                                        ) : (
-                                                            <><i className="fa-solid fa-copy"></i> Copy Flight Code</>
-                                                        )}
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        disabled={dropDodoLoading}
-                                                        onClick={() => handleGetDropIslandDodo(selectedDropIsland)}
-                                                        className="btn btn-warning text-dark rounded-pill fw-black px-3 py-2 shadow-sm d-flex align-items-center gap-2 hover-scale transition-all"
-                                                    >
-                                                        {dropDodoLoading ? (
-                                                            <><span className="spinner-border spinner-border-sm" /> Logging & Retrieving…</>
-                                                        ) : (
-                                                            <><i className="fa-solid fa-key"></i> Get Dodo Code</>
-                                                        )}
-                                                    </button>
-                                                )}
-
-                                                {/* "Already on Island" Button */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        playChimeClick();
-                                                        setAlreadyOnIsland(true);
-                                                        if (!dropDodoCode) {
-                                                            // Fire webhook in background so arrival is logged
-                                                            handleGetDropIslandDodo(selectedDropIsland);
-                                                        }
-                                                        triggerInAppToast({
-                                                            type: 'success',
-                                                            title: 'Island Presence Confirmed',
-                                                            message: `Confirmed on ${selectedDropIsland.name}! Proceed to Step 3 to drop items.`,
-                                                        });
-                                                    }}
-                                                    className={`btn rounded-pill fw-black px-3 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${alreadyOnIsland
-                                                        ? 'btn-success text-white'
-                                                        : 'btn-outline-light text-white hover-scale'
-                                                        }`}
-                                                >
-                                                    <i className={`fa-solid ${alreadyOnIsland ? 'fa-check-double' : 'fa-location-dot'}`}></i>
-                                                    <span>{alreadyOnIsland ? "Already On Island (Confirmed)" : "I'm Already on the Island"}</span>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {dropDodoError && (
-                                            <div className="alert alert-danger rounded-4 mt-3 mb-0 p-2 d-flex align-items-center justify-content-between gap-2 shadow-2xs">
-                                                <div className="d-flex align-items-center gap-2 tiny-text fw-bold">
-                                                    <i className="fa-solid fa-triangle-exclamation"></i>
-                                                    <span>{dropDodoError}</span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleGetDropIslandDodo(selectedDropIsland)}
-                                                    className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2 py-1"
-                                                >
-                                                    Retry
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        {(dropDodoCode || alreadyOnIsland) && (
-                                            <div className="mt-2 tiny-text text-white-50 d-flex align-items-center gap-1">
-                                                <i className="fa-solid fa-circle-check text-success"></i>
-                                                <span>
-                                                    {alreadyOnIsland
-                                                        ? `Island presence confirmed for ${selectedDropIsland.name}. Stand in front of airport gate to drop.`
-                                                        : `Flight pass logged via Discord webhook. Fly to ${selectedDropIsland.name} before dropping!`}
-                                                </span>
-                                            </div>
-                                        )}
                                     </div>
                                 )}
 
-                                {/* ── STEP 3: DROP ITEMS DESIGNER (9 SLOTS) ── */}
-                                <div className="ob-card shadow-sm mb-4">
-                                    <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
-                                        <div className="d-flex align-items-center gap-3">
-                                            <div className="ob-card-icon" style={{ background: '#e0e7ff', color: '#4338ca' }}>
-                                                <i className="fa-solid fa-boxes-stacked" />
+                                {/* ══════════════════════════════════════
+                                STAGE: SUBMIT (BUILD & REVIEW)
+                            ══════════════════════════════════════ */}
+                                {stage === 'submit' && (
+                                    <div className="ob-card accent-green shadow-sm mb-4">
+                                        {/* Card Header */}
+                                        <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="ob-card-icon" aria-hidden="true">
+                                                    <i className="fa-solid fa-bag-shopping" />
+                                                </div>
+                                                <div>
+                                                    <h2
+                                                        className="h5 fw-bold mb-0 text-dark ac-font"
+                                                    >
+                                                        Your 40-Slot Pocket
+                                                    </h2>
+                                                    <p className="text-muted mb-0 tiny-text">
+                                                        Synced with your Command Builder & Pocket Grid
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h2 className="h5 fw-bold mb-0 text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                                                    3. Select Drop Items (Max {DROP_MAX} Slots)
-                                                </h2>
-                                                <p className="text-muted mb-0 tiny-text">
-                                                    Items dropped instantly at the island airport landing zone
-                                                </p>
+
+                                            {/* Quick toolbar chips */}
+                                            <div className="d-flex gap-2 flex-wrap align-items-center">
+                                                <Link
+                                                    to="/command-builder"
+                                                    className="btn btn-xs btn-outline-success rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
+                                                    onClick={() => playChimeClick()}
+                                                >
+                                                    <i className="fa-solid fa-cubes-stacked" />
+                                                    <span>Builder</span>
+                                                </Link>
+                                                <Link
+                                                    to="/pockets"
+                                                    className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
+                                                    onClick={() => playChimeClick()}
+                                                >
+                                                    <i className="fa-solid fa-grip" />
+                                                    <span>Grid</span>
+                                                </Link>
                                             </div>
                                         </div>
 
-                                        {/* Clear Button */}
-                                        {totalDropCount > 0 && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-link p-0 text-danger tiny-text fw-bold text-decoration-none"
-                                                onClick={() => {
-                                                    playChimeClick();
-                                                    setDropItems([]);
-                                                }}
-                                            >
-                                                <i className="fa-solid fa-trash-can me-1" /> Clear Drop Pocket
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Warning if Dodo Code not retrieved yet and not on island */}
-                                    {selectedDropIsland && !dropDodoCode && !alreadyOnIsland && (
-                                        <div className="alert alert-info rounded-4 border-0 p-3 mb-3 d-flex align-items-center gap-2 tiny-text fw-bold shadow-2xs">
-                                            <i className="fa-solid fa-circle-info fs-6 flex-shrink-0 text-primary"></i>
-                                            <span>Please click <strong>Get Dodo Code</strong> or <strong>I'm Already on the Island</strong> in Step 2 before dropping items.</span>
+                                        {/* Quick Fill Presets Bar */}
+                                        <div className="bg-light rounded-4 p-3 mb-3 border border-light-subtle">
+                                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                                <span className="tiny-text fw-bold text-muted text-uppercase tracking-wider">
+                                                    <i className="fa-solid fa-wand-magic-sparkles text-warning me-1" />
+                                                    Quick Presets
+                                                </span>
+                                                {totalOrderCount > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-link p-0 text-danger tiny-text fw-bold text-decoration-none"
+                                                        onClick={() => {
+                                                            playChimeClick();
+                                                            setOrderItems([]);
+                                                        }}
+                                                    >
+                                                        <i className="fa-solid fa-trash-can me-1" /> Clear All
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="d-flex gap-2 flex-wrap">
+                                                {QUICK_PRESETS.map((preset) => (
+                                                    <button
+                                                        key={preset.id}
+                                                        type="button"
+                                                        className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-2 hover-shadow-sm transition-all"
+                                                        onClick={() => handleApplyPreset(preset.fillType)}
+                                                        title={`Fill pockets with ${preset.desc}`}
+                                                    >
+                                                        <img
+                                                            src={preset.icon}
+                                                            alt=""
+                                                            style={{ width: 18, height: 18, objectFit: 'contain' }}
+                                                        />
+                                                        <span className="small fw-bold text-dark">{preset.name}</span>
+                                                    </button>
+                                                ))}
+                                                {totalOrderCount > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1 hover-shadow-sm transition-all"
+                                                        onClick={() => {
+                                                            playChimeClick();
+                                                            handleMaximizeStacks();
+                                                        }}
+                                                        title="Maximize item stacks to full quantity"
+                                                    >
+                                                        <i className="fa-solid fa-layer-group text-success" />
+                                                        <span className="small fw-bold text-dark">Max Stacks</span>
+                                                    </button>
+                                                )}
+                                                {totalOrderCount > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1 hover-shadow-sm transition-all"
+                                                        onClick={() => {
+                                                            playChimeClick();
+                                                            handleSortPockets();
+                                                        }}
+                                                        title="Sort pockets alphabetically"
+                                                    >
+                                                        <i className="fa-solid fa-arrow-down-a-z text-primary" />
+                                                        <span className="small fw-bold text-dark">Sort</span>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
 
-                                    {/* Quick Fill Drop Presets Bar */}
-                                    <div className="bg-light rounded-4 p-3 mb-3 border border-light-subtle">
-                                        <div className="d-flex align-items-center justify-content-between mb-2">
-                                            <span className="tiny-text fw-bold text-muted text-uppercase tracking-wider">
-                                                <i className="fa-solid fa-wand-magic-sparkles text-warning me-1" />
-                                                Quick Drop Presets
+                                        {/* Capacity Progress Bar */}
+                                        <div className="d-flex align-items-center justify-content-between mb-1 tiny-text fw-bold">
+                                            <span className="text-dark">
+                                                {totalOrderCount} / {ORDER_MAX} Slots Used
+                                            </span>
+                                            <span className={capacityPct === 100 ? 'text-success fw-black' : 'text-muted'}>
+                                                {capacityPct}% Full ({ORDER_MAX - totalOrderCount} slots remaining)
                                             </span>
                                         </div>
-                                        <div className="d-flex gap-2 flex-wrap">
-                                            {DROP_QUICK_PRESETS.map((preset) => (
-                                                <button
-                                                    key={preset.id}
-                                                    type="button"
-                                                    className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-2 hover-shadow-sm transition-all"
-                                                    onClick={() => handleApplyDropPreset(preset.fillType)}
-                                                    title={`Load 9× ${preset.name}`}
-                                                >
-                                                    <img
-                                                        src={preset.icon}
-                                                        alt=""
-                                                        style={{ width: 18, height: 18, objectFit: 'contain' }}
-                                                    />
-                                                    <span className="small fw-bold text-dark">{preset.name}</span>
-                                                </button>
-                                            ))}
+                                        <div
+                                            className="progress mb-3"
+                                            style={{ height: '8px', borderRadius: '10px', background: '#e5e7eb' }}
+                                        >
+                                            <div
+                                                className={`progress-bar transition-all ${capacityPct === 100 ? 'bg-success' : 'bg-success bg-opacity-75'
+                                                    }`}
+                                                role="progressbar"
+                                                style={{ width: `${capacityPct}%` }}
+                                                aria-valuenow={totalOrderCount}
+                                                aria-valuemin={0}
+                                                aria-valuemax={ORDER_MAX}
+                                            />
                                         </div>
-                                    </div>
 
-                                    {/* 9-Slot Drop Grid */}
-                                    {dropItems.length === 0 ? (
-                                        <div className="ob-empty-pocket my-4 text-center py-5">
-                                            <div style={{ fontSize: '3rem' }} className="mb-2">📦</div>
-                                            <h3 className="h6 fw-bold mb-1 text-dark">Your drop pocket is empty</h3>
-                                            <p className="text-muted small mb-3" style={{ maxWidth: 380, margin: '0 auto' }}>
-                                                Choose one of the quick drop presets above, or load items from Command Builder.
-                                            </p>
-                                            <Link
-                                                to="/command-builder"
-                                                className="btn btn-sm btn-outline-primary rounded-pill px-4 fw-bold shadow-2xs"
-                                                onClick={() => playChimeClick()}
-                                            >
-                                                <i className="fa-solid fa-cubes-stacked me-1" /> Open Command Builder
-                                            </Link>
-                                        </div>
-                                    ) : (
-                                        <div className="row g-2 mb-3">
-                                            {dropItems.map((entry) => (
-                                                <div key={entry.item.id} className="col-4 col-sm-3 col-md-4">
-                                                    <div className="ob-drop-slot-tile h-100">
+                                        {/* ── 40-SLOT POCKET GRID ── */}
+                                        {orderItems.length === 0 ? (
+                                            <div className="ob-empty-pocket my-4 text-center py-5">
+                                                <div style={{ fontSize: '3.2rem', marginBottom: '.5rem' }}>🛍️</div>
+                                                <h3 className="h5 fw-bold mb-1 text-dark ac-font">
+                                                    Your pocket is empty
+                                                </h3>
+                                                <p
+                                                    className="text-muted small mb-4"
+                                                    style={{ maxWidth: 420, margin: '0 auto' }}
+                                                >
+                                                    Pick one of the quick presets above, or open the Command Builder to
+                                                    search thousands of items, DIYs, and villagers.
+                                                </p>
+                                                <div className="d-flex gap-2 justify-content-center flex-wrap">
+                                                    <Link
+                                                        to="/command-builder"
+                                                        className="btn btn-nook text-white rounded-pill px-4 fw-bold shadow-2xs"
+                                                        onClick={() => playChimeClick()}
+                                                    >
+                                                        <i className="fa-solid fa-cubes-stacked me-1" /> Open Command
+                                                        Builder
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-outline-success rounded-pill px-4 fw-bold shadow-2xs"
+                                                        onClick={() => handleApplyPreset('tickets')}
+                                                    >
+                                                        <i className="fa-solid fa-ticket me-1" /> Load 40× NMTs
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="ob-interactive-pocket-grid mb-3">
+                                                {orderItems.map((entry) => (
+                                                    <div
+                                                        key={entry.item.id}
+                                                        className="ob-interactive-tile"
+                                                        title={entry.item.name}
+                                                    >
                                                         <img
                                                             src={entry.item.image || FALLBACK_IMG}
                                                             alt={entry.item.name}
-                                                            style={{ width: 44, height: 44, objectFit: 'contain' }}
                                                             onError={(ev) => {
                                                                 (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
                                                             }}
                                                         />
-                                                        <span className="tiny-text fw-bold text-dark text-truncate w-100 mt-1" title={entry.item.name}>
-                                                            {entry.item.name}
-                                                        </span>
-                                                        <div className="d-flex align-items-center gap-1 mt-1">
+                                                        <span className="ob-tile-label">{entry.item.name}</span>
+                                                        {entry.quantity > 1 && (
+                                                            <span className="ob-tile-qty">×{entry.quantity}</span>
+                                                        )}
+                                                        {/* Inline adjust hover buttons */}
+                                                        <div className="ob-tile-actions">
                                                             <button
                                                                 type="button"
-                                                                className="btn btn-xs btn-light border rounded-circle"
-                                                                style={{ width: 22, height: 22, padding: 0 }}
-                                                                onClick={() => { playChimeClick(); decreaseDropQuantity(entry.item.id); }}
+                                                                className="ob-tile-btn dec"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    playChimeClick();
+                                                                    decreaseOrderQuantity(String(entry.item.id));
+                                                                }}
+                                                                title="Decrease quantity"
                                                             >
                                                                 -
                                                             </button>
-                                                            <span className="small fw-black text-primary px-1">×{entry.quantity}</span>
                                                             <button
                                                                 type="button"
-                                                                className="btn btn-xs btn-light border rounded-circle"
-                                                                style={{ width: 22, height: 22, padding: 0 }}
-                                                                onClick={() => { playChimeClick(); increaseDropQuantity(entry.item.id); }}
+                                                                className="ob-tile-btn inc"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    playChimeClick();
+                                                                    increaseOrderQuantity(String(entry.item.id));
+                                                                }}
+                                                                disabled={totalOrderCount >= ORDER_MAX}
+                                                                title="Increase quantity"
                                                             >
                                                                 +
                                                             </button>
+                                                            <button
+                                                                type="button"
+                                                                className="ob-tile-btn del"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    playChimeClick();
+                                                                    removeOrderItem(String(entry.item.id));
+                                                                }}
+                                                                title="Remove item"
+                                                            >
+                                                                <i className="fa-solid fa-xmark" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Terminal Command Toggle Preview */}
+                                        {totalOrderCount > 0 && (
+                                            <div className="mb-3">
+                                                <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-link p-0 text-muted tiny-text fw-bold text-decoration-none d-flex align-items-center gap-1"
+                                                        onClick={() => setShowTerminal((s) => !s)}
+                                                    >
+                                                        <i className={`fa-solid fa-chevron-${showTerminal ? 'down' : 'right'}`} />
+                                                        <span>{showTerminal ? 'Hide' : 'View'} Raw Command Strings</span>
+                                                    </button>
+
+                                                    {/* Multi-Format Copy Chips */}
+                                                    <div className="d-flex align-items-center gap-1 flex-wrap">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
+                                                            onClick={() => handleCopySpecific(orderItemsOnlyCommand || orderCommandText, '!order items')}
+                                                            title="Copy !order items command"
+                                                        >
+                                                            <i className="fa-solid fa-copy" aria-hidden="true" />
+                                                            <span>!order items</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-outline-info rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
+                                                            onClick={() => handleCopySpecific(dropItemsOnlyCommand || dropCommandText, '!drop items')}
+                                                            title="Copy !drop items command"
+                                                        >
+                                                            <i className="fa-solid fa-plane-arrival" aria-hidden="true" />
+                                                            <span>!drop</span>
+                                                        </button>
+                                                        {dropVillagerCommand && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
+                                                                onClick={() => handleCopySpecific(dropVillagerCommand, '!drop villager')}
+                                                                title="Copy !drop <villager> command"
+                                                            >
+                                                                <i className="fa-solid fa-person-falling" aria-hidden="true" />
+                                                                <span>!drop villager</span>
+                                                            </button>
+                                                        )}
+                                                        {orderVillagerCommand && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-xs btn-outline-warning rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
+                                                                onClick={() => handleCopySpecific(orderVillagerCommand, '!order villager')}
+                                                                title="Copy !order villager command"
+                                                            >
+                                                                <i className="fa-solid fa-user-tag" aria-hidden="true" />
+                                                                <span>!order villager</span>
+                                                            </button>
+                                                        )}
+                                                        {injectVillagerCommand && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-xs btn-outline-primary rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
+                                                                onClick={() => handleCopySpecific(injectVillagerCommand, '!injectvillager')}
+                                                                title="Copy !injectvillager command"
+                                                            >
+                                                                <i className="fa-solid fa-syringe" aria-hidden="true" />
+                                                                <span>!injectvillager</span>
+                                                            </button>
+                                                        )}
+                                                        {mviVillagerCommand && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-2 py-1 tiny-text d-inline-flex align-items-center gap-1"
+                                                                onClick={() => handleCopySpecific(mviVillagerCommand, '!mvi')}
+                                                                title="Copy !mvi command"
+                                                            >
+                                                                <i className="fa-solid fa-house-user" aria-hidden="true" />
+                                                                <span>!mvi</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {showTerminal && (
+                                                    <div className="bg-dark text-light p-3 rounded-3 font-monospace small position-relative mb-3 select-all">
+                                                        <div className="text-break text-success pe-5">
+                                                            {orderCommandText}
                                                         </div>
                                                         <button
                                                             type="button"
-                                                            className="btn btn-link p-0 text-muted hover-text-danger position-absolute top-0 end-0 m-1"
-                                                            onClick={() => { playChimeClick(); removeDropItem(entry.item.id); }}
-                                                            title="Remove item"
+                                                            className="btn btn-xs btn-light position-absolute top-0 end-0 m-2 rounded-pill px-2 py-1 tiny-text fw-bold"
+                                                            onClick={handleCopyCommand}
                                                         >
-                                                            <i className="fa-solid fa-xmark small" />
+                                                            <i
+                                                                className={`fa-solid ${commandCopied ? 'fa-check text-success' : 'fa-copy'
+                                                                    } me-1`}
+                                                            />
+                                                            {commandCopied ? 'Copied' : 'Copy All'}
                                                         </button>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Drop Bot Offline Guidance Banner */}
-                                    <div className="alert alert-warning rounded-4 border-0 p-3 mt-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 shadow-2xs">
-                                        <div className="d-flex align-items-start gap-2">
-                                            <i className="fa-solid fa-moon text-warning fs-5 flex-shrink-0 mt-1"></i>
-                                            <div>
-                                                <strong className="d-block text-dark small fw-bold">Drop Bot is Currently Offline</strong>
-                                                <span className="tiny-text text-muted">
-                                                    SysBot direct web dispatch is not set up yet. Use Discord for now to drop items on your Sub Island.
-                                                </span>
+                                                )}
                                             </div>
-                                        </div>
-                                        {dropCommandText && (
-                                            <button
-                                                type="button"
-                                                onClick={handleCopyDropForDiscord}
-                                                className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap d-flex align-items-center gap-2 hover-scale"
-                                            >
-                                                <i className="fa-solid fa-copy"></i> Copy !drop for Discord
-                                            </button>
                                         )}
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* ════ SIDEBAR: DROP DISPATCH RADAR ════ */}
-                            <div className="col-12 col-lg-4">
-                                <div className="ob-radar-card sticky-top" style={{ top: '1.5rem' }}>
-                                    {/* Radar Header */}
-                                    <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                                        <div className="d-flex align-items-center gap-2">
-                                            <div className="ob-card-icon" style={{ width: 34, height: 34, background: '#fffbeb', color: '#d97706' }}>
-                                                <i className="fa-solid fa-satellite-dish fa-spin-pulse" />
-                                            </div>
-                                            <div>
-                                                <h3 className="h6 fw-black mb-0 text-dark" style={{ fontFamily: "'Outfit', sans-serif", letterSpacing: '0.04em' }}>
-                                                    DROP RADAR
-                                                </h3>
-                                                <span className="tiny-text text-muted">In-Game Telemetry</span>
-                                            </div>
-                                        </div>
-                                        <span className="ob-radar-badge-pulse">
-                                            <span className="ob-radar-dot" /> LIVE
-                                        </span>
-                                    </div>
-
-                                    {/* Offline SysBot Notice inside Radar */}
-                                    <div className="bg-warning bg-opacity-10 border border-warning border-opacity-30 rounded-4 p-2 px-3 mb-3 text-center">
-                                        <span className="text-dark small fw-bold d-block">
-                                            <i className="fa-solid fa-moon text-warning me-1"></i> Drop Bot is Currently Offline
-                                        </span>
-                                        <span className="tiny-text text-muted">
-                                            Use Discord for now to drop items on-island.
-                                        </span>
-                                    </div>
-
-                                    {/* Target Island HUD Screen */}
-                                    <div className={`ob-radar-hud-box mb-3 ${selectedDropIsland ? 'active' : ''}`}>
-                                        <div className="d-flex align-items-center justify-content-between mb-1">
-                                            <span className="tiny-text fw-bold text-uppercase text-muted tracking-wider">
-                                                <i className="fa-solid fa-crosshairs me-1 text-primary"></i> Target Coordinates
-                                            </span>
-                                            {selectedDropIsland && (
-                                                <span className="badge bg-light text-dark border rounded-pill x-small fw-bold">
-                                                    {selectedDropIsland.visitors ?? 0}/7 Flying
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {selectedDropIsland ? (
-                                            <div>
-                                                <div className="d-flex align-items-center justify-content-between mt-1">
-                                                    <strong className="text-dark fs-6 fw-black text-truncate d-block">
-                                                        {selectedDropIsland.name}
-                                                    </strong>
-                                                    <span className="badge bg-warning-subtle text-warning-emphasis rounded-pill x-small fw-bold border border-warning-subtle">
-                                                        {selectedDropIsland.type || 'Treasure Island'}
-                                                    </span>
+                                        {/* ── SUBMIT BAR ── */}
+                                        <div className="border-top pt-3 mt-3">
+                                            {/* Profile & Active In-Game Character Strip */}
+                                            <div className="d-flex align-items-center justify-content-between gap-3 mb-3 p-3 rounded-4 border bg-white shadow-2xs flex-wrap">
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div
+                                                        className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white shadow-2xs"
+                                                        style={{ width: 40, height: 40, fontSize: '1.05rem' }}
+                                                    >
+                                                        <i className={`fa-solid ${characters.find(c => c.id === orderProfile?.characterId)?.icon || 'fa-leaf'}`} />
+                                                    </div>
+                                                    <div className="lh-sm">
+                                                        <div className="small fw-bold text-dark d-flex align-items-center gap-2 flex-wrap">
+                                                            <span>Ordering For:</span>
+                                                            <span className="badge bg-success text-white rounded-pill px-2 py-1 ac-font">
+                                                                {orderProfile?.orderFor || user?.username}
+                                                            </span>
+                                                            {orderProfile?.islandName && (
+                                                                <span className="text-muted fw-bold tiny-text">🏝️ {orderProfile.islandName}</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="tiny-text text-muted d-flex align-items-center gap-1 mt-1">
+                                                            <i className="fa-brands fa-discord text-primary" />
+                                                            <span>Discord: <strong>{orderProfile?.displayName || user?.username}</strong></span>
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-success rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
+                                                    onClick={handleOpenSetup}
+                                                    title="Change In-Game Character"
+                                                >
+                                                    <i className="fa-solid fa-address-card" />
+                                                    <span>Switch Character</span>
+                                                </button>
+                                            </div>
 
-                                                <div className="mt-2 pt-2 border-top d-flex align-items-center justify-content-between tiny-text">
-                                                    <span className="text-muted">Presence:</span>
-                                                    {alreadyOnIsland ? (
-                                                        <span className="text-success fw-bold d-inline-flex align-items-center gap-1">
-                                                            <i className="fa-solid fa-circle-check"></i> On-Site Confirmed
-                                                        </span>
-                                                    ) : dropDodoCode ? (
-                                                        <span className="text-primary fw-bold d-inline-flex align-items-center gap-1">
-                                                            <i className="fa-solid fa-ticket"></i> Pass Logged ({dropDodoCode})
-                                                        </span>
+                                            {submitError && (
+                                                <div
+                                                    className="alert alert-danger py-2 d-flex align-items-center gap-2 mb-3 rounded-3 small"
+                                                    role="alert"
+                                                >
+                                                    <i
+                                                        className="fa-solid fa-circle-exclamation flex-shrink-0 fs-5"
+                                                        aria-hidden="true"
+                                                    />
+                                                    <span>{submitError}</span>
+                                                </div>
+                                            )}
+
+                                            <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                                <button
+                                                    id="ob-send-order-btn"
+                                                    className="btn btn-nook text-white fw-bold rounded-pill px-4 py-3 shadow-sm d-inline-flex align-items-center gap-2"
+                                                    onClick={!orderProfile ? handleOpenSetup : handleSubmit}
+                                                    disabled={!canSubmitOrder || totalOrderCount === 0 || submitLoading || stage !== 'submit'}
+                                                    aria-busy={submitLoading}
+                                                    style={{ fontSize: '1.05rem', minWidth: 200 }}
+                                                >
+                                                    {submitLoading ? (
+                                                        <>
+                                                            <span
+                                                                className="spinner-border spinner-border-sm"
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>Submitting Order…</span>
+                                                        </>
+                                                    ) : !orderProfile ? (
+                                                        <>
+                                                            <i className="fa-solid fa-user-gear" aria-hidden="true" />
+                                                            <span>Set Up Profile & Order</span>
+                                                        </>
                                                     ) : (
-                                                        <span className="text-muted fw-bold d-inline-flex align-items-center gap-1">
-                                                            <i className="fa-solid fa-clock"></i> Logging Required
-                                                        </span>
+                                                        <>
+                                                            <i className="fa-solid fa-paper-plane" aria-hidden="true" />
+                                                            <span>
+                                                                Send Order ({totalOrderCount} Item
+                                                                {totalOrderCount === 1 ? '' : 's'})
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                {!botAvailable && !statusLoading && (
+                                                    <span className="text-dark small fw-bold bg-warning bg-opacity-10 px-3 py-1 rounded-pill border border-warning border-opacity-30">
+                                                        <i className="fa-solid fa-moon text-warning me-1" aria-hidden="true" />
+                                                        Bot is resting • Copy !order command for Discord
+                                                    </span>
+                                                )}
+                                                {totalOrderCount === 0 && user && (
+                                                    <span className="text-muted small">
+                                                        <i className="fa-solid fa-info-circle me-1" />
+                                                        Add at least 1 item to submit your order.
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ══════════════════════════════════════
+                                STAGE: TRACKER (LIVE RADAR & DODO)
+                            ══════════════════════════════════════ */}
+                                {stage === 'tracker' && (
+                                    <div className="ob-card accent-green shadow-sm mb-4 animate-fade">
+                                        {/* Top status bar */}
+                                        <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="ob-card-icon blue" aria-hidden="true">
+                                                    <i className="fa-solid fa-satellite-dish" />
+                                                </div>
+                                                <div>
+                                                    <h2
+                                                        className="h5 fw-bold mb-0 text-dark ac-font"
+                                                    >
+                                                        Order Flight Tracker
+                                                    </h2>
+                                                    {activeOrderId && (
+                                                        <p
+                                                            className="text-muted mb-0 font-monospace"
+                                                            style={{ fontSize: '.72rem' }}
+                                                        >
+                                                            Order #{activeOrderId}
+                                                        </p>
                                                     )}
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="text-muted small py-1">
-                                                <i className="fa-solid fa-location-dot me-1 text-secondary"></i>
-                                                No island locked. Select destination in Step 1.
+
+                                            {!isDone && !isReady && (
+                                                <button
+                                                    id="ob-cancel-btn"
+                                                    className="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-1"
+                                                    onClick={handleCancel}
+                                                    disabled={cancelLoading}
+                                                    aria-label="Cancel order"
+                                                >
+                                                    {cancelLoading ? (
+                                                        <span
+                                                            className="spinner-border spinner-border-sm"
+                                                            aria-hidden="true"
+                                                        />
+                                                    ) : (
+                                                        <>
+                                                            <i className="fa-solid fa-xmark" aria-hidden="true" />
+                                                            <span>Cancel Order</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Order State Progression Bar */}
+                                        <div className="ob-order-progress-steps mb-4">
+                                            <div className="ob-prog-step active">
+                                                <div className="ob-prog-dot">
+                                                    <i className="fa-solid fa-check" />
+                                                </div>
+                                                <span className="ob-prog-text">Submitted</span>
+                                            </div>
+                                            <div
+                                                className={`ob-prog-step ${['queued', 'preparing', 'ready', 'completed'].includes(statusStr)
+                                                    ? 'active'
+                                                    : ''
+                                                    }`}
+                                            >
+                                                <div className="ob-prog-dot">
+                                                    {statusStr === 'queued' ? (
+                                                        <span className="spinner-border spinner-border-sm" />
+                                                    ) : (
+                                                        <i className="fa-solid fa-check" />
+                                                    )}
+                                                </div>
+                                                <span className="ob-prog-text">
+                                                    {typeof orderStatus?.queuePosition === 'number'
+                                                        ? (orderStatus.queuePosition > 0 ? `In Queue (#${orderStatus.queuePosition})` : 'In Queue (Next Up)')
+                                                        : 'In Queue'}
+                                                </span>
+                                            </div>
+                                            <div
+                                                className={`ob-prog-step ${['preparing', 'ready', 'completed'].includes(statusStr) ? 'active' : ''
+                                                    }`}
+                                            >
+                                                <div className="ob-prog-dot">
+                                                    {statusStr === 'preparing' ? (
+                                                        <i className="fa-solid fa-gears fa-spin" />
+                                                    ) : isReady || statusStr === 'completed' ? (
+                                                        <i className="fa-solid fa-check" />
+                                                    ) : (
+                                                        <i className="fa-solid fa-box" />
+                                                    )}
+                                                </div>
+                                                <span className="ob-prog-text">Preparing Items</span>
+                                            </div>
+                                            <div
+                                                className={`ob-prog-step ${isReady || statusStr === 'completed' ? 'active ready-step' : ''
+                                                    }`}
+                                            >
+                                                <div className="ob-prog-dot">
+                                                    {isReady ? (
+                                                        <i className="fa-solid fa-plane-arrival" />
+                                                    ) : (
+                                                        <i className="fa-solid fa-ticket" />
+                                                    )}
+                                                </div>
+                                                <span className="ob-prog-text">Dodo Ready</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Cancelled / Timed Out Banner */}
+                                        {statusStr === 'cancelled' && (
+                                            <div className="alert alert-danger border-danger-subtle rounded-4 p-3 mb-4 animate-fade shadow-2xs" role="alert">
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <i className="fa-solid fa-circle-xmark fs-5 text-danger" />
+                                                    <strong className="text-danger">Order Cancelled or Timed Out</strong>
+                                                </div>
+                                                <p className="tiny-text text-dark mb-3">
+                                                    {orderStatus?.message || 'Your order request was cancelled or timed out before arrival.'}
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-danger rounded-pill px-3 fw-bold shadow-2xs"
+                                                    onClick={handleReset}
+                                                >
+                                                    <i className="fa-solid fa-rotate-left me-1" /> Re-Order Items
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Preparing Items on Island Banner */}
+                                        {statusStr === 'preparing' && (
+                                            <div className="alert alert-warning border-warning-subtle rounded-4 p-3 mb-4 animate-fade shadow-2xs text-start" role="status">
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div
+                                                        className="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0"
+                                                        style={{ width: 44, height: 44, background: '#d97706' }}
+                                                    >
+                                                        <i className="fa-solid fa-gears fa-spin fs-5" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="h6 fw-black text-dark mb-1 ac-font">
+                                                            Preparing Items on Island
+                                                        </h3>
+                                                        <p className="tiny-text text-muted mb-0">
+                                                            ChoBot is currently placing your 40 pocket items on the ground on {orderStatus?.islandName || 'the island'}. Your private Dodo Code™ will arrive momentarily!
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Metrics strip */}
+                                        {!isReady && !isDone && orderStatus && (
+                                            <div className="row g-3 mb-4">
+                                                {typeof orderStatus.queuePosition === 'number' && (
+                                                    <div className="col-6">
+                                                        <div className="bg-light rounded-4 p-3 border text-center">
+                                                            <div className="tiny-text text-muted fw-bold text-uppercase">
+                                                                Your Position
+                                                            </div>
+                                                            <div className="h2 fw-black text-success mb-0 ac-font">
+                                                                {statusStr === 'preparing'
+                                                                    ? 'Up Next'
+                                                                    : orderStatus.queuePosition > 0
+                                                                        ? `#${orderStatus.queuePosition}`
+                                                                        : 'Next Up'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {orderStatus.estimatedMinutes !== undefined && (
+                                                    <div className="col-6">
+                                                        <div className="bg-light rounded-4 p-3 border text-center">
+                                                            <div className="tiny-text text-muted fw-bold text-uppercase">
+                                                                Estimated Wait
+                                                            </div>
+                                                            <div className="h2 fw-black text-dark mb-0 ac-font">
+                                                                {statusStr === 'preparing'
+                                                                    ? '< 1 min'
+                                                                    : fmtEta(orderStatus.estimatedMinutes)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Browser Notification Prompt */}
+                                        {!isReady && !isDone && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
+                                            <div className="alert alert-warning border-warning-subtle rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2 shadow-2xs">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <i className="fa-solid fa-bell text-warning fs-5"></i>
+                                                    <div>
+                                                        <strong className="d-block text-dark small fw-bold">Get notified when your Dodo is ready</strong>
+                                                        <span className="tiny-text text-muted">We'll alert your browser so you don't miss your flight.</span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-warning text-dark rounded-pill fw-bold px-3 shadow-2xs"
+                                                    onClick={async () => {
+                                                        playChimeClick();
+                                                        const res = await Notification.requestPermission();
+                                                        setNotifGranted(res === 'granted');
+                                                    }}
+                                                >
+                                                    <i className="fa-solid fa-bell me-1"></i>Enable Alerts
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* ── BOARDING PASS / DODO CODE REVEAL CARD ── */}
+                                        {isReady && orderStatus?.dodoCode && (
+                                            <div className="ob-boarding-pass-card mb-4 shadow-sm" role="status" aria-live="polite">
+                                                <div className="ob-pass-header d-flex align-items-center justify-content-between">
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <i className="fa-solid fa-plane-departure text-warning fs-4" />
+                                                        <div>
+                                                            <span className="ob-pass-badge">DODO AIRLINES EXPRESS</span>
+                                                            <h3 className="h5 fw-black text-white mb-0">
+                                                                🏝️ Fly to {orderStatus.islandName || 'Order Island'}
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <span className="badge bg-white text-success rounded-pill fw-black px-3 py-1">
+                                                        READY FOR PICKUP
+                                                    </span>
+                                                </div>
+
+                                                <div className="ob-pass-body text-center py-4">
+                                                    <div className="tiny-text text-muted fw-bold text-uppercase tracking-wider mb-1">
+                                                        Your Private Dodo Code™
+                                                    </div>
+                                                    <div className="ob-pass-dodo-display">{orderStatus.dodoCode}</div>
+
+                                                    <div className="d-flex justify-content-center gap-2 mt-3">
+                                                        <button
+                                                            id="ob-copy-dodo-btn"
+                                                            className={`btn btn-lg rounded-pill fw-black px-5 py-3 shadow-sm d-inline-flex align-items-center gap-2 ${dodoCopied ? 'btn-success text-white' : 'btn-nook text-white'
+                                                                }`}
+                                                            onClick={handleCopyDodo}
+                                                            aria-label={
+                                                                dodoCopied
+                                                                    ? 'Dodo code copied'
+                                                                    : `Copy Dodo code ${orderStatus.dodoCode}`
+                                                            }
+                                                        >
+                                                            <i
+                                                                className={`fa-solid ${dodoCopied ? 'fa-check' : 'fa-copy'}`}
+                                                                aria-hidden="true"
+                                                            />
+                                                            <span>{dodoCopied ? 'Copied to Clipboard!' : 'Copy Dodo Code'}</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="ob-pass-footer bg-light p-3 border-top rounded-bottom-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                                    <div className="d-flex align-items-center gap-2 tiny-text text-muted">
+                                                        <i className="fa-solid fa-circle-info text-primary" />
+                                                        <span>Talk to Orville → "I wanna fly!" → "Via online play" → "Dodo Code™"</span>
+                                                    </div>
+                                                    <span className="font-monospace text-muted tiny-text">
+                                                        Gate Pass: #{activeOrderId?.slice(0, 10)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Message alert if any */}
+                                        {orderStatus?.message && (
+                                            <div className="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3 rounded-3">
+                                                <i className="fa-solid fa-circle-info text-primary flex-shrink-0" />
+                                                <span>{orderStatus.message}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Polling live ticker */}
+                                        {!isDone && !isReady && (
+                                            <div className="ob-polling d-flex align-items-center gap-2 text-muted tiny-text mb-3">
+                                                <span
+                                                    className="spinner-border spinner-border-sm text-success"
+                                                    style={{ width: 12, height: 12 }}
+                                                />
+                                                <span>
+                                                    {statusStr === 'preparing'
+                                                        ? 'Dropping items on island ground...'
+                                                        : `Syncing live radar every ${POLL_MS / 1000}s…`}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Completion actions */}
+                                        {(isDone || isReady) && (
+                                            <div className="d-flex gap-2 flex-wrap pt-2 border-top">
+                                                <button
+                                                    id="ob-new-order-btn"
+                                                    className="btn btn-nook text-white rounded-pill px-4 py-2 fw-bold shadow-2xs"
+                                                    onClick={handleReset}
+                                                >
+                                                    <i className="fa-solid fa-rotate-left me-1" /> Place Another Order
+                                                </button>
+                                                <Link
+                                                    to="/command-builder"
+                                                    className="btn btn-outline-success rounded-pill px-4 py-2 fw-bold shadow-2xs"
+                                                    onClick={() => playChimeClick()}
+                                                >
+                                                    <i className="fa-solid fa-pencil me-1" /> Edit Pocket
+                                                </Link>
                                             </div>
                                         )}
                                     </div>
+                                )}
+                            </div>
 
-                                    {/* Drop Slot Capacity Progress Bar */}
-                                    <div className="mb-3">
-                                        <div className="d-flex align-items-center justify-content-between mb-1">
-                                            <span className="tiny-text fw-bold text-uppercase text-muted tracking-wider">
-                                                <i className="fa-solid fa-box me-1 text-success"></i> Slot Capacity
-                                            </span>
-                                            <span className={`tiny-text fw-black ${totalDropCount >= DROP_MAX ? 'text-success' : 'text-primary'}`}>
-                                                {totalDropCount} / {DROP_MAX} Slots
-                                            </span>
+                            {/* ════ SIDEBAR ════ */}
+                            <div className="col-12 col-lg-4">
+                                {/* ── Quick Tools ── */}
+                                <div className="ob-card shadow-sm mb-3">
+                                    <div className="ob-card-head mb-3">
+                                        <div className="ob-card-icon" aria-hidden="true">
+                                            <i className="fa-solid fa-compass" />
                                         </div>
-                                        <div className="progress" style={{ height: 6, borderRadius: 99 }}>
+                                        <div>
+                                            <h3 className="h6 fw-bold mb-0 text-dark ac-font">
+                                                Order Tools & Nav
+                                            </h3>
+                                            <p className="text-muted mb-0 tiny-text">Quick island & pocket actions</p>
+                                        </div>
+                                    </div>
+                                    <div className="d-flex flex-column gap-2">
+                                        <button
+                                            type="button"
+                                            className="btn ob-tool-link text-start"
+                                            onClick={handleOpenHistoryModal}
+                                        >
+                                            <div className="ob-tool-icon">
+                                                <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" />
+                                            </div>
+                                            <div>
+                                                <div className="fw-bold small text-dark ac-font">
+                                                    Order History
+                                                </div>
+                                                <div className="tiny-text text-muted">1-click reorder past pockets</div>
+                                            </div>
+                                        </button>
+
+                                        <Link
+                                            to="/command-builder"
+                                            className="ob-tool-link"
+                                            onClick={() => playChimeClick()}
+                                        >
+                                            <div className="ob-tool-icon">
+                                                <i className="fa-solid fa-cubes-stacked" aria-hidden="true" />
+                                            </div>
+                                            <div>
+                                                <div className="fw-bold small text-dark ac-font">
+                                                    Command Builder
+                                                </div>
+                                                <div className="tiny-text text-muted">Search catalog & add items</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link
+                                            to="/pockets"
+                                            className="ob-tool-link"
+                                            onClick={() => playChimeClick()}
+                                        >
+                                            <div className="ob-tool-icon">
+                                                <i className="fa-solid fa-grip" aria-hidden="true" />
+                                            </div>
+                                            <div>
+                                                <div className="fw-bold small text-dark ac-font">
+                                                    Pocket Inventory
+                                                </div>
+                                                <div className="tiny-text text-muted">Drag & drop pocket loadouts</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link
+                                            to="/islands"
+                                            className="ob-tool-link"
+                                            onClick={() => playChimeClick()}
+                                        >
+                                            <div className="ob-tool-icon">
+                                                <i className="fa-solid fa-map-location-dot" aria-hidden="true" />
+                                            </div>
+                                            <div>
+                                                <div className="fw-bold small text-dark ac-font">
+                                                    Treasure Islands
+                                                </div>
+                                                <div className="tiny-text text-muted">Explore free public islands</div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                {/* ── Live Queue Drawer ── */}
+                                <div className="ob-card shadow-sm mb-3">
+                                    <button
+                                        id="ob-queue-toggle"
+                                        className="d-flex align-items-center justify-content-between w-100 bg-transparent border-0 p-0"
+                                        onClick={() => {
+                                            playChimeClick();
+                                            setQueueOpen((o) => !o);
+                                        }}
+                                        aria-expanded={queueOpen}
+                                        aria-controls="ob-queue-panel"
+                                    >
+                                        <div className="d-flex align-items-center gap-2">
                                             <div
-                                                className={`progress-bar transition-all ${totalDropCount >= DROP_MAX ? 'bg-success' : 'bg-primary'}`}
-                                                role="progressbar"
-                                                style={{ width: `${(totalDropCount / DROP_MAX) * 100}%` }}
-                                                aria-valuenow={totalDropCount}
-                                                aria-valuemin={0}
-                                                aria-valuemax={DROP_MAX}
-                                            />
+                                                className="ob-card-icon"
+                                                style={{ width: 34, height: 34, borderRadius: 10, fontSize: '.85rem' }}
+                                            >
+                                                <i className="fa-solid fa-list-ol" />
+                                            </div>
+                                            <div className="text-start">
+                                                <span className="fw-bold small d-block text-dark ac-font">
+                                                    Live Order Queue
+                                                </span>
+                                                <span className="tiny-text text-muted">
+                                                    {typeof botStatus?.queue_count === 'number'
+                                                        ? `${botStatus.queue_count} players waiting`
+                                                        : 'Check queue'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <i
+                                            className={`fa-solid fa-chevron-${queueOpen ? 'up' : 'down'} text-muted small`}
+                                            aria-hidden="true"
+                                        />
+                                    </button>
+
+                                    {queueOpen && (
+                                        <div id="ob-queue-panel" className="mt-3 pt-3 border-top animate-fade">
+                                            {queue.length === 0 ? (
+                                                <div className="text-center py-3 text-muted small">
+                                                    <span
+                                                        className="spinner-border spinner-border-sm me-1 text-success"
+                                                        aria-hidden="true"
+                                                    />
+                                                    Loading queue list…
+                                                </div>
+                                            ) : (
+                                                <QueueList queue={queue} myOrderId={activeOrderId ?? undefined} />
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* ── Flight Steps Guide ── */}
+                                <div className="ob-card shadow-sm">
+                                    <div className="ob-card-head mb-3">
+                                        <div
+                                            className="ob-card-icon"
+                                            style={{ width: 34, height: 34, borderRadius: 10, fontSize: '.85rem' }}
+                                        >
+                                            <i className="fa-solid fa-circle-question" />
+                                        </div>
+                                        <span className="fw-bold small text-dark ac-font">
+                                            How Ordering Works
+                                        </span>
+                                    </div>
+                                    {[
+                                        {
+                                            icon: 'fa-cubes-stacked',
+                                            title: '1. Build Pockets',
+                                            text: 'Pick up to 40 items in Command Builder or load presets.',
+                                        },
+                                        {
+                                            icon: 'fa-paper-plane',
+                                            title: '2. Send Order',
+                                            text: 'Click Send Order to join the live bot dispatch queue.',
+                                        },
+                                        {
+                                            icon: 'fa-satellite-dish',
+                                            title: '3. Track Radar',
+                                            text: 'Watch your queue position & estimated wait time.',
+                                        },
+                                        {
+                                            icon: 'fa-plane',
+                                            title: '4. Fly In',
+                                            text: 'Enter your personal Dodo code at Dodo Airlines to collect.',
+                                        },
+                                    ].map((step, i) => (
+                                        <div key={i} className="d-flex align-items-start gap-2 mb-2">
+                                            <div className="ob-how-num" aria-hidden="true">
+                                                {i + 1}
+                                            </div>
+                                            <div>
+                                                <strong className="d-block tiny-text text-dark">{step.title}</strong>
+                                                <span className="text-muted tiny-text">{step.text}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    /* ══════════════════════════════════════
+                        IN-ISLAND DROP BOT (9 SLOTS)
+                    ══════════════════════════════════════ */
+                    <div className="row g-4 animate-fade">
+                        {/* ════ MAIN DROP COLUMN ════ */}
+                        <div className="col-12 col-lg-8">
+
+                            {/* ── STEP 1: SELECT DESTINATION SUB MEMBER ISLAND ── */}
+                            <div className="ob-card accent-green shadow-sm mb-4">
+                                <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="ob-card-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
+                                            <i className="fa-solid fa-crown" />
+                                        </div>
+                                        <div>
+                                            <h2 className="h5 fw-bold mb-0 text-dark ac-font">
+                                                1. Select Destination Sub Member Island
+                                            </h2>
+                                            <p className="text-muted mb-0 tiny-text">
+                                                Select a Sub Member island to receive your in-game item drops
+                                            </p>
                                         </div>
                                     </div>
 
-                                    {/* Payload Micro Preview Chips */}
-                                    {dropItems.length > 0 && (
-                                        <div className="d-flex flex-wrap gap-1 mb-3">
-                                            {dropItems.map((entry) => (
-                                                <span key={entry.item.id} className="ob-radar-payload-pill">
-                                                    <img
-                                                        src={entry.item.image || FALLBACK_IMG}
-                                                        alt=""
-                                                        style={{ width: 14, height: 14, objectFit: 'contain' }}
-                                                    />
-                                                    <span className="text-truncate" style={{ maxWidth: 80 }}>{entry.item.name}</span>
-                                                    <span className="text-success fw-black">×{entry.quantity}</span>
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
+                                    {/* Filter Pills */}
+                                    <div className="d-flex gap-1 bg-light p-1 rounded-pill border">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setDropFilter('all'); playChimeClick(); }}
+                                            className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${dropFilter === 'all' ? 'btn-dark text-white shadow-2xs' : 'text-muted border-0'
+                                                }`}
+                                            style={{ fontSize: '0.72rem' }}
+                                        >
+                                            All Sub Islands ({subMemberIslands.length})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setDropFilter('unlocked'); playChimeClick(); }}
+                                            className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${dropFilter === 'unlocked' ? 'btn-dark text-white shadow-2xs' : 'text-muted border-0'
+                                                }`}
+                                            style={{ fontSize: '0.72rem' }}
+                                        >
+                                            <i className="fa-solid fa-crown me-1 text-warning"></i>
+                                            My Sub Islands ({subMemberIslands.filter(i => !!user && canAccessIsland(i.requiredRoles)).length})
+                                        </button>
+                                    </div>
+                                </div>
 
-                                    {/* Live Monospace Command Injection Preview */}
-                                    <div className="ob-radar-terminal-box mb-3">
-                                        <div className="d-flex align-items-center gap-2 text-truncate">
-                                            <span className="text-secondary">$</span>
-                                            <span className="text-truncate">{dropCommandText || '!drop <payload>'}</span>
+                                {/* Sub Requirement Notice for Guest / Non-Sub */}
+                                {(!user || subMemberIslands.every(i => !user || !canAccessIsland(i.requiredRoles))) && (
+                                    <div className="alert alert-warning rounded-4 border-0 p-3 mb-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 shadow-2xs">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <i className="fa-solid fa-crown text-warning fs-5 flex-shrink-0"></i>
+                                            <span className="small fw-bold text-dark">
+                                                {user ? 'You do not currently have an active Sub Member subscription tier.' : 'Log in with your Discord account to access your Sub Islands.'}
+                                            </span>
                                         </div>
-                                        {dropCommandText && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-link p-0 text-success opacity-75 hover-opacity-100"
-                                                title="Copy drop command & open Discord"
-                                                onClick={handleCopyDropForDiscord}
-                                            >
-                                                <i className="fa-solid fa-copy"></i>
+                                        {user ? (
+                                            <Link to="/membership" className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap">
+                                                View Memberships
+                                            </Link>
+                                        ) : (
+                                            <button type="button" onClick={login} className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap">
+                                                <i className="fa-brands fa-discord me-1"></i> Log In
                                             </button>
                                         )}
                                     </div>
+                                )}
 
-                                    {/* Copy Command for Discord CTA Button */}
-                                    <button
-                                        type="button"
-                                        disabled={!selectedDropIsland || totalDropCount === 0}
-                                        onClick={handleCopyDropForDiscord}
-                                        className="btn ob-radar-dispatch-cta w-100 d-flex align-items-center justify-content-center gap-2 hover-scale"
-                                    >
-                                        {!selectedDropIsland ? (
-                                            <><i className="fa-solid fa-crosshairs"></i> 1. SELECT ISLAND FIRST</>
-                                        ) : totalDropCount === 0 ? (
-                                            <><i className="fa-solid fa-boxes-stacked"></i> 3. LOAD DROP ITEMS</>
-                                        ) : (
-                                            <><i className="fa-solid fa-copy"></i> COPY !DROP & OPEN DISCORD</>
-                                        )}
-                                    </button>
+                                {/* Island Dropdown Selector */}
+                                {islandsLoading ? (
+                                    <div className="text-center py-4 text-muted">
+                                        <span className="spinner-border spinner-border-sm text-success me-2" />
+                                        <span>Loading Sub Member islands…</span>
+                                    </div>
+                                ) : (
+                                    <div className="mb-3">
+                                        <label className="form-label small fw-bold text-muted text-uppercase tracking-wider d-flex align-items-center justify-content-between">
+                                            <span>
+                                                <i className="fa-solid fa-tree text-success me-1"></i> Choose Sub Island:
+                                            </span>
+                                            {selectedDropIsland && (
+                                                <span className="text-success fw-bold tiny-text">
+                                                    <i className="fa-solid fa-circle-check me-1"></i> Selected: {selectedDropIsland.name}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <select
+                                            className="form-select form-select-lg rounded-4 border-2 shadow-2xs fw-bold text-dark"
+                                            style={{ fontSize: '0.95rem', borderColor: selectedDropIsland ? '#86efac' : '#e2e8f0' }}
+                                            value={selectedDropIsland?.id || ''}
+                                            onChange={(e) => {
+                                                const found = subMemberIslands.find((isl) => isl.id === e.target.value);
+                                                if (found) {
+                                                    const hasAccess = !!user && canAccessIsland(found.requiredRoles);
+                                                    if (!hasAccess) {
+                                                        if (!user) {
+                                                            login();
+                                                        } else {
+                                                            triggerInAppToast({
+                                                                type: 'warning',
+                                                                title: 'Sub Pass Required',
+                                                                message: `You do not have access to ${found.name}. Requires an active Sub Member tier.`,
+                                                            });
+                                                        }
+                                                        return;
+                                                    }
+                                                    setSelectedDropIsland(found);
+                                                    setDropDodoCode(null);
+                                                    setDropDodoError(null);
+                                                    setAlreadyOnIsland(false);
+                                                    setDropSuccessMsg(null);
+                                                    setDropErrorMsg(null);
+                                                    playChimeClick();
+                                                } else {
+                                                    setSelectedDropIsland(null);
+                                                    setDropDodoCode(null);
+                                                    setDropDodoError(null);
+                                                    setAlreadyOnIsland(false);
+                                                }
+                                            }}
+                                        >
+                                            <option value="">-- Select a Sub Member Island --</option>
 
-                                    {/* Status alerts */}
-                                    {dropSuccessMsg && (
-                                        <div className="alert alert-success rounded-4 mt-3 p-2 d-flex align-items-center gap-2 shadow-2xs mb-0">
-                                            <i className="fa-solid fa-circle-check text-success fs-5 flex-shrink-0" />
-                                            <span className="fw-bold tiny-text text-success-emphasis">{dropSuccessMsg}</span>
+                                            {/* My Accessible group */}
+                                            {availableDropIslands.filter(i => !!user && canAccessIsland(i.requiredRoles)).length > 0 && (
+                                                <optgroup label="👑 My Sub Member Islands">
+                                                    {availableDropIslands
+                                                        .filter(i => !!user && canAccessIsland(i.requiredRoles))
+                                                        .map(isl => (
+                                                            <option key={isl.id} value={isl.id}>
+                                                                {isl.name} · {isl.type || 'Treasure Island'} ({isl.visitors ?? 0}/7 Flying)
+                                                            </option>
+                                                        ))}
+                                                </optgroup>
+                                            )}
+
+                                            {/* Other group if filter is 'all' */}
+                                            {dropFilter === 'all' && availableDropIslands.filter(i => !user || !canAccessIsland(i.requiredRoles)).length > 0 && (
+                                                <optgroup label="🔒 Other Sub Member Islands (Requires Subscription)">
+                                                    {availableDropIslands
+                                                        .filter(i => !user || !canAccessIsland(i.requiredRoles))
+                                                        .map(isl => (
+                                                            <option key={isl.id} value={isl.id}>
+                                                                {isl.name} · {isl.type || 'Treasure Island'} ({isl.visitors ?? 0}/7 Flying)
+                                                            </option>
+                                                        ))}
+                                                </optgroup>
+                                            )}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Selected Island Banner Preview */}
+                                {selectedDropIsland && (
+                                    <div className="animate-up mt-3">
+                                        <div className="ob-island-sub-card selected p-0 overflow-hidden shadow-sm border-2">
+                                            <div className="ob-island-card-banner position-relative" style={{ height: '140px' }}>
+                                                <img
+                                                    src={selectedDropIsland.mapUrl || `https://cdn.chopaeng.com/maps/${selectedDropIsland.name.toLowerCase()}.png`}
+                                                    alt={selectedDropIsland.name}
+                                                    className="ob-island-card-img w-100 h-100"
+                                                    style={{ objectFit: 'cover' }}
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f172a'/><text x='50%' y='65%' font-size='40' text-anchor='middle' fill='%2352b788'>MAP</text></svg>";
+                                                    }}
+                                                />
+                                                <div className="ob-island-banner-overlay" />
+
+                                                {/* Floating Badges */}
+                                                <div className="position-absolute top-0 start-0 m-2 d-flex gap-1">
+                                                    <span className="badge bg-dark bg-opacity-75 text-white rounded-pill x-small fw-bold border border-secondary border-opacity-50">
+                                                        <i className="fa-solid fa-crown text-warning me-1"></i> SUB MEMBER
+                                                    </span>
+                                                </div>
+
+                                                <div className="position-absolute top-0 end-0 m-2">
+                                                    <span className="badge bg-success text-white rounded-pill px-2 py-1 shadow-2xs x-small fw-bold">
+                                                        <i className="fa-solid fa-check me-1"></i> TARGET SET
+                                                    </span>
+                                                </div>
+
+                                                <div className="position-absolute bottom-0 start-0 m-3">
+                                                    <strong className="text-white h5 mb-0 fw-black text-truncate d-block drop-shadow-sm">
+                                                        {selectedDropIsland.name}
+                                                    </strong>
+                                                    <span className="tiny-text text-white-50">
+                                                        {selectedDropIsland.type || 'Treasure Island'} · {selectedDropIsland.visitors ?? 0}/7 Flying
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="p-3 bg-white d-flex align-items-center justify-content-between">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <i className="fa-solid fa-circle-check text-success fs-5"></i>
+                                                    <div>
+                                                        <strong className="d-block text-dark small fw-bold">Ready for Flight Pass</strong>
+                                                        <span className="tiny-text text-muted">Proceed to Step 2 below to retrieve Dodo code</span>
+                                                    </div>
+                                                </div>
+                                                <span className="badge bg-success-subtle text-success rounded-pill px-3 py-1 fw-bold x-small border border-success">
+                                                    ACCESS GRANTED
+                                                </span>
+                                            </div>
                                         </div>
-                                    )}
-                                    {dropErrorMsg && (
-                                        <div className="alert alert-danger rounded-4 mt-3 p-2 d-flex align-items-center gap-2 shadow-2xs mb-0">
-                                            <i className="fa-solid fa-triangle-exclamation text-danger fs-5 flex-shrink-0" />
-                                            <span className="fw-bold tiny-text text-danger-emphasis">{dropErrorMsg}</span>
-                                        </div>
-                                    )}
+                                    </div>
+                                )}
+                            </div>
 
-                                    {/* Diagnostic Checklist */}
-                                    <div className="mt-3 pt-3 border-top d-flex flex-column gap-1">
-                                        <span className="tiny-text fw-bold text-muted text-uppercase d-block mb-1 tracking-wider">
-                                            Flight Pre-Check:
+                            {/* ── STEP 2: GET DODO FLIGHT PASS & LOG VIA WEBHOOK ── */}
+                            {selectedDropIsland && (
+                                <div className="ob-dodo-flight-pass mb-4 animate-up">
+                                    <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <div className="rounded-circle bg-success bg-opacity-25 p-2 d-flex align-items-center justify-content-center" style={{ width: 36, height: 36 }}>
+                                                <i className="fa-solid fa-plane-departure text-warning fs-6" />
+                                            </div>
+                                            <div>
+                                                <h2 className="h6 fw-black mb-0 text-white ac-font">
+                                                    2. Flight Pass & On-Island Presence
+                                                </h2>
+                                                <span className="tiny-text text-white-50">Fly in via Dodo Airlines or confirm you're already landed</span>
+                                            </div>
+                                        </div>
+                                        <span className={`badge rounded-pill px-3 py-1 fw-black x-small ${alreadyOnIsland ? 'bg-success text-white' : dropDodoCode ? 'bg-warning text-dark' : 'bg-secondary text-white'
+                                            }`}>
+                                            <i className={`fa-solid ${alreadyOnIsland ? 'fa-circle-check' : 'fa-plane'} me-1`}></i>
+                                            {alreadyOnIsland ? 'ON-SITE CONFIRMED' : dropDodoCode ? 'FLIGHT PASS ACTIVE' : 'LOGGING REQUIRED'}
                                         </span>
-                                        <div className={`ob-radar-diag-item ${selectedDropIsland ? 'done' : 'pending'}`}>
-                                            <i className={`fa-solid ${selectedDropIsland ? 'fa-check-circle text-success' : 'fa-circle-dot text-muted'}`} />
-                                            <span>1. Sub Island Target Set</span>
+                                    </div>
+
+                                    <div className="bg-black bg-opacity-30 rounded-4 p-3 border border-white border-opacity-10 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                                        <div>
+                                            <span className="tiny-text text-uppercase text-white-50 fw-bold d-block mb-1 tracking-wider">
+                                                Destination · {selectedDropIsland.name}
+                                            </span>
+                                            {alreadyOnIsland ? (
+                                                <div className="d-flex align-items-center gap-2 text-success fw-black py-1">
+                                                    <i className="fa-solid fa-location-dot fs-5 text-success"></i>
+                                                    <span>Landed on {selectedDropIsland.name} (Ready to Drop)</span>
+                                                </div>
+                                            ) : dropDodoCode ? (
+                                                <div className="ob-dodo-code-chip">
+                                                    <i className="fa-solid fa-ticket text-warning fs-5"></i>
+                                                    <span>{dropDodoCode}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="text-white-50 small font-monospace py-1">
+                                                    <i className="fa-solid fa-lock me-1"></i> Get code to fly in, or click if already on island
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className={`ob-radar-diag-item ${alreadyOnIsland || dropDodoCode ? 'done' : 'pending'}`}>
-                                            <i className={`fa-solid ${alreadyOnIsland || dropDodoCode ? 'fa-check-circle text-success' : 'fa-circle-dot text-muted'}`} />
-                                            <span>2. Webhook & On-Island Presence</span>
+
+                                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                                            {dropDodoCode ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleCopyDropIslandDodo(dropDodoCode)}
+                                                    className={`btn rounded-pill fw-black px-4 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${dropDodoCopied ? 'btn-success text-white' : 'btn-warning text-dark hover-scale'
+                                                        }`}
+                                                >
+                                                    {dropDodoCopied ? (
+                                                        <><i className="fa-solid fa-check"></i> Copied to Clipboard!</>
+                                                    ) : (
+                                                        <><i className="fa-solid fa-copy"></i> Copy Flight Code</>
+                                                    )}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    disabled={dropDodoLoading}
+                                                    onClick={() => handleGetDropIslandDodo(selectedDropIsland)}
+                                                    className="btn btn-warning text-dark rounded-pill fw-black px-3 py-2 shadow-sm d-flex align-items-center gap-2 hover-scale transition-all"
+                                                >
+                                                    {dropDodoLoading ? (
+                                                        <><span className="spinner-border spinner-border-sm" /> Logging & Retrieving…</>
+                                                    ) : (
+                                                        <><i className="fa-solid fa-key"></i> Get Dodo Code</>
+                                                    )}
+                                                </button>
+                                            )}
+
+                                            {/* "Already on Island" Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setAlreadyOnIsland(true);
+                                                    if (!dropDodoCode) {
+                                                        // Fire webhook in background so arrival is logged
+                                                        handleGetDropIslandDodo(selectedDropIsland);
+                                                    }
+                                                    triggerInAppToast({
+                                                        type: 'success',
+                                                        title: 'Island Presence Confirmed',
+                                                        message: `Confirmed on ${selectedDropIsland.name}! Proceed to Step 3 to drop items.`,
+                                                    });
+                                                }}
+                                                className={`btn rounded-pill fw-black px-3 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${alreadyOnIsland
+                                                    ? 'btn-success text-white'
+                                                    : 'btn-outline-light text-white hover-scale'
+                                                    }`}
+                                            >
+                                                <i className={`fa-solid ${alreadyOnIsland ? 'fa-check-double' : 'fa-location-dot'}`}></i>
+                                                <span>{alreadyOnIsland ? "Already On Island (Confirmed)" : "I'm Already on the Island"}</span>
+                                            </button>
                                         </div>
-                                        <div className={`ob-radar-diag-item ${totalDropCount > 0 ? 'done' : 'pending'}`}>
-                                            <i className={`fa-solid ${totalDropCount > 0 ? 'fa-check-circle text-success' : 'fa-circle-dot text-muted'}`} />
-                                            <span>3. 9-Slot Payload Loaded ({totalDropCount}/{DROP_MAX})</span>
+                                    </div>
+
+                                    {dropDodoError && (
+                                        <div className="alert alert-danger rounded-4 mt-3 mb-0 p-2 d-flex align-items-center justify-content-between gap-2 shadow-2xs">
+                                            <div className="d-flex align-items-center gap-2 tiny-text fw-bold">
+                                                <i className="fa-solid fa-triangle-exclamation"></i>
+                                                <span>{dropDodoError}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleGetDropIslandDodo(selectedDropIsland)}
+                                                className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2 py-1"
+                                            >
+                                                Retry
+                                            </button>
                                         </div>
+                                    )}
+
+                                    {(dropDodoCode || alreadyOnIsland) && (
+                                        <div className="mt-2 tiny-text text-white-50 d-flex align-items-center gap-1">
+                                            <i className="fa-solid fa-circle-check text-success"></i>
+                                            <span>
+                                                {alreadyOnIsland
+                                                    ? `Island presence confirmed for ${selectedDropIsland.name}. Stand in front of airport gate to drop.`
+                                                    : `Flight pass logged via Discord webhook. Fly to ${selectedDropIsland.name} before dropping!`}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ── STEP 3: DROP ITEMS DESIGNER (9 SLOTS) ── */}
+                            <div className="ob-card shadow-sm mb-4">
+                                <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="ob-card-icon" style={{ background: '#e0e7ff', color: '#4338ca' }}>
+                                            <i className="fa-solid fa-boxes-stacked" />
+                                        </div>
+                                        <div>
+                                            <h2 className="h5 fw-bold mb-0 text-dark ac-font">
+                                                3. Select Drop Items (Max {DROP_MAX} Slots)
+                                            </h2>
+                                            <p className="text-muted mb-0 tiny-text">
+                                                Items dropped instantly at the island airport landing zone
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Clear Button */}
+                                    {totalDropCount > 0 && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-link p-0 text-danger tiny-text fw-bold text-decoration-none"
+                                            onClick={() => {
+                                                playChimeClick();
+                                                setDropItems([]);
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-trash-can me-1" /> Clear Drop Pocket
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Warning if Dodo Code not retrieved yet and not on island */}
+                                {selectedDropIsland && !dropDodoCode && !alreadyOnIsland && (
+                                    <div className="alert alert-info rounded-4 border-0 p-3 mb-3 d-flex align-items-center gap-2 tiny-text fw-bold shadow-2xs">
+                                        <i className="fa-solid fa-circle-info fs-6 flex-shrink-0 text-primary"></i>
+                                        <span>Please click <strong>Get Dodo Code</strong> or <strong>I'm Already on the Island</strong> in Step 2 before dropping items.</span>
+                                    </div>
+                                )}
+
+                                {/* Quick Fill Drop Presets Bar */}
+                                <div className="bg-light rounded-4 p-3 mb-3 border border-light-subtle">
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <span className="tiny-text fw-bold text-muted text-uppercase tracking-wider">
+                                            <i className="fa-solid fa-wand-magic-sparkles text-warning me-1" />
+                                            Quick Drop Presets
+                                        </span>
+                                    </div>
+                                    <div className="d-flex gap-2 flex-wrap">
+                                        {DROP_QUICK_PRESETS.map((preset) => (
+                                            <button
+                                                key={preset.id}
+                                                type="button"
+                                                className="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 shadow-2xs d-inline-flex align-items-center gap-2 hover-shadow-sm transition-all"
+                                                onClick={() => handleApplyDropPreset(preset.fillType)}
+                                                title={`Load 9× ${preset.name}`}
+                                            >
+                                                <img
+                                                    src={preset.icon}
+                                                    alt=""
+                                                    style={{ width: 18, height: 18, objectFit: 'contain' }}
+                                                />
+                                                <span className="small fw-bold text-dark">{preset.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 9-Slot Drop Grid */}
+                                {dropItems.length === 0 ? (
+                                    <div className="ob-empty-pocket my-4 text-center py-5">
+                                        <div style={{ fontSize: '3rem' }} className="mb-2">📦</div>
+                                        <h3 className="h6 fw-bold mb-1 text-dark">Your drop pocket is empty</h3>
+                                        <p className="text-muted small mb-3" style={{ maxWidth: 380, margin: '0 auto' }}>
+                                            Choose one of the quick drop presets above, or load items from Command Builder.
+                                        </p>
+                                        <Link
+                                            to="/command-builder"
+                                            className="btn btn-sm btn-outline-primary rounded-pill px-4 fw-bold shadow-2xs"
+                                            onClick={() => playChimeClick()}
+                                        >
+                                            <i className="fa-solid fa-cubes-stacked me-1" /> Open Command Builder
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="row g-2 mb-3">
+                                        {dropItems.map((entry) => (
+                                            <div key={entry.item.id} className="col-4 col-sm-3 col-md-4">
+                                                <div className="ob-drop-slot-tile h-100">
+                                                    <img
+                                                        src={entry.item.image || FALLBACK_IMG}
+                                                        alt={entry.item.name}
+                                                        style={{ width: 44, height: 44, objectFit: 'contain' }}
+                                                        onError={(ev) => {
+                                                            (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
+                                                        }}
+                                                    />
+                                                    <span className="tiny-text fw-bold text-dark text-truncate w-100 mt-1" title={entry.item.name}>
+                                                        {entry.item.name}
+                                                    </span>
+                                                    <div className="d-flex align-items-center gap-1 mt-1">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-light border rounded-circle"
+                                                            style={{ width: 22, height: 22, padding: 0 }}
+                                                            onClick={() => { playChimeClick(); decreaseDropQuantity(entry.item.id); }}
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <span className="small fw-black text-primary px-1">×{entry.quantity}</span>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-light border rounded-circle"
+                                                            style={{ width: 22, height: 22, padding: 0 }}
+                                                            onClick={() => { playChimeClick(); increaseDropQuantity(entry.item.id); }}
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-link p-0 text-muted hover-text-danger position-absolute top-0 end-0 m-1"
+                                                        onClick={() => { playChimeClick(); removeDropItem(entry.item.id); }}
+                                                        title="Remove item"
+                                                    >
+                                                        <i className="fa-solid fa-xmark small" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Drop Bot Offline Guidance Banner */}
+                                <div className="alert alert-warning rounded-4 border-0 p-3 mt-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 shadow-2xs">
+                                    <div className="d-flex align-items-start gap-2">
+                                        <i className="fa-solid fa-moon text-warning fs-5 flex-shrink-0 mt-1"></i>
+                                        <div>
+                                            <strong className="d-block text-dark small fw-bold">Drop Bot is Currently Offline</strong>
+                                            <span className="tiny-text text-muted">
+                                                SysBot direct web dispatch is not set up yet. Use Discord for now to drop items on your Sub Island.
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {dropCommandText && (
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyDropForDiscord}
+                                            className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap d-flex align-items-center gap-2 hover-scale"
+                                        >
+                                            <i className="fa-solid fa-copy"></i> Copy !drop for Discord
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ════ SIDEBAR: DROP DISPATCH RADAR ════ */}
+                        <div className="col-12 col-lg-4">
+                            <div className="ob-radar-card sticky-top" style={{ top: '1.5rem' }}>
+                                {/* Radar Header */}
+                                <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                                    <div className="d-flex align-items-center gap-2">
+                                        <div className="ob-card-icon" style={{ width: 34, height: 34, background: '#fffbeb', color: '#d97706' }}>
+                                            <i className="fa-solid fa-satellite-dish fa-spin-pulse" />
+                                        </div>
+                                        <div>
+                                            <h3 className="h6 fw-black mb-0 text-dark ac-font" style={{ letterSpacing: '0.04em' }}>
+                                                DROP RADAR
+                                            </h3>
+                                            <span className="tiny-text text-muted">In-Game Telemetry</span>
+                                        </div>
+                                    </div>
+                                    <span className="ob-radar-badge-pulse">
+                                        <span className="ob-radar-dot" /> LIVE
+                                    </span>
+                                </div>
+
+                                {/* Offline SysBot Notice inside Radar */}
+                                <div className="bg-warning bg-opacity-10 border border-warning border-opacity-30 rounded-4 p-2 px-3 mb-3 text-center">
+                                    <span className="text-dark small fw-bold d-block">
+                                        <i className="fa-solid fa-moon text-warning me-1"></i> Drop Bot is Currently Offline
+                                    </span>
+                                    <span className="tiny-text text-muted">
+                                        Use Discord for now to drop items on-island.
+                                    </span>
+                                </div>
+
+                                {/* Target Island HUD Screen */}
+                                <div className={`ob-radar-hud-box mb-3 ${selectedDropIsland ? 'active' : ''}`}>
+                                    <div className="d-flex align-items-center justify-content-between mb-1">
+                                        <span className="tiny-text fw-bold text-uppercase text-muted tracking-wider">
+                                            <i className="fa-solid fa-crosshairs me-1 text-primary"></i> Target Coordinates
+                                        </span>
+                                        {selectedDropIsland && (
+                                            <span className="badge bg-light text-dark border rounded-pill x-small fw-bold">
+                                                {selectedDropIsland.visitors ?? 0}/7 Flying
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {selectedDropIsland ? (
+                                        <div>
+                                            <div className="d-flex align-items-center justify-content-between mt-1">
+                                                <strong className="text-dark fs-6 fw-black text-truncate d-block">
+                                                    {selectedDropIsland.name}
+                                                </strong>
+                                                <span className="badge bg-warning-subtle text-warning-emphasis rounded-pill x-small fw-bold border border-warning-subtle">
+                                                    {selectedDropIsland.type || 'Treasure Island'}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-2 pt-2 border-top d-flex align-items-center justify-content-between tiny-text">
+                                                <span className="text-muted">Presence:</span>
+                                                {alreadyOnIsland ? (
+                                                    <span className="text-success fw-bold d-inline-flex align-items-center gap-1">
+                                                        <i className="fa-solid fa-circle-check"></i> On-Site Confirmed
+                                                    </span>
+                                                ) : dropDodoCode ? (
+                                                    <span className="text-primary fw-bold d-inline-flex align-items-center gap-1">
+                                                        <i className="fa-solid fa-ticket"></i> Pass Logged ({dropDodoCode})
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted fw-bold d-inline-flex align-items-center gap-1">
+                                                        <i className="fa-solid fa-clock"></i> Logging Required
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-muted small py-1">
+                                            <i className="fa-solid fa-location-dot me-1 text-secondary"></i>
+                                            No island locked. Select destination in Step 1.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Drop Slot Capacity Progress Bar */}
+                                <div className="mb-3">
+                                    <div className="d-flex align-items-center justify-content-between mb-1">
+                                        <span className="tiny-text fw-bold text-uppercase text-muted tracking-wider">
+                                            <i className="fa-solid fa-box me-1 text-success"></i> Slot Capacity
+                                        </span>
+                                        <span className={`tiny-text fw-black ${totalDropCount >= DROP_MAX ? 'text-success' : 'text-primary'}`}>
+                                            {totalDropCount} / {DROP_MAX} Slots
+                                        </span>
+                                    </div>
+                                    <div className="progress" style={{ height: 6, borderRadius: 99 }}>
+                                        <div
+                                            className={`progress-bar transition-all ${totalDropCount >= DROP_MAX ? 'bg-success' : 'bg-primary'}`}
+                                            role="progressbar"
+                                            style={{ width: `${(totalDropCount / DROP_MAX) * 100}%` }}
+                                            aria-valuenow={totalDropCount}
+                                            aria-valuemin={0}
+                                            aria-valuemax={DROP_MAX}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Payload Micro Preview Chips */}
+                                {dropItems.length > 0 && (
+                                    <div className="d-flex flex-wrap gap-1 mb-3">
+                                        {dropItems.map((entry) => (
+                                            <span key={entry.item.id} className="ob-radar-payload-pill">
+                                                <img
+                                                    src={entry.item.image || FALLBACK_IMG}
+                                                    alt=""
+                                                    style={{ width: 14, height: 14, objectFit: 'contain' }}
+                                                />
+                                                <span className="text-truncate" style={{ maxWidth: 80 }}>{entry.item.name}</span>
+                                                <span className="text-success fw-black">×{entry.quantity}</span>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Live Monospace Command Injection Preview */}
+                                <div className="ob-radar-terminal-box mb-3">
+                                    <div className="d-flex align-items-center gap-2 text-truncate">
+                                        <span className="text-secondary">$</span>
+                                        <span className="text-truncate">{dropCommandText || '!drop <payload>'}</span>
+                                    </div>
+                                    {dropCommandText && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-link p-0 text-success opacity-75 hover-opacity-100"
+                                            title="Copy drop command & open Discord"
+                                            onClick={handleCopyDropForDiscord}
+                                        >
+                                            <i className="fa-solid fa-copy"></i>
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Copy Command for Discord CTA Button */}
+                                <button
+                                    type="button"
+                                    disabled={!selectedDropIsland || totalDropCount === 0}
+                                    onClick={handleCopyDropForDiscord}
+                                    className="btn ob-radar-dispatch-cta w-100 d-flex align-items-center justify-content-center gap-2 hover-scale"
+                                >
+                                    {!selectedDropIsland ? (
+                                        <><i className="fa-solid fa-crosshairs"></i> 1. SELECT ISLAND FIRST</>
+                                    ) : totalDropCount === 0 ? (
+                                        <><i className="fa-solid fa-boxes-stacked"></i> 3. LOAD DROP ITEMS</>
+                                    ) : (
+                                        <><i className="fa-solid fa-copy"></i> COPY !DROP & OPEN DISCORD</>
+                                    )}
+                                </button>
+
+                                {/* Status alerts */}
+                                {dropSuccessMsg && (
+                                    <div className="alert alert-success rounded-4 mt-3 p-2 d-flex align-items-center gap-2 shadow-2xs mb-0">
+                                        <i className="fa-solid fa-circle-check text-success fs-5 flex-shrink-0" />
+                                        <span className="fw-bold tiny-text text-success-emphasis">{dropSuccessMsg}</span>
+                                    </div>
+                                )}
+                                {dropErrorMsg && (
+                                    <div className="alert alert-danger rounded-4 mt-3 p-2 d-flex align-items-center gap-2 shadow-2xs mb-0">
+                                        <i className="fa-solid fa-triangle-exclamation text-danger fs-5 flex-shrink-0" />
+                                        <span className="fw-bold tiny-text text-danger-emphasis">{dropErrorMsg}</span>
+                                    </div>
+                                )}
+
+                                {/* Diagnostic Checklist */}
+                                <div className="mt-3 pt-3 border-top d-flex flex-column gap-1">
+                                    <span className="tiny-text fw-bold text-muted text-uppercase d-block mb-1 tracking-wider">
+                                        Flight Pre-Check:
+                                    </span>
+                                    <div className={`ob-radar-diag-item ${selectedDropIsland ? 'done' : 'pending'}`}>
+                                        <i className={`fa-solid ${selectedDropIsland ? 'fa-check-circle text-success' : 'fa-circle-dot text-muted'}`} />
+                                        <span>1. Sub Island Target Set</span>
+                                    </div>
+                                    <div className={`ob-radar-diag-item ${alreadyOnIsland || dropDodoCode ? 'done' : 'pending'}`}>
+                                        <i className={`fa-solid ${alreadyOnIsland || dropDodoCode ? 'fa-check-circle text-success' : 'fa-circle-dot text-muted'}`} />
+                                        <span>2. Webhook & On-Island Presence</span>
+                                    </div>
+                                    <div className={`ob-radar-diag-item ${totalDropCount > 0 ? 'done' : 'pending'}`}>
+                                        <i className={`fa-solid ${totalDropCount > 0 ? 'fa-check-circle text-success' : 'fa-circle-dot text-muted'}`} />
+                                        <span>3. 9-Slot Payload Loaded ({totalDropCount}/{DROP_MAX})</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* ════════════════ RECENT ORDERS MODAL ════════════════ */}
@@ -2792,7 +2842,7 @@ const OrderBot: React.FC = () => {
                                     <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" />
                                 </div>
                                 <div>
-                                    <h3 className="h6 fw-bold mb-0 text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                                    <h3 className="h6 fw-bold mb-0 text-dark ac-font">
                                         Your Recent Orders
                                     </h3>
                                     <div className="tiny-text text-muted">1-click reorder past items</div>
@@ -2827,12 +2877,14 @@ const OrderBot: React.FC = () => {
                                                             #{order.id.slice(0, 14)}
                                                         </span>
                                                         <span
-                                                            className={`badge rounded-pill x-small ${order.status === 'ready' || order.status === 'completed'
+                                                            className={`badge rounded-pill x-small fw-bold ${order.status === 'ready' || order.status === 'completed'
                                                                 ? 'bg-success text-white'
-                                                                : 'bg-light text-dark border'
+                                                                : order.status === 'preparing'
+                                                                    ? 'bg-warning text-dark border-0'
+                                                                    : 'bg-light text-dark border'
                                                                 }`}
                                                         >
-                                                            {order.status}
+                                                            {order.status === 'preparing' ? 'Preparing' : order.status}
                                                         </span>
                                                     </div>
                                                     <span className="tiny-text text-muted">
@@ -2886,7 +2938,7 @@ const OrderBot: React.FC = () => {
                             ) : (
                                 <div className="text-center py-5 text-muted">
                                     <div style={{ fontSize: '2.8rem' }} className="mb-2">📦</div>
-                                    <h4 className="fw-bold mb-1 h6 text-dark" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                                    <h4 className="fw-bold mb-1 h6 text-dark ac-font">
                                         No Past Orders Found
                                     </h4>
                                     <p className="tiny-text text-muted mb-0">
@@ -2897,330 +2949,335 @@ const OrderBot: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* ════════════════ SETUP MODAL OVERLAY ════════════════ */}
-            {showSetup && user && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.65)',
-                        backdropFilter: 'blur(6px)',
-                        WebkitBackdropFilter: 'blur(6px)',
-                        zIndex: 9999,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '1rem',
-                        overflowY: 'auto',
-                    }}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Order Profile Setup"
-                >
-                    <div style={{
-                        background: '#fff',
-                        borderRadius: '1.5rem',
-                        padding: '2.5rem 2rem',
-                        maxWidth: 520,
-                        width: '100%',
-                        boxShadow: '0 32px 80px rgba(0,0,0,0.35)',
-                        position: 'relative',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                    }}>
-                        {/* Close (only if already has a profile) */}
-                        {orderProfile && (
-                            <button
-                                type="button"
-                                className="btn-close position-absolute"
-                                style={{ top: '1.25rem', right: '1.25rem' }}
-                                aria-label="Close setup"
-                                onClick={() => { setShowSetup(false); setShowAddChar(false); }}
-                            />
-                        )}
-
-                        {/* Step indicator */}
-                        <div className="d-flex align-items-center gap-2 mb-4">
-                            <div style={{
-                                width: 32, height: 32, borderRadius: '50%',
-                                background: setupStep === 'username' ? '#4ade80' : '#e5e7eb',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontWeight: 700, fontSize: '.8rem',
-                                color: setupStep === 'username' ? '#fff' : '#9ca3af',
-                                transition: 'all .3s',
-                            }}>1</div>
-                            <div style={{ flex: 1, height: 2, background: setupStep === 'select-character' ? '#4ade80' : '#e5e7eb', borderRadius: 2, transition: 'all .3s' }} />
-                            <div style={{
-                                width: 32, height: 32, borderRadius: '50%',
-                                background: setupStep === 'select-character' ? '#4ade80' : '#e5e7eb',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontWeight: 700, fontSize: '.8rem',
-                                color: setupStep === 'select-character' ? '#fff' : '#9ca3af',
-                                transition: 'all .3s',
-                            }}>2</div>
-                        </div>
-
-                        {/* ── STEP 1: Discord Username Confirm ── */}
-                        {setupStep === 'username' && (
-                            <>
-                                <div className="text-center mb-4">
-                                    {user.avatar ? (
-                                        <img
-                                            src={`https://cdn.discordapp.com/avatars/${user.user_id}/${user.avatar}.png?size=80`}
-                                            alt={user.username}
-                                            style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid #4ade80', marginBottom: '.75rem' }}
-                                        />
-                                    ) : (
-                                        <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto .75rem', fontSize: '1.8rem' }}>
-                                            <i className="fa-brands fa-discord text-white" />
-                                        </div>
-                                    )}
-                                    <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: '1.3rem', marginBottom: '.25rem' }}>
-                                        Welcome, {user.username}! 👋
-                                    </h2>
-                                    <p className="text-muted small mb-0">Let's confirm your Discord identity before ordering.</p>
-                                </div>
-
-                                <div className="mb-4">
-                                    <label className="form-label fw-bold small text-dark" htmlFor="setup-display-name">
-                                        <i className="fa-brands fa-discord text-primary me-1" /> Discord Display Name
-                                        <span className="text-muted fw-normal ms-1">(auto-filled)</span>
-                                    </label>
-                                    <input
-                                        id="setup-display-name"
-                                        type="text"
-                                        className="form-control rounded-3 border-2"
-                                        placeholder="Your Discord username"
-                                        value={setupDisplayName}
-                                        onChange={e => setSetupDisplayName(e.target.value)}
-                                        maxLength={32}
-                                    />
-                                    <div className="form-text">This identifies you in the order queue.</div>
-                                </div>
-
+            {
+                showSetup && user && (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            inset: 0,
+                            background: 'rgba(0,0,0,0.65)',
+                            backdropFilter: 'blur(6px)',
+                            WebkitBackdropFilter: 'blur(6px)',
+                            zIndex: 9999,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '1rem',
+                            overflowY: 'auto',
+                        }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Order Profile Setup"
+                    >
+                        <div style={{
+                            background: '#fff',
+                            borderRadius: '1.5rem',
+                            padding: '2.5rem 2rem',
+                            maxWidth: 520,
+                            width: '100%',
+                            boxShadow: '0 32px 80px rgba(0,0,0,0.35)',
+                            position: 'relative',
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                        }}>
+                            {/* Close (only if already has a profile) */}
+                            {orderProfile && (
                                 <button
                                     type="button"
-                                    className="btn btn-nook text-white fw-bold rounded-pill px-4 py-2 w-100 d-flex align-items-center justify-content-center gap-2"
-                                    onClick={() => {
-                                        playChimeClick();
-                                        setSetupStep('select-character');
-                                    }}
-                                    disabled={!setupDisplayName.trim()}
-                                >
-                                    <span>Next: Select In-Game Character</span>
-                                    <i className="fa-solid fa-arrow-right" />
-                                </button>
-                            </>
-                        )}
+                                    className="btn-close position-absolute"
+                                    style={{ top: '1.25rem', right: '1.25rem' }}
+                                    aria-label="Close setup"
+                                    onClick={() => { setShowSetup(false); setShowAddChar(false); }}
+                                />
+                            )}
 
-                        {/* ── STEP 2: Select In-Game Character ── */}
-                        {setupStep === 'select-character' && (
-                            <>
-                                <div className="mb-3">
-                                    <div className="d-flex align-items-center justify-content-between mb-1">
-                                        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: '1.15rem', margin: 0 }}>
-                                            <i className="fa-solid fa-address-card text-success me-2" />
-                                            Select In-Game Character
-                                        </h2>
-                                        <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-black">
-                                            {characters.length} / 3 Slots
-                                        </span>
-                                    </div>
-                                    <p className="text-muted small mb-0">Pick which character is ordering. IGN &amp; Island will be sent to the bot.</p>
-                                </div>
+                            {/* Step indicator */}
+                            <div className="d-flex align-items-center gap-2 mb-4">
+                                <div style={{
+                                    width: 32, height: 32, borderRadius: '50%',
+                                    background: setupStep === 'username' ? '#4ade80' : '#e5e7eb',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontWeight: 700, fontSize: '.8rem',
+                                    color: setupStep === 'username' ? '#fff' : '#9ca3af',
+                                    transition: 'all .3s',
+                                }}>1</div>
+                                <div style={{ flex: 1, height: 2, background: setupStep === 'select-character' ? '#4ade80' : '#e5e7eb', borderRadius: 2, transition: 'all .3s' }} />
+                                <div style={{
+                                    width: 32, height: 32, borderRadius: '50%',
+                                    background: setupStep === 'select-character' ? '#4ade80' : '#e5e7eb',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontWeight: 700, fontSize: '.8rem',
+                                    color: setupStep === 'select-character' ? '#fff' : '#9ca3af',
+                                    transition: 'all .3s',
+                                }}>2</div>
+                            </div>
 
-                                {/* Character cards */}
-                                <div className="d-flex flex-column gap-2 mb-3">
-                                    {characters.length === 0 && (
-                                        <div className="text-center py-3 text-muted small border rounded-4 bg-light">
-                                            <i className="fa-solid fa-person-circle-question fs-3 mb-2 d-block text-muted opacity-50" />
-                                            No saved characters yet.<br />
-                                            <span className="tiny-text">Add one below or go to <Link to="/profile" className="text-success fw-bold">Profile → Saved Characters</Link>.</span>
-                                        </div>
-                                    )}
-                                    {characters.map((char: SavedCharacter) => {
-                                        const isSelected = setupSelectedCharId === char.id;
-                                        return (
-                                            <button
-                                                key={char.id}
-                                                type="button"
-                                                id={`setup-char-${char.id}`}
-                                                className={`d-flex align-items-center gap-3 p-3 rounded-4 w-100 text-start border-2 ${isSelected
-                                                    ? 'border-success bg-success bg-opacity-10'
-                                                    : 'border-light-subtle bg-light'
-                                                    }`}
-                                                style={{ cursor: 'pointer', transition: 'all .2s' }}
-                                                onClick={() => { setSetupSelectedCharId(char.id); playChimeClick(); }}
-                                            >
-                                                <div style={{
-                                                    width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                                                    background: isSelected ? '#dcfce7' : '#f1f5f9',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    border: isSelected ? '2px solid #4ade80' : '2px solid #e2e8f0',
-                                                    transition: 'all .2s',
-                                                    fontSize: '1.1rem',
-                                                }}>
-                                                    <i className={`fa-solid ${char.icon || 'fa-leaf'}`} style={{ color: isSelected ? '#16a34a' : '#94a3b8' }} />
-                                                </div>
-                                                <div className="flex-grow-1 min-w-0">
-                                                    <div className="fw-black text-dark" style={{ fontSize: '.95rem' }}>{char.ign}</div>
-                                                    <div className="tiny-text text-muted fw-bold">🏝️ {char.islandName}</div>
-                                                    {char.title && <div className="tiny-text text-muted opacity-75">{char.title}</div>}
-                                                </div>
-                                                <div className="d-flex flex-column align-items-end gap-1">
-                                                    {char.isDefault && (
-                                                        <span className="badge bg-success text-white rounded-pill x-small fw-bold">Primary</span>
-                                                    )}
-                                                    {isSelected && <i className="fa-solid fa-circle-check text-success fs-5" />}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Add Character inline form */}
-                                {!showAddChar && remainingSlots > 0 && (
-                                    <button
-                                        type="button"
-                                        id="setup-add-char-btn"
-                                        className="btn btn-outline-success rounded-pill fw-bold w-100 mb-3 d-flex align-items-center justify-content-center gap-2 py-2"
-                                        onClick={() => { setShowAddChar(true); setAddCharError(''); }}
-                                    >
-                                        <i className="fa-solid fa-plus" />
-                                        <span>Add New Character ({remainingSlots} slot{remainingSlots !== 1 ? 's' : ''} left)</span>
-                                    </button>
-                                )}
-
-                                {showAddChar && (
-                                    <div className="border rounded-4 p-3 bg-light mb-3 animate-fade">
-                                        <div className="fw-bold small text-dark mb-2">
-                                            <i className="fa-solid fa-user-plus text-success me-1" /> New In-Game Character
-                                        </div>
-                                        <div className="row g-2 mb-2">
-                                            <div className="col">
-                                                <input
-                                                    type="text"
-                                                    className="form-control form-control-sm rounded-3"
-                                                    placeholder="IGN (e.g. Bitress)"
-                                                    value={addCharIgn}
-                                                    onChange={e => setAddCharIgn(e.target.value)}
-                                                    maxLength={24}
-                                                    autoFocus
-                                                />
-                                            </div>
-                                            <div className="col">
-                                                <input
-                                                    type="text"
-                                                    className="form-control form-control-sm rounded-3"
-                                                    placeholder="Island Name (e.g. Nookville)"
-                                                    value={addCharIsland}
-                                                    onChange={e => setAddCharIsland(e.target.value)}
-                                                    maxLength={24}
-                                                />
-                                            </div>
-                                        </div>
-                                        {addCharError && (
-                                            <div className="text-danger tiny-text mb-2">
-                                                <i className="fa-solid fa-triangle-exclamation me-1" />{addCharError}
+                            {/* ── STEP 1: Discord Username Confirm ── */}
+                            {setupStep === 'username' && (
+                                <>
+                                    <div className="text-center mb-4">
+                                        {user.avatar ? (
+                                            <img
+                                                src={`https://cdn.discordapp.com/avatars/${user.user_id}/${user.avatar}.png?size=80`}
+                                                alt={user.username}
+                                                style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid #4ade80', marginBottom: '.75rem' }}
+                                            />
+                                        ) : (
+                                            <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto .75rem', fontSize: '1.8rem' }}>
+                                                <i className="fa-brands fa-discord text-white" />
                                             </div>
                                         )}
-                                        <div className="d-flex gap-2">
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-success rounded-pill fw-bold px-3"
-                                                onClick={handleAddCharacter}
-                                            >
-                                                <i className="fa-solid fa-check me-1" />Save Character
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn btn-sm btn-outline-secondary rounded-pill"
-                                                onClick={() => { setShowAddChar(false); setAddCharError(''); setAddCharIgn(''); setAddCharIsland(''); }}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
+                                        <h2 className="ac-font fw-black text-dark mb-1" style={{ fontSize: '1.3rem' }}>
+                                            Welcome, {user.username}! 👋
+                                        </h2>
+                                        <p className="text-muted small mb-0">Let's confirm your Discord identity before ordering.</p>
                                     </div>
-                                )}
 
-                                <div className="text-center mb-3">
-                                    <Link to="/profile" className="tiny-text text-muted text-decoration-none">
-                                        <i className="fa-solid fa-sliders me-1" />
-                                        Manage all characters in Profile
-                                    </Link>
-                                </div>
+                                    <div className="mb-4">
+                                        <label className="form-label fw-bold small text-dark" htmlFor="setup-display-name">
+                                            <i className="fa-brands fa-discord text-primary me-1" /> Discord Display Name
+                                            <span className="text-muted fw-normal ms-1">(auto-filled)</span>
+                                        </label>
+                                        <input
+                                            id="setup-display-name"
+                                            type="text"
+                                            className="form-control rounded-3 border-2"
+                                            placeholder="Your Discord username"
+                                            value={setupDisplayName}
+                                            onChange={e => setSetupDisplayName(e.target.value)}
+                                            maxLength={32}
+                                        />
+                                        <div className="form-text">This identifies you in the order queue.</div>
+                                    </div>
 
-                                <div className="d-flex gap-2">
                                     <button
                                         type="button"
-                                        className="btn btn-outline-secondary rounded-pill fw-bold px-4 py-2 d-flex align-items-center gap-1"
-                                        onClick={() => { setSetupStep('username'); playChimeClick(); }}
-                                    >
-                                        <i className="fa-solid fa-arrow-left" />
-                                        <span>Back</span>
-                                    </button>
-                                    <button
-                                        id="setup-confirm-btn"
-                                        type="button"
-                                        className="btn btn-nook text-white fw-bold rounded-pill px-4 py-2 flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                                        onClick={handleSetupSave}
-                                        disabled={characters.length === 0}
-                                    >
-                                        <i className="fa-solid fa-check" />
-                                        <span>Confirm &amp; Start Ordering</span>
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* ════════════════ IN-APP NOTIFICATION TOAST ════════════════ */}
-            {inAppToast && (
-                <div className="ob-in-app-toast-container">
-                    <div className={`ob-in-app-toast toast-${inAppToast.type}`} role="alert" aria-live="assertive">
-                        <div className="ob-toast-icon" aria-hidden="true">
-                            {inAppToast.type === 'dodo' && <i className="fa-solid fa-plane-departure" />}
-                            {inAppToast.type === 'success' && <i className="fa-solid fa-circle-check" />}
-                            {inAppToast.type === 'warning' && <i className="fa-solid fa-triangle-exclamation" />}
-                            {inAppToast.type === 'info' && <i className="fa-solid fa-circle-info" />}
-                        </div>
-                        <div className="flex-grow-1">
-                            <div className="fw-bold small mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                                {inAppToast.title}
-                            </div>
-                            <div style={{ fontSize: '0.82rem', opacity: inAppToast.type === 'dodo' ? 0.95 : 0.8 }}>
-                                {inAppToast.message}
-                            </div>
-                            {inAppToast.actionLabel && inAppToast.onAction && (
-                                <div className="mt-2">
-                                    <button
-                                        type="button"
-                                        className={`btn btn-xs rounded-pill fw-bold px-3 py-1 ${inAppToast.type === 'dodo' ? 'btn-light text-dark' : 'btn-success text-white'
-                                            }`}
+                                        className="btn btn-nook text-white fw-bold rounded-pill px-4 py-2 w-100 d-flex align-items-center justify-content-center gap-2"
                                         onClick={() => {
-                                            inAppToast.onAction?.();
-                                            dismissInAppToast();
+                                            playChimeClick();
+                                            setSetupStep('select-character');
                                         }}
+                                        disabled={!setupDisplayName.trim()}
                                     >
-                                        {inAppToast.actionLabel}
+                                        <span>Next: Select In-Game Character</span>
+                                        <i className="fa-solid fa-arrow-right" />
                                     </button>
-                                </div>
+                                </>
+                            )}
+
+                            {/* ── STEP 2: Select In-Game Character ── */}
+                            {setupStep === 'select-character' && (
+                                <>
+                                    <div className="mb-3">
+                                        <div className="d-flex align-items-center justify-content-between mb-1">
+                                            <h2 className="ac-font fw-black text-dark mb-0" style={{ fontSize: '1.15rem' }}>
+                                                <i className="fa-solid fa-address-card text-success me-2" />
+                                                Select In-Game Character
+                                            </h2>
+                                            <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-black">
+                                                {characters.length} / 3 Slots
+                                            </span>
+                                        </div>
+                                        <p className="text-muted small mb-0">Pick which character is ordering. IGN &amp; Island will be sent to the bot.</p>
+                                    </div>
+
+                                    {/* Character cards */}
+                                    <div className="d-flex flex-column gap-2 mb-3">
+                                        {characters.length === 0 && (
+                                            <div className="text-center py-3 text-muted small border rounded-4 bg-light">
+                                                <i className="fa-solid fa-person-circle-question fs-3 mb-2 d-block text-muted opacity-50" />
+                                                No saved characters yet.<br />
+                                                <span className="tiny-text">Add one below or go to <Link to="/profile" className="text-success fw-bold">Profile → Saved Characters</Link>.</span>
+                                            </div>
+                                        )}
+                                        {characters.map((char: SavedCharacter) => {
+                                            const isSelected = setupSelectedCharId === char.id;
+                                            return (
+                                                <button
+                                                    key={char.id}
+                                                    type="button"
+                                                    id={`setup-char-${char.id}`}
+                                                    className={`d-flex align-items-center gap-3 p-3 rounded-4 w-100 text-start border-2 ${isSelected
+                                                        ? 'border-success bg-success bg-opacity-10'
+                                                        : 'border-light-subtle bg-light'
+                                                        }`}
+                                                    style={{ cursor: 'pointer', transition: 'all .2s' }}
+                                                    onClick={() => { setSetupSelectedCharId(char.id); playChimeClick(); }}
+                                                >
+                                                    <div style={{
+                                                        width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+                                                        background: isSelected ? '#dcfce7' : '#f1f5f9',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        border: isSelected ? '2px solid #4ade80' : '2px solid #e2e8f0',
+                                                        transition: 'all .2s',
+                                                        fontSize: '1.1rem',
+                                                    }}>
+                                                        <i className={`fa-solid ${char.icon || 'fa-leaf'}`} style={{ color: isSelected ? '#16a34a' : '#94a3b8' }} />
+                                                    </div>
+                                                    <div className="flex-grow-1 min-w-0">
+                                                        <div className="fw-black text-dark" style={{ fontSize: '.95rem' }}>{char.ign}</div>
+                                                        <div className="tiny-text text-muted fw-bold">🏝️ {char.islandName}</div>
+                                                        {char.title && <div className="tiny-text text-muted opacity-75">{char.title}</div>}
+                                                    </div>
+                                                    <div className="d-flex flex-column align-items-end gap-1">
+                                                        {char.isDefault && (
+                                                            <span className="badge bg-success text-white rounded-pill x-small fw-bold">Primary</span>
+                                                        )}
+                                                        {isSelected && <i className="fa-solid fa-circle-check text-success fs-5" />}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Add Character inline form */}
+                                    {!showAddChar && remainingSlots > 0 && (
+                                        <button
+                                            type="button"
+                                            id="setup-add-char-btn"
+                                            className="btn btn-outline-success rounded-pill fw-bold w-100 mb-3 d-flex align-items-center justify-content-center gap-2 py-2"
+                                            onClick={() => { setShowAddChar(true); setAddCharError(''); }}
+                                        >
+                                            <i className="fa-solid fa-plus" />
+                                            <span>Add New Character ({remainingSlots} slot{remainingSlots !== 1 ? 's' : ''} left)</span>
+                                        </button>
+                                    )}
+
+                                    {showAddChar && (
+                                        <div className="border rounded-4 p-3 bg-light mb-3 animate-fade">
+                                            <div className="fw-bold small text-dark mb-2">
+                                                <i className="fa-solid fa-user-plus text-success me-1" /> New In-Game Character
+                                            </div>
+                                            <div className="row g-2 mb-2">
+                                                <div className="col">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-sm rounded-3"
+                                                        placeholder="IGN (e.g. Bitress)"
+                                                        value={addCharIgn}
+                                                        onChange={e => setAddCharIgn(e.target.value)}
+                                                        maxLength={24}
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                                <div className="col">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-sm rounded-3"
+                                                        placeholder="Island Name (e.g. Nookville)"
+                                                        value={addCharIsland}
+                                                        onChange={e => setAddCharIsland(e.target.value)}
+                                                        maxLength={24}
+                                                    />
+                                                </div>
+                                            </div>
+                                            {addCharError && (
+                                                <div className="text-danger tiny-text mb-2">
+                                                    <i className="fa-solid fa-triangle-exclamation me-1" />{addCharError}
+                                                </div>
+                                            )}
+                                            <div className="d-flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-success rounded-pill fw-bold px-3"
+                                                    onClick={handleAddCharacter}
+                                                >
+                                                    <i className="fa-solid fa-check me-1" />Save Character
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-secondary rounded-pill"
+                                                    onClick={() => { setShowAddChar(false); setAddCharError(''); setAddCharIgn(''); setAddCharIsland(''); }}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="text-center mb-3">
+                                        <Link to="/profile" className="tiny-text text-muted text-decoration-none">
+                                            <i className="fa-solid fa-sliders me-1" />
+                                            Manage all characters in Profile
+                                        </Link>
+                                    </div>
+
+                                    <div className="d-flex gap-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-secondary rounded-pill fw-bold px-4 py-2 d-flex align-items-center gap-1"
+                                            onClick={() => { setSetupStep('username'); playChimeClick(); }}
+                                        >
+                                            <i className="fa-solid fa-arrow-left" />
+                                            <span>Back</span>
+                                        </button>
+                                        <button
+                                            id="setup-confirm-btn"
+                                            type="button"
+                                            className="btn btn-nook text-white fw-bold rounded-pill px-4 py-2 flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                                            onClick={handleSetupSave}
+                                            disabled={characters.length === 0}
+                                        >
+                                            <i className="fa-solid fa-check" />
+                                            <span>Confirm &amp; Start Ordering</span>
+                                        </button>
+                                    </div>
+                                </>
                             )}
                         </div>
-                        <button
-                            type="button"
-                            className={`btn-close ${inAppToast.type === 'dodo' ? 'btn-close-white' : ''} x-small`}
-                            aria-label="Dismiss notification"
-                            onClick={dismissInAppToast}
-                        />
                     </div>
-                </div>
-            )}
-        </>
+                )
+            }
+
+            {/* ════════════════ IN-APP NOTIFICATION TOAST ════════════════ */}
+            {
+                inAppToast && (
+                    <div className="ob-in-app-toast-container">
+                        <div className={`ob-in-app-toast toast-${inAppToast.type}`} role="alert" aria-live="assertive">
+                            <div className="ob-toast-icon" aria-hidden="true">
+                                {inAppToast.type === 'dodo' && <i className="fa-solid fa-plane-departure" />}
+                                {inAppToast.type === 'success' && <i className="fa-solid fa-circle-check" />}
+                                {inAppToast.type === 'warning' && <i className="fa-solid fa-triangle-exclamation" />}
+                                {inAppToast.type === 'info' && <i className="fa-solid fa-circle-info" />}
+                            </div>
+                            <div className="flex-grow-1">
+                                <div className="fw-bold small mb-1 ac-font">
+                                    {inAppToast.title}
+                                </div>
+                                <div style={{ fontSize: '0.82rem', opacity: inAppToast.type === 'dodo' ? 0.95 : 0.8 }}>
+                                    {inAppToast.message}
+                                </div>
+                                {inAppToast.actionLabel && inAppToast.onAction && (
+                                    <div className="mt-2">
+                                        <button
+                                            type="button"
+                                            className={`btn btn-xs rounded-pill fw-bold px-3 py-1 ${inAppToast.type === 'dodo' ? 'btn-light text-dark' : 'btn-success text-white'
+                                                }`}
+                                            onClick={() => {
+                                                inAppToast.onAction?.();
+                                                dismissInAppToast();
+                                            }}
+                                        >
+                                            {inAppToast.actionLabel}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                className={`btn-close ${inAppToast.type === 'dodo' ? 'btn-close-white' : ''} x-small`}
+                                aria-label="Dismiss notification"
+                                onClick={dismissInAppToast}
+                            />
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

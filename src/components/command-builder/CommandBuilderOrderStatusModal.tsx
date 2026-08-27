@@ -36,24 +36,11 @@ export const CommandBuilderOrderStatusModal = ({
             step++;
             const data = await pollOrderStatus(orderId, getAuthToken());
             if (!isMounted) return;
-
-            // Simulate progression after 6-8 seconds if backend is in demo mode
-            if (step >= 2 && !data.dodoCode) {
-                setStatusData({
-                    status: 'ready',
-                    queuePosition: 0,
-                    estimatedMinutes: 0,
-                    dodoCode: 'CH0P1',
-                    islandName: 'Sinta',
-                    message: 'Your island is ready for departure!',
-                });
-            } else {
-                setStatusData(data);
-            }
+            setStatusData(data);
         };
 
         checkStatus();
-        timer = window.setInterval(checkStatus, 4000);
+        timer = window.setInterval(checkStatus, 3000);
 
         return () => {
             isMounted = false;
@@ -150,9 +137,13 @@ export const CommandBuilderOrderStatusModal = ({
                         ) : (
                             <div>
                                 <div className="spinner-border text-primary mb-3" style={{ width: '48px', height: '48px' }} role="status"></div>
-                                <h3 className="h5 fw-black text-dark mb-1 ac-font">Queued in Order Bot</h3>
+                                <h3 className="h5 fw-black text-dark mb-1 ac-font">
+                                    {statusData.status === 'preparing' ? 'Preparing Items on Island' : 'Queued in Order Bot'}
+                                </h3>
                                 <p className="small text-muted mb-4">
-                                    ChoBot has submitted your order silently. Please wait while the Switch prepares your island.
+                                    {statusData.status === 'preparing'
+                                        ? 'Your order is currently being placed on the island ground. Dodo code arriving shortly!'
+                                        : 'ChoBot has submitted your order. Please wait while the Switch prepares your island.'}
                                 </p>
 
                                 {/* Queue Cards */}
@@ -161,7 +152,7 @@ export const CommandBuilderOrderStatusModal = ({
                                         <div className="bg-white rounded-4 border p-3 shadow-sm">
                                             <span className="tiny-text fw-bold text-muted text-uppercase d-block mb-1">Queue Position</span>
                                             <span className="h3 fw-black text-dark mb-0 ac-font">
-                                                #{statusData.queuePosition ?? 1}
+                                                {statusData.status === 'preparing' ? 'Up Next' : `#${statusData.queuePosition ?? 1}`}
                                             </span>
                                         </div>
                                     </div>
@@ -169,7 +160,7 @@ export const CommandBuilderOrderStatusModal = ({
                                         <div className="bg-white rounded-4 border p-3 shadow-sm">
                                             <span className="tiny-text fw-bold text-muted text-uppercase d-block mb-1">Est. Wait</span>
                                             <span className="h3 fw-black text-primary mb-0 ac-font">
-                                                ~{statusData.estimatedMinutes ?? 2}m
+                                                {statusData.eta || `~${statusData.estimatedMinutes ?? 2}m`}
                                             </span>
                                         </div>
                                     </div>
@@ -177,7 +168,11 @@ export const CommandBuilderOrderStatusModal = ({
 
                                 <div className="d-flex align-items-center justify-content-center gap-2 text-muted small">
                                     <span className="spinner-grow spinner-grow-sm text-success" role="status" />
-                                    <span>Waiting for bot confirmation...</span>
+                                    <span>
+                                        {statusData.status === 'preparing'
+                                            ? 'Dropping items on island...'
+                                            : 'Waiting in queue for next slot...'}
+                                    </span>
                                 </div>
                             </div>
                         )}

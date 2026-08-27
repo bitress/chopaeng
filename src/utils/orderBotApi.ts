@@ -5,11 +5,21 @@ import { getAuthToken } from '../context/authToken';
 
 export interface BotStatusResponse {
     success: boolean;
+    is_running?: boolean;
+    mode?: 'DropMode' | 'OrderMode';
+    is_drop_mode?: boolean;
+    is_order_mode?: boolean;
     island_name?: string;
     dodo_code?: string;
-    queue_count?: number;
+    layer?: string;
+    visitors_count?: number;
+    visitors?: string;
+    visitor_list?: string[];
+    is_dirty?: boolean;
     accepting_commands?: boolean;
+    queue_count?: number;
     battery_charge?: number;
+    last_dodo_fetch?: string;
     server_time?: string;
     error?: string;
 }
@@ -28,6 +38,8 @@ export interface OrderStatusResponse {
     status: 'queued' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'error';
     queuePosition?: number;
     estimatedMinutes?: number;
+    estimatedSeconds?: number;
+    eta?: string;
     dodoCode?: string;
     islandName?: string;
     message?: string;
@@ -37,14 +49,23 @@ export interface QueueEntry {
     order_id: string;
     username: string;
     queue_position: number;
+    position?: number;       // alias from Sinta
     estimated_minutes?: number;
+    eta?: string;
     status: string;
+    item_count?: number;
+    villager?: string;
+    created_at?: string;
 }
 
 export interface OrderQueueResponse {
     success: boolean;
     queue?: QueueEntry[];
+    orders?: QueueEntry[];
     total?: number;
+    count?: number;
+    island_name?: string;
+    current_active_user?: string;
     error?: string;
 }
 
@@ -89,10 +110,61 @@ const getHeaders = (token?: string | null): Record<string, string> => {
     return headers;
 };
 
+/** Set of clearly-invalid Dodo codes the SysBot may return before the real code is ready. */
+const INVALID_DODO_CODES = new Set(['00000', '-----', 'null', 'None', '']);
+
+/** Returns true if the dodo_code is a real, usable code. */
+const isValidDodo = (code: unknown): code is string =>
+    typeof code === 'string' && code.trim().length > 0 && !INVALID_DODO_CODES.has(code.trim());
+
+/**
+ * Parse the Sinta `eta` string (e.g. "04m:00s") into estimated minutes.
+ * Falls back to `estimated_seconds` if available.
+ */
+const parseEtaMinutes = (data: Record<string, unknown>): number | undefined => {
+    // Prefer estimated_seconds (most precise)
+    if (typeof data.estimated_seconds === 'number') {
+        return Math.max(1, Math.round(data.estimated_seconds / 60));
+    }
+    // Parse "04m:00s" style strings
+    if (typeof data.eta === 'string') {
+        const match = data.eta.match(/(\d+)m/);
+        if (match) return Math.max(1, parseInt(match[1], 10));
+    }
+    // Fallback to estimated_minutes from backend
+    if (typeof data.estimated_minutes === 'number') {
+        return data.estimated_minutes;
+    }
+    return undefined;
+};
+
+/**
+ * Map SysBot / backend status values to the canonical set the frontend expects.
+ * The backend already does most of the mapping (next → preparing), but we
+ * handle edge cases here as a safety net.
+ */
+const normalizeStatus = (raw: string): OrderStatusResponse['status'] => {
+    const s = (raw || 'queued').toLowerCase();
+    const map: Record<string, OrderStatusResponse['status']> = {
+        queued: 'queued',
+        next: 'preparing',
+        preparing: 'preparing',
+        active: 'preparing',
+        in_progress: 'preparing',
+        ready: 'ready',
+        completed: 'completed',
+        cancelled: 'cancelled',
+        not_found: 'error',
+        error: 'error',
+    };
+    return map[s] ?? 'queued';
+};
+
 // ─── Bot Status ────────────────────────────────────────────────────────────
 
 /**
- * Fetches the live bot status (mode, island, dodo, queue count, battery).
+ * Fetches the live bot status (mode, island, dodo, queue count, battery,
+ * visitors, layer, etc.).
  */
 export const fetchBotStatus = async (
     token?: string | null
@@ -147,12 +219,20 @@ export const submitOrderToBot = async (
 
         if (res.ok) {
             const data = await res.json();
+            const hasDodo = isValidDodo(data.dodo_code);
+            const status = normalizeStatus(data.status);
+
+            let queuePos = typeof data.queue_position === 'number' ? data.queue_position : 1;
+            if (queuePos <= 0 && status !== 'ready' && status !== 'preparing') queuePos = 1;
+
+            const estMin = parseEtaMinutes(data) ?? 2;
+
             return {
                 success: true,
-                orderId: data.order_id,
-                queuePosition: data.queue_position,
-                estimatedMinutes: data.estimated_minutes,
-                dodoCode: data.dodo_code,
+                orderId: data.order_id || data.id,
+                queuePosition: queuePos,
+                estimatedMinutes: estMin,
+                dodoCode: hasDodo ? data.dodo_code : undefined,
                 message: data.message || 'Order placed successfully!',
             };
         }
@@ -190,12 +270,24 @@ export const pollOrderStatus = async (
 
         if (res.ok) {
             const data = await res.json();
+            const hasDodo = isValidDodo(data.dodo_code);
+            const status = hasDodo ? 'ready' as const : normalizeStatus(data.status);
+
+            let queuePos = typeof data.queue_position === 'number' ? data.queue_position : undefined;
+            if (queuePos !== undefined && queuePos <= 0 && status !== 'ready' && status !== 'preparing') {
+                queuePos = 1;
+            }
+
+            const estMin = parseEtaMinutes(data);
+
             return {
-                status: data.status || 'queued',
-                queuePosition: data.queue_position,
-                estimatedMinutes: data.estimated_minutes,
-                dodoCode: data.dodo_code,
-                islandName: data.island_name,
+                status,
+                queuePosition: queuePos,
+                estimatedMinutes: estMin,
+                estimatedSeconds: typeof data.estimated_seconds === 'number' ? data.estimated_seconds : undefined,
+                eta: typeof data.eta === 'string' ? data.eta : undefined,
+                dodoCode: hasDodo ? data.dodo_code : undefined,
+                islandName: data.island_name || 'Sinta',
                 message: data.message,
             };
         }
@@ -231,6 +323,8 @@ export const cancelOrder = async (
 
 /**
  * Fetches the full current order queue.
+ * Normalizes the response from Sinta's format (orders[] with position)
+ * to the frontend's expected format (queue[] with queue_position).
  */
 export const fetchOrderQueue = async (
     token?: string | null
@@ -242,10 +336,21 @@ export const fetchOrderQueue = async (
         });
         if (res.ok) {
             const data = await res.json();
+            // The backend normalizes orders[].position → queue_position and
+            // copies orders into queue[], but we handle fallbacks here too.
+            const rawEntries: QueueEntry[] = data.queue || data.orders || [];
+            const entries = rawEntries.map((e) => ({
+                ...e,
+                queue_position: e.queue_position ?? e.position ?? 0,
+                estimated_minutes: e.estimated_minutes ?? parseEtaMinutes(e as unknown as Record<string, unknown>),
+                status: normalizeStatus(e.status),
+            }));
             return {
                 success: true,
-                queue: data.queue || data.orders || [],
-                total: data.total ?? (data.queue || data.orders || []).length,
+                queue: entries,
+                total: data.total ?? data.count ?? entries.length,
+                island_name: data.island_name,
+                current_active_user: data.current_active_user,
             };
         }
         const err = await res.json().catch(() => ({}));

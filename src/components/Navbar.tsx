@@ -19,6 +19,8 @@ export const Navbar: React.FC = () => {
     const userDropdownRef = useRef<HTMLDivElement>(null);
     const exploreDropdownRef = useRef<HTMLDivElement>(null);
     const exploreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hamburgerRef = useRef<HTMLButtonElement>(null);
+    const drawerCloseRef = useRef<HTMLButtonElement>(null);
 
     const { pathname } = useLocation();
     const navigate = useNavigate();
@@ -48,6 +50,8 @@ export const Navbar: React.FC = () => {
     useEffect(() => {
         if (isMobileMenuOpen) {
             document.body.style.overflow = "hidden";
+            // Move focus into the drawer for keyboard/screen-reader users
+            drawerCloseRef.current?.focus();
         } else {
             document.body.style.overflow = "";
         }
@@ -70,6 +74,33 @@ export const Navbar: React.FC = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    // Escape key closes any open dropdown or the mobile drawer
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== "Escape") return;
+            setShowThemeDropdown(false);
+            setShowUserDropdown(false);
+            setShowExploreDropdown(false);
+            if (isMobileMenuOpen) {
+                setIsMobileMenuOpen(false);
+                hamburgerRef.current?.focus();
+            }
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [isMobileMenuOpen]);
+
+    // Safety net: if the viewport grows into desktop width, drop the mobile drawer
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 992 && isMobileMenuOpen) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [isMobileMenuOpen]);
 
     const handleLogout = async () => {
         try {
@@ -164,6 +195,11 @@ export const Navbar: React.FC = () => {
                     gap: 1px;
                 }
 
+                /* Compact icon-only rail shown between mobile and full desktop widths (md → lg) */
+                .chopaeng-nav-compact .chopaeng-nav-item {
+                    padding: 8px 12px;
+                }
+
                 .chopaeng-nav-item {
                     display: inline-flex;
                     align-items: center;
@@ -238,6 +274,7 @@ export const Navbar: React.FC = () => {
                     transform: translateX(-50%);
                     margin-top: 10px;
                     width: 340px;
+                    max-width: calc(100vw - 32px);
                     background: var(--card-bg, #ffffff);
                     border: 1px solid var(--card-border, rgba(0,0,0,0.08));
                     border-radius: 16px;
@@ -300,6 +337,7 @@ export const Navbar: React.FC = () => {
                     transition: all 0.18s ease;
                     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
                     font-size: 0.85rem;
+                    flex-shrink: 0;
                 }
 
                 .chopaeng-action-btn:hover {
@@ -340,11 +378,27 @@ export const Navbar: React.FC = () => {
                     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                     display: flex;
                     flex-direction: column;
-                    overflow-y: auto;
+                    overflow: hidden;
                 }
 
                 .chopaeng-mobile-drawer.open {
                     transform: translateX(0);
+                }
+
+                .chopaeng-drawer-header {
+                    flex-shrink: 0;
+                }
+
+                .chopaeng-drawer-body {
+                    flex: 1 1 auto;
+                    overflow-y: auto;
+                    -webkit-overflow-scrolling: touch;
+                    min-height: 0;
+                }
+
+                .chopaeng-drawer-footer {
+                    flex-shrink: 0;
+                    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
                 }
 
                 .mobile-nav-link {
@@ -404,6 +458,7 @@ export const Navbar: React.FC = () => {
                     padding: 0;
                     cursor: pointer;
                     transition: all 0.2s ease;
+                    flex-shrink: 0;
                 }
 
                 .chopaeng-hamburger span {
@@ -458,6 +513,7 @@ export const Navbar: React.FC = () => {
                     top: 100%;
                     margin-top: 8px;
                     width: 240px;
+                    max-width: calc(100vw - 32px);
                     background: var(--card-bg, #ffffff);
                     border: 1px solid var(--card-border, rgba(0,0,0,0.08));
                     border-radius: 16px;
@@ -537,6 +593,41 @@ export const Navbar: React.FC = () => {
                     transform: translateY(-1px);
                     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
                 }
+
+                /* Visible keyboard focus for every interactive nav element */
+                .chopaeng-nav-item:focus-visible,
+                .chopaeng-explore-trigger:focus-visible,
+                .chopaeng-explore-link:focus-visible,
+                .chopaeng-action-btn:focus-visible,
+                .chopaeng-user-pill:focus-visible,
+                .chopaeng-hamburger:focus-visible,
+                .chopaeng-user-dropdown-item:focus-visible,
+                .mobile-nav-link:focus-visible,
+                .mobile-quick-link:focus-visible {
+                    outline: 2px solid #16a34a;
+                    outline-offset: 2px;
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .chopaeng-navbar,
+                    .chopaeng-nav-item,
+                    .chopaeng-explore-trigger,
+                    .chopaeng-explore-trigger .chevron-icon,
+                    .chopaeng-explore-dropdown,
+                    .chopaeng-explore-link,
+                    .chopaeng-mobile-overlay,
+                    .chopaeng-mobile-drawer,
+                    .chopaeng-hamburger span,
+                    .chopaeng-user-dropdown,
+                    .chopaeng-user-dropdown-item,
+                    .mobile-nav-link,
+                    .chopaeng-action-btn,
+                    .chopaeng-user-pill,
+                    .mobile-quick-link {
+                        transition: none !important;
+                        animation: none !important;
+                    }
+                }
             `}</style>
 
             <nav
@@ -572,6 +663,25 @@ export const Navbar: React.FC = () => {
                         </div>
                     </Link>
 
+                    {/* Compact icon-only nav for tablet widths (md up to lg) so the bar isn't hamburger-only there */}
+                    <div className="d-none d-md-flex d-lg-none align-items-center chopaeng-nav-pill-container chopaeng-nav-compact" role="menubar" aria-label="Quick navigation">
+                        {primaryLinks.map((link) => (
+                            <NavLink
+                                key={link.name}
+                                to={link.path}
+                                end={link.path === "/"}
+                                className={({ isActive }) => `chopaeng-nav-item ${isActive ? "active" : ""}`}
+                                onClick={() => playChimeClick()}
+                                role="menuitem"
+                                title={link.name}
+                                aria-label={link.name}
+                            >
+                                <i className={`fa-solid ${link.icon}`} style={{ fontSize: '0.8rem' }} aria-hidden="true" />
+                                <span className="visually-hidden">{link.name}</span>
+                            </NavLink>
+                        ))}
+                    </div>
+
                     {/* Desktop Navigation — Primary Pills + Explore Dropdown */}
                     <div className="d-none d-lg-flex align-items-center chopaeng-nav-pill-container" role="menubar">
                         {primaryLinks.map((link) => (
@@ -603,6 +713,7 @@ export const Navbar: React.FC = () => {
                                     setShowExploreDropdown(prev => !prev);
                                 }}
                                 aria-expanded={showExploreDropdown}
+                                aria-haspopup="menu"
                                 aria-label="More navigation options"
                             >
                                 <i className="fa-solid fa-compass" style={{ fontSize: '0.72rem' }} aria-hidden="true" />
@@ -612,6 +723,7 @@ export const Navbar: React.FC = () => {
 
                             <div
                                 className={`chopaeng-explore-dropdown ${showExploreDropdown ? 'show' : ''}`}
+                                role="menu"
                                 onMouseEnter={handleExploreEnter}
                                 onMouseLeave={handleExploreLeave}
                             >
@@ -619,6 +731,7 @@ export const Navbar: React.FC = () => {
                                     <NavLink
                                         key={link.name}
                                         to={link.path}
+                                        role="menuitem"
                                         className={({ isActive }) => `chopaeng-explore-link ${isActive ? 'active-link' : ''}`}
                                         onClick={() => {
                                             playChimeClick();
@@ -642,7 +755,7 @@ export const Navbar: React.FC = () => {
                     </div>
 
                     {/* Right Action Controls */}
-                    <div className="d-flex align-items-center gap-1.5 flex-shrink-0">
+                    <div className="d-flex align-items-center gap-2 flex-shrink-0">
                         {/* User Account */}
                         {user ? (
                             <div className="position-relative" ref={userDropdownRef}>
@@ -654,6 +767,7 @@ export const Navbar: React.FC = () => {
                                     }}
                                     className="chopaeng-user-pill"
                                     aria-expanded={showUserDropdown}
+                                    aria-haspopup="menu"
                                     aria-label="User Account Menu"
                                 >
                                     {userAvatarUrl ? (
@@ -679,7 +793,7 @@ export const Navbar: React.FC = () => {
 
                                 {/* User Dropdown */}
                                 {showUserDropdown && (
-                                    <div className="chopaeng-user-dropdown">
+                                    <div className="chopaeng-user-dropdown" role="menu">
                                         <div className="px-3 py-2 border-bottom mb-1" style={{ borderColor: 'var(--card-border, rgba(0,0,0,0.06))' }}>
                                             <div className="fw-black text-dark text-truncate" style={{ fontSize: '0.85rem' }}>{user.username}</div>
                                             <div className="text-muted text-truncate" style={{ fontSize: '0.7rem' }}>
@@ -691,6 +805,7 @@ export const Navbar: React.FC = () => {
                                             <Link
                                                 key={link.path}
                                                 to={link.path}
+                                                role="menuitem"
                                                 className="chopaeng-user-dropdown-item"
                                                 onClick={() => setShowUserDropdown(false)}
                                             >
@@ -705,6 +820,7 @@ export const Navbar: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={handleLogout}
+                                                role="menuitem"
                                                 className="chopaeng-user-dropdown-item danger"
                                             >
                                                 <div className="dropdown-icon" style={{ backgroundColor: '#ef444412', color: '#ef4444' }}>
@@ -754,18 +870,19 @@ export const Navbar: React.FC = () => {
                                 className="chopaeng-action-btn"
                                 title={`Theme: ${currentTheme === 'celeste' ? 'Celeste Stargazing' : currentTheme === 'roost' ? 'The Roost Cozy' : 'Nook Day'}`}
                                 aria-label="Toggle Theme"
+                                aria-haspopup="menu"
                                 aria-expanded={showThemeDropdown}
                             >
-                                <i className={`fa-solid ${
-                                    currentTheme === 'celeste' ? 'fa-star text-warning' :
+                                <i className={`fa-solid ${currentTheme === 'celeste' ? 'fa-star text-warning' :
                                     currentTheme === 'roost' ? 'fa-mug-hot text-amber' :
-                                    'fa-leaf text-success'
-                                }`} aria-hidden="true" />
+                                        'fa-leaf text-success'
+                                    }`} aria-hidden="true" />
                             </button>
 
                             {showThemeDropdown && (
                                 <div
                                     className="chopaeng-user-dropdown"
+                                    role="menu"
                                     style={{ width: '230px' }}
                                 >
                                     <div className="px-3 py-2 mb-1">
@@ -777,6 +894,8 @@ export const Navbar: React.FC = () => {
                                         <button
                                             key={opt.id}
                                             type="button"
+                                            role="menuitemradio"
+                                            aria-checked={currentTheme === opt.id}
                                             onClick={() => {
                                                 playChimeClick();
                                                 setStoredTheme(opt.id);
@@ -815,6 +934,7 @@ export const Navbar: React.FC = () => {
 
                         {/* Mobile Menu Toggle */}
                         <button
+                            ref={hamburgerRef}
                             type="button"
                             className={`chopaeng-hamburger d-lg-none ${isMobileMenuOpen ? 'open' : ''}`}
                             onClick={() => {
@@ -822,6 +942,7 @@ export const Navbar: React.FC = () => {
                                 setIsMobileMenuOpen(!isMobileMenuOpen);
                             }}
                             aria-expanded={isMobileMenuOpen}
+                            aria-controls="chopaeng-mobile-drawer"
                             aria-label="Toggle Mobile Navigation Menu"
                         >
                             <span></span>
@@ -839,18 +960,23 @@ export const Navbar: React.FC = () => {
                 aria-hidden="true"
             />
 
-            {/* Mobile Drawer */}
+            {/* Mobile Drawer — header/footer stay fixed, only the middle section scrolls */}
             <aside
+                id="chopaeng-mobile-drawer"
                 className={`chopaeng-mobile-drawer ${isMobileMenuOpen ? 'open' : ''}`}
+                role="dialog"
+                aria-modal="true"
+                aria-hidden={!isMobileMenuOpen}
                 aria-label="Mobile Navigation Drawer"
             >
-                {/* Drawer Header */}
-                <div className="p-3 border-bottom d-flex align-items-center justify-content-between" style={{ background: 'var(--bg-cream, #f8faf6)' }}>
+                {/* Drawer Header (fixed) */}
+                <div className="chopaeng-drawer-header p-3 border-bottom d-flex align-items-center justify-content-between" style={{ background: 'var(--bg-cream, #f8faf6)' }}>
                     <div className="d-flex align-items-center gap-2">
                         <img src={logo} alt="Logo" style={{ width: 26, height: 26, objectFit: 'contain' }} />
                         <span className="ac-font fw-black text-dark" style={{ fontSize: '1rem' }}>CHOPAENG</span>
                     </div>
                     <button
+                        ref={drawerCloseRef}
                         type="button"
                         className="btn-close"
                         onClick={() => setIsMobileMenuOpen(false)}
@@ -859,144 +985,147 @@ export const Navbar: React.FC = () => {
                     />
                 </div>
 
-                {/* Drawer User Card */}
-                <div className="p-3 border-bottom">
-                    {user ? (
-                        <div className="d-flex align-items-center justify-content-between gap-2">
-                            <div className="d-flex align-items-center gap-2 min-w-0">
-                                {userAvatarUrl ? (
-                                    <img src={userAvatarUrl} alt={user.username} className="rounded-circle" style={{ width: 34, height: 34 }} />
-                                ) : (
-                                    <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style={{ width: 34, height: 34, fontSize: '0.75rem' }}>
-                                        {user.username.charAt(0).toUpperCase()}
+                {/* Scrollable body: user card, quick links, nav list, theme selector */}
+                <div className="chopaeng-drawer-body">
+                    {/* Drawer User Card */}
+                    <div className="p-3 border-bottom">
+                        {user ? (
+                            <div className="d-flex align-items-center justify-content-between gap-2">
+                                <div className="d-flex align-items-center gap-2 min-w-0">
+                                    {userAvatarUrl ? (
+                                        <img src={userAvatarUrl} alt={user.username} className="rounded-circle" style={{ width: 34, height: 34 }} />
+                                    ) : (
+                                        <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style={{ width: 34, height: 34, fontSize: '0.75rem' }}>
+                                            {user.username.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className="min-w-0">
+                                        <strong className="d-block text-dark text-truncate" style={{ fontSize: '0.85rem' }}>{user.username}</strong>
+                                        <span className="text-muted" style={{ fontSize: '0.68rem' }}>
+                                            {user.is_admin ? "Admin" : user.is_mod ? "Moderator" : "Member"}
+                                        </span>
                                     </div>
-                                )}
-                                <div className="min-w-0">
-                                    <strong className="d-block text-dark text-truncate" style={{ fontSize: '0.85rem' }}>{user.username}</strong>
-                                    <span className="text-muted" style={{ fontSize: '0.68rem' }}>
-                                        {user.is_admin ? "Admin" : user.is_mod ? "Moderator" : "Member"}
-                                    </span>
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2.5 py-1 flex-shrink-0"
+                                    style={{ fontSize: '0.72rem' }}
+                                >
+                                    Logout
+                                </button>
                             </div>
+                        ) : (
                             <button
                                 type="button"
-                                onClick={handleLogout}
-                                className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2.5 py-1"
-                                style={{ fontSize: '0.72rem' }}
+                                onClick={() => {
+                                    setIsMobileMenuOpen(false);
+                                    login();
+                                }}
+                                className="btn btn-nook text-white rounded-pill fw-bold btn-sm w-100 py-2 shadow-2xs d-flex align-items-center justify-content-center gap-2"
                             >
-                                Logout
+                                <i className="fa-brands fa-discord fs-6" aria-hidden="true" />
+                                <span>Login with Discord</span>
                             </button>
-                        </div>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIsMobileMenuOpen(false);
-                                login();
-                            }}
-                            className="btn btn-nook text-white rounded-pill fw-bold btn-sm w-100 py-2 shadow-2xs d-flex align-items-center justify-content-center gap-2"
-                        >
-                            <i className="fa-brands fa-discord fs-6" aria-hidden="true" />
-                            <span>Login with Discord</span>
-                        </button>
-                    )}
-                </div>
+                        )}
+                    </div>
 
-                {/* User Quick Links (mobile) */}
-                {user && (
-                    <div className="px-3 pt-3">
-                        <div className="mobile-quick-links">
-                            {userQuickLinks.slice(0, 3).map((link) => (
-                                <Link
-                                    key={link.path}
+                    {/* User Quick Links (mobile) */}
+                    {user && (
+                        <div className="px-3 pt-3">
+                            <div className="mobile-quick-links">
+                                {userQuickLinks.slice(0, 3).map((link) => (
+                                    <Link
+                                        key={link.path}
+                                        to={link.path}
+                                        className="mobile-quick-link"
+                                        onClick={() => { playChimeClick(); setIsMobileMenuOpen(false); }}
+                                    >
+                                        <i className={`fa-solid ${link.icon}`} style={{ color: link.color, fontSize: '0.9rem' }} />
+                                        <span>{link.name.replace('My ', '')}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Drawer Navigation List */}
+                    <div className="p-3">
+                        <div className="fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.06em', fontSize: '0.62rem' }}>
+                            Navigation
+                        </div>
+                        <div className="d-flex flex-column gap-1 mb-3">
+                            {allNavLinks.map((link) => (
+                                <NavLink
+                                    key={link.name}
                                     to={link.path}
-                                    className="mobile-quick-link"
-                                    onClick={() => { playChimeClick(); setIsMobileMenuOpen(false); }}
+                                    end={link.path === "/"}
+                                    className={({ isActive }) => `mobile-nav-link ${isActive ? "active" : ""}`}
+                                    onClick={() => {
+                                        playChimeClick();
+                                        setIsMobileMenuOpen(false);
+                                    }}
                                 >
-                                    <i className={`fa-solid ${link.icon}`} style={{ color: link.color, fontSize: '0.9rem' }} />
-                                    <span>{link.name.replace('My ', '')}</span>
-                                </Link>
+                                    <div className="mobile-nav-icon">
+                                        <i className={`fa-solid ${link.icon} text-success`} aria-hidden="true" />
+                                    </div>
+                                    <span>{link.name}</span>
+                                </NavLink>
+                            ))}
+                        </div>
+
+                        {/* Theme Selector (mobile) */}
+                        <div className="fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.06em', fontSize: '0.62rem' }}>
+                            Theme
+                        </div>
+                        <div className="d-flex gap-1">
+                            {THEME_OPTIONS.map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    aria-pressed={currentTheme === opt.id}
+                                    onClick={() => {
+                                        playChimeClick();
+                                        setStoredTheme(opt.id);
+                                        setCurrentTheme(opt.id);
+                                    }}
+                                    className={`btn btn-xs rounded-pill flex-grow-1 py-1.5 fw-bold transition-all d-flex align-items-center justify-content-center gap-1 ${currentTheme === opt.id ? 'btn-success text-white shadow-2xs' : 'btn-light text-dark border'
+                                        }`}
+                                    style={{ fontSize: '0.72rem' }}
+                                >
+                                    <i className={`fa-solid ${opt.icon}`} style={{ fontSize: '0.65rem' }} aria-hidden="true" />
+                                    <span>{opt.name.split(' ')[0]}</span>
+                                </button>
                             ))}
                         </div>
                     </div>
-                )}
+                </div>
 
-                {/* Drawer Navigation List */}
-                <div className="p-3 flex-grow-1">
-                    <div className="fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.06em', fontSize: '0.62rem' }}>
-                        Navigation
-                    </div>
-                    <div className="d-flex flex-column gap-1 mb-3">
-                        {allNavLinks.map((link) => (
-                            <NavLink
-                                key={link.name}
-                                to={link.path}
-                                end={link.path === "/"}
-                                className={({ isActive }) => `mobile-nav-link ${isActive ? "active" : ""}`}
-                                onClick={() => {
-                                    playChimeClick();
-                                    setIsMobileMenuOpen(false);
-                                }}
-                            >
-                                <div className="mobile-nav-icon">
-                                    <i className={`fa-solid ${link.icon} text-success`} aria-hidden="true" />
-                                </div>
-                                <span>{link.name}</span>
-                            </NavLink>
-                        ))}
-                    </div>
+                {/* Drawer Footer (fixed): feedback / Discord — always reachable, never scrolled out of view */}
+                <div className="chopaeng-drawer-footer p-3 border-top d-flex flex-column gap-2">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            openSuggestionModal();
+                        }}
+                        className="btn btn-sm w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 border"
+                        style={{ backgroundColor: '#fffbeb', borderColor: '#fbbf2440', fontSize: '0.8rem', color: '#92400e' }}
+                    >
+                        <i className="fa-solid fa-lightbulb text-warning" aria-hidden="true" />
+                        <span>Suggest Feature</span>
+                    </button>
 
-                    {/* Theme Selector (mobile) */}
-                    <div className="fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.06em', fontSize: '0.62rem' }}>
-                        Theme
-                    </div>
-                    <div className="d-flex gap-1 mb-3">
-                        {THEME_OPTIONS.map((opt) => (
-                            <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => {
-                                    playChimeClick();
-                                    setStoredTheme(opt.id);
-                                    setCurrentTheme(opt.id);
-                                }}
-                                className={`btn btn-xs rounded-pill flex-grow-1 py-1.5 fw-bold transition-all d-flex align-items-center justify-content-center gap-1 ${
-                                    currentTheme === opt.id ? 'btn-success text-white shadow-2xs' : 'btn-light text-dark border'
-                                }`}
-                                style={{ fontSize: '0.72rem' }}
-                            >
-                                <i className={`fa-solid ${opt.icon}`} style={{ fontSize: '0.65rem' }} aria-hidden="true" />
-                                <span>{opt.name.split(' ')[0]}</span>
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Feedback / Discord */}
-                    <div className="d-flex flex-column gap-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIsMobileMenuOpen(false);
-                                openSuggestionModal();
-                            }}
-                            className="btn btn-sm w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 border"
-                            style={{ backgroundColor: '#fffbeb', borderColor: '#fbbf2440', fontSize: '0.8rem', color: '#92400e' }}
-                        >
-                            <i className="fa-solid fa-lightbulb text-warning" aria-hidden="true" />
-                            <span>Suggest Feature</span>
-                        </button>
-
-                        <a
-                            href="https://discord.gg/chopaeng"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-sm btn-light border w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none text-dark"
-                            style={{ fontSize: '0.8rem' }}
-                        >
-                            <i className="fa-brands fa-discord text-primary" aria-hidden="true" />
-                            <span>Join Discord</span>
-                        </a>
-                    </div>
+                    <a
+                        href="https://discord.gg/chopaeng"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-sm btn-light border w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none text-dark"
+                        style={{ fontSize: '0.8rem' }}
+                    >
+                        <i className="fa-brands fa-discord text-primary" aria-hidden="true" />
+                        <span>Join Discord</span>
+                    </a>
                 </div>
             </aside>
 
