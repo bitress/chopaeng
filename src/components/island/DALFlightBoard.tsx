@@ -98,16 +98,6 @@ export const DALFlightBoard: React.FC<DALFlightBoardProps> = ({
                     </span>
                 </div>
 
-                {/* Optional Battery Row for Order Island */}
-                {isOrderIsland && typeof botStatus?.battery_charge === "number" && (
-                    <>
-                        <div className="flight-divider"></div>
-                        <div className="flight-row">
-                            <span className="flight-label">SWITCH BATTERY</span>
-                            <span className="flight-value text-muted">{botStatus.battery_charge}%</span>
-                        </div>
-                    </>
-                )}
             </div>
             <div className="dal-footer">
                 <small>Dodo Airlines • We make travel a breeze!</small>

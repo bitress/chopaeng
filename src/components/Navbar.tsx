@@ -129,6 +129,7 @@ export const Navbar: React.FC = () => {
 
     // "Explore" dropdown links — secondary features
     const exploreLinks = useMemo(() => [
+        { name: "Trip Planner", path: "/trip-planner", icon: "fa-route", color: "#10b981", desc: "Optimal island flight routes" },
         { name: "Find Items", path: "/find", icon: "fa-magnifying-glass", color: "#6366f1", desc: "Instant item search" },
         { name: "Critters", path: "/critters", icon: "fa-fish", color: "#0ea5e9", desc: "Availability calendar" },
         { name: "Events", path: "/events", icon: "fa-calendar-days", color: "#f59e0b", desc: "Seasons & holidays" },
@@ -139,6 +140,7 @@ export const Navbar: React.FC = () => {
     // User-only quick links for the dropdown
     const userQuickLinks = useMemo(() => [
         { name: "My Profile", path: "/profile", icon: "fa-user", color: "#16a34a" },
+        { name: "Trip Planner", path: "/trip-planner", icon: "fa-route", color: "#10b981" },
         { name: "My Wishlist", path: "/wishlist", icon: "fa-heart", color: "#ef4444" },
         { name: "My Collection", path: "/my-collection", icon: "fa-clipboard-check", color: "#f59e0b" },
         { name: "Pocket Inventory", path: "/pockets", icon: "fa-boxes-packing", color: "#3b82f6" },
@@ -149,6 +151,7 @@ export const Navbar: React.FC = () => {
     const allNavLinks = useMemo(() => [
         { name: "Home", path: "/", icon: "fa-house" },
         { name: "Islands", path: "/islands", icon: "fa-map-location-dot" },
+        { name: "Trip Planner", path: "/trip-planner", icon: "fa-route" },
         { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
         { name: "Catalogue", path: "/catalog", icon: "fa-boxes-stacked" },
         { name: "Critters", path: "/critters", icon: "fa-fish" },
@@ -627,6 +630,227 @@ export const Navbar: React.FC = () => {
                         transition: none !important;
                         animation: none !important;
                     }
+                }
+
+                /* ═══════════════════════════════════════════════════════════
+                   CELESTE THEME OVERRIDES (Navbar.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="celeste"] .chopaeng-navbar.scrolled {
+                    background-color: rgba(11, 15, 25, 0.95);
+                    border-bottom-color: rgba(167, 139, 250, 0.25);
+                }
+                [data-theme="celeste"] .chopaeng-nav-pill-container {
+                    background: rgba(30, 41, 59, 0.88);
+                    border-color: rgba(167, 139, 250, 0.3);
+                }
+                [data-theme="celeste"] .chopaeng-nav-item {
+                    color: #cbd5e1;
+                }
+                [data-theme="celeste"] .chopaeng-nav-item:hover {
+                    color: #f8fafc;
+                    background-color: rgba(167, 139, 250, 0.18);
+                }
+                [data-theme="celeste"] .chopaeng-nav-item.active {
+                    background: #7c3aed;
+                    color: #ffffff !important;
+                    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.45);
+                }
+                [data-theme="celeste"] .chopaeng-explore-trigger {
+                    color: #cbd5e1;
+                }
+                [data-theme="celeste"] .chopaeng-explore-trigger:hover,
+                [data-theme="celeste"] .chopaeng-explore-trigger.open {
+                    color: #f8fafc;
+                    background-color: rgba(167, 139, 250, 0.18);
+                }
+                [data-theme="celeste"] .chopaeng-explore-trigger.has-active {
+                    color: #a78bfa;
+                }
+                [data-theme="celeste"] .chopaeng-explore-dropdown,
+                [data-theme="celeste"] .chopaeng-user-dropdown {
+                    background: #1e293b;
+                    border-color: rgba(167, 139, 250, 0.3);
+                }
+                [data-theme="celeste"] .chopaeng-explore-link,
+                [data-theme="celeste"] .chopaeng-user-dropdown-item {
+                    color: #f8fafc;
+                }
+                [data-theme="celeste"] .chopaeng-explore-link:hover,
+                [data-theme="celeste"] .chopaeng-user-dropdown-item:hover {
+                    background: #2b3658;
+                    color: #fcd34d;
+                }
+                [data-theme="celeste"] .chopaeng-action-btn,
+                [data-theme="celeste"] .chopaeng-hamburger,
+                [data-theme="celeste"] .chopaeng-user-pill {
+                    background: #1e293b;
+                    border-color: rgba(167, 139, 250, 0.3);
+                    color: #f8fafc;
+                }
+                [data-theme="celeste"] .chopaeng-action-btn:hover,
+                [data-theme="celeste"] .chopaeng-user-pill:hover {
+                    background: #2b3658;
+                    color: #fcd34d;
+                    border-color: #a78bfa;
+                }
+                [data-theme="celeste"] .chopaeng-hamburger span {
+                    background: #f8fafc;
+                }
+                [data-theme="celeste"] .chopaeng-mobile-drawer {
+                    background: #1e293b;
+                    color: #f8fafc;
+                }
+                [data-theme="celeste"] .chopaeng-drawer-header,
+                [data-theme="celeste"] .chopaeng-drawer-footer {
+                    background: #0f172a !important;
+                    border-color: rgba(167, 139, 250, 0.25) !important;
+                }
+                [data-theme="celeste"] .mobile-nav-link {
+                    color: #f8fafc;
+                }
+                [data-theme="celeste"] .mobile-nav-link:hover {
+                    background: rgba(167, 139, 250, 0.18);
+                    color: #fcd34d;
+                }
+                [data-theme="celeste"] .mobile-nav-link.active {
+                    background: #7c3aed;
+                    color: #ffffff !important;
+                }
+                [data-theme="celeste"] .mobile-nav-link .mobile-nav-icon {
+                    background: #0f172a;
+                }
+                [data-theme="celeste"] .mobile-quick-link {
+                    color: #f8fafc;
+                    background: #0f172a;
+                    border-color: rgba(167, 139, 250, 0.25);
+                }
+                [data-theme="celeste"] .mobile-quick-link:hover {
+                    background: #2b3658;
+                    color: #fcd34d;
+                }
+
+                /* ═══════════════════════════════════════════════════════════
+                   ROOST THEME OVERRIDES (Navbar.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="roost"] .chopaeng-navbar.scrolled {
+                    background-color: rgba(20, 18, 16, 0.95);
+                    border-bottom-color: rgba(217, 119, 6, 0.25);
+                }
+                [data-theme="roost"] .chopaeng-nav-pill-container {
+                    background: rgba(41, 37, 36, 0.88);
+                    border-color: rgba(217, 119, 6, 0.3);
+                }
+                [data-theme="roost"] .chopaeng-nav-item {
+                    color: #d1beaf;
+                }
+                [data-theme="roost"] .chopaeng-nav-item:hover {
+                    color: #fafaf9;
+                    background-color: rgba(217, 119, 6, 0.18);
+                }
+                [data-theme="roost"] .chopaeng-nav-item.active {
+                    background: #a06b43;
+                    color: #ffffff !important;
+                    box-shadow: 0 2px 10px rgba(160, 107, 67, 0.45);
+                }
+                [data-theme="roost"] .chopaeng-explore-trigger {
+                    color: #d1beaf;
+                }
+                [data-theme="roost"] .chopaeng-explore-trigger:hover,
+                [data-theme="roost"] .chopaeng-explore-trigger.open {
+                    color: #fafaf9;
+                    background-color: rgba(217, 119, 6, 0.18);
+                }
+                [data-theme="roost"] .chopaeng-explore-trigger.has-active {
+                    color: #f59e0b;
+                }
+                [data-theme="roost"] .chopaeng-explore-dropdown,
+                [data-theme="roost"] .chopaeng-user-dropdown {
+                    background: #292524;
+                    border-color: rgba(217, 119, 6, 0.3);
+                }
+                [data-theme="roost"] .chopaeng-explore-link,
+                [data-theme="roost"] .chopaeng-user-dropdown-item {
+                    color: #fafaf9;
+                }
+                [data-theme="roost"] .chopaeng-explore-link:hover,
+                [data-theme="roost"] .chopaeng-user-dropdown-item:hover {
+                    background: #40362f;
+                    color: #e6be94;
+                }
+                [data-theme="roost"] .chopaeng-action-btn,
+                [data-theme="roost"] .chopaeng-hamburger,
+                [data-theme="roost"] .chopaeng-user-pill {
+                    background: #292524;
+                    border-color: rgba(217, 119, 6, 0.3);
+                    color: #fafaf9;
+                }
+                [data-theme="roost"] .chopaeng-action-btn:hover,
+                [data-theme="roost"] .chopaeng-user-pill:hover {
+                    background: #40362f;
+                    color: #e6be94;
+                    border-color: #f59e0b;
+                }
+                [data-theme="roost"] .chopaeng-hamburger span {
+                    background: #fafaf9;
+                }
+                [data-theme="roost"] .chopaeng-mobile-drawer {
+                    background: #292524;
+                    color: #fafaf9;
+                }
+                [data-theme="roost"] .chopaeng-drawer-header,
+                [data-theme="roost"] .chopaeng-drawer-footer {
+                    background: #1c1917 !important;
+                    border-color: rgba(217, 119, 6, 0.25) !important;
+                }
+                [data-theme="roost"] .mobile-nav-link {
+                    color: #fafaf9;
+                }
+                [data-theme="roost"] .mobile-nav-link:hover {
+                    background: rgba(217, 119, 6, 0.18);
+                    color: #e6be94;
+                }
+                [data-theme="roost"] .mobile-nav-link.active {
+                    background: #a06b43;
+                    color: #ffffff !important;
+                }
+                [data-theme="roost"] .mobile-nav-link .mobile-nav-icon {
+                    background: #1c1917;
+                }
+                [data-theme="roost"] .mobile-quick-link {
+                    color: #fafaf9;
+                    background: #1c1917;
+                    border-color: rgba(217, 119, 6, 0.25);
+                }
+                [data-theme="roost"] .mobile-quick-link:hover {
+                    background: #40362f;
+                    color: #e6be94;
+                }
+
+                /* Preserve Action Button & Nav Icons */
+                .chopaeng-action-btn i.text-success,
+                [data-theme="celeste"] .chopaeng-action-btn i.text-success,
+                [data-theme="roost"] .chopaeng-action-btn i.text-success {
+                    color: #22c55e !important;
+                }
+                .chopaeng-action-btn i.text-warning,
+                [data-theme="celeste"] .chopaeng-action-btn i.text-warning,
+                [data-theme="roost"] .chopaeng-action-btn i.text-warning {
+                    color: #f59e0b !important;
+                }
+                .chopaeng-action-btn i.text-amber,
+                [data-theme="celeste"] .chopaeng-action-btn i.text-amber,
+                [data-theme="roost"] .chopaeng-action-btn i.text-amber {
+                    color: #f59e0b !important;
+                }
+                .chopaeng-action-btn i.text-primary,
+                [data-theme="celeste"] .chopaeng-action-btn i.text-primary,
+                [data-theme="roost"] .chopaeng-action-btn i.text-primary {
+                    color: #3b82f6 !important;
+                }
+                .mobile-nav-icon i.text-success,
+                [data-theme="celeste"] .mobile-nav-icon i.text-success,
+                [data-theme="roost"] .mobile-nav-icon i.text-success {
+                    color: #22c55e !important;
                 }
             `}</style>
 
@@ -1109,8 +1333,8 @@ export const Navbar: React.FC = () => {
                             setIsMobileMenuOpen(false);
                             openSuggestionModal();
                         }}
-                        className="btn btn-sm w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 border"
-                        style={{ backgroundColor: '#fffbeb', borderColor: '#fbbf2440', fontSize: '0.8rem', color: '#92400e' }}
+                        className="btn btn-sm btn-outline-warning w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2"
+                        style={{ fontSize: '0.8rem' }}
                     >
                         <i className="fa-solid fa-lightbulb text-warning" aria-hidden="true" />
                         <span>Suggest Feature</span>
@@ -1120,7 +1344,7 @@ export const Navbar: React.FC = () => {
                         href="https://discord.gg/chopaeng"
                         target="_blank"
                         rel="noreferrer"
-                        className="btn btn-sm btn-light border w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none text-dark"
+                        className="btn btn-sm btn-outline-primary w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none"
                         style={{ fontSize: '0.8rem' }}
                     >
                         <i className="fa-brands fa-discord text-primary" aria-hidden="true" />

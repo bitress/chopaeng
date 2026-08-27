@@ -353,3 +353,158 @@
         border-bottom: none;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CELESTE THEME (Profile.css)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="celeste"] .profile-page-wrapper {
+    --pf-text-main: #f8fafc;
+    --pf-text-muted: #a5b4fc;
+    --pf-border-subtle: rgba(167, 139, 250, 0.28);
+    --pf-card-bg: #1e293b;
+    --pf-green-dark: #c4b5fd;
+    --pf-green: #8b5cf6;
+    --pf-green-light: #a78bfa;
+    --pf-green-subtle: rgba(167, 139, 250, 0.25);
+    --pf-green-tint: rgba(139, 92, 246, 0.15);
+    --pf-sand-border: rgba(167, 139, 250, 0.3);
+    color: #f8fafc;
+    background-color: #0b0f19;
+}
+
+[data-theme="celeste"] .pf-hero-card,
+[data-theme="celeste"] .pf-card,
+[data-theme="celeste"] .pf-char-card,
+[data-theme="celeste"] .pf-island-card,
+[data-theme="celeste"] .pf-order-card,
+[data-theme="celeste"] .pf-empty-state {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: rgba(167, 139, 250, 0.28) !important;
+}
+
+[data-theme="celeste"] .pf-stats-ribbon {
+    background: rgba(139, 92, 246, 0.12) !important;
+    border-color: rgba(167, 139, 250, 0.25) !important;
+}
+
+[data-theme="celeste"] .pf-stat-item:not(:last-child) {
+    border-right-color: rgba(167, 139, 250, 0.2) !important;
+}
+
+[data-theme="celeste"] .pf-char-card.primary {
+    background: linear-gradient(180deg, #1e293b 0%, #2e265c 100%) !important;
+    border-color: #a78bfa !important;
+}
+
+[data-theme="celeste"] .pf-tab-btn {
+    background-color: #1e293b;
+    color: #cbd5e1;
+    border-color: rgba(167, 139, 250, 0.28);
+}
+
+[data-theme="celeste"] .pf-tab-btn:hover {
+    color: #f8fafc;
+    background-color: #2b3658;
+    border-color: #a78bfa;
+}
+
+[data-theme="celeste"] .pf-tab-btn.active {
+    background-color: #7c3aed !important;
+    color: #ffffff !important;
+    border-color: #a78bfa !important;
+}
+
+[data-theme="celeste"] .pf-stat-value {
+    color: #f8fafc !important;
+}
+
+[data-theme="celeste"] .pf-stat-label {
+    color: #a5b4fc !important;
+}
+
+[data-theme="celeste"] .pf-empty-title {
+    color: #f8fafc !important;
+}
+
+[data-theme="celeste"] .pf-empty-desc {
+    color: #a5b4fc !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THE ROOST THEME (Profile.css)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="roost"] .profile-page-wrapper {
+    --pf-text-main: #fafaf9;
+    --pf-text-muted: #d1beaf;
+    --pf-border-subtle: rgba(217, 119, 6, 0.28);
+    --pf-card-bg: #292524;
+    --pf-green-dark: #fcd34d;
+    --pf-green: #d97706;
+    --pf-green-light: #f59e0b;
+    --pf-green-subtle: rgba(217, 119, 6, 0.25);
+    --pf-green-tint: rgba(217, 119, 6, 0.15);
+    --pf-sand-border: rgba(217, 119, 6, 0.3);
+    color: #fafaf9;
+    background-color: #141210;
+}
+
+[data-theme="roost"] .pf-hero-card,
+[data-theme="roost"] .pf-card,
+[data-theme="roost"] .pf-char-card,
+[data-theme="roost"] .pf-island-card,
+[data-theme="roost"] .pf-order-card,
+[data-theme="roost"] .pf-empty-state {
+    background-color: #292524 !important;
+    color: #fafaf9 !important;
+    border-color: rgba(217, 119, 6, 0.28) !important;
+}
+
+[data-theme="roost"] .pf-stats-ribbon {
+    background: rgba(217, 119, 6, 0.12) !important;
+    border-color: rgba(217, 119, 6, 0.25) !important;
+}
+
+[data-theme="roost"] .pf-stat-item:not(:last-child) {
+    border-right-color: rgba(217, 119, 6, 0.2) !important;
+}
+
+[data-theme="roost"] .pf-char-card.primary {
+    background: linear-gradient(180deg, #292524 0%, #3d241d 100%) !important;
+    border-color: #f59e0b !important;
+}
+
+[data-theme="roost"] .pf-tab-btn {
+    background-color: #292524;
+    color: #d1beaf;
+    border-color: rgba(217, 119, 6, 0.28);
+}
+
+[data-theme="roost"] .pf-tab-btn:hover {
+    color: #fafaf9;
+    background-color: #40362f;
+    border-color: #f59e0b;
+}
+
+[data-theme="roost"] .pf-tab-btn.active {
+    background-color: #a06b43 !important;
+    color: #ffffff !important;
+    border-color: #f59e0b !important;
+}
+
+[data-theme="roost"] .pf-stat-value {
+    color: #fdf8f5 !important;
+}
+
+[data-theme="roost"] .pf-stat-label {
+    color: #fed7aa !important;
+}
+
+[data-theme="roost"] .pf-empty-title {
+    color: #fdf8f5 !important;
+}
+
+[data-theme="roost"] .pf-empty-desc {
+    color: #d1beaf !important;
+}
+

@@ -1,24 +1,30 @@
+/* ═══════════════════════════════════════════════════════════════
+   ORDER BOT ISLAND & DIRECT ORDER REQUIRED THEME STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Default Nook Light Theme ── */
 .order-bot-island-card {
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border: 1.5px solid #bbf7d0 !important;
+    background: #f0fdf4 !important;
+    border: 1.5px solid rgba(34, 197, 94, 0.35) !important;
+    color: #14532d;
 }
 
 .order-bot-card {
-    background: linear-gradient(135deg, #f0f4ff 0%, #ede8ff 100%);
-    border: 2px solid #c7bfff;
+    background: #f5f3ff !important;
+    border: 1.5px solid rgba(139, 92, 246, 0.35) !important;
 }
 
 .order-bot-icon {
     width: 44px;
     height: 44px;
-    background: linear-gradient(135deg, #16a34a, #15803d);
-    color: #fff;
-    font-size: 1.1rem;
-    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+    background: #22c55e;
+    color: #ffffff;
+    font-size: 1.15rem;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
 .order-bot-title {
-    color: #15803d;
+    color: #15803d !important;
     font-size: 0.95rem;
     letter-spacing: 0.04em;
     font-family: 'Outfit', sans-serif;
@@ -29,6 +35,149 @@
     line-height: 1.55;
 }
 
+.order-bot-pocket-card {
+    background: #ffffff !important;
+    border: 1px solid rgba(34, 197, 94, 0.22) !important;
+    color: #1e293b;
+}
+
+.order-bot-suggestion-banner {
+    background: #f8fafc !important;
+    border: 1.5px solid rgba(34, 197, 94, 0.3) !important;
+}
+
+.order-bot-suggestion-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+}
+
+.direct-order-box {
+    background: #f5f3ff !important;
+    border: 1.5px solid rgba(139, 92, 246, 0.35) !important;
+}
+
+.direct-order-icon {
+    width: 26px;
+    height: 26px;
+    background: #7c3aed;
+    color: #ffffff;
+    font-size: 0.75rem;
+}
+
+.direct-order-label {
+    color: #6d28d9 !important;
+    letter-spacing: 0.03em;
+}
+
+/* ── Celeste Stargazing Theme (Midnight Navy & Violet) ── */
+[data-theme="celeste"] .order-bot-island-card {
+    background: #0f172a !important;
+    border: 1.5px solid rgba(167, 139, 250, 0.35) !important;
+    color: #f8fafc !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="celeste"] .order-bot-card {
+    background: #1e293b !important;
+    border: 1.5px solid rgba(167, 139, 250, 0.35) !important;
+}
+
+[data-theme="celeste"] .order-bot-icon {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45) !important;
+}
+
+[data-theme="celeste"] .order-bot-title {
+    color: #c4b5fd !important;
+}
+
+[data-theme="celeste"] .order-bot-pocket-card {
+    background: #1e293b !important;
+    border: 1px solid rgba(167, 139, 250, 0.25) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="celeste"] .order-bot-suggestion-banner {
+    background: #0f172a !important;
+    border: 1.5px solid rgba(167, 139, 250, 0.3) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="celeste"] .order-bot-suggestion-icon {
+    background: rgba(124, 58, 237, 0.25) !important;
+    color: #c4b5fd !important;
+}
+
+[data-theme="celeste"] .direct-order-box {
+    background: #1e293b !important;
+    border: 1.5px solid rgba(167, 139, 250, 0.38) !important;
+}
+
+[data-theme="celeste"] .direct-order-icon {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+}
+
+[data-theme="celeste"] .direct-order-label {
+    color: #ddd6fe !important;
+}
+
+/* ── The Roost Theme (Warm Roasted Espresso & Caramel) ── */
+[data-theme="roost"] .order-bot-island-card {
+    background: #1c1917 !important;
+    border: 1.5px solid rgba(217, 119, 6, 0.35) !important;
+    color: #fafaf9 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="roost"] .order-bot-card {
+    background: #292524 !important;
+    border: 1.5px solid rgba(217, 119, 6, 0.35) !important;
+}
+
+[data-theme="roost"] .order-bot-icon {
+    background: #d97706 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.45) !important;
+}
+
+[data-theme="roost"] .order-bot-title {
+    color: #fcd34d !important;
+}
+
+[data-theme="roost"] .order-bot-pocket-card {
+    background: #292524 !important;
+    border: 1px solid rgba(217, 119, 6, 0.25) !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .order-bot-suggestion-banner {
+    background: #1c1917 !important;
+    border: 1.5px solid rgba(217, 119, 6, 0.3) !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .order-bot-suggestion-icon {
+    background: rgba(217, 119, 6, 0.22) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme="roost"] .direct-order-box {
+    background: #292524 !important;
+    border: 1.5px solid rgba(217, 119, 6, 0.38) !important;
+}
+
+[data-theme="roost"] .direct-order-icon {
+    background: #d97706 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="roost"] .direct-order-label {
+    color: #fed7aa !important;
+}
+
+/* ── Social / External Buttons ── */
 .btn-discord {
     background: #5865f2;
     color: #fff;

@@ -133,7 +133,7 @@ const Catalogue: React.FC = () => {
                     const langIdx = translationIndex?.get(searchLang);
                     if (langIdx) {
                         const matches = searchByTranslation(langIdx, query);
-                        const matchNames = new Set(matches.map(m => m.name.toLowerCase()));
+                        const matchNames = new Set(matches.map((m: { name: string; translatedName: string }) => m.name.toLowerCase()));
                         if (!matchNames.has(i.name.toLowerCase())) return false;
                     } else {
                         // Fallback to English if index not loaded yet

@@ -156,10 +156,7 @@ const IslandDetail = () => {
 
     if (!island) {
         return (
-            <div
-                className="min-vh-100 d-flex align-items-center justify-content-center"
-                style={{ background: "#f0f4e4", color: "#7ba592" }}
-            >
+            <div className="nook-bg min-vh-100 d-flex align-items-center justify-content-center">
                 <div className="text-center">
                     <i className="fa-solid fa-plane-slash fa-3x mb-3 opacity-50"></i>
                     <h2 className="fw-black">Destination Not Found</h2>
@@ -503,17 +500,17 @@ const IslandDetail = () => {
 
                                 {/* Subtle Order Bot banner for regular treasure islands */}
                                 {!isOrderIsland && (
-                                    <div className="card rounded-4 p-3 bg-light border border-success border-opacity-25 shadow-2xs mb-4">
+                                    <div className="card rounded-4 p-3 order-bot-suggestion-banner shadow-2xs mb-4">
                                         <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                             <div className="d-flex align-items-center gap-2">
                                                 <span
-                                                    className="rounded-circle d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success flex-shrink-0"
+                                                    className="rounded-circle d-flex align-items-center justify-content-center order-bot-suggestion-icon flex-shrink-0"
                                                     style={{ width: 36, height: 36 }}
                                                 >
                                                     <i className="fa-solid fa-box-open"></i>
                                                 </span>
                                                 <div>
-                                                    <strong className="d-block small text-dark fw-bold">Need Specific Items Delivered?</strong>
+                                                    <strong className="d-block small fw-bold">Need Specific Items Delivered?</strong>
                                                     <span className="tiny-text text-muted">Use our 40-slot Order Bot for custom item & villager delivery.</span>
                                                 </div>
                                             </div>

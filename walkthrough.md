@@ -30,3 +30,107 @@ We refined the In-Island Drop Bot feature on `/order` to follow the exact 3-step
 ## 🧪 Verification Results
 - **TypeScript & Vite Production Bundle**: `✓ built in 10.28s` with 0 errors.
 - **Backend Logging**: Fully wired to `POST /api/islands/<name>/dodo`.
+
+---
+
+# ChoPaeng Theme Contrast & Text Visibility Overhaul Walkthrough
+
+## Root Causes Identified & Fixed
+
+1. **Global CSS Missing Text Contrast Overrides (`style.css`)**:
+   - In Celeste (`[data-theme="celeste"]`) and Roost (`[data-theme="roost"]`), cards, dropdowns, and `.bg-light`/`.bg-white` containers were switching to dark backgrounds, but nested `p`, `span`, `div`, `label`, `td`, `th`, `strong`, `b`, `.text-secondary`, `.text-body`, `.text-body-secondary`, `.tiny-text`, and `.text-muted` elements lacked explicit light color definitions, causing dark text to blend invisibly into dark backgrounds.
+   - **Resolution**: Added comprehensive dark theme typography rules covering all base HTML text tags, Bootstrap utility classes, form labels, muted text (bright periwinkle `#a5b4fc` for Celeste, warm caramel `#d1beaf` for Roost), headings (`#f8fafc` / `#fffdfa`), and inverted close buttons.
+
+2. **Profile System CSS Isolation (`Profile.css`)**:
+   - `.profile-page-wrapper` had hardcoded CSS variables (`--pf-text-main: #1e293b;`, `--pf-card-bg: #ffffff;`, etc.) with no theme variants.
+   - **Resolution**: Implemented complete `[data-theme="celeste"]` and `[data-theme="roost"]` rule blocks in `Profile.css` for `.profile-page-wrapper`, `.pf-hero-card`, `.pf-card`, `.pf-char-card`, `.pf-island-card`, `.pf-order-card`, `.pf-stats-ribbon`, `.pf-tab-btn`, `.pf-stat-value`, and empty states.
+
+3. **Page Enhancement Design System (`page-enhancements.css`)**:
+   - Roost theme was missing adaptations for `.ac-stat-card`, `.ac-stat-number`, `.ac-tab-btn`, `.ac-select-pill`, `.ac-grid-card`, `.ac-event-item`, and search input bars.
+   - **Resolution**: Fully defined all interactive controls, stat cards, search pills, tabs, and tags for both Celeste and Roost themes.
+
+4. **OrderBot Dashboard Styles (`OrderBot.css`)**:
+   - Added `[data-theme="roost"]` theme styles across all radar cards, hero banners, order queue tiles, action chips, loadout cards, and modal dialogs.
+
+5. **Hardcoded Background Overrides Removed**:
+   - `PocketInventory.tsx`: Replaced inline `backgroundColor: '#fbfcf9'` with the responsive `nook-bg` class.
+   - `IslandDetail.tsx`: Replaced inline `background: '#f0f4e4'` on error states with `nook-bg`.
+   - Modals in `CommandBuilderSubIslandPickerModal.tsx`, `CommandBuilderShareModal.tsx`, and `CommandBuilderOrderStatusModal.tsx`: Updated to use dynamic theme variables `backgroundColor: 'var(--paper, #fdfbf7)'`.
+
+6. **Navbar Component (`Navbar.tsx`)**:
+   - Added complete `[data-theme="celeste"]` and `[data-theme="roost"]` overrides covering:
+     - Scrolled navigation bar background & borders.
+     - Nav pill capsule, nav items (`.chopaeng-nav-item`), and active/hover states.
+     - Explore trigger button, explore mega dropdown, and explore item links with high-contrast text and warm/celeste hover chips.
+     - Action buttons (Jukebox, Theme Switcher, Discord link), user pill, and user profile dropdown.
+     - Mobile drawer backdrop, header, user card, quick links, mobile nav links, and drawer footer buttons (`.btn-outline-warning` / `.btn-outline-primary`).
+
+7. **Today Snapshot Component (`TodaySnapshot.tsx`)**:
+   - Added comprehensive Roost theme and improved Celeste theme support for:
+     - Header banner (`#7c3aed` for Celeste, `#a06b43` for Roost), titles, and date badges.
+     - Critter & Birthday section panels (`#0f172a` in Celeste, `#1c1917` in Roost).
+     - Creature & Villager chips (`.snapshot-chip`), chip labels, names (`#f8fafc` / `#fafaf9`), price badges, and species tags.
+     - Section count badges, empty state text (`.snapshot-empty`), and call-to-action buttons (`.snapshot-cta`).
+
+8. **Guides Page (`Guides.tsx`)**:
+   - Added complete Celeste & Roost theme styles for:
+     - Navigation tabs container (`.guide-nav-group`) and tab buttons (`.guide-nav-tab`).
+     - Content cards (`.content-card`), top highlight banner (`.guide-top-banner`), and step cards (`.step-card-box`).
+     - Sub rules cards (`.rule-card`), rule icon boxes (`.rule-icon-box`), and FAQ dialogue question & quote answer bubbles (`.dialogue-bubble`).
+
+9. **Font Awesome & Semantic Color Integrity Preservation (`style.css` & `Navbar.tsx`)**:
+   - Removed generic `span, div` element color overrides from `[data-theme="celeste"]` and `[data-theme="roost"]` that were unintentionally overwriting Font Awesome icons and colored chips.
+   - Added global preservation rules for all semantic color utility classes (`.text-success`, `.text-warning`, `.text-danger`, `.text-primary`, `.text-info`, `.text-amber`, `.text-emerald`, `.text-purple`, `.text-indigo`, `.text-pink`, `.text-cyan`, `.text-white`) with high-specificity `i.text-*` and `svg.text-*` support.
+   - Preserved all brand and action button icons in `Navbar.tsx` (green K.K. guitar, primary blue Discord icon, yellow/amber theme switcher icons, and green navigation icons).
+
+10. **Removed Battery Indicators from Frontend**:
+   - Removed the `SWITCH BATTERY` row from [DALFlightBoard.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/components/island/DALFlightBoard.tsx).
+   - Removed the `Battery` percentage stat card from the top banner in [OrderBot.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/OrderBot.tsx).
+
+11. **Island Trip Planner Multi-Island Algorithm Overhaul ([TripPlanner.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/TripPlanner.tsx))**:
+   - **Fixed Single-Island Fallback Bug**: Previously, the matcher contained a catch-all `if (isl.cat === 'member' || isl.cat === 'public') return true;`, which caused every island to match every item. Because the greedy loop picked the first match with maximal coverage, it always assigned 100% of items to the very first island (`islands[0]`).
+   - **Multi-Criteria Scoring Engine**: Implemented specific weighted scoring:
+     - **Villagers**: Real-time `villagersMap` matching + villager island category scores (160–200 pts).
+     - **DIY Recipes**: Dedicated DIY/Recipe island matching (100 pts).
+     - **Sanrio & Collabs**: Specific Sanrio/Collab island detection (140 pts).
+     - **Materials & Currency**: Dedicated Materials/Resources/Bells/NMT island detection (100 pts).
+     - **Apparel & Fashion**: Dedicated Clothing/Apparel island detection (90 pts).
+     - **Alphabetical Catalog Letters**: Parses letter ranges (e.g. `A-M`, `N-Z`, `A to C`) from island titles and descriptions, rewarding matches (+70 pts) and penalizing mismatches (-50 pts).
+     - **Live Availability & Queue Optimization**: Rewards online islands (+15 pts) and lower queue counts, preventing unnecessary stop duplications.
+
+12. **ORDER BOT ISLAND & Direct Order Required Theme Styling ([IslandDetail.css](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/IslandDetail.css), [IslandActionArea.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/components/island/IslandActionArea.tsx), [IslandDetail.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/IslandDetail.tsx), [TreasureIslands.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/TreasureIslands.tsx))**:
+   - **Replaced Inline Gradients**: Removed hardcoded light-mode inline gradients (`linear-gradient(135deg, #f0f4ff 0%, #ede8ff 100%)`) and hardcoded colors (`#5a47c9`) from the "Direct Order Required" card in `TreasureIslands.tsx`.
+   - **Complete 3-Theme Adaptation**:
+     - **Nook (Default)**: Clean mint/green card background (`#f0fdf4`), green title (`#15803d`), soft purple direct order pill with `#7c3aed` icon and `#6d28d9` label.
+     - **Celeste (Midnight Navy & Stargazing Violet)**: Deep navy card background (`#0f172a`), lilac title (`#c4b5fd`), violet icon (`#7c3aed`), dark pocket container (`#1e293b`), and glowing violet direct order badge (`#ddd6fe` on `#1e293b`).
+     - **Roost (Warm Roasted Espresso & Caramel)**: Dark espresso card background (`#1c1917`), warm amber title (`#fcd34d`), amber icon (`#d97706`), warm roasted pocket container (`#292524`), and caramel direct order badge (`#fed7aa` on `#292524`).
+   - **Themed "Need Specific Items Delivered?" Banner**: The banner on standard treasure islands now adapts to dark modes with proper background and icon contrast.
+
+13. **Reusable "How does this work?" Explainer Component ([HowItWorksExplainer.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/components/HowItWorksExplainer.tsx) & [HowItWorksExplainer.css](file:///c:/Users/bitress/Desktop/chopaeng/src/components/HowItWorksExplainer.css))**:
+   - **Modular Drop-In Architecture**: A highly flexible, reusable component that any page can drop in with custom step configs, FAQs, actions, and tips.
+   - **Two Display Modes**:
+     - *Inline Collapsible Card*: Clean collapse/expand header with sound feedback and persistent `localStorage` preference memory.
+     - *Modal Trigger*: Compact button trigger for dense dashboards and mobile views.
+   - **Pre-Configured Presets Exported**:
+     - `ORDER_BOT_EXPLAINER_CONFIG` for [OrderBot.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/OrderBot.tsx)
+     - `TREASURE_ISLANDS_EXPLAINER_CONFIG` for [TreasureIslands.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/TreasureIslands.tsx)
+     - `PROFILE_EXPLAINER_CONFIG` for [Profile.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/Profile.tsx)
+     - `TRIP_PLANNER_EXPLAINER_CONFIG` for [TripPlanner.tsx](file:///c:/Users/bitress/Desktop/chopaeng/src/pages/TripPlanner.tsx)
+     - `COMMAND_BUILDER_EXPLAINER_CONFIG` for Command Builder
+   - **Full 3-Theme Cohesion**: Scoped custom CSS styles supporting Nook, Celeste, and Roost themes with 0 emoji usage, sleek numbered circles, and micro-hover states.
+
+14. **SEO & Sitemap Generator Overhaul ([generate-sitemap.mjs](file:///c:/Users/bitress/Desktop/chopaeng/scripts/generate-sitemap.mjs) & [package.json](file:///c:/Users/bitress/Desktop/chopaeng/package.json))**:
+   - **Expanded from 9 to 69+ URLs**: Added all core interactive tools (`/order`, `/command-builder`, `/trip-planner`, `/pockets`), reference guides (`/critters`, `/events`, `/npcs`), catalog category deep links, and legal pages.
+   - **Google Image Sitemap Integration**: Added `<image:image>` tags with logo, banners, and dynamic island maps for rich indexing in Google Images.
+   - **Multi-Source Dynamic Discovery & CI Resilience**:
+     - Fetches live islands with fallback to secondary API and local fallback island slugs for offline builds.
+     - Fetches live Patreon/Community blog articles with published dates and thumbnails.
+     - Indexes top requested villagers (`/villager/raymond`, `/villager/marshal`, etc.).
+   - **CLI Enhancements & `npm run sitemap`**: Added flags (`--site`, `--out`, `--dry-run`, `--no-remote`) with a formatted summary table.
+
+---
+
+## Verification & Build
+- Ran `npm run sitemap`: **Successfully generated 69 unique URLs in 1614ms**.
+- Ran `npm run build` (`tsc -b && vite build`):
+  - **Status**: `✓ built in 32.72s` (Exit code 0, 0 TypeScript/CSS errors).

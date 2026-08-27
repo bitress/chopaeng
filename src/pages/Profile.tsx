@@ -10,6 +10,8 @@ import { useSavedCharacters, type SavedCharacter } from "../hooks/useSavedCharac
 import { parseItemCodes } from "../utils/itemCodeParser";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
 import { fetchUserOrderHistory, type OrderHistoryItem } from "../utils/orderBotApi";
+import { getStoredPassport, savePassportToDb, fetchPublicPassportFromDb, type PublicPassportData } from "../utils/userProfileApi";
+import { HowItWorksExplainer, PROFILE_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
 import "./Profile.css";
 
 const CHARACTER_ICONS = [
@@ -147,8 +149,14 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [prefNotice, setPrefNotice] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"passport" | "access" | "favorites" | "orders" | "history">("passport");
+    const [activeTab, setActiveTab] = useState<"profile" | "access" | "favorites" | "orders" | "history">("profile");
     const [accessFilter, setAccessFilter] = useState<"all" | "public" | "member" | "order">("all");
+
+    // Public Passport Customizer State
+    const [passportData, setPassportData] = useState<PublicPassportData>(() => getStoredPassport(authUser?.username || ''));
+    const [savingPassport, setSavingPassport] = useState(false);
+    const [villagerSearchQuery, setVillagerSearchQuery] = useState('');
+    const [passportLinkCopied, setPassportLinkCopied] = useState(false);
 
     // Orders History & Reorder State
     const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
@@ -237,7 +245,6 @@ const Profile = () => {
         characters,
         activeCharacter,
         maxSlots,
-        remainingSlots,
         isSyncingDb,
         addCharacter,
         updateCharacter,
@@ -245,6 +252,31 @@ const Profile = () => {
         setDefaultCharacter,
         syncFromDiscordNickname,
     } = useSavedCharacters(rawDiscordName);
+
+    // Sync and hydrate Public Passport state from ChoBot database & local storage
+    useEffect(() => {
+        const username = profile?.user?.discord_name || authUser?.username || '';
+        if (username) {
+            const token = getAuthToken();
+            fetchPublicPassportFromDb(username, token).then((dbPassport) => {
+                const base = dbPassport || getStoredPassport(username);
+                setPassportData({
+                    ...base,
+                    username,
+                    primaryIgn: activeCharacter.ign || base.primaryIgn || '',
+                    primaryIsland: activeCharacter.islandName || base.primaryIsland || '',
+                });
+            }).catch(() => {
+                const stored = getStoredPassport(username);
+                setPassportData({
+                    ...stored,
+                    username,
+                    primaryIgn: activeCharacter.ign || stored.primaryIgn || '',
+                    primaryIsland: activeCharacter.islandName || stored.primaryIsland || '',
+                });
+            });
+        }
+    }, [profile?.user?.discord_name, authUser?.username, activeCharacter.ign, activeCharacter.islandName]);
 
     // Saved in-game character creation / editing state
     const [characterModalOpen, setCharacterModalOpen] = useState(false);
@@ -592,13 +624,13 @@ const Profile = () => {
                         <button
                             type="button"
                             role="tab"
-                            aria-selected={activeTab === "passport"}
-                            className={`pf-tab-btn ${activeTab === "passport" ? "active" : ""}`}
-                            onClick={() => setActiveTab("passport")}
+                            aria-selected={activeTab === "profile"}
+                            className={`pf-tab-btn ${activeTab === "profile" ? "active" : ""}`}
+                            onClick={() => setActiveTab("profile")}
                         >
-                            <i className="fa-solid fa-address-card"></i>
-                            <span>Saved Characters</span>
-                            <span className="pf-tab-count">{characters.length}/{maxSlots}</span>
+                            <i className="fa-solid fa-user"></i>
+                            <span>Profile</span>
+                            <span className="pf-tab-count">{characters.length}/3</span>
                         </button>
 
                         <button
@@ -653,42 +685,34 @@ const Profile = () => {
 
             {/* ── 2. TAB CONTENT ─────────────────────────────────────────────────── */}
             <div className="container py-4">
-                {/* ── TAB 1: SAVED CHARACTERS (MULTI-SLOT PASSPORTS) ──────────────── */}
-                {activeTab === "passport" && (
-                    <div className="row g-4 animate-fade" role="tabpanel" aria-label="Saved Characters">
+                {/* ── REUSABLE HOW IT WORKS EXPLAINER ── */}
+                <HowItWorksExplainer {...PROFILE_EXPLAINER_CONFIG} className="mb-4" defaultExpanded={false} />
+
+                {/* ── TAB 1: PROFILE & PUBLIC PASSPORT HUB ──────────────── */}
+                {activeTab === "profile" && (
+                    <div className="row g-4 animate-fade" role="tabpanel" aria-label="Profile Hub">
                         <div className="col-lg-8">
-                            <div className="pf-card">
-                                <div className="pf-section-header">
+                            <div className="pf-card mb-4">
+                                <div className="pf-section-header flex-column flex-sm-row align-items-start align-items-sm-center">
                                     <div>
-                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                        <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                             <h2 className="h5 ac-font text-dark mb-0">Saved In-Game Characters</h2>
                                             <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-black">
-                                                {characters.length} / {maxSlots} Slots
+                                                {characters.length} / 3 Slots
                                             </span>
                                             <span className="badge bg-light text-success border border-success-subtle rounded-pill x-small fw-bold d-inline-flex align-items-center gap-1">
                                                 <i className={isSyncingDb ? "fa-solid fa-spinner fa-spin text-primary" : "fa-solid fa-cloud-arrow-up text-success"}></i>
-                                                <span>{isSyncingDb ? "Syncing..." : "Saved to Database"}</span>
+                                                <span>{isSyncingDb ? "Syncing to Database..." : "Auto-Saved to Database"}</span>
                                             </span>
                                         </div>
                                         <p className="tiny-text text-muted mb-0">
-                                            Active character will auto-fill your IGN &amp; Island Name across Order Bot, Command Builder, and Drop Selector.
+                                            Active character auto-fills your IGN &amp; Island Name in Order Bot, Command Builder, and Drop orders.
                                         </p>
                                     </div>
 
                                     {/* Action buttons */}
-                                    <div className="d-flex align-items-center gap-2 flex-wrap">
-                                        <button
-                                            type="button"
-                                            onClick={handleOpenAddCharacter}
-                                            disabled={remainingSlots <= 0}
-                                            className="btn btn-sm btn-success rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-xs"
-                                            title={remainingSlots > 0 ? "Add a new in-game character" : `Max ${maxSlots} slots used`}
-                                        >
-                                            <i className="fa-solid fa-plus"></i>
-                                            <span>Add Character</span>
-                                        </button>
-
-                                        {rawDiscordName && (
+                                    {rawDiscordName && (
+                                        <div className="d-flex align-items-center gap-2 flex-wrap">
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -706,110 +730,644 @@ const Profile = () => {
                                                 <i className="fa-brands fa-discord text-primary"></i>
                                                 <span>Sync from Discord</span>
                                             </button>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Characters Grid */}
+                                {/* 3 Fixed Character Slots Grid */}
                                 <div className="row g-3">
-                                    {characters.map((char) => {
-                                        const isSelected = char.isDefault;
+                                    {[0, 1, 2].map((slotIdx) => {
+                                        const char = characters[slotIdx];
+                                        const isSelected = char?.isDefault;
 
-                                        return (
-                                            <div key={char.id} className="col-md-6">
-                                                <div className={`pf-char-card ${isSelected ? "primary" : ""}`}>
-                                                    <div className="d-flex align-items-start justify-content-between mb-2">
-                                                        <div className="d-flex align-items-center gap-2">
-                                                            <div className="pf-char-icon-circle">
-                                                                <i className={`fa-solid ${char.icon || "fa-leaf"}`}></i>
-                                                            </div>
-                                                            <div>
-                                                                <div className="fw-black text-dark" style={{ fontSize: "1rem" }}>
-                                                                    {char.ign}
+                                        if (char) {
+                                            return (
+                                                <div key={char.id} className="col-12 col-md-6 col-lg-4">
+                                                    <div className={`pf-char-card ${isSelected ? "primary" : ""} h-100 d-flex flex-column`}>
+                                                        <div className="d-flex align-items-start justify-content-between mb-2">
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <div className="pf-char-icon-circle">
+                                                                    <i className={`fa-solid ${char.icon || "fa-leaf"}`}></i>
                                                                 </div>
-                                                                <div className="tiny-text text-muted fw-bold">
-                                                                    {char.title || "Island Resident"}
+                                                                <div>
+                                                                    <div className="fw-black text-dark" style={{ fontSize: "1rem" }}>
+                                                                        {char.ign}
+                                                                    </div>
+                                                                    <div className="tiny-text text-muted fw-bold">
+                                                                        {char.title || (slotIdx === 0 ? "Main Character" : `Slot #${slotIdx + 1}`)}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
 
-                                                        {isSelected ? (
-                                                            <span className="badge bg-success text-white rounded-pill x-small fw-black">
-                                                                <i className="fa-solid fa-check me-1"></i>Active Primary
-                                                            </span>
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-xs btn-light rounded-pill border fw-bold tiny-text"
-                                                                onClick={() => setDefaultCharacter(char.id)}
-                                                                aria-label={`Set ${char.ign} as active character`}
-                                                            >
-                                                                Set Active
-                                                            </button>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="bg-white rounded-3 p-2 border mb-3">
-                                                        <div className="d-flex align-items-center justify-content-between tiny-text">
-                                                            <span className="text-muted fw-bold">Island Name:</span>
-                                                            <span className="fw-black text-dark">
-                                                                🏝️ {char.islandName}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
-                                                        <span className="tiny-text text-success font-monospace d-flex align-items-center gap-1 fw-bold">
-                                                            <i className="fa-solid fa-cloud-check"></i>
-                                                            <span>Cloud Synced</span>
-                                                        </span>
-
-                                                        <div className="d-flex align-items-center gap-1">
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-2 py-1 tiny-text d-flex align-items-center gap-1"
-                                                                onClick={() => handleOpenEditCharacter(char)}
-                                                                title="Edit character details"
-                                                                aria-label={`Edit ${char.ign}`}
-                                                            >
-                                                                <i className="fa-solid fa-pen"></i>
-                                                                <span>Edit</span>
-                                                            </button>
-                                                            {characters.length > 1 && (
+                                                            {isSelected ? (
+                                                                <span className="badge bg-success text-white rounded-pill x-small fw-black">
+                                                                    <i className="fa-solid fa-check me-1"></i>Active Primary
+                                                                </span>
+                                                            ) : (
                                                                 <button
                                                                     type="button"
-                                                                    className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2 py-1 tiny-text d-flex align-items-center gap-1"
-                                                                    onClick={() => handleDeleteCharacter(char)}
-                                                                    title="Delete character"
-                                                                    aria-label={`Delete ${char.ign}`}
-                                                                >
-                                                                    <i className="fa-solid fa-trash"></i>
-                                                                </button>
-                                                            )}
-                                                            {!isSelected && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 tiny-text"
+                                                                    className="btn btn-xs btn-light rounded-pill border fw-bold tiny-text"
                                                                     onClick={() => setDefaultCharacter(char.id)}
-                                                                    aria-label={`Set ${char.ign} as primary`}
+                                                                    aria-label={`Set ${char.ign} as active character`}
                                                                 >
-                                                                    Set Primary
+                                                                    Set Active
                                                                 </button>
                                                             )}
                                                         </div>
+
+                                                        <div className="bg-white rounded-3 p-2 border mb-3">
+                                                            <div className="d-flex align-items-center justify-content-between tiny-text">
+                                                                <span className="text-muted fw-bold">Island Name:</span>
+                                                                <span className="fw-black text-dark d-flex align-items-center gap-1">
+                                                                    <i className="fa-solid fa-tree text-success"></i>
+                                                                    <span>{char.islandName}</span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
+                                                            <span className="tiny-text text-success font-monospace d-flex align-items-center gap-1 fw-bold">
+                                                                <i className="fa-solid fa-cloud-check"></i>
+                                                                <span>Synced</span>
+                                                            </span>
+
+                                                            <div className="d-flex align-items-center gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-xs btn-outline-secondary rounded-pill fw-bold px-2 py-1 tiny-text d-flex align-items-center gap-1"
+                                                                    onClick={() => handleOpenEditCharacter(char)}
+                                                                    title="Edit character details"
+                                                                    aria-label={`Edit ${char.ign}`}
+                                                                >
+                                                                    <i className="fa-solid fa-pen"></i>
+                                                                    <span>Edit</span>
+                                                                </button>
+                                                                {characters.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-xs btn-outline-danger rounded-pill fw-bold px-2 py-1 tiny-text d-flex align-items-center gap-1"
+                                                                        onClick={() => handleDeleteCharacter(char)}
+                                                                        title="Delete character"
+                                                                        aria-label={`Delete ${char.ign}`}
+                                                                    >
+                                                                        <i className="fa-solid fa-trash"></i>
+                                                                    </button>
+                                                                )}
+                                                                {!isSelected && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 tiny-text"
+                                                                        onClick={() => setDefaultCharacter(char.id)}
+                                                                        aria-label={`Set ${char.ign} as primary`}
+                                                                    >
+                                                                        Set Primary
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        // Empty Slot Card
+                                        const slotTitle = slotIdx === 0 ? "Slot 1 (Main Character)" : slotIdx === 1 ? "Slot 2 (Secondary)" : "Slot 3 (Extra Slot)";
+                                        return (
+                                            <div key={`empty_slot_${slotIdx}`} className="col-12 col-md-6 col-lg-4">
+                                                <div
+                                                    className="pf-char-card d-flex flex-column align-items-center justify-content-center text-center p-4 h-100 bg-light"
+                                                    style={{
+                                                        border: "2px dashed #cbd5e1",
+                                                        cursor: "pointer",
+                                                        minHeight: "185px",
+                                                    }}
+                                                    onClick={handleOpenAddCharacter}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter" || e.key === " ") {
+                                                            handleOpenAddCharacter();
+                                                        }
+                                                    }}
+                                                >
+                                                    <div
+                                                        className="rounded-circle d-flex align-items-center justify-content-center bg-white border text-success shadow-2xs mb-2"
+                                                        style={{ width: 44, height: 44, fontSize: "1.1rem" }}
+                                                    >
+                                                        <i className="fa-solid fa-plus"></i>
+                                                    </div>
+                                                    <div className="fw-bold text-dark small mb-1">
+                                                        {slotTitle}
+                                                    </div>
+                                                    <span className="tiny-text text-muted mb-3">
+                                                        Empty slot · click to configure character
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-xs btn-success rounded-pill fw-bold px-3 py-1 shadow-2xs"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenAddCharacter();
+                                                        }}
+                                                    >
+                                                        <i className="fa-solid fa-plus me-1"></i>Add Character
+                                                    </button>
                                                 </div>
                                             </div>
                                         );
                                     })}
                                 </div>
+                            </div>
 
+                            {/* 2. Public Passport & Profile Customizer Form */}
+                            <div className="pf-card">
+                                <div className="pf-section-header mb-3">
+                                    <div className="d-flex align-items-center gap-2">
+                                        <div className="icon-bubble bg-success bg-opacity-10 text-success">
+                                            <i className="fa-solid fa-id-card-clip"></i>
+                                        </div>
+                                        <div>
+                                            <h2 className="h5 ac-font text-dark mb-0">Public Profile &amp; Passport Customizer</h2>
+                                            <p className="tiny-text text-muted mb-0">
+                                                Customise your public passport and share your Animal Crossing identity with friends.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form
+                                    onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        setSavingPassport(true);
+                                        playChimeClick();
+                                        const ok = await savePassportToDb(passportData, getAuthToken());
+                                        setSavingPassport(false);
+                                        setPrefNotice(ok ? "Your Public Profile & Passport has been saved to the ChoBot database!" : "Passport saved locally (server sync pending).");
+                                        setTimeout(() => setPrefNotice(null), 3500);
+                                    }}
+                                >
+                                    <div className="row g-4">
+                                        {/* Left Column: Core Identity */}
+                                        <div className="col-lg-6">
+                                            <div className="bg-light rounded-4 p-3 border mb-3">
+                                                <h3 className="h6 fw-black text-dark mb-3 ac-font d-flex align-items-center gap-2">
+                                                    <i className="fa-solid fa-address-card text-success"></i>
+                                                    Resident Details &amp; Island Traits
+                                                </h3>
+
+                                                {/* Pronouns */}
+                                                <div className="mb-3">
+                                                    <label className="form-label fw-bold small text-dark mb-1">
+                                                        Pronouns
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control rounded-3 border-2"
+                                                        placeholder="e.g. she/her, they/them, he/him"
+                                                        value={passportData.pronouns}
+                                                        onChange={(e) => setPassportData({ ...passportData, pronouns: e.target.value })}
+                                                    />
+                                                </div>
+
+                                                {/* Birthday (Day & Month) */}
+                                                <div className="mb-3">
+                                                    <label className="form-label fw-bold small text-dark mb-1">
+                                                        Birthday (Day / Month)
+                                                    </label>
+                                                    <div className="row g-2">
+                                                        <div className="col-5">
+                                                            <select
+                                                                className="form-select rounded-3 border-2"
+                                                                value={passportData.birthDay}
+                                                                onChange={(e) => setPassportData({ ...passportData, birthDay: e.target.value })}
+                                                            >
+                                                                {Array.from({ length: 31 }, (_, i) => String(i + 1)).map((d) => (
+                                                                    <option key={d} value={d}>
+                                                                        Day {d}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-7">
+                                                            <select
+                                                                className="form-select rounded-3 border-2"
+                                                                value={passportData.birthMonth}
+                                                                onChange={(e) => setPassportData({ ...passportData, birthMonth: e.target.value })}
+                                                            >
+                                                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m) => (
+                                                                    <option key={m} value={m}>
+                                                                        {m}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Native Fruit */}
+                                                <div className="mb-3">
+                                                    <label className="form-label fw-bold small text-dark mb-1">
+                                                        Native Fruit
+                                                    </label>
+                                                    <div className="d-flex flex-wrap gap-2">
+                                                        {(["Apple", "Cherry", "Orange", "Peach", "Pear", "Coconut"] as const).map((fruit) => {
+                                                            const isSelected = passportData.nativeFruit === fruit;
+                                                            return (
+                                                                <button
+                                                                    key={fruit}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        playChimeClick();
+                                                                        setPassportData({ ...passportData, nativeFruit: fruit });
+                                                                    }}
+                                                                    className={`btn btn-sm rounded-pill px-3 py-1 border d-inline-flex align-items-center gap-1 transition-all ${
+                                                                        isSelected ? "btn-success text-white shadow-2xs" : "btn-white text-dark bg-white"
+                                                                    }`}
+                                                                >
+                                                                    <img
+                                                                        src={`https://dodo.ac/np/images/${fruit === "Apple" ? "2/22/Apple_NH_Inv_Icon.png" : fruit === "Cherry" ? "2/20/Cherry_NH_Inv_Icon.png" : fruit === "Orange" ? "8/87/Orange_NH_Inv_Icon.png" : fruit === "Peach" ? "8/86/Peach_NH_Inv_Icon.png" : fruit === "Pear" ? "e/e0/Pear_NH_Inv_Icon.png" : "2/2f/Coconut_NH_Inv_Icon.png"}`}
+                                                                        alt=""
+                                                                        style={{ width: 18, height: 18, objectFit: "contain" }}
+                                                                        onError={(e) => { (e.currentTarget as HTMLElement).style.display = "none"; }}
+                                                                    />
+                                                                    <span className="fw-bold">{fruit}</span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* Personality */}
+                                                <div className="mb-3">
+                                                    <label className="form-label fw-bold small text-dark mb-1">
+                                                        Your Personality
+                                                    </label>
+                                                    <div className="d-flex flex-wrap gap-1">
+                                                        {(["Lazy", "Jock", "Cranky", "Smug", "Normal", "Peppy", "Snooty", "Big Sister"] as const).map((p) => {
+                                                            const isSelected = passportData.personality === p;
+                                                            return (
+                                                                <button
+                                                                    key={p}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        playChimeClick();
+                                                                        setPassportData({ ...passportData, personality: p });
+                                                                    }}
+                                                                    className={`btn btn-xs rounded-pill px-2 py-1 border transition-all ${
+                                                                        isSelected ? "btn-dark text-white shadow-2xs" : "btn-white text-muted bg-white"
+                                                                    }`}
+                                                                    style={{ fontSize: "0.74rem" }}
+                                                                >
+                                                                    {p}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* Favourite Colour & Song */}
+                                                <div className="row g-2 mb-3">
+                                                    <div className="col-6">
+                                                        <label className="form-label fw-bold small text-dark mb-1">
+                                                            Favourite Colour
+                                                        </label>
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <input
+                                                                type="color"
+                                                                className="form-control form-control-color border-2 rounded-3"
+                                                                value={passportData.favouriteColour || "#37b06d"}
+                                                                onChange={(e) => setPassportData({ ...passportData, favouriteColour: e.target.value })}
+                                                                title="Choose favourite colour"
+                                                            />
+                                                            <span className="font-monospace tiny-text fw-bold text-muted">{passportData.favouriteColour}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-6">
+                                                        <label className="form-label fw-bold small text-dark mb-1">
+                                                            Favourite Song
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control rounded-3 border-2"
+                                                            placeholder="e.g. K.K. Cruisin'"
+                                                            value={passportData.favouriteSong}
+                                                            onChange={(e) => setPassportData({ ...passportData, favouriteSong: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Country & Language */}
+                                                <div className="row g-2">
+                                                    <div className="col-6">
+                                                        <label className="form-label fw-bold small text-dark mb-1">
+                                                            Country / Region
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control rounded-3 border-2"
+                                                            placeholder="e.g. Canada, Japan"
+                                                            value={passportData.country}
+                                                            onChange={(e) => setPassportData({ ...passportData, country: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="col-6">
+                                                        <label className="form-label fw-bold small text-dark mb-1">
+                                                            Language
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control rounded-3 border-2"
+                                                            placeholder="e.g. English, Español"
+                                                            value={passportData.language}
+                                                            onChange={(e) => setPassportData({ ...passportData, language: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Right Column: Bio, Interests & Villagers */}
+                                        <div className="col-lg-6">
+                                            <div className="bg-light rounded-4 p-3 border mb-3 d-flex flex-column h-100">
+                                                <h3 className="h6 fw-black text-dark mb-3 ac-font d-flex align-items-center gap-2">
+                                                    <i className="fa-solid fa-heart text-danger"></i>
+                                                    Bio, Hobbies &amp; Villagers
+                                                </h3>
+
+                                                {/* About You (160 characters) */}
+                                                <div className="mb-3">
+                                                    <div className="d-flex align-items-center justify-content-between mb-1">
+                                                        <label className="form-label fw-bold small text-dark mb-0">
+                                                            About You (160 characters)
+                                                        </label>
+                                                        <span className={`tiny-text font-monospace ${passportData.aboutYou.length > 160 ? "text-danger fw-bold" : "text-muted"}`}>
+                                                            {passportData.aboutYou.length}/160
+                                                        </span>
+                                                    </div>
+                                                    <textarea
+                                                        className="form-control rounded-3 border-2"
+                                                        rows={3}
+                                                        maxLength={160}
+                                                        placeholder="Tell the community about your island theme, favorite activities, or dream designs..."
+                                                        value={passportData.aboutYou}
+                                                        onChange={(e) => setPassportData({ ...passportData, aboutYou: e.target.value })}
+                                                    ></textarea>
+                                                </div>
+
+                                                {/* Hobbies & Shows */}
+                                                <div className="row g-2 mb-3">
+                                                    <div className="col-6">
+                                                        <label className="form-label fw-bold small text-dark mb-1">
+                                                            Hobbies
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control rounded-3 border-2"
+                                                            placeholder="e.g. Gardening, Fishing"
+                                                            value={passportData.hobbies}
+                                                            onChange={(e) => setPassportData({ ...passportData, hobbies: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="col-6">
+                                                        <label className="form-label fw-bold small text-dark mb-1">
+                                                            Shows or Films
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control rounded-3 border-2"
+                                                            placeholder="e.g. Studio Ghibli"
+                                                            value={passportData.favouriteShowsFilms}
+                                                            onChange={(e) => setPassportData({ ...passportData, favouriteShowsFilms: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Favourite Villagers (up to 10) */}
+                                                <div className="mb-3">
+                                                    <div className="d-flex align-items-center justify-content-between mb-1">
+                                                        <label className="form-label fw-bold small text-dark mb-0">
+                                                            Favourite Villagers (up to 10)
+                                                        </label>
+                                                        <span className="tiny-text text-muted font-monospace">
+                                                            {passportData.favouriteVillagers.length}/10 selected
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Selected Villagers Tags */}
+                                                    <div className="d-flex flex-wrap gap-1 mb-2">
+                                                        {passportData.favouriteVillagers.map((vName) => (
+                                                            <span
+                                                                key={vName}
+                                                                className="badge bg-white text-dark border rounded-pill px-2 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
+                                                                style={{ fontSize: "0.78rem" }}
+                                                            >
+                                                                <i className="fa-solid fa-paw text-warning small"></i>
+                                                                <span>{vName}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-link text-muted hover-text-danger p-0 ms-1 border-0"
+                                                                    onClick={() => {
+                                                                        playChimeClick();
+                                                                        setPassportData({
+                                                                            ...passportData,
+                                                                            favouriteVillagers: passportData.favouriteVillagers.filter((v) => v !== vName),
+                                                                        });
+                                                                    }}
+                                                                >
+                                                                    <i className="fa-solid fa-xmark"></i>
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Quick Villager Add Input */}
+                                                    {passportData.favouriteVillagers.length < 10 && (
+                                                        <div className="position-relative">
+                                                            <input
+                                                                type="text"
+                                                                className="form-control rounded-3 border-2"
+                                                                placeholder="Type villager name (e.g. Raymond, Shino) and press Enter..."
+                                                                value={villagerSearchQuery}
+                                                                onChange={(e) => setVillagerSearchQuery(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter" && villagerSearchQuery.trim()) {
+                                                                        e.preventDefault();
+                                                                        const name = villagerSearchQuery.trim();
+                                                                        if (!passportData.favouriteVillagers.includes(name)) {
+                                                                            playChimeClick();
+                                                                            setPassportData({
+                                                                                ...passportData,
+                                                                                favouriteVillagers: [...passportData.favouriteVillagers, name].slice(0, 10),
+                                                                            });
+                                                                            setVillagerSearchQuery("");
+                                                                        }
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Toggles & Privacy */}
+                                                <div className="bg-white rounded-3 p-3 border mt-auto">
+                                                    <div className="form-check form-switch mb-2">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            role="switch"
+                                                            id="showCharAndIsland"
+                                                            checked={passportData.showCharacterAndIsland}
+                                                            onChange={(e) => setPassportData({ ...passportData, showCharacterAndIsland: e.target.checked })}
+                                                        />
+                                                        <label className="form-check-label fw-bold small text-dark ms-2" htmlFor="showCharAndIsland">
+                                                            Show my character and island name
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            role="switch"
+                                                            id="makeProfilePublic"
+                                                            checked={passportData.isPublic}
+                                                            onChange={(e) => setPassportData({ ...passportData, isPublic: e.target.checked })}
+                                                        />
+                                                        <label className="form-check-label fw-bold small text-dark ms-2" htmlFor="makeProfilePublic">
+                                                            Make my profile public — anyone with the link can see it
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Save Button Bar */}
+                                    <div className="d-flex align-items-center justify-content-between p-3 rounded-4 bg-white border shadow-sm mt-4">
+                                        <span className="tiny-text text-muted">
+                                            All profile changes sync securely to your ChoPaeng database passport.
+                                        </span>
+
+                                        <button
+                                            type="submit"
+                                            disabled={savingPassport}
+                                            className="btn btn-success rounded-pill fw-black px-4 py-2 shadow-xs d-inline-flex align-items-center gap-2"
+                                        >
+                                            <i className={savingPassport ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-floppy-disk"}></i>
+                                            <span>{savingPassport ? "Saving to Database..." : "Save Profile to Database"}</span>
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
 
-                        {/* Account Information Column */}
-                        <div className="col-lg-4">
-                            <div className="pf-card h-100">
+                        {/* Account & Passport Sidebar Column */}
+                        <div className="col-lg-4 d-flex flex-column gap-4">
+                            {/* 1. Public Profile Link & Quick Share Card */}
+                            <div className="pf-card">
+                                <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                    <span className={`badge rounded-pill px-3 py-1 fw-bold ${passportData.isPublic ? "bg-success text-white" : "bg-secondary text-white"}`}>
+                                        <i className={`fa-solid ${passportData.isPublic ? "fa-globe" : "fa-lock"} me-1`}></i>
+                                        {passportData.isPublic ? "Public Profile Active" : "Private Profile"}
+                                    </span>
+                                    <Link
+                                        to={`/u/${encodeURIComponent(passportData.username || profileUser?.discord_name || authUser?.username || "resident")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 d-inline-flex align-items-center gap-1 shadow-2xs"
+                                    >
+                                        <span>View</span>
+                                        <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </Link>
+                                </div>
+
+                                <div className="bg-light rounded-3 p-3 border mb-0">
+                                    <span className="tiny-text fw-bold text-muted text-uppercase d-block mb-1">Your Public Link:</span>
+                                    <strong className="text-dark font-monospace small text-truncate d-block mb-2">
+                                        {window.location.origin}/u/{passportData.username || profileUser?.discord_name || authUser?.username || "resident"}
+                                    </strong>
+                                    <button
+                                        type="button"
+                                        className={`btn btn-xs w-100 rounded-pill fw-bold py-1 shadow-2xs d-inline-flex align-items-center justify-content-center gap-1 ${
+                                            passportLinkCopied ? "btn-success text-white" : "btn-dark text-white"
+                                        }`}
+                                        onClick={() => {
+                                            const url = `${window.location.origin}/u/${passportData.username || profileUser?.discord_name || authUser?.username || "resident"}`;
+                                            navigator.clipboard.writeText(url).catch(() => {});
+                                            setPassportLinkCopied(true);
+                                            playChimeClick();
+                                            setTimeout(() => setPassportLinkCopied(false), 2500);
+                                        }}
+                                    >
+                                        <i className={`fa-solid ${passportLinkCopied ? "fa-check" : "fa-copy"}`}></i>
+                                        <span>{passportLinkCopied ? "Link Copied!" : "Copy Link"}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 2. Live Resident Passport Preview Card */}
+                            <div className="pf-card" style={{ borderLeft: `5px solid ${passportData.favouriteColour || "#37b06d"}` }}>
+                                <div className="d-flex align-items-center gap-2 mb-3">
+                                    <div className="icon-bubble bg-success bg-opacity-10 text-success">
+                                        <i className="fa-solid fa-id-card"></i>
+                                    </div>
+                                    <div>
+                                        <h3 className="h6 ac-font text-dark mb-0">Passport Preview</h3>
+                                        <span className="tiny-text text-muted">What visitors see</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-light rounded-3 p-3 border mb-3">
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <span className="tiny-text text-muted fw-bold">Resident IGN:</span>
+                                        <span className="fw-black text-dark small">{activeCharacter.ign || passportData.primaryIgn || "Resident"}</span>
+                                    </div>
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <span className="tiny-text text-muted fw-bold">Island:</span>
+                                        <span className="fw-bold text-dark small d-flex align-items-center gap-1">
+                                            <i className="fa-solid fa-tree text-success"></i>
+                                            <span>{activeCharacter.islandName || passportData.primaryIsland || "Paradise"}</span>
+                                        </span>
+                                    </div>
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <span className="tiny-text text-muted fw-bold">Native Fruit:</span>
+                                        <span className="badge bg-white border text-dark fw-bold">{passportData.nativeFruit || "Apple"}</span>
+                                    </div>
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <span className="tiny-text text-muted fw-bold">Personality:</span>
+                                        <span className="badge bg-white border text-dark fw-bold">{passportData.personality || "Normal"}</span>
+                                    </div>
+                                    <div className="d-flex align-items-center justify-content-between">
+                                        <span className="tiny-text text-muted fw-bold">K.K. Song:</span>
+                                        <span className="fw-bold text-dark tiny-text text-truncate" style={{ maxWidth: 140 }}>
+                                            <i className="fa-solid fa-music text-primary me-1"></i>
+                                            {passportData.favouriteSong || "K.K. Cruisin'"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {passportData.aboutYou && (
+                                    <div className="p-2 rounded-3 bg-white border tiny-text text-muted fst-italic mb-3">
+                                        "{passportData.aboutYou}"
+                                    </div>
+                                )}
+
+                                {passportData.favouriteVillagers && passportData.favouriteVillagers.length > 0 && (
+                                    <div>
+                                        <div className="tiny-text text-muted fw-bold mb-2">Favorite Villagers ({passportData.favouriteVillagers.length}):</div>
+                                        <div className="d-flex flex-wrap gap-1">
+                                            {passportData.favouriteVillagers.slice(0, 6).map((v) => (
+                                                <span key={v} className="badge bg-light border text-dark tiny-text fw-bold">
+                                                    {v}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 3. Discord & Account Information Card */}
+                            <div className="pf-card">
                                 <div className="d-flex align-items-center gap-3 mb-3">
                                     <div className="icon-bubble bg-success bg-opacity-10 text-success">
                                         <i className="fa-solid fa-user-shield"></i>
@@ -832,10 +1390,30 @@ const Profile = () => {
                                     </div>
                                 </div>
 
-                                <div className="passport-field mb-0">
+                                <div className="passport-field mb-3">
+                                    <div className="tiny-text text-muted fw-black text-uppercase mb-1">Discord ID</div>
+                                    <div className="tiny-text text-muted font-monospace">{profileUser?.id || authUser?.user_id || "N/A"}</div>
+                                </div>
+
+                                <div className="passport-field mb-3">
                                     <div className="tiny-text text-muted fw-black text-uppercase mb-1">Account Standing</div>
                                     <div className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
                                         <i className="fa-solid fa-shield-check me-1"></i>Good Standing • Verified
+                                    </div>
+                                </div>
+
+                                <div className="passport-field mb-0">
+                                    <div className="tiny-text text-muted fw-black text-uppercase mb-1">Subscription Roles</div>
+                                    <div className="d-flex flex-wrap gap-1 mt-1">
+                                        {subscriptionRoleNames.length > 0 ? (
+                                            subscriptionRoleNames.map((role) => (
+                                                <span key={role} className="badge bg-warning bg-opacity-10 text-dark border border-warning-subtle rounded-pill px-2 py-1 tiny-text fw-bold">
+                                                    <i className="fa-solid fa-crown text-warning me-1"></i>{role}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="tiny-text text-muted">Free Community Member</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1090,7 +1668,7 @@ const Profile = () => {
                                     </div>
                                 ) : (
                                     <div className="pf-empty-state mb-4">
-                                        <div className="pf-empty-icon">🏝️</div>
+                                        <div className="pf-empty-icon text-muted"><i className="fa-solid fa-map-location-dot"></i></div>
                                         <div className="pf-empty-title">No Islands Found</div>
                                         <p className="pf-empty-desc">Try selecting "All Unlocked" to view all available destinations.</p>
                                     </div>
@@ -1190,8 +1768,9 @@ const Profile = () => {
                                                             </button>
                                                         </div>
 
-                                                        <div className="fw-black text-dark h5 mb-1 ac-font">
-                                                            🏝️ {island.name}
+                                                        <div className="fw-black text-dark h5 mb-1 ac-font d-flex align-items-center gap-2">
+                                                            <i className="fa-solid fa-tree text-success"></i>
+                                                            <span>{island.name}</span>
                                                         </div>
 
                                                         <p className="tiny-text text-muted mb-3 flex-grow-1 line-clamp-2">
@@ -1314,8 +1893,9 @@ const Profile = () => {
                                                         {/* Island info & Dodo code if ready */}
                                                         {order.island_name && (
                                                             <div className="d-flex align-items-center gap-2 mb-2 tiny-text">
-                                                                <span className="fw-bold text-dark">
-                                                                    🏝️ Island: <strong>{order.island_name}</strong>
+                                                                <span className="fw-bold text-dark d-flex align-items-center gap-1">
+                                                                    <i className="fa-solid fa-tree text-success"></i>
+                                                                    <span>Island: <strong>{order.island_name}</strong></span>
                                                                 </span>
                                                                 {order.dodo_code && (
                                                                     <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace">
@@ -1407,7 +1987,7 @@ const Profile = () => {
                                     </div>
                                 ) : (
                                     <div className="pf-empty-state">
-                                        <div className="pf-empty-icon">📦</div>
+                                        <div className="pf-empty-icon text-muted"><i className="fa-solid fa-box-open"></i></div>
                                         <h3 className="pf-empty-title">No Orders Placed Yet</h3>
                                         <p className="pf-empty-desc">
                                             Build your 40-slot pocket loadout in the Command Builder and place an order to get automatic tracking and 1-click reordering here.

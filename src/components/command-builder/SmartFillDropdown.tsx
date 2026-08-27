@@ -95,10 +95,11 @@ export const SmartFillDropdown = ({
                     {/* Header */}
                     <div className="px-2 py-1 mb-1 d-flex align-items-center justify-content-between">
                         <span
-                            className="tiny-text fw-black text-uppercase text-muted"
+                            className="tiny-text fw-black text-uppercase text-muted d-flex align-items-center gap-1"
                             style={{ fontSize: '0.68rem', letterSpacing: '0.8px' }}
                         >
-                            ⚡ Optimization Tools
+                            <i className="fa-solid fa-bolt text-warning" aria-hidden="true"></i>
+                            <span>Optimization Tools</span>
                         </span>
                         <span className="badge bg-light text-muted border rounded-pill x-small">
                             ACNH Stacks
@@ -121,7 +122,7 @@ export const SmartFillDropdown = ({
                             style={{
                                 width: '34px',
                                 height: '34px',
-                                background: 'linear-gradient(135deg, #e8f7ec 0%, #c8eed4 100%)',
+                                background: '#e8f7ec',
                                 color: '#198754',
                             }}
                         >
@@ -129,7 +130,7 @@ export const SmartFillDropdown = ({
                         </div>
                         <div className="text-start flex-grow-1">
                             <div className="small fw-black text-dark">Maximize Stacks</div>
-                            <div className="tiny-text text-muted">Auto-max materials (30×) & tickets (10×)</div>
+                            <div className="tiny-text text-muted">Auto-max materials (30×) &amp; tickets (10×)</div>
                         </div>
                     </button>
 
@@ -149,25 +150,26 @@ export const SmartFillDropdown = ({
                             style={{
                                 width: '34px',
                                 height: '34px',
-                                background: 'linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%)',
+                                background: '#e7f1ff',
                                 color: '#0d6efd',
                             }}
                         >
                             <i className="fa-solid fa-arrow-down-a-z small"></i>
                         </div>
                         <div className="text-start flex-grow-1">
-                            <div className="small fw-black text-dark">Sort & Organize</div>
-                            <div className="tiny-text text-muted">Tools ➔ Materials ➔ Furniture ➔ DIYs</div>
+                            <div className="small fw-black text-dark">Sort &amp; Organize</div>
+                            <div className="tiny-text text-muted">Tools → Materials → Furniture → DIYs</div>
                         </div>
                     </button>
 
                     {/* Section Divider */}
                     <div className="px-2 pt-2 pb-1 border-top mt-1 mb-1 d-flex align-items-center justify-content-between">
                         <span
-                            className="tiny-text fw-black text-uppercase text-muted"
+                            className="tiny-text fw-black text-uppercase text-muted d-flex align-items-center gap-1"
                             style={{ fontSize: '0.68rem', letterSpacing: '0.8px' }}
                         >
-                            💰 Fill Empty Pocket Slots
+                            <i className="fa-solid fa-coins text-warning" aria-hidden="true"></i>
+                            <span>Fill Empty Pocket Slots</span>
                         </span>
                         {isOrderFull && (
                             <span className="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill x-small">
@@ -201,7 +203,7 @@ export const SmartFillDropdown = ({
                                 <span>Nook Miles Tickets</span>
                                 <span className="badge bg-success-subtle text-success x-small font-monospace">10×</span>
                             </div>
-                            <div className="tiny-text text-muted">Fill empty slots with 🎟️ NMT stacks</div>
+                            <div className="tiny-text text-muted">Fill empty slots with NMT stacks</div>
                         </div>
                     </button>
 
@@ -230,7 +232,7 @@ export const SmartFillDropdown = ({
                                 <span>Gold Nuggets</span>
                                 <span className="badge bg-warning-subtle text-warning-emphasis x-small font-monospace">30×</span>
                             </div>
-                            <div className="tiny-text text-muted">Fill with ⭐ Gold stacks</div>
+                            <div className="tiny-text text-muted">Fill with Gold stacks</div>
                         </div>
                     </button>
 
@@ -259,7 +261,7 @@ export const SmartFillDropdown = ({
                                 <span>Royal Crowns</span>
                                 <span className="badge bg-warning-subtle text-warning-emphasis x-small font-monospace">300k</span>
                             </div>
-                            <div className="tiny-text text-muted">Fill with 👑 300k Bell Crowns</div>
+                            <div className="tiny-text text-muted">Fill with 300k Bell Crowns</div>
                         </div>
                     </button>
 
@@ -288,7 +290,7 @@ export const SmartFillDropdown = ({
                                 <span>99,000 Bells</span>
                                 <span className="badge bg-success-subtle text-success x-small font-monospace">99k</span>
                             </div>
-                            <div className="tiny-text text-muted">Fill with 💰 99k Bell bags</div>
+                            <div className="tiny-text text-muted">Fill with 99k Bell bags</div>
                         </div>
                     </button>
 

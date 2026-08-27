@@ -395,3 +395,136 @@
     background-color: var(--nook-green, #37b06d);
     transition: width 0.4s ease;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   THE ROOST THEME ADAPTATIONS (page-enhancements.css)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="roost"] .ac-stat-card {
+    background-color: #292524 !important;
+    border-color: rgba(217, 119, 6, 0.28) !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .ac-stat-card:hover {
+    border-color: #f59e0b;
+    box-shadow: 0 8px 24px rgba(217, 119, 6, 0.22);
+}
+
+[data-theme="roost"] .ac-stat-number {
+    color: #fffdfa !important;
+}
+
+[data-theme="roost"] .ac-stat-icon-wrapper--green { background-color: #3b2a14; color: #fbbf24; }
+[data-theme="roost"] .ac-stat-icon-wrapper--yellow { background-color: #452b0f; color: #f59e0b; }
+[data-theme="roost"] .ac-stat-icon-wrapper--blue { background-color: #2c221a; color: #fdba74; }
+[data-theme="roost"] .ac-stat-icon-wrapper--purple { background-color: #3d241d; color: #f97316; }
+[data-theme="roost"] .ac-stat-icon-wrapper--gray { background-color: #332a24; color: #d6d3d1; }
+
+[data-theme="roost"] .ac-stat-label {
+    color: #fed7aa;
+}
+
+[data-theme="roost"] .ac-filter-bar,
+[data-theme="roost"] .ac-search-input-group {
+    background-color: #292524 !important;
+    border-color: rgba(217, 119, 6, 0.3) !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .ac-search-input-group input {
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .ac-search-input-group input::placeholder {
+    color: #a8a29e !important;
+}
+
+[data-theme="roost"] .ac-search-input-group:focus-within {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+}
+
+[data-theme="roost"] .ac-select-pill {
+    background-color: #1c1917 !important;
+    border-color: rgba(212, 163, 115, 0.3) !important;
+    color: #fdf8f5 !important;
+}
+
+[data-theme="roost"] .ac-select-pill:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+[data-theme="roost"] .ac-nav-tabs-pill {
+    background-color: #292524 !important;
+    border-color: rgba(217, 119, 6, 0.28) !important;
+}
+
+[data-theme="roost"] .ac-tab-btn {
+    color: #d1beaf;
+}
+
+[data-theme="roost"] .ac-tab-btn:hover {
+    color: #fafaf9;
+    background-color: #40362f;
+}
+
+[data-theme="roost"] .ac-tab-btn.active {
+    background-color: #a06b43 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(160, 107, 67, 0.4) !important;
+}
+
+[data-theme="roost"] .ac-grid-card {
+    background-color: #292524 !important;
+    border-color: rgba(217, 119, 6, 0.28) !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .ac-grid-card:hover {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    box-shadow: 0 10px 24px rgba(217, 119, 6, 0.2) !important;
+}
+
+[data-theme="roost"] .ac-grid-card--collected {
+    border-color: #d97706 !important;
+    background-color: #3b2a14 !important;
+}
+
+[data-theme="roost"] .ac-card-img-frame {
+    background-color: #1c1917 !important;
+}
+
+[data-theme="roost"] .ac-card-price-badge {
+    background-color: #452b0f !important;
+    color: #fcd34d !important;
+    border-color: #78350f !important;
+}
+
+[data-theme="roost"] .ac-event-item {
+    background-color: #292524 !important;
+    border-color: rgba(217, 119, 6, 0.28) !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .ac-spotlight-box {
+    background-color: #292017 !important;
+    border-color: #78350f !important;
+    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.12) !important;
+}
+
+[data-theme="roost"] .ac-spotlight-chip {
+    background-color: #33271e !important;
+    border-color: rgba(245, 158, 11, 0.25) !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .ac-progress-bar-container {
+    background-color: #332a24 !important;
+}
+
+[data-theme="roost"] .ac-progress-bar-fill {
+    background-color: #d97706 !important;
+}
+
+

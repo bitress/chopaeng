@@ -47,10 +47,13 @@ const styles = `
 [data-theme="celeste"] .snapshot-header {
     background-color: #7c3aed;
 }
+[data-theme="roost"] .snapshot-header {
+    background-color: #a06b43;
+}
 
 .snapshot-title {
     font-size: 1.15rem;
-    color: #fff;
+    color: #fff !important;
     margin: 0;
     display: flex;
     align-items: center;
@@ -63,7 +66,7 @@ const styles = `
     background: rgba(255,255,255,0.22);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    color: #fff;
+    color: #fff !important;
     border: 1px solid rgba(255,255,255,0.3);
     border-radius: 2rem;
     padding: 0.35rem 1rem;
@@ -120,8 +123,12 @@ const styles = `
 }
 .snapshot-section--critters::after { background: var(--nook-green); }
 [data-theme="celeste"] .snapshot-section--critters {
-    background-color: #17243b;
-    border-color: rgba(139,92,246,0.22);
+    background-color: #0f172a;
+    border-color: rgba(167,139,250,0.25);
+}
+[data-theme="roost"] .snapshot-section--critters {
+    background-color: #1c1917;
+    border-color: rgba(217,119,6,0.25);
 }
 
 .snapshot-section--birthdays {
@@ -130,8 +137,12 @@ const styles = `
 }
 .snapshot-section--birthdays::after { background: var(--nook-yellow); }
 [data-theme="celeste"] .snapshot-section--birthdays {
-    background-color: #2b2318;
-    border-color: rgba(251,191,36,0.22);
+    background-color: #0f172a;
+    border-color: rgba(251,191,36,0.25);
+}
+[data-theme="roost"] .snapshot-section--birthdays {
+    background-color: #1c1917;
+    border-color: rgba(245,158,11,0.25);
 }
 
 /* ── Section headers ── */
@@ -149,6 +160,12 @@ const styles = `
     font-size: 0.82rem;
     color: var(--text, #5e564d);
 }
+[data-theme="celeste"] .snapshot-section-label {
+    color: #f8fafc;
+}
+[data-theme="roost"] .snapshot-section-label {
+    color: #fafaf9;
+}
 .snapshot-section-label i {
     font-size: 0.95rem;
 }
@@ -164,16 +181,24 @@ const styles = `
     color: var(--nook-green);
 }
 [data-theme="celeste"] .snapshot-count-badge--critters {
-    background: rgba(139,92,246,0.16);
-    color: #a78bfa;
+    background: rgba(139,92,246,0.22);
+    color: #c4b5fd;
+}
+[data-theme="roost"] .snapshot-count-badge--critters {
+    background: rgba(217,119,6,0.22);
+    color: #fcd34d;
 }
 .snapshot-count-badge--birthdays {
     background: rgba(240,173,78,0.14);
     color: #c88a2a;
 }
 [data-theme="celeste"] .snapshot-count-badge--birthdays {
-    background: rgba(251,191,36,0.16);
-    color: #fbbf24;
+    background: rgba(251,191,36,0.22);
+    color: #fde047;
+}
+[data-theme="roost"] .snapshot-count-badge--birthdays {
+    background: rgba(245,158,11,0.22);
+    color: #fcd34d;
 }
 
 /* ── Creature / villager chips ── */
@@ -194,13 +219,22 @@ const styles = `
     border-color: rgba(55,176,109,0.25);
 }
 [data-theme="celeste"] .snapshot-chip {
-    background: rgba(30,41,59,0.7);
-    border-color: rgba(167,139,250,0.2);
+    background: #1e293b;
+    border-color: rgba(167,139,250,0.25);
 }
 [data-theme="celeste"] .snapshot-chip:hover {
     border-color: rgba(167,139,250,0.5);
-    box-shadow: 0 4px 14px rgba(139,92,246,0.2);
+    box-shadow: 0 4px 14px rgba(139,92,246,0.25);
 }
+[data-theme="roost"] .snapshot-chip {
+    background: #292524;
+    border-color: rgba(217,119,6,0.25);
+}
+[data-theme="roost"] .snapshot-chip:hover {
+    border-color: rgba(245,158,11,0.5);
+    box-shadow: 0 4px 14px rgba(217,119,6,0.25);
+}
+
 .snapshot-chip-icon {
     width: 30px;
     height: 30px;
@@ -211,14 +245,25 @@ const styles = `
     flex-shrink: 0;
 }
 [data-theme="celeste"] .snapshot-chip-icon {
-    background: rgba(139,92,246,0.12);
+    background: rgba(139,92,246,0.18);
 }
+[data-theme="roost"] .snapshot-chip-icon {
+    background: rgba(217,119,6,0.18);
+}
+
 .snapshot-chip-name {
     font-size: 0.72rem;
     font-weight: 700;
     color: var(--text, #5e564d);
     line-height: 1.1;
 }
+[data-theme="celeste"] .snapshot-chip-name {
+    color: #f8fafc;
+}
+[data-theme="roost"] .snapshot-chip-name {
+    color: #fafaf9;
+}
+
 .snapshot-chip-price {
     font-size: 0.65rem;
     font-weight: 800;
@@ -227,13 +272,16 @@ const styles = `
     align-items: center;
     gap: 2px;
 }
-[data-theme="celeste"] .snapshot-chip-price { color: #fbbf24; }
+[data-theme="celeste"] .snapshot-chip-price { color: #fde047; }
+[data-theme="roost"] .snapshot-chip-price { color: #fcd34d; }
+
 .snapshot-chip-species {
     font-size: 0.62rem;
     color: #999;
     font-weight: 600;
 }
 [data-theme="celeste"] .snapshot-chip-species { color: #a5b4fc; }
+[data-theme="roost"] .snapshot-chip-species { color: #fed7aa; }
 
 /* ── Empty state ── */
 .snapshot-empty {
@@ -245,6 +293,8 @@ const styles = `
     color: #aaa;
     font-weight: 600;
 }
+[data-theme="celeste"] .snapshot-empty { color: #94a3b8; }
+[data-theme="roost"] .snapshot-empty { color: #a8a29e; }
 .snapshot-empty i { font-size: 1.1rem; opacity: 0.5; }
 
 /* ── Section CTA button ── */
@@ -272,6 +322,10 @@ const styles = `
 [data-theme="celeste"] .snapshot-cta:hover { color: #c4b5fd; }
 [data-theme="celeste"] .snapshot-cta--warn { color: #fbbf24; }
 [data-theme="celeste"] .snapshot-cta--warn:hover { color: #fcd34d; }
+[data-theme="roost"] .snapshot-cta { color: #f59e0b; }
+[data-theme="roost"] .snapshot-cta:hover { color: #fbbf24; }
+[data-theme="roost"] .snapshot-cta--warn { color: #f59e0b; }
+[data-theme="roost"] .snapshot-cta--warn:hover { color: #fbbf24; }
 
 /* ── Quick links ── */
 .snapshot-links {
@@ -283,6 +337,7 @@ const styles = `
     border-top: 1px solid rgba(0,0,0,0.05);
 }
 [data-theme="celeste"] .snapshot-links { border-color: rgba(167,139,250,0.15); }
+[data-theme="roost"] .snapshot-links { border-color: rgba(217,119,6,0.15); }
 
 .snapshot-link-btn {
     display: inline-flex;
@@ -447,7 +502,7 @@ const TodaySnapshot: React.FC = () => {
                             <div className="snapshot-section snapshot-section--critters">
                                 <div className="snapshot-section-header">
                                     <span className="snapshot-section-label">
-                                        <i className="fa-solid fa-fish" style={{ color: 'var(--nook-green)' }} aria-hidden="true" />
+                                        <i className="fa-solid fa-fish text-success" aria-hidden="true" />
                                         Catchable Right Now
                                     </span>
                                     <span className="snapshot-count-badge snapshot-count-badge--critters">
@@ -467,8 +522,8 @@ const TodaySnapshot: React.FC = () => {
                                                 />
                                                 <div>
                                                     <div className="snapshot-chip-name">{c.name}</div>
-                                                    <div className="snapshot-chip-price">
-                                                        <i className="fa-solid fa-coins" aria-hidden="true" />
+                                                    <div className="snapshot-chip-price text-warning">
+                                                        <i className="fa-solid fa-coins text-warning" aria-hidden="true" />
                                                         {c.sell.toLocaleString()}
                                                     </div>
                                                 </div>
@@ -497,7 +552,7 @@ const TodaySnapshot: React.FC = () => {
                             <div className="snapshot-section snapshot-section--birthdays">
                                 <div className="snapshot-section-header">
                                     <span className="snapshot-section-label">
-                                        <i className="fa-solid fa-cake-candles" style={{ color: '#e0a030' }} aria-hidden="true" />
+                                        <i className="fa-solid fa-cake-candles text-warning" aria-hidden="true" />
                                         Today's Birthdays
                                     </span>
                                     <span className="snapshot-count-badge snapshot-count-badge--birthdays">
@@ -544,13 +599,13 @@ const TodaySnapshot: React.FC = () => {
                 {/* ── Quick Links ── */}
                 <div className="snapshot-links snapshot-stagger-3">
                     <Link to="/events" className="snapshot-link-btn snapshot-link-btn--events" onClick={() => playChimeClick()}>
-                        <i className="fa-solid fa-calendar-days" aria-hidden="true" /> Events
+                        <i className="fa-solid fa-calendar-days text-success" aria-hidden="true" /> Events
                     </Link>
                     <Link to="/my-collection" className="snapshot-link-btn snapshot-link-btn--collection" onClick={() => playChimeClick()}>
-                        <i className="fa-solid fa-clipboard-check" aria-hidden="true" /> My Collection
+                        <i className="fa-solid fa-clipboard-check text-primary" aria-hidden="true" /> My Collection
                     </Link>
                     <Link to="/wishlist" className="snapshot-link-btn snapshot-link-btn--wishlist" onClick={() => playChimeClick()}>
-                        <i className="fa-solid fa-heart" aria-hidden="true" /> Wishlist
+                        <i className="fa-solid fa-heart text-danger" aria-hidden="true" /> Wishlist
                     </Link>
                 </div>
             </div>

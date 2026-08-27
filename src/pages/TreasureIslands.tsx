@@ -8,6 +8,7 @@ import { useFavoriteIslands } from "../hooks/useFavoriteIslands";
 import { ACNH_FINDER_API_BASE, DODO_API_BASE } from "../config/api";
 import RevealErrorPopup from "../components/RevealErrorPopup";
 import DisclaimerBanner from "../components/DisclaimerBanner";
+import { HowItWorksExplainer, TREASURE_ISLANDS_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
 
 type SearchMode = "FILTER" | "ITEM" | "VILLAGER";
@@ -514,6 +515,9 @@ const TreasureIslands = () => {
             {/* ════════════════ MAIN CONTENT & FILTER BAR ════════════════ */}
             <div className="container py-4">
 
+                {/* ── REUSABLE HOW IT WORKS EXPLAINER ── */}
+                <HowItWorksExplainer {...TREASURE_ISLANDS_EXPLAINER_CONFIG} className="mb-4" defaultExpanded={false} />
+
                 {/* Filter Tabs & Sort Controls */}
                 <div className="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
                     
@@ -840,21 +844,16 @@ const TreasureIslands = () => {
                                             {/* Action Button / Order Panel */}
                                             {isOrder ? (
                                                 <div
-                                                    className="rounded-4 p-3 mb-2"
-                                                    style={{
-                                                        background: 'linear-gradient(135deg, #f0f4ff 0%, #ede8ff 100%)',
-                                                        border: '1.5px solid #c7bfff'
-                                                    }}
+                                                    className="direct-order-box rounded-4 p-3 mb-2"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     <div className="d-flex align-items-center gap-2 mb-2">
                                                         <span
-                                                            className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                                            style={{ width: 26, height: 26, background: '#7c6fff', color: '#fff', fontSize: '0.75rem' }}
+                                                            className="direct-order-icon rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                                                         >
                                                             <i className="fa-solid fa-box-open"></i>
                                                         </span>
-                                                        <span className="fw-black x-small text-uppercase" style={{ color: '#5a47c9' }}>Direct Order Required</span>
+                                                        <span className="direct-order-label fw-black x-small text-uppercase">Direct Order Required</span>
                                                     </div>
                                                     <Link
                                                         to="/order"

@@ -1,0 +1,713 @@
+/* ═══════════════════════════════════════════════════════════════
+   HOW IT WORKS EXPLAINER COMPONENT STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+.hiw-container {
+    background: #ffffff;
+    border: 1.5px solid rgba(55, 176, 109, 0.28);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    margin-bottom: 2rem;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hiw-variant-compact {
+    padding: 1.15rem;
+    border-radius: 1rem;
+}
+
+.hiw-variant-minimal {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+/* ── Header ── */
+.hiw-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    user-select: none;
+}
+
+.hiw-header.cursor-pointer:hover .hiw-title {
+    color: #15803d;
+}
+
+.hiw-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.hiw-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.hiw-header.cursor-pointer:hover .hiw-icon-badge {
+    transform: scale(1.06);
+}
+
+.hiw-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    background: rgba(34, 197, 94, 0.14);
+    color: #15803d;
+}
+
+.hiw-title {
+    font-size: 1.12rem;
+    font-weight: 900;
+    color: #1e293b;
+    font-family: var(--font-brand, 'Outfit', sans-serif);
+    letter-spacing: -0.01em;
+    transition: color 0.2s ease;
+}
+
+.hiw-subtitle {
+    font-size: 0.84rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 0.15rem;
+}
+
+.hiw-collapse-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #f8fafc;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.hiw-collapse-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* ── Body & Steps Grid ── */
+.hiw-body {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px dashed rgba(55, 176, 109, 0.22);
+}
+
+.hiw-steps-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 576px) {
+    .hiw-steps-grid.hiw-steps-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .hiw-steps-grid.hiw-steps-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .hiw-steps-grid.hiw-steps-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 992px) {
+    .hiw-steps-grid.hiw-steps-4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ── Step Card ── */
+.hiw-step-item {
+    display: flex;
+}
+
+.hiw-step-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.15rem;
+    width: 100%;
+    display: flex;
+    /* was `flex-column: column` — not a real CSS property, so this card was
+       silently falling back to the default row direction and laying the
+       header/title/description/tip out sideways instead of stacked. */
+    flex-direction: column;
+    justify-content: flex-start;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.hiw-step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.hiw-step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.hiw-step-num-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hiw-step-num {
+    font-size: 0.72rem;
+    font-weight: 900;
+    color: #64748b;
+    font-family: var(--font-brand, monospace);
+    letter-spacing: 0.05em;
+    background: #e2e8f0;
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.35rem;
+}
+
+.hiw-step-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #22c55e;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+}
+
+.hiw-step-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(34, 197, 94, 0.1);
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.hiw-step-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.01em;
+}
+
+.hiw-step-desc {
+    font-size: 0.82rem;
+    color: #475569;
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.hiw-step-tip {
+    margin-top: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    line-height: 1.4;
+}
+
+.hiw-tip-icon {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+}
+
+/* ── FAQ Accordion ── */
+.hiw-faqs-section {
+    border-color: rgba(55, 176, 109, 0.2) !important;
+}
+
+.hiw-faqs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.hiw-faq-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.hiw-faq-item.open {
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.hiw-faq-question {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-size: 0.88rem;
+    color: #1e293b;
+    cursor: pointer;
+}
+
+.hiw-faq-toggle {
+    font-size: 0.75rem;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.hiw-faq-answer {
+    padding: 0 1rem 0.85rem 1rem;
+    font-size: 0.82rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
+/* ── Modal Dialog ── */
+.hiw-modal-backdrop {
+    position: fixed;
+    /* `inset: 0` instead of top/left/width:100vw/height:100vh — 100vw can
+       overshoot the viewport and cause a horizontal scrollbar on some
+       browsers because it doesn't account for the vertical scrollbar's
+       own width. inset:0 always matches the actual viewport exactly. */
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: hiwFadeIn 0.2s ease-out;
+}
+
+.hiw-modal-dialog {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    max-width: 780px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    border: 1.5px solid rgba(55, 176, 109, 0.35);
+    animation: hiwSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hiw-modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #f8fafc;
+}
+
+.hiw-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.hiw-close-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+}
+
+.hiw-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    /* keeps scroll momentum inside the dialog on touch devices instead of
+       "leaking" into the page behind it once you hit the top/bottom */
+    overscroll-behavior: contain;
+}
+
+@keyframes hiwFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes hiwSlideUp {
+    from {
+        transform: translateY(20px) scale(0.97);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ── Keyboard focus visibility ──
+   The modal now traps focus and closes on Escape (see the JS component),
+   so anyone tabbing through it needs a visible ring — relying on the
+   browser default isn't safe if a global reset suppresses it elsewhere. */
+.hiw-collapse-btn:focus-visible,
+.hiw-close-btn:focus-visible,
+.hiw-faq-question:focus-visible,
+.hiw-header[role="button"]:focus-visible {
+    outline: 2px solid #16a34a;
+    outline-offset: 2px;
+}
+
+[data-theme="celeste"] .hiw-collapse-btn:focus-visible,
+[data-theme="celeste"] .hiw-close-btn:focus-visible,
+[data-theme="celeste"] .hiw-faq-question:focus-visible,
+[data-theme="celeste"] .hiw-header[role="button"]:focus-visible {
+    outline-color: #a78bfa;
+}
+
+[data-theme="roost"] .hiw-collapse-btn:focus-visible,
+[data-theme="roost"] .hiw-close-btn:focus-visible,
+[data-theme="roost"] .hiw-faq-question:focus-visible,
+[data-theme="roost"] .hiw-header[role="button"]:focus-visible {
+    outline-color: #fbbf24;
+}
+
+/* ── Respect reduced-motion preference ── */
+@media (prefers-reduced-motion: reduce) {
+
+    .hiw-container,
+    .hiw-icon-badge,
+    .hiw-collapse-btn,
+    .hiw-step-card,
+    .hiw-title,
+    .hiw-faq-item,
+    .hiw-close-btn {
+        transition: none !important;
+    }
+
+    .hiw-step-card:hover,
+    .hiw-header.cursor-pointer:hover .hiw-icon-badge {
+        transform: none !important;
+    }
+
+    .hiw-modal-backdrop,
+    .hiw-modal-dialog {
+        animation: none !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME OVERRIDES: CELESTE THEME (Midnight Navy & Violet)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="celeste"] .hiw-container {
+    background: #1e293b;
+    border-color: rgba(167, 139, 250, 0.3);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="celeste"] .hiw-header.cursor-pointer:hover .hiw-title {
+    color: #c4b5fd;
+}
+
+[data-theme="celeste"] .hiw-icon-badge {
+    background: rgba(124, 58, 237, 0.25);
+    color: #c4b5fd;
+}
+
+[data-theme="celeste"] .hiw-badge {
+    background: rgba(124, 58, 237, 0.3);
+    color: #ddd6fe;
+}
+
+[data-theme="celeste"] .hiw-title {
+    color: #f8fafc;
+}
+
+[data-theme="celeste"] .hiw-subtitle {
+    color: #a5b4fc;
+}
+
+[data-theme="celeste"] .hiw-collapse-btn {
+    background: #0f172a;
+    border-color: rgba(167, 139, 250, 0.25);
+    color: #cbd5e1;
+}
+
+[data-theme="celeste"] .hiw-collapse-btn:hover {
+    background: #2b3658;
+    color: #fcd34d;
+}
+
+[data-theme="celeste"] .hiw-body {
+    border-top-color: rgba(167, 139, 250, 0.22);
+}
+
+[data-theme="celeste"] .hiw-step-card {
+    background: #0f172a;
+    border-color: rgba(167, 139, 250, 0.22);
+}
+
+[data-theme="celeste"] .hiw-step-card:hover {
+    border-color: rgba(167, 139, 250, 0.5);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="celeste"] .hiw-step-num {
+    background: #2b3658;
+    color: #cbd5e1;
+}
+
+[data-theme="celeste"] .hiw-step-icon {
+    background: #7c3aed;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.5);
+}
+
+[data-theme="celeste"] .hiw-step-badge {
+    background: rgba(124, 58, 237, 0.25);
+    color: #ddd6fe;
+    border-color: rgba(167, 139, 250, 0.35);
+}
+
+[data-theme="celeste"] .hiw-step-title {
+    color: #f8fafc;
+}
+
+[data-theme="celeste"] .hiw-step-desc {
+    color: #cbd5e1;
+}
+
+[data-theme="celeste"] .hiw-step-tip {
+    border-top-color: rgba(167, 139, 250, 0.2);
+    color: #a5b4fc;
+}
+
+[data-theme="celeste"] .hiw-faqs-section {
+    border-top-color: rgba(167, 139, 250, 0.22) !important;
+}
+
+[data-theme="celeste"] .hiw-faqs-section h4 {
+    color: #f8fafc !important;
+}
+
+[data-theme="celeste"] .hiw-faq-item {
+    background: #0f172a;
+    border-color: rgba(167, 139, 250, 0.22);
+}
+
+[data-theme="celeste"] .hiw-faq-item.open {
+    border-color: rgba(167, 139, 250, 0.5);
+}
+
+[data-theme="celeste"] .hiw-faq-question {
+    color: #f8fafc;
+}
+
+[data-theme="celeste"] .hiw-faq-toggle {
+    color: #a5b4fc;
+}
+
+[data-theme="celeste"] .hiw-faq-answer {
+    color: #cbd5e1;
+}
+
+[data-theme="celeste"] .hiw-modal-dialog {
+    background: #1e293b;
+    border-color: rgba(167, 139, 250, 0.4);
+}
+
+[data-theme="celeste"] .hiw-modal-header {
+    background: #0f172a;
+    border-bottom-color: rgba(167, 139, 250, 0.25);
+}
+
+[data-theme="celeste"] .hiw-close-btn {
+    background: #0f172a;
+    border-color: rgba(167, 139, 250, 0.3);
+    color: #cbd5e1;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME OVERRIDES: THE ROOST THEME (Warm Roasted Espresso & Caramel)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="roost"] .hiw-container {
+    background: #292524;
+    border-color: rgba(217, 119, 6, 0.3);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="roost"] .hiw-header.cursor-pointer:hover .hiw-title {
+    color: #fcd34d;
+}
+
+[data-theme="roost"] .hiw-icon-badge {
+    background: rgba(217, 119, 6, 0.22);
+    color: #fbbf24;
+}
+
+[data-theme="roost"] .hiw-badge {
+    background: rgba(217, 119, 6, 0.25);
+    color: #fed7aa;
+}
+
+[data-theme="roost"] .hiw-title {
+    color: #fafaf9;
+}
+
+[data-theme="roost"] .hiw-subtitle {
+    color: #d1beaf;
+}
+
+[data-theme="roost"] .hiw-collapse-btn {
+    background: #1c1917;
+    border-color: rgba(217, 119, 6, 0.25);
+    color: #ded1c7;
+}
+
+[data-theme="roost"] .hiw-collapse-btn:hover {
+    background: #40362f;
+    color: #fcd34d;
+}
+
+[data-theme="roost"] .hiw-body {
+    border-top-color: rgba(217, 119, 6, 0.22);
+}
+
+[data-theme="roost"] .hiw-step-card {
+    background: #1c1917;
+    border-color: rgba(217, 119, 6, 0.22);
+}
+
+[data-theme="roost"] .hiw-step-card:hover {
+    border-color: rgba(217, 119, 6, 0.5);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="roost"] .hiw-step-num {
+    background: #40362f;
+    color: #ded1c7;
+}
+
+[data-theme="roost"] .hiw-step-icon {
+    background: #d97706;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(217, 119, 6, 0.5);
+}
+
+[data-theme="roost"] .hiw-step-badge {
+    background: rgba(217, 119, 6, 0.22);
+    color: #fed7aa;
+    border-color: rgba(217, 119, 6, 0.35);
+}
+
+[data-theme="roost"] .hiw-step-title {
+    color: #fafaf9;
+}
+
+[data-theme="roost"] .hiw-step-desc {
+    color: #ded1c7;
+}
+
+[data-theme="roost"] .hiw-step-tip {
+    border-top-color: rgba(217, 119, 6, 0.2);
+    color: #d1beaf;
+}
+
+[data-theme="roost"] .hiw-faqs-section {
+    border-top-color: rgba(217, 119, 6, 0.22) !important;
+}
+
+[data-theme="roost"] .hiw-faqs-section h4 {
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .hiw-faq-item {
+    background: #1c1917;
+    border-color: rgba(217, 119, 6, 0.22);
+}
+
+[data-theme="roost"] .hiw-faq-item.open {
+    border-color: rgba(217, 119, 6, 0.5);
+}
+
+[data-theme="roost"] .hiw-faq-question {
+    color: #fafaf9;
+}
+
+[data-theme="roost"] .hiw-faq-toggle {
+    color: #d1beaf;
+}
+
+[data-theme="roost"] .hiw-faq-answer {
+    color: #ded1c7;
+}
+
+[data-theme="roost"] .hiw-modal-dialog {
+    background: #292524;
+    border-color: rgba(217, 119, 6, 0.4);
+}
+
+[data-theme="roost"] .hiw-modal-header {
+    background: #1c1917;
+    border-bottom-color: rgba(217, 119, 6, 0.25);
+}
+
+[data-theme="roost"] .hiw-close-btn {
+    background: #1c1917;
+    border-color: rgba(217, 119, 6, 0.3);
+    color: #ded1c7;
+}

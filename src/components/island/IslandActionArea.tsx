@@ -80,11 +80,11 @@ export const IslandActionArea: React.FC<IslandActionAreaProps> = ({
                 </div>
 
                 {/* Pocket Status Preview */}
-                <div className="bg-white rounded-4 border p-3 mb-3 shadow-2xs">
+                <div className="order-bot-pocket-card rounded-4 p-3 mb-3 shadow-2xs">
                     <div className="d-flex align-items-center justify-content-between mb-2">
                         <div className="d-flex align-items-center gap-2">
                             <i className="fa-solid fa-bag-shopping text-success"></i>
-                            <span className="fw-bold small text-dark">Your Loaded Pocket</span>
+                            <span className="fw-bold small">Your Loaded Pocket</span>
                         </div>
                         <span className="badge bg-success bg-opacity-10 text-success rounded-pill fw-bold x-small">
                             {totalOrderCount} / {ORDER_MAX} Slots ({capacityPct}%)

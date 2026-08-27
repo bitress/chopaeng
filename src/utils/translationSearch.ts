@@ -66,8 +66,45 @@ export const buildTranslationIndex = async (): Promise<Map<string, TranslationIn
 };
 
 /**
- * Search items by translated name in the specified language.
- * Returns matching English item names.
+ * Search items by translated name across all supported languages.
+ * Returns matching English item names with the translation details.
+ */
+export const searchAllTranslations = (
+    indexMap: Map<string, TranslationIndex>,
+    query: string
+): { name: string; translatedName: string; langCode: string; langLabel: string }[] => {
+    if (!query.trim()) return [];
+    const lowerQuery = query.toLowerCase();
+    const results: { name: string; translatedName: string; langCode: string; langLabel: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const lang of SUPPORTED_LANGUAGES) {
+        if (lang.code === 'en') continue;
+        const langIndex = indexMap.get(lang.code);
+        if (!langIndex) continue;
+
+        for (const [translatedKey, entries] of langIndex) {
+            if (translatedKey.includes(lowerQuery)) {
+                for (const entry of entries) {
+                    if (!seen.has(entry.name)) {
+                        seen.add(entry.name);
+                        results.push({
+                            name: entry.name,
+                            translatedName: entry.translatedName,
+                            langCode: lang.code,
+                            langLabel: lang.label,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    return results;
+};
+
+/**
+ * Search items by translated name in a specific language index.
  */
 export const searchByTranslation = (
     index: TranslationIndex,
@@ -91,3 +128,5 @@ export const searchByTranslation = (
 
     return results;
 };
+
+

@@ -1,10 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { CatalogEntity } from '../../data/commandBuilderData';
 import type { PocketItem } from '../../hooks/useCommandBuilderPockets';
 import { getVariantCommandParts, getVariantKey, getVariantLabel } from '../../utils/commandBuilderHex';
 import { playChimeClick } from '../../utils/kkAudioSynthesizer';
+import {
+    buildTranslationIndex,
+    searchAllTranslations,
+    SUPPORTED_LANGUAGES,
+    type TranslationIndex,
+} from '../../utils/translationSearch';
 
-const FALLBACK_IMAGE = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f3f5'/%3E%3Cpath d='M30 65 L45 45 L58 58 L68 42 L75 65 Z' fill='%23ced4da'/%3E%3Ccircle cx='38' cy='35' r='7' fill='%23ced4da'/%3E%3C/svg%3E";
+const FALLBACK_IMAGE =
+    "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f1f3f5'/%3E%3Cpath d='M30 65 L45 45 L58 58 L68 42 L75 65 Z' fill='%23ced4da'/%3E%3Ccircle cx='38' cy='35' r='7' fill='%23ced4da'/%3E%3C/svg%3E";
 
 const QUICK_PRESETS = [
     { name: 'Nook Miles Ticket', icon: 'fa-ticket', query: 'Nook Miles Ticket' },
@@ -63,7 +70,15 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategoryTab, setSelectedCategoryTab] = useState('all');
+    const [selectedLanguage, setSelectedLanguage] = useState('all');
+    const [translationMap, setTranslationMap] = useState<Map<string, TranslationIndex> | null>(null);
     const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'warning' } | null>(null);
+
+    // Lazy load translation index on modal open
+    useEffect(() => {
+        if (!isOpen) return;
+        buildTranslationIndex().then((idx) => setTranslationMap(idx)).catch(() => {});
+    }, [isOpen]);
 
     // Map active quantities for fast lookup
     const orderQuantityMap = useMemo(() => {
@@ -77,6 +92,37 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
         dropItems.forEach((p) => map.set(p.item.id, p.quantity));
         return map;
     }, [dropItems]);
+
+    // Fast multi-language item match lookup
+    const translatedMatches = useMemo(() => {
+        if (!searchQuery.trim() || !translationMap) return new Map<string, { translatedName: string; langLabel: string }>();
+        const q = searchQuery.toLowerCase().trim();
+        const map = new Map<string, { translatedName: string; langLabel: string }>();
+
+        if (selectedLanguage === 'all') {
+            const allMatches = searchAllTranslations(translationMap, q);
+            for (const m of allMatches) {
+                map.set(m.name.toLowerCase(), { translatedName: m.translatedName, langLabel: m.langLabel });
+            }
+        } else if (selectedLanguage !== 'en') {
+            const langIndex = translationMap.get(selectedLanguage);
+            if (langIndex) {
+                for (const [tKey, entries] of langIndex) {
+                    if (tKey.includes(q)) {
+                        for (const e of entries) {
+                            const langMeta = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage);
+                            map.set(e.name.toLowerCase(), {
+                                translatedName: e.translatedName,
+                                langLabel: langMeta?.label || selectedLanguage,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        return map;
+    }, [searchQuery, translationMap, selectedLanguage]);
 
     // Filter items
     const filteredItems = useMemo(() => {
@@ -96,14 +142,16 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
         }
 
         if (q) {
-            list = list.filter((item) =>
-                item.name.toLowerCase().includes(q) ||
-                (item.category && item.category.toLowerCase().includes(q))
-            );
+            list = list.filter((item) => {
+                const lowerName = item.name.toLowerCase();
+                const matchesDirect = lowerName.includes(q) || (item.category && item.category.toLowerCase().includes(q));
+                const matchesTrans = translatedMatches.has(lowerName);
+                return matchesDirect || matchesTrans;
+            });
         }
 
         return list.slice(0, 60); // Limit to top 60 for performance
-    }, [catalog, searchQuery, selectedCategoryTab]);
+    }, [catalog, searchQuery, selectedCategoryTab, translatedMatches]);
 
     if (!isOpen) return null;
 
@@ -144,7 +192,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
         >
             <div
                 className="bg-white rounded-5 shadow-2xl overflow-hidden border-0 position-relative w-100 animate-up"
-                style={{ maxWidth: '820px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+                style={{ maxWidth: '840px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -155,7 +203,12 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                             Quick Add Items to Inventory
                         </h2>
                         <span className="tiny-text text-muted font-monospace">
-                            Adding to: <strong className={initialTarget === 'drop' ? 'text-info' : 'text-success'}>{initialTarget.toUpperCase()}</strong> · Order: <strong className="text-success">{totalOrderCount}/40</strong> · Drop: <strong className="text-info">{totalDropCount}/9</strong>
+                            Adding to:{' '}
+                            <strong className={initialTarget === 'drop' ? 'text-info' : 'text-success'}>
+                                {initialTarget.toUpperCase()}
+                            </strong>{' '}
+                            · Order: <strong className="text-success">{totalOrderCount}/40</strong> · Drop:{' '}
+                            <strong className="text-info">{totalDropCount}/9</strong>
                         </span>
                     </div>
 
@@ -175,7 +228,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                         <input
                             type="search"
                             className="form-control rounded-pill ps-5 pe-5 py-2 fw-medium border shadow-xs"
-                            placeholder="Type to search items, DIYs, materials, or villagers..."
+                            placeholder="Search in English, 日本語, 한국어, 繁/简体中文, Deutsch, Français, Español..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             autoFocus
@@ -189,6 +242,39 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                 <i className="fa-solid fa-circle-xmark"></i>
                             </button>
                         )}
+                    </div>
+
+                    {/* Language Selector Filter Row */}
+                    <div className="d-flex align-items-center gap-1 overflow-x-auto pb-2 mb-2 no-scrollbar border-bottom">
+                        <span className="tiny-text fw-bold text-muted text-uppercase text-nowrap me-1">
+                            <i className="fa-solid fa-language me-1 text-primary"></i> Lang:
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedLanguage('all')}
+                            className={`btn btn-xs rounded-pill text-nowrap fw-bold px-2 py-0 transition-all ${
+                                selectedLanguage === 'all' ? 'btn-dark text-white' : 'btn-light text-muted border'
+                            }`}
+                            style={{ fontSize: '0.7rem' }}
+                        >
+                            All Languages
+                        </button>
+                        {SUPPORTED_LANGUAGES.map((lang) => {
+                            const isSelected = selectedLanguage === lang.code;
+                            return (
+                                <button
+                                    key={lang.code}
+                                    type="button"
+                                    onClick={() => setSelectedLanguage(lang.code)}
+                                    className={`btn btn-xs rounded-pill text-nowrap fw-bold px-2 py-0 transition-all ${
+                                        isSelected ? 'btn-primary text-white shadow-2xs' : 'btn-light text-muted border'
+                                    }`}
+                                    style={{ fontSize: '0.7rem' }}
+                                >
+                                    {lang.label}
+                                </button>
+                            );
+                        })}
                     </div>
 
                     {/* Quick Category Pills */}
@@ -205,7 +291,11 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                     }`}
                                     style={{ fontSize: '0.75rem' }}
                                 >
-                                    <i className={`fa-solid ${tab.icon} me-1 ${active ? 'text-white' : 'text-success'}`}></i>
+                                    <i
+                                        className={`fa-solid ${tab.icon} me-1 ${
+                                            active ? 'text-white' : 'text-success'
+                                        }`}
+                                    ></i>
                                     {tab.label}
                                 </button>
                             );
@@ -232,28 +322,46 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
 
                 {/* Status Notice if any */}
                 {statusMessage && (
-                    <div className={`py-1 px-3 text-center small fw-bold animate-fade ${statusMessage.type === 'success' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis'}`}>
-                        <i className={`fa-solid ${statusMessage.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'} me-1`}></i>
+                    <div
+                        className={`py-1 px-3 text-center small fw-bold animate-fade ${
+                            statusMessage.type === 'success'
+                                ? 'bg-success-subtle text-success'
+                                : 'bg-warning-subtle text-warning-emphasis'
+                        }`}
+                    >
+                        <i
+                            className={`fa-solid ${
+                                statusMessage.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'
+                            } me-1`}
+                        ></i>
                         {statusMessage.text}
                     </div>
                 )}
 
                 {/* Items Results Grid */}
-                <div className="p-3 px-4 overflow-y-auto flex-grow-1" style={{ backgroundColor: '#fffdfa', maxHeight: '420px' }}>
+                <div
+                    className="p-3 px-4 overflow-y-auto flex-grow-1"
+                    style={{ backgroundColor: '#fffdfa', maxHeight: '420px' }}
+                >
                     {filteredItems.length === 0 ? (
                         <div className="text-center py-5 text-muted">
                             <i className="fa-solid fa-box-open fs-2 mb-2 opacity-50"></i>
                             <h6 className="fw-bold text-dark mb-1">No matching items found</h6>
-                            <p className="small mb-0">Try searching for common item names like "Iron", "Raymond", or "Crown".</p>
+                            <p className="small mb-0">
+                                Try searching for names in English or your native language (e.g. "金鉱石", "마일",
+                                "Crown").
+                            </p>
                         </div>
                     ) : (
                         <div className="row g-2">
                             {filteredItems.map((item) => {
-                                const defaultVariant = item.variations && item.variations.length > 0 ? item.variations[0] : null;
+                                const defaultVariant =
+                                    item.variations && item.variations.length > 0 ? item.variations[0] : null;
                                 const vKey = getVariantKey(defaultVariant);
                                 const pocketId = vKey !== 'NA' ? `${item.id}:${vKey}` : item.id;
                                 const orderQty = orderQuantityMap.get(pocketId) || 0;
                                 const dropQty = dropQuantityMap.get(pocketId) || 0;
+                                const transInfo = translatedMatches.get(item.name.toLowerCase());
 
                                 return (
                                     <div key={item.id} className="col-12 col-md-6">
@@ -268,26 +376,43 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                     alt={item.name}
                                                     className="w-100 h-100 object-fit-contain p-1"
                                                     loading="lazy"
-                                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = FALLBACK_IMAGE;
+                                                    }}
                                                 />
                                             </div>
 
                                             {/* Name & Category */}
                                             <div className="min-w-0 flex-grow-1">
-                                                <strong className="d-block small text-dark text-truncate" title={item.name}>
+                                                <strong
+                                                    className="d-block small text-dark text-truncate"
+                                                    title={item.name}
+                                                >
                                                     {item.name}
                                                 </strong>
-                                                <span className="tiny-text text-muted text-truncate d-block">
-                                                    {item.category}
-                                                    {item.variations && item.variations.length > 1 && ` · ${item.variations.length} vars`}
-                                                </span>
+                                                {transInfo ? (
+                                                    <span className="badge bg-light text-primary border rounded-pill px-2 py-0 tiny-text text-truncate d-inline-block mw-100">
+                                                        {transInfo.translatedName} ({transInfo.langLabel})
+                                                    </span>
+                                                ) : (
+                                                    <span className="tiny-text text-muted text-truncate d-block">
+                                                        {item.category}
+                                                        {item.variations &&
+                                                            item.variations.length > 1 &&
+                                                            ` · ${item.variations.length} vars`}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {/* Action Buttons */}
                                             <div className="d-flex align-items-center gap-1 flex-shrink-0">
                                                 {/* Order Button / Stepper */}
                                                 {orderQty > 0 ? (
-                                                    <div className="btn-group rounded-pill border border-success overflow-hidden" style={{ backgroundColor: '#f0fdf4' }}>
+                                                    <div
+                                                        className="btn-group rounded-pill border border-success overflow-hidden"
+                                                        style={{ backgroundColor: '#f0fdf4' }}
+                                                    >
                                                         <button
                                                             type="button"
                                                             className="btn btn-xs text-success fw-bold px-2 py-1 border-0"
@@ -323,7 +448,13 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
 
                                                 {/* Drop Button / Stepper */}
                                                 {dropQty > 0 ? (
-                                                    <div className="btn-group rounded-pill border border-info overflow-hidden" style={{ backgroundColor: '#f0f9ff', borderColor: '#0284c7' }}>
+                                                    <div
+                                                        className="btn-group rounded-pill border border-info overflow-hidden"
+                                                        style={{
+                                                            backgroundColor: '#f0f9ff',
+                                                            borderColor: '#0284c7',
+                                                        }}
+                                                    >
                                                         <button
                                                             type="button"
                                                             className="btn btn-xs text-info fw-bold px-2 py-1 border-0"
@@ -333,7 +464,10 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                         >
                                                             −
                                                         </button>
-                                                        <span className="x-small px-1 fw-bold font-monospace d-flex align-items-center" style={{ color: '#0284c7' }}>
+                                                        <span
+                                                            className="x-small px-1 fw-bold font-monospace d-flex align-items-center"
+                                                            style={{ color: '#0284c7' }}
+                                                        >
                                                             {dropQty}
                                                         </span>
                                                         <button

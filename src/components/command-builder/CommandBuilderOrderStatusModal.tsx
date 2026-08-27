@@ -70,7 +70,7 @@ export const CommandBuilderOrderStatusModal = ({
             style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(4px)', zIndex: 1060 }}
         >
             <div className="modal-dialog modal-md modal-dialog-centered">
-                <div className="modal-content rounded-5 border-0 shadow-lg overflow-hidden" style={{ background: '#fdfbf7' }}>
+                <div className="modal-content rounded-5 border-0 shadow-lg overflow-hidden" style={{ backgroundColor: 'var(--paper, #fdfbf7)' }}>
                     
                     {/* Header */}
                     <div className="modal-header border-0 bg-white px-4 py-3 shadow-sm d-flex align-items-center justify-content-between">

@@ -215,6 +215,90 @@ const Guide: React.FC = () => {
                     border-color: #16a34a !important;
                     transform: translateY(-1px);
                 }
+
+                /* ═══════════════════════════════════════════════════════════
+                   CELESTE THEME OVERRIDES (Guides.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="celeste"] .guide-nav-group {
+                    background: #0f172a;
+                    border-color: rgba(167, 139, 250, 0.25);
+                }
+                [data-theme="celeste"] .guide-nav-tab {
+                    color: #cbd5e1;
+                }
+                [data-theme="celeste"] .guide-nav-tab:hover {
+                    color: #f8fafc;
+                    background: #2b3658;
+                }
+                [data-theme="celeste"] .guide-nav-tab.active {
+                    background: #7c3aed !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 3px 12px rgba(124, 58, 237, 0.45) !important;
+                    border-color: #a78bfa !important;
+                }
+                [data-theme="celeste"] .content-card,
+                [data-theme="celeste"] .guide-top-banner {
+                    background-color: #1e293b !important;
+                    border-color: rgba(167, 139, 250, 0.25) !important;
+                }
+                [data-theme="celeste"] .step-card-box {
+                    background-color: #0f172a !important;
+                    border-color: rgba(167, 139, 250, 0.2) !important;
+                }
+                [data-theme="celeste"] .dialogue-bubble {
+                    background-color: #0f172a !important;
+                    border-color: rgba(167, 139, 250, 0.25) !important;
+                }
+                [data-theme="celeste"] .dialogue-bubble p {
+                    background-color: #1e293b !important;
+                    border-color: rgba(167, 139, 250, 0.25) !important;
+                    color: #4ade80 !important;
+                }
+                [data-theme="celeste"] .rule-icon-box {
+                    background-color: #1e293b !important;
+                }
+
+                /* ═══════════════════════════════════════════════════════════
+                   ROOST THEME OVERRIDES (Guides.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="roost"] .guide-nav-group {
+                    background: #1c1917;
+                    border-color: rgba(217, 119, 6, 0.25);
+                }
+                [data-theme="roost"] .guide-nav-tab {
+                    color: #d1beaf;
+                }
+                [data-theme="roost"] .guide-nav-tab:hover {
+                    color: #fafaf9;
+                    background: #40362f;
+                }
+                [data-theme="roost"] .guide-nav-tab.active {
+                    background: #a06b43 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 3px 12px rgba(160, 107, 67, 0.45) !important;
+                    border-color: #f59e0b !important;
+                }
+                [data-theme="roost"] .content-card,
+                [data-theme="roost"] .guide-top-banner {
+                    background-color: #292524 !important;
+                    border-color: rgba(217, 119, 6, 0.25) !important;
+                }
+                [data-theme="roost"] .step-card-box {
+                    background-color: #1c1917 !important;
+                    border-color: rgba(217, 119, 6, 0.2) !important;
+                }
+                [data-theme="roost"] .dialogue-bubble {
+                    background-color: #1c1917 !important;
+                    border-color: rgba(217, 119, 6, 0.25) !important;
+                }
+                [data-theme="roost"] .dialogue-bubble p {
+                    background-color: #292524 !important;
+                    border-color: rgba(217, 119, 6, 0.25) !important;
+                    color: #fbbf24 !important;
+                }
+                [data-theme="roost"] .rule-icon-box {
+                    background-color: #292524 !important;
+                }
             `}</style>
 
             <div className="app-container w-100" style={{ maxWidth: '960px' }}>
@@ -252,7 +336,7 @@ const Guide: React.FC = () => {
                 </div>
 
                 {/* Banner Pointing to Catalogue */}
-                <div className="bg-white p-3 p-md-4 rounded-4 border shadow-2xs mb-4 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 animate-up">
+                <div className="guide-top-banner bg-white p-3 p-md-4 rounded-4 border shadow-2xs mb-4 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 animate-up">
                     <div className="d-flex align-items-center gap-3">
                         <div className="rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 48, height: 48 }}>
                             <i className="fa-solid fa-boxes-stacked fs-4" aria-hidden="true" />
@@ -274,7 +358,7 @@ const Guide: React.FC = () => {
                 </div>
 
                 {/* 2. NAVIGATION TABS */}
-                <div className="bg-white p-2 rounded-4 shadow-sm border mb-4">
+                <div className="guide-top-banner bg-white p-2 rounded-4 shadow-sm border mb-4">
                     <div
                         className="guide-nav-group d-flex flex-wrap gap-1 justify-content-center"
                         role="tablist"
@@ -319,7 +403,7 @@ const Guide: React.FC = () => {
                                 {steps.map((step, i) => (
                                     <div
                                         key={i}
-                                        className="d-flex align-items-start gap-3 p-3 rounded-4 bg-light border border-transparent hover-border transition-all"
+                                        className="step-card-box d-flex align-items-start gap-3 p-3 rounded-4 bg-light border border-transparent hover-border transition-all"
                                     >
                                         <div
                                             className="step-badge rounded-circle bg-success text-white fw-black d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm"
@@ -357,7 +441,7 @@ const Guide: React.FC = () => {
                                         <div
                                             className={`p-3 rounded-4 bg-${rule.type}-subtle border border-${rule.type} border-opacity-25 d-flex align-items-start gap-3 h-100`}
                                         >
-                                            <div className={`icon-box text-${rule.type} bg-white shadow-sm rounded-circle p-2 flex-shrink-0`} style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
+                                            <div className={`rule-icon-box icon-box text-${rule.type} bg-white shadow-sm rounded-circle p-2 flex-shrink-0`} style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
                                                 <i className={`${rule.icon}`}></i>
                                             </div>
                                             <div>

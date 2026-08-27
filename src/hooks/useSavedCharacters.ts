@@ -317,5 +317,15 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
         deleteCharacter,
         setDefaultCharacter,
         syncFromDiscordNickname,
+        syncWithDb: async () => {
+            setIsSyncingDb(true);
+            try {
+                const res = await saveCharactersToDb(characters);
+                return res;
+            } finally {
+                setIsSyncingDb(false);
+            }
+        },
     };
 };
+

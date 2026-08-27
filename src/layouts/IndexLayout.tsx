@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar.tsx";
 import Footer from "../components/Footer.tsx";
 import { SuggestionModal } from "../components/suggestions/SuggestionModal.tsx";
+import GlobalOrderTrackerPill from "../components/GlobalOrderTrackerPill.tsx";
 
 export function IndexLayout() {
     return (
@@ -12,6 +13,7 @@ export function IndexLayout() {
             </main>
             <Footer />
             <SuggestionModal />
+            <GlobalOrderTrackerPill />
         </>
     );
 }
