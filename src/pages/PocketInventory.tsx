@@ -56,6 +56,8 @@ export const PocketInventory: React.FC = () => {
         handleCopyDrop,
         reorderOrderPockets,
         reorderDropPockets,
+        orderVillager,
+        totalOrderItemsCount,
     } = useCommandBuilderPockets();
 
     const { data: catalogData } = useCatalogData();
@@ -131,6 +133,7 @@ export const PocketInventory: React.FC = () => {
             quantity: item.quantity,
             category: item.category,
             image: item.image,
+            entityType: item.entityType,
             variantId: item.variantId,
             variantLabel: item.variantLabel,
         }));
@@ -265,7 +268,7 @@ export const PocketInventory: React.FC = () => {
 
                     {/* Toolbar Actions */}
                     <div
-                        className="pocket-toolbar-actions d-flex align-items-center gap-2"
+                        className="pocket-toolbar-actions d-flex align-items-center gap-2 flex-wrap"
                         role="toolbar"
                         aria-label="Pocket Inventory Actions"
                     >
@@ -481,8 +484,8 @@ export const PocketInventory: React.FC = () => {
 
                         {/* Smart Tools & Presets Card */}
                         <div className="card rounded-4 border p-3 shadow-2xs bg-white mt-3">
-                            <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
-                                <div className="d-flex align-items-center gap-2">
+                            <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                                <div className="d-flex align-items-center gap-2 min-w-0">
                                     <span
                                         className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
                                         style={{ width: 28, height: 28, backgroundColor: '#fef3c7', color: '#d97706' }}
@@ -490,13 +493,13 @@ export const PocketInventory: React.FC = () => {
                                     >
                                         <i className="fa-solid fa-wand-magic-sparkles small"></i>
                                     </span>
-                                    <div>
-                                        <strong className="d-block text-dark small fw-bold">Smart Fill Tools</strong>
-                                        <span className="tiny-text text-muted">Auto-optimize your inventory layout</span>
+                                    <div className="min-w-0">
+                                        <strong className="d-block text-dark small fw-bold text-truncate">Smart Fill Tools</strong>
+                                        <span className="tiny-text text-muted text-truncate d-block">Auto-optimize your inventory layout</span>
                                     </div>
                                 </div>
 
-                                <div className="smart-fill-actions d-flex align-items-center gap-2">
+                                <div className="smart-fill-actions d-flex align-items-center gap-2 flex-wrap min-w-0">
                                     <SmartFillDropdown
                                         onFillNmt={handleFillTickets}
                                         onFillCrowns={handleFillCrowns}
@@ -511,7 +514,7 @@ export const PocketInventory: React.FC = () => {
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
-                                        style={{ minHeight: '32px' }}
+                                        style={{ minHeight: '34px', fontSize: '0.8rem' }}
                                         onClick={() => {
                                             handleMaximizeStacks();
                                             playChimeClick();
@@ -528,7 +531,7 @@ export const PocketInventory: React.FC = () => {
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
-                                        style={{ minHeight: '32px' }}
+                                        style={{ minHeight: '34px', fontSize: '0.8rem' }}
                                         onClick={() => {
                                             handleSortPockets();
                                             playChimeClick();
@@ -545,7 +548,7 @@ export const PocketInventory: React.FC = () => {
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-white border rounded-pill fw-bold text-dark shadow-2xs d-inline-flex align-items-center gap-1 px-3 text-nowrap"
-                                        style={{ minHeight: '32px' }}
+                                        style={{ minHeight: '34px', fontSize: '0.8rem' }}
                                         onClick={() => {
                                             handleFlipOrderAndDrop();
                                             playChimeClick();
@@ -566,7 +569,7 @@ export const PocketInventory: React.FC = () => {
                         {/* Selector Card */}
                         <div className="card rounded-4 border-0 shadow-sm p-3 mb-4 bg-white">
                             {/* Navigation Pill Switcher */}
-                            <div className="d-flex align-items-center justify-content-between p-1 rounded-pill bg-light border mb-3">
+                            <div className="d-flex align-items-center justify-content-between p-1 rounded-pill bg-light border mb-3 flex-wrap gap-1">
                                 <button
                                     type="button"
                                     className={`btn btn-xs rounded-pill fw-bold px-3 py-1 flex-grow-1 transition-all ${
@@ -975,7 +978,7 @@ export const PocketInventory: React.FC = () => {
                                             <div className="mb-3">
                                                 <div className="d-flex justify-content-between align-items-center mb-1">
                                                     <span className="badge rounded-pill fw-bold font-monospace x-small bg-success text-white">
-                                                        !order command ({totalOrderCount} items)
+                                                        !order command ({totalOrderItemsCount > 0 ? `${totalOrderItemsCount}/40 items${orderVillager ? ` + ${orderVillager.name}` : ''}` : orderVillager ? `${orderVillager.name}` : '0 items'})
                                                     </span>
                                                 </div>
                                                 <div
@@ -1313,7 +1316,7 @@ export const PocketInventory: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="modal-footer bg-white px-4 py-3 border-top d-flex justify-content-between">
+                            <div className="modal-footer bg-white px-3 px-md-4 py-3 border-top d-flex flex-wrap align-items-center justify-content-between gap-2">
                                 <button
                                     type="button"
                                     className="btn btn-outline-secondary rounded-pill btn-sm px-3"
@@ -1321,10 +1324,10 @@ export const PocketInventory: React.FC = () => {
                                 >
                                     Cancel
                                 </button>
-                                <div className="d-flex gap-2">
+                                <div className="d-flex flex-wrap gap-2">
                                     <button
                                         type="button"
-                                        className="btn btn-outline-success rounded-pill btn-sm fw-bold px-3"
+                                        className="btn btn-outline-success rounded-pill btn-sm fw-bold px-3 text-nowrap"
                                         disabled={parsedBatch.items.length === 0}
                                         onClick={() => handleApplyBatchPaste('order', 'append')}
                                     >
@@ -1332,7 +1335,7 @@ export const PocketInventory: React.FC = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-nook text-white rounded-pill btn-sm fw-bold px-4 shadow-sm"
+                                        className="btn btn-nook text-white rounded-pill btn-sm fw-bold px-4 shadow-sm text-nowrap"
                                         disabled={parsedBatch.items.length === 0}
                                         onClick={() => handleApplyBatchPaste('order', 'replace')}
                                     >

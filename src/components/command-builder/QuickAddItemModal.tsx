@@ -196,13 +196,13 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="p-3 px-4 border-bottom bg-light d-flex align-items-center justify-content-between">
-                    <div>
-                        <h2 className="h5 fw-black text-dark mb-0 ac-font d-flex align-items-center gap-2">
-                            <i className="fa-solid fa-plus-circle text-success"></i>
-                            Quick Add Items to Inventory
+                <div className="p-3 px-3 px-md-4 border-bottom bg-light d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <div className="min-w-0">
+                        <h2 className="h5 fw-black text-dark mb-0 ac-font d-flex align-items-center gap-2 text-truncate">
+                            <i className="fa-solid fa-plus-circle text-success flex-shrink-0"></i>
+                            <span className="text-truncate">Quick Add Items to Inventory</span>
                         </h2>
-                        <span className="tiny-text text-muted font-monospace">
+                        <span className="tiny-text text-muted font-monospace d-block text-truncate">
                             Adding to:{' '}
                             <strong className={initialTarget === 'drop' ? 'text-info' : 'text-success'}>
                                 {initialTarget.toUpperCase()}
@@ -214,14 +214,14 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
 
                     <button
                         type="button"
-                        className="btn-close"
+                        className="btn-close flex-shrink-0"
                         onClick={onClose}
                         aria-label="Close modal"
                     ></button>
                 </div>
 
                 {/* Search & Filter Bar */}
-                <div className="p-3 px-4 border-bottom bg-white">
+                <div className="p-3 px-3 px-md-4 border-bottom bg-white">
                     {/* Search Input */}
                     <div className="position-relative mb-2">
                         <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
@@ -340,7 +340,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
 
                 {/* Items Results Grid */}
                 <div
-                    className="p-3 px-4 overflow-y-auto flex-grow-1"
+                    className="p-3 px-3 px-md-4 overflow-y-auto flex-grow-1"
                     style={{ backgroundColor: '#fffdfa', maxHeight: '420px' }}
                 >
                     {filteredItems.length === 0 ? (
@@ -365,11 +365,11 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
 
                                 return (
                                     <div key={item.id} className="col-12 col-md-6">
-                                        <div className="card rounded-4 p-2 border shadow-2xs h-100 bg-white d-flex flex-row align-items-center gap-2 hover-shadow-sm transition-all">
+                                        <div className="card rounded-4 p-2 border shadow-2xs h-100 bg-white d-flex flex-row align-items-center gap-2 hover-shadow-sm transition-all overflow-hidden">
                                             {/* Item Thumbnail */}
                                             <div
                                                 className="ratio ratio-1x1 bg-light rounded-3 border d-flex align-items-center justify-content-center flex-shrink-0"
-                                                style={{ width: '48px', height: '48px', overflow: 'hidden' }}
+                                                style={{ width: '42px', height: '42px', overflow: 'hidden' }}
                                             >
                                                 <img
                                                     src={item.image || FALLBACK_IMAGE}
@@ -379,7 +379,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                     onError={(e) => {
                                                         e.currentTarget.onerror = null;
                                                         e.currentTarget.src = FALLBACK_IMAGE;
-                                                    }}
+                                                     }}
                                                 />
                                             </div>
 
@@ -388,6 +388,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                 <strong
                                                     className="d-block small text-dark text-truncate"
                                                     title={item.name}
+                                                    style={{ fontSize: '0.82rem' }}
                                                 >
                                                     {item.name}
                                                 </strong>
@@ -406,16 +407,37 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                             </div>
 
                                             {/* Action Buttons */}
-                                            <div className="d-flex align-items-center gap-1 flex-shrink-0">
+                                            <div className="d-flex align-items-center gap-1 flex-shrink-0 flex-wrap justify-content-end">
                                                 {/* Order Button / Stepper */}
-                                                {orderQty > 0 ? (
+                                                {(item.entityType === 'villager' || item.category === 'Villagers') ? (
+                                                    orderQty > 0 ? (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-success text-white rounded-pill fw-bold px-2 py-1 shadow-2xs"
+                                                            style={{ backgroundColor: '#2ea466', borderColor: '#2ea466' }}
+                                                            onClick={() => decreaseOrderQuantity(pocketId)}
+                                                            title="Click to remove villager from Order"
+                                                        >
+                                                            <i className="fa-solid fa-check me-1"></i>Order<i className="fa-solid fa-xmark ms-1 opacity-75"></i>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1"
+                                                            onClick={() => handleAdd(item, 'order')}
+                                                            title="Add or replace moving-in Villager (1/1)"
+                                                        >
+                                                            <i className="fa-solid fa-user-plus me-1"></i>Order
+                                                        </button>
+                                                    )
+                                                ) : orderQty > 0 ? (
                                                     <div
                                                         className="btn-group rounded-pill border border-success overflow-hidden"
                                                         style={{ backgroundColor: '#f0fdf4' }}
                                                     >
                                                         <button
                                                             type="button"
-                                                            className="btn btn-xs text-success fw-bold px-2 py-1 border-0"
+                                                            className="btn btn-xs text-success fw-bold px-1.5 py-0.5 border-0"
                                                             onClick={() => decreaseOrderQuantity(pocketId)}
                                                             title="Decrease order"
                                                         >
@@ -426,7 +448,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                         </span>
                                                         <button
                                                             type="button"
-                                                            className="btn btn-xs text-success fw-bold px-2 py-1 border-0"
+                                                            className="btn btn-xs text-success fw-bold px-1.5 py-0.5 border-0"
                                                             onClick={() => increaseOrderQuantity(pocketId)}
                                                             disabled={!canIncreaseOrder}
                                                             title="Increase order"
@@ -440,14 +462,37 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                         className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1"
                                                         onClick={() => handleAdd(item, 'order')}
                                                         disabled={totalOrderCount >= 40}
-                                                        title="Add to Order bot"
+                                                        title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : 'Add to Order bot'}
                                                     >
                                                         <i className="fa-solid fa-box me-1"></i>Order
                                                     </button>
                                                 )}
 
                                                 {/* Drop Button / Stepper */}
-                                                {dropQty > 0 ? (
+                                                {(item.entityType === 'villager' || item.category === 'Villagers') ? (
+                                                    dropQty > 0 ? (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs text-white rounded-pill fw-bold px-2 py-1 shadow-2xs"
+                                                            style={{ backgroundColor: '#0284c7', borderColor: '#0284c7' }}
+                                                            onClick={() => decreaseDropQuantity(pocketId)}
+                                                            title="Click to remove villager from Drop"
+                                                        >
+                                                            <i className="fa-solid fa-check me-1"></i>Drop<i className="fa-solid fa-xmark ms-1 opacity-75"></i>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-outline-info rounded-pill fw-bold px-2 py-1"
+                                                            style={{ color: '#0284c7', borderColor: '#0284c7' }}
+                                                            onClick={() => handleAdd(item, 'drop')}
+                                                            disabled={totalDropCount >= 9}
+                                                            title="Add to Drop bot"
+                                                        >
+                                                            <i className="fa-solid fa-plane-arrival me-1"></i>Drop
+                                                        </button>
+                                                    )
+                                                ) : dropQty > 0 ? (
                                                     <div
                                                         className="btn-group rounded-pill border border-info overflow-hidden"
                                                         style={{
@@ -457,7 +502,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                     >
                                                         <button
                                                             type="button"
-                                                            className="btn btn-xs text-info fw-bold px-2 py-1 border-0"
+                                                            className="btn btn-xs text-info fw-bold px-1.5 py-0.5 border-0"
                                                             style={{ color: '#0284c7' }}
                                                             onClick={() => decreaseDropQuantity(pocketId)}
                                                             title="Decrease drop"
@@ -472,7 +517,7 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                                                         </span>
                                                         <button
                                                             type="button"
-                                                            className="btn btn-xs text-info fw-bold px-2 py-1 border-0"
+                                                            className="btn btn-xs text-info fw-bold px-1.5 py-0.5 border-0"
                                                             style={{ color: '#0284c7' }}
                                                             onClick={() => increaseDropQuantity(pocketId)}
                                                             disabled={!canIncreaseDrop}
@@ -503,11 +548,11 @@ export const QuickAddItemModal: React.FC<QuickAddItemModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 px-4 border-top bg-light d-flex align-items-center justify-content-between">
-                    <span className="tiny-text text-muted">
+                <div className="p-3 px-3 px-md-4 border-top bg-light d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <span className="tiny-text text-muted text-truncate min-w-0" style={{ maxWidth: '70%' }}>
                         Need all variations? Switch to <strong className="text-dark">Command Builder Catalog</strong>.
                     </span>
-                    <button type="button" className="btn btn-dark rounded-pill px-4 fw-bold btn-sm" onClick={onClose}>
+                    <button type="button" className="btn btn-dark rounded-pill px-4 fw-bold btn-sm flex-shrink-0" onClick={onClose}>
                         Done
                     </button>
                 </div>

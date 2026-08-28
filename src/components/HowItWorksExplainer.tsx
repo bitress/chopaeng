@@ -513,7 +513,7 @@ export const TREASURE_ISLANDS_EXPLAINER_CONFIG: HowItWorksExplainerProps = {
     title: 'How do Treasure Islands work?',
     subtitle: 'Free & Supporter 24/7 Animal Crossing islands stocked with endless items, DIYs, materials, and villagers.',
     badge: 'Island Travel Guide',
-    icon: 'fa-island-tropical',
+    icon: 'fa-umbrella-beach',
     storageKey: 'treasure_islands_explainer',
     steps: [
         {

@@ -216,8 +216,33 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                     {/* Action Buttons (Order vs Drop) */}
                     <div className="mt-auto pt-2 w-100" onClick={(e) => e.stopPropagation()}>
                         <div className="d-flex gap-1">
-                            {/* Order Button Group (Green) */}
-                            {orderQty > 0 ? (
+                            {/* Order Button / Toggle / Stepper */}
+                            {isVillager ? (
+                                orderQty > 0 ? (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-success text-white rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all shadow-2xs"
+                                        style={{ fontSize: "0.75rem", backgroundColor: '#2ea466', borderColor: '#2ea466' }}
+                                        onClick={() => decreaseOrderQuantity(item.id)}
+                                        title="Click to remove villager from Order"
+                                    >
+                                        <i className="fa-solid fa-check x-small"></i>
+                                        <span>Order</span>
+                                        <i className="fa-solid fa-xmark ms-1 opacity-75 x-small"></i>
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-success rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
+                                        style={{ fontSize: "0.75rem" }}
+                                        onClick={handleInitialOrderClick}
+                                        title="Add or replace moving-in Villager (1/1)"
+                                    >
+                                        <i className="fa-solid fa-user-plus x-small"></i>
+                                        <span>Order</span>
+                                    </button>
+                                )
+                            ) : orderQty > 0 ? (
                                 <div
                                     className="btn-group rounded-pill flex-grow-1 border border-success overflow-hidden"
                                     style={{ backgroundColor: '#f0fdf4' }}
@@ -256,15 +281,41 @@ export const CommandBuilderItemCard: React.FC<CommandBuilderItemCardProps> = ({
                                     style={{ fontSize: "0.75rem" }}
                                     onClick={handleInitialOrderClick}
                                     disabled={totalOrderCount >= 40}
-                                    title={totalOrderCount >= 40 ? 'Order bot full (40/40)' : hasMultipleVariants && hideVariants ? 'Choose variant to order' : 'Add to Order ($order)'}
+                                    title={totalOrderCount >= 40 ? 'Order bot item slots full (40/40)' : hasMultipleVariants && hideVariants ? 'Choose variant to order' : 'Add to Order ($order)'}
                                 >
                                     <i className="fa-solid fa-box x-small"></i>
                                     <span>Order</span>
                                 </button>
                             )}
 
-                            {/* Drop Button Group (Cyan/Blue) */}
-                            {dropQty > 0 ? (
+                            {/* Drop Button / Toggle / Stepper */}
+                            {isVillager ? (
+                                dropQty > 0 ? (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm text-white rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all shadow-2xs"
+                                        style={{ fontSize: "0.75rem", backgroundColor: '#0284c7', borderColor: '#0284c7' }}
+                                        onClick={() => decreaseDropQuantity(item.id)}
+                                        title="Click to remove villager from Drop"
+                                    >
+                                        <i className="fa-solid fa-check x-small"></i>
+                                        <span>Drop</span>
+                                        <i className="fa-solid fa-xmark ms-1 opacity-75 x-small"></i>
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-info rounded-pill py-1 flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 transition-all"
+                                        style={{ fontSize: "0.75rem", color: '#0284c7', borderColor: '#0284c7' }}
+                                        onClick={handleInitialDropClick}
+                                        disabled={totalDropCount >= 9}
+                                        title={totalDropCount >= 9 ? 'Drop bot full (9/9)' : 'Add to Drop ($drop)'}
+                                    >
+                                        <i className="fa-solid fa-plane-arrival x-small"></i>
+                                        <span>Drop</span>
+                                    </button>
+                                )
+                            ) : dropQty > 0 ? (
                                 <div
                                     className="btn-group rounded-pill flex-grow-1 border border-info overflow-hidden"
                                     style={{ backgroundColor: '#f0f9ff', borderColor: '#0284c7' }}

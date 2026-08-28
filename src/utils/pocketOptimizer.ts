@@ -73,14 +73,14 @@ export const getItemMaxStack = (item: PocketItem): number => {
 };
 
 /**
- * Maximizes the stack sizes of stackable items in the pocket while respecting maximum capacity.
+ * Maximizes the stack sizes of stackable items in the pocket while respecting maximum capacity (40 items).
  */
 export const maximizePocketStacks = (
     entries: PocketEntry[],
     maxCapacity: number = 40
 ): PocketEntry[] => {
-    const currentTotal = entries.reduce((sum, e) => sum + (e.item.entityType === 'villager' ? 1 : e.quantity), 0);
-    let remainingCapacity = maxCapacity - currentTotal;
+    const regularItemTotal = entries.filter(e => e.item.entityType !== 'villager').reduce((sum, e) => sum + e.quantity, 0);
+    let remainingCapacity = maxCapacity - regularItemTotal;
     if (remainingCapacity <= 0) {
         return entries.map(e => e.item.entityType === 'villager' ? { ...e, quantity: 1 } : e);
     }
@@ -106,15 +106,15 @@ export const maximizePocketStacks = (
 };
 
 /**
- * Fills remaining empty slots up to maxCapacity with the chosen buffer or pattern.
+ * Fills remaining empty slots up to maxCapacity (40 items) with the chosen buffer or pattern.
  */
 export const fillRemainingPockets = (
     entries: PocketEntry[],
     type: 'nmt' | 'crowns' | 'bells' | 'gold' | 'repeat',
     maxCapacity: number = 40
 ): PocketEntry[] => {
-    const currentTotal = entries.reduce((sum, e) => sum + (e.item.entityType === 'villager' ? 1 : e.quantity), 0);
-    const remaining = maxCapacity - currentTotal;
+    const regularItemTotal = entries.filter(e => e.item.entityType !== 'villager').reduce((sum, e) => sum + e.quantity, 0);
+    const remaining = maxCapacity - regularItemTotal;
     if (remaining <= 0) return entries;
 
     if (type === 'repeat') {

@@ -324,14 +324,13 @@ const OrderBot: React.FC = () => {
     const {
         orderCommandText,
         dropCommandText,
-        orderItemsOnlyCommand,
-        orderVillagerCommand,
-        injectVillagerCommand,
-        mviVillagerCommand,
         dropItemsOnlyCommand,
         dropVillagerCommand,
         totalOrderCount,
         totalDropCount,
+        totalOrderItemsCount,
+        orderVillager,
+        removeOrderVillager,
         orderItems,
         dropItems,
         setOrderItems,
@@ -1150,9 +1149,14 @@ const OrderBot: React.FC = () => {
     const statusStr = orderStatus?.status ?? 'queued';
     const isDone = ['completed', 'cancelled', 'error'].includes(statusStr);
     const isReady = statusStr === 'ready' || Boolean(orderStatus?.dodoCode && !isDone);
-    const capacityPct = Math.min(100, Math.round((totalOrderCount / ORDER_MAX) * 100));
+    const regularOrderItems = useMemo(
+        () => orderItems.filter((p) => p.item.entityType !== 'villager'),
+        [orderItems]
+    );
+    const capacityPct = Math.min(100, Math.round((totalOrderItemsCount / ORDER_MAX) * 100));
     const sintaIsDropMode = botStatus?.is_drop_mode === true;
     const canSubmitOrder = botAvailable && !sintaIsDropMode;
+    const hasAnyOrderContent = totalOrderItemsCount > 0 || orderVillager !== null;
 
     const subMemberIslands = useMemo(() => {
         return islands.filter((isl) => isl.cat === 'member');
@@ -1165,8 +1169,8 @@ const OrderBot: React.FC = () => {
         return subMemberIslands;
     }, [subMemberIslands, dropFilter, user, canAccessIsland]);
 
-    // Compute empty slots to fill up to 40 slots
-    const emptySlotsCount = Math.max(0, ORDER_MAX - totalOrderCount);
+    // Compute empty slots to fill up to 40 regular item slots
+    const emptySlotsCount = Math.max(0, ORDER_MAX - totalOrderItemsCount);
 
     // Calculate flight radar progress percentage
     const flightProgressPct = useMemo(() => {
@@ -1625,11 +1629,18 @@ const OrderBot: React.FC = () => {
 
                                         {/* Capacity Progress Bar */}
                                         <div className="d-flex align-items-center justify-content-between mb-1 tiny-text fw-bold">
-                                            <span className="text-dark">
-                                                {totalOrderCount} / {ORDER_MAX} Slots Used
-                                            </span>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="text-dark">
+                                                    {totalOrderItemsCount} / {ORDER_MAX} Item Slots Used
+                                                </span>
+                                                {orderVillager && (
+                                                    <span className="badge bg-warning text-dark rounded-pill x-small fw-bold">
+                                                        <i className="fa-solid fa-house-user me-1" />+ 1/1 Villager: {orderVillager.name}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className={capacityPct === 100 ? 'text-success fw-black' : 'text-muted'}>
-                                                {capacityPct}% Full ({ORDER_MAX - totalOrderCount} slots remaining)
+                                                {capacityPct}% Full ({ORDER_MAX - totalOrderItemsCount} item slots remaining)
                                             </span>
                                         </div>
                                         <div
@@ -1637,18 +1648,17 @@ const OrderBot: React.FC = () => {
                                             style={{ height: '8px', borderRadius: '10px', background: '#e2e8f0' }}
                                         >
                                             <div
-                                                className={`progress-bar transition-all ${capacityPct === 100 ? 'bg-success' : 'bg-success'
-                                                    }`}
+                                                className="progress-bar transition-all bg-success"
                                                 role="progressbar"
                                                 style={{ width: `${capacityPct}%` }}
-                                                aria-valuenow={totalOrderCount}
+                                                aria-valuenow={totalOrderItemsCount}
                                                 aria-valuemin={0}
                                                 aria-valuemax={ORDER_MAX}
                                             />
                                         </div>
 
                                         {/* ── 40-SLOT POCKET GRID (Authentic ACNH Inventory Grid) ── */}
-                                        {orderItems.length === 0 ? (
+                                        {!hasAnyOrderContent ? (
                                             <div className="ob-empty-pocket my-4 text-center">
                                                 <div className="text-success mb-2" style={{ fontSize: '3rem' }}>
                                                     <i className="fa-solid fa-bag-shopping" />
@@ -1660,7 +1670,7 @@ const OrderBot: React.FC = () => {
                                                     className="text-muted small mb-4"
                                                     style={{ maxWidth: 420, margin: '0 auto' }}
                                                 >
-                                                    Search items directly, choose one of the quick presets above, or load pre-made theme bundles.
+                                                    Search items directly, choose one of the quick presets above, or load pre-made theme bundles. You can also add 1 moving-in villager to your order!
                                                 </p>
                                                 <div className="d-flex gap-2 justify-content-center flex-wrap">
                                                     <button
@@ -1694,92 +1704,168 @@ const OrderBot: React.FC = () => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="ob-interactive-pocket-grid mb-3">
-                                                {/* Filled Slots */}
-                                                {orderItems.map((entry) => (
-                                                    <div
-                                                        key={entry.item.id}
-                                                        className="ob-interactive-tile"
-                                                        title={entry.item.name}
-                                                    >
-                                                        <img
-                                                            className="ob-tile-img"
-                                                            src={entry.item.image || FALLBACK_IMG}
-                                                            alt={entry.item.name}
-                                                            onError={(ev) => {
-                                                                (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
-                                                            }}
-                                                        />
-                                                        <span className="ob-tile-label">{entry.item.name}</span>
-                                                        {entry.quantity > 1 && (
-                                                            <span className="ob-tile-qty">×{entry.quantity}</span>
-                                                        )}
-                                                        {/* Hover overlay actions */}
-                                                        <div className="ob-tile-actions">
-                                                            <div className="ob-tile-hover-name">{entry.item.name}</div>
-                                                            <div className="ob-tile-actions-row">
-                                                                <button
-                                                                    type="button"
-                                                                    className="ob-tile-btn dec"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        playSound();
-                                                                        decreaseOrderQuantity(String(entry.item.id));
-                                                                    }}
-                                                                    title="Decrease quantity"
-                                                                >
-                                                                    -
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className="ob-tile-btn inc"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        playSound();
-                                                                        increaseOrderQuantity(String(entry.item.id));
-                                                                    }}
-                                                                    disabled={totalOrderCount >= ORDER_MAX}
-                                                                    title="Increase quantity"
-                                                                >
-                                                                    +
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className="ob-tile-btn del"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        playSound();
-                                                                        removeOrderItem(String(entry.item.id));
-                                                                    }}
-                                                                    title="Remove item"
-                                                                >
-                                                                    <i className="fa-solid fa-xmark" />
-                                                                </button>
+                                            <>
+                                                <div className="ob-interactive-pocket-grid mb-3">
+                                                    {/* Filled Regular Item Slots (0-40) */}
+                                                    {regularOrderItems.map((entry) => (
+                                                        <div
+                                                            key={entry.item.id}
+                                                            className="ob-interactive-tile"
+                                                            title={entry.item.name}
+                                                        >
+                                                            <img
+                                                                className="ob-tile-img"
+                                                                src={entry.item.image || FALLBACK_IMG}
+                                                                alt={entry.item.name}
+                                                                onError={(ev) => {
+                                                                    (ev.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
+                                                                }}
+                                                            />
+                                                            <span className="ob-tile-label">{entry.item.name}</span>
+                                                            {entry.quantity > 1 && (
+                                                                <span className="ob-tile-qty">×{entry.quantity}</span>
+                                                            )}
+                                                            {/* Hover overlay actions */}
+                                                            <div className="ob-tile-actions">
+                                                                <div className="ob-tile-hover-name">{entry.item.name}</div>
+                                                                <div className="ob-tile-actions-row">
+                                                                    <button
+                                                                        type="button"
+                                                                        className="ob-tile-btn dec"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            playSound();
+                                                                            decreaseOrderQuantity(String(entry.item.id));
+                                                                        }}
+                                                                        title="Decrease quantity"
+                                                                    >
+                                                                        -
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="ob-tile-btn inc"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            playSound();
+                                                                            increaseOrderQuantity(String(entry.item.id));
+                                                                        }}
+                                                                        disabled={totalOrderItemsCount >= ORDER_MAX}
+                                                                        title="Increase quantity"
+                                                                    >
+                                                                        +
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="ob-tile-btn del"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            playSound();
+                                                                            removeOrderItem(String(entry.item.id));
+                                                                        }}
+                                                                        title="Remove item"
+                                                                    >
+                                                                        <i className="fa-solid fa-xmark" />
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
 
-                                                {/* Dashed Empty Slots up to 40 */}
-                                                {Array.from({ length: emptySlotsCount }).map((_, i) => (
-                                                    <button
-                                                        key={`empty-${i}`}
-                                                        type="button"
-                                                        className="ob-interactive-tile empty text-decoration-none"
-                                                        title="Empty slot — click to search and add items"
-                                                        onClick={() => {
-                                                            playSound();
-                                                            setShowQuickAddModal(true);
-                                                        }}
-                                                    >
-                                                        <i className="fa-solid fa-plus text-muted opacity-50 small" />
-                                                    </button>
-                                                ))}
-                                            </div>
+                                                    {/* Dashed Empty Slots up to 40 items */}
+                                                    {Array.from({ length: emptySlotsCount }).map((_, i) => (
+                                                        <button
+                                                            key={`empty-${i}`}
+                                                            type="button"
+                                                            className="ob-interactive-tile empty text-decoration-none"
+                                                            title="Empty slot — click to search and add items"
+                                                            onClick={() => {
+                                                                playSound();
+                                                                setShowQuickAddModal(true);
+                                                            }}
+                                                        >
+                                                            <i className="fa-solid fa-plus text-muted opacity-50 small" />
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {/* ── DEDICATED 1/1 MOVING-IN VILLAGER IN BOXES CARD ── */}
+                                                {orderVillager ? (
+                                                    <div className="p-3 rounded-4 mb-3 border border-2 border-warning bg-warning bg-opacity-10 d-flex align-items-center justify-content-between flex-wrap gap-3 shadow-2xs">
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="position-relative bg-white rounded-circle p-1 border border-warning shadow-2xs flex-shrink-0" style={{ width: 52, height: 52 }}>
+                                                                <img
+                                                                    src={orderVillager.image || FALLBACK_IMG}
+                                                                    alt={orderVillager.name}
+                                                                    className="w-100 h-100 rounded-circle object-fit-contain"
+                                                                />
+                                                                <span className="position-absolute bottom-0 end-0 badge rounded-pill bg-warning text-dark font-monospace" style={{ fontSize: '0.6rem' }}>
+                                                                    1/1
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <div className="d-flex align-items-center gap-2 flex-wrap">
+                                                                    <strong className="text-dark ac-font fs-6 mb-0">{orderVillager.name}</strong>
+                                                                    <span className="badge bg-warning text-dark rounded-pill x-small fw-bold">In Boxes (Moving In)</span>
+                                                                    <span className="badge bg-dark text-white rounded-pill x-small font-monospace">villager:{orderVillager.id}</span>
+                                                                </div>
+                                                                <span className="tiny-text text-muted">
+                                                                    {orderVillager.personality || 'Villager'} · Moving into your island's open plot with this order (does not use regular 40 item slots).
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-outline-warning text-dark fw-bold rounded-pill px-3 py-1 shadow-2xs"
+                                                                onClick={() => {
+                                                                    playSound();
+                                                                    setShowQuickAddModal(true);
+                                                                }}
+                                                                title="Replace moving-in villager"
+                                                            >
+                                                                <i className="fa-solid fa-arrows-rotate me-1" /> Replace
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-outline-danger fw-bold rounded-pill px-3 py-1 shadow-2xs"
+                                                                onClick={() => {
+                                                                    playSound();
+                                                                    removeOrderVillager();
+                                                                }}
+                                                                title="Remove villager from order"
+                                                            >
+                                                                <i className="fa-solid fa-xmark me-1" /> Remove
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-2 px-3 rounded-4 mb-3 border border-2 border-dashed d-flex align-items-center justify-content-between flex-wrap gap-2" style={{ backgroundColor: 'rgba(254, 243, 199, 0.35)', borderColor: '#fcd34d' }}>
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <div className="rounded-circle d-flex align-items-center justify-content-center bg-warning bg-opacity-25" style={{ width: 34, height: 34 }}>
+                                                                <i className="fa-solid fa-house-user text-warning" />
+                                                            </div>
+                                                            <div>
+                                                                <span className="fw-bold text-dark small d-block">Moving-In Villager (Optional · 1/1)</span>
+                                                                <span className="tiny-text text-muted">Include a villager in boxes alongside your 40 items without taking any item slots.</span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-xs btn-warning text-dark fw-bold rounded-pill px-3 py-1 shadow-2xs"
+                                                            onClick={() => {
+                                                                playSound();
+                                                                setShowQuickAddModal(true);
+                                                            }}
+                                                        >
+                                                            <i className="fa-solid fa-plus me-1" /> Add Villager (1/1)
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
 
                                         {/* Terminal Command Toggle Preview */}
-                                        {totalOrderCount > 0 && (
+                                        {hasAnyOrderContent && (
                                             <div className="mb-3">
                                                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                                                     <button
@@ -1801,14 +1887,14 @@ const OrderBot: React.FC = () => {
                                                             className="ob-copy-chip"
                                                             onClick={() =>
                                                                 handleCopySpecific(
-                                                                    orderItemsOnlyCommand || orderCommandText,
-                                                                    '!order items'
+                                                                    orderCommandText,
+                                                                    '!order command'
                                                                 )
                                                             }
-                                                            title="Copy !order items command"
+                                                            title="Copy !order command (Items + Villager)"
                                                         >
                                                             <i className="fa-solid fa-copy text-success" />
-                                                            <span>!order items</span>
+                                                            <span>!order</span>
                                                         </button>
                                                         <button
                                                             type="button"
@@ -1840,56 +1926,11 @@ const OrderBot: React.FC = () => {
                                                                 <span>!drop villager</span>
                                                             </button>
                                                         )}
-                                                        {orderVillagerCommand && (
-                                                            <button
-                                                                type="button"
-                                                                className="ob-copy-chip"
-                                                                onClick={() =>
-                                                                    handleCopySpecific(
-                                                                        orderVillagerCommand,
-                                                                        '!order villager'
-                                                                    )
-                                                                }
-                                                                title="Copy !order villager command"
-                                                            >
-                                                                <i className="fa-solid fa-user-tag text-warning" />
-                                                                <span>!order villager</span>
-                                                            </button>
-                                                        )}
-                                                        {injectVillagerCommand && (
-                                                            <button
-                                                                type="button"
-                                                                className="ob-copy-chip"
-                                                                onClick={() =>
-                                                                    handleCopySpecific(
-                                                                        injectVillagerCommand,
-                                                                        '!injectvillager'
-                                                                    )
-                                                                }
-                                                                title="Copy !injectvillager command"
-                                                            >
-                                                                <i className="fa-solid fa-syringe text-info" />
-                                                                <span>!injectvillager</span>
-                                                            </button>
-                                                        )}
-                                                        {mviVillagerCommand && (
-                                                            <button
-                                                                type="button"
-                                                                className="ob-copy-chip"
-                                                                onClick={() =>
-                                                                    handleCopySpecific(mviVillagerCommand, '!mvi')
-                                                                }
-                                                                title="Copy !mvi command"
-                                                            >
-                                                                <i className="fa-solid fa-house-user text-secondary" />
-                                                                <span>!mvi</span>
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
 
                                                 {showTerminal && (
-                                                    <div className="ob-terminal-box mb-3 select-all">
+                                                    <div className="ob-terminal-box mb-3 select-all position-relative">
                                                         <div className="text-break pe-5">{orderCommandText}</div>
                                                         <button
                                                             type="button"
@@ -1911,9 +1952,9 @@ const OrderBot: React.FC = () => {
                                         <div className="border-top pt-3 mt-3">
                                             {/* Profile & Active In-Game Character Strip */}
                                             <div className="ob-passport-card mb-3 flex-wrap">
-                                                <div className="d-flex align-items-center gap-3">
+                                                <div className="d-flex align-items-center gap-3 flex-wrap min-w-0">
                                                     <div
-                                                        className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white shadow-2xs"
+                                                        className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white shadow-2xs flex-shrink-0"
                                                         style={{ width: 42, height: 42, fontSize: '1.1rem' }}
                                                     >
                                                         <i
@@ -1922,22 +1963,22 @@ const OrderBot: React.FC = () => {
                                                                 }`}
                                                         />
                                                     </div>
-                                                    <div className="lh-sm">
+                                                    <div className="lh-sm min-w-0">
                                                         <div className="small fw-bold text-dark d-flex align-items-center gap-2 flex-wrap">
                                                             <span>Ordering For:</span>
-                                                            <span className="badge bg-success text-white rounded-pill px-2 py-1 ac-font">
+                                                            <span className="badge bg-success text-white rounded-pill px-2 py-1 ac-font text-truncate" style={{ maxWidth: 200 }}>
                                                                 {orderProfile?.orderFor || user?.username}
                                                             </span>
                                                             {orderProfile?.islandName && (
-                                                                <span className="text-muted fw-bold tiny-text d-inline-flex align-items-center gap-1">
+                                                                <span className="text-muted fw-bold tiny-text d-inline-flex align-items-center gap-1 text-truncate" style={{ maxWidth: 180 }}>
                                                                     <i className="fa-solid fa-mountain-sun text-success" />
-                                                                    <span>{orderProfile.islandName}</span>
+                                                                    <span className="text-truncate">{orderProfile.islandName}</span>
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="tiny-text text-muted d-flex align-items-center gap-1 mt-1">
-                                                            <i className="fa-brands fa-discord text-primary" />
-                                                            <span>
+                                                        <div className="tiny-text text-muted d-flex align-items-center gap-1 mt-1 text-truncate">
+                                                            <i className="fa-brands fa-discord text-primary flex-shrink-0" />
+                                                            <span className="text-truncate">
                                                                 Discord:{' '}
                                                                 <strong>
                                                                     {orderProfile?.displayName || user?.username}
@@ -1977,7 +2018,7 @@ const OrderBot: React.FC = () => {
                                                     onClick={!orderProfile ? handleOpenSetup : handleSubmit}
                                                     disabled={
                                                         !canSubmitOrder ||
-                                                        totalOrderCount === 0 ||
+                                                        !hasAnyOrderContent ||
                                                         submitLoading ||
                                                         stage !== 'submit'
                                                     }
@@ -2009,8 +2050,7 @@ const OrderBot: React.FC = () => {
                                                                 aria-hidden="true"
                                                             />
                                                             <span>
-                                                                Send Order ({totalOrderCount} Item
-                                                                {totalOrderCount === 1 ? '' : 's'})
+                                                                Send Order ({totalOrderItemsCount > 0 ? `${totalOrderItemsCount} Item${totalOrderItemsCount === 1 ? '' : 's'}` : ''}{totalOrderItemsCount > 0 && orderVillager ? ' + ' : ''}{orderVillager ? `${orderVillager.name} (Villager)` : ''})
                                                             </span>
                                                         </>
                                                     )}
@@ -2025,10 +2065,10 @@ const OrderBot: React.FC = () => {
                                                         Bot is resting • Copy !order command for Discord
                                                     </span>
                                                 )}
-                                                {totalOrderCount === 0 && user && (
+                                                {!hasAnyOrderContent && user && (
                                                     <span className="text-muted small">
                                                         <i className="fa-solid fa-info-circle me-1" />
-                                                        Add at least 1 item to submit your order.
+                                                        Add at least 1 item or villager to submit your order.
                                                     </span>
                                                 )}
                                             </div>
@@ -2671,7 +2711,7 @@ const OrderBot: React.FC = () => {
                                     </div>
 
                                     {/* Filter Pills */}
-                                    <div className="d-flex gap-1 bg-light p-1 rounded-pill border">
+                                    <div className="d-flex gap-1 bg-light p-1 rounded-pill border flex-wrap">
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -2935,19 +2975,19 @@ const OrderBot: React.FC = () => {
                                         </span>
                                     </div>
 
-                                    <div className="bg-black bg-opacity-30 rounded-4 p-3 border border-white border-opacity-10 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                                        <div>
-                                            <span className="tiny-text text-uppercase text-white-50 fw-bold d-block mb-1 tracking-wider">
+                                    <div className="bg-black bg-opacity-30 rounded-4 p-3 border border-white border-opacity-10 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 min-w-0">
+                                        <div className="min-w-0">
+                                            <span className="tiny-text text-uppercase text-white-50 fw-bold d-block mb-1 tracking-wider text-truncate">
                                                 Destination · {selectedDropIsland.name}
                                             </span>
                                             {alreadyOnIsland ? (
-                                                <div className="d-flex align-items-center gap-2 text-success fw-black py-1">
-                                                    <i className="fa-solid fa-location-dot fs-5 text-success"></i>
-                                                    <span>Landed on {selectedDropIsland.name} (Ready to Drop)</span>
+                                                <div className="d-flex align-items-center gap-2 text-success fw-black py-1 text-truncate">
+                                                    <i className="fa-solid fa-location-dot fs-5 text-success flex-shrink-0"></i>
+                                                    <span className="text-truncate">Landed on {selectedDropIsland.name} (Ready to Drop)</span>
                                                 </div>
                                             ) : dropDodoCode ? (
                                                 <div className="ob-dodo-code-chip">
-                                                    <i className="fa-solid fa-ticket text-warning fs-5"></i>
+                                                    <i className="fa-solid fa-ticket text-warning fs-5 flex-shrink-0"></i>
                                                     <span>{dropDodoCode}</span>
                                                 </div>
                                             ) : (
@@ -3366,14 +3406,14 @@ const OrderBot: React.FC = () => {
 
                                 {/* Live Monospace Command Injection Preview */}
                                 <div className="ob-radar-terminal-box mb-3">
-                                    <div className="d-flex align-items-center gap-2 text-truncate">
-                                        <span className="text-secondary">$</span>
-                                        <span className="text-truncate">{dropCommandText || '!drop <payload>'}</span>
+                                    <div className="d-flex align-items-center gap-2 text-truncate min-w-0 flex-grow-1">
+                                        <span className="text-secondary flex-shrink-0">$</span>
+                                        <span className="text-truncate font-monospace">{dropCommandText || '!drop <payload>'}</span>
                                     </div>
                                     {dropCommandText && (
                                         <button
                                             type="button"
-                                            className="btn btn-link p-0 text-success opacity-75 hover-opacity-100"
+                                            className="btn btn-link p-0 text-success opacity-75 hover-opacity-100 flex-shrink-0"
                                             title="Copy drop command & open Discord"
                                             onClick={handleCopyDropForDiscord}
                                         >

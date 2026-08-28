@@ -95,21 +95,37 @@ export const useCommandBuilderPockets = () => {
 
 
     // Counts
-    const totalOrderCount = orderItems.reduce((acc, curr) => acc + curr.quantity, 0);
-    const totalDropCount = dropItems.reduce((acc, curr) => acc + curr.quantity, 0);
+    const totalOrderItemsCount = orderItems
+        .filter((p) => p.item.entityType !== 'villager')
+        .reduce((acc, curr) => acc + curr.quantity, 0);
+    const orderVillagerItem = orderItems.find((p) => p.item.entityType === 'villager');
+    const orderVillager = orderVillagerItem ? orderVillagerItem.item : null;
+    const totalOrderVillagersCount = orderVillager ? 1 : 0;
+
+    const totalDropItemsCount = dropItems
+        .filter((p) => p.item.entityType !== 'villager')
+        .reduce((acc, curr) => acc + curr.quantity, 0);
+    const dropVillagerItem = dropItems.find((p) => p.item.entityType === 'villager');
+    const dropVillager = dropVillagerItem ? dropVillagerItem.item : null;
+    const totalDropVillagersCount = dropVillager ? 1 : 0;
+
+    // Total order count for regular 40-slot grid
+    const totalOrderCount = totalOrderItemsCount;
+    const totalDropCount = totalDropItemsCount;
     // Keep legacy alias for components that use totalItemsCount
     const totalItemsCount = totalOrderCount;
 
-    const canIncrease = totalOrderCount < ORDER_BOT_MAX;
-    const canIncreaseOrder = totalOrderCount < ORDER_BOT_MAX;
-    const canIncreaseDrop = totalDropCount < DROP_BOT_MAX;
+    const canIncrease = totalOrderItemsCount < ORDER_BOT_MAX;
+    const canIncreaseOrder = totalOrderItemsCount < ORDER_BOT_MAX;
+    const canIncreaseDrop = totalDropItemsCount < DROP_BOT_MAX;
+    const canAddOrderVillager = !orderVillager;
 
     // ── Order pocket operations ────────────────────────────────────────────
     const decreaseOrderQuantity = useCallback((id: string) => {
         setOrderItems((prev) => {
             const existing = prev.find((p) => p.item.id === id);
             if (!existing) return prev;
-            if (existing.quantity <= 1) {
+            if (existing.quantity <= 1 || existing.item.entityType === 'villager') {
                 return prev.filter((p) => p.item.id !== id);
             }
             return prev.map((pocket) => {
@@ -121,12 +137,16 @@ export const useCommandBuilderPockets = () => {
 
     const increaseOrderQuantity = useCallback((id: string) => {
         setOrderItems((prev) => {
-            const count = prev.reduce((acc, curr) => acc + curr.quantity, 0);
-            if (count >= ORDER_BOT_MAX) return prev;
-            return prev.map((pocket) => {
-                if (pocket.item.id !== id) return pocket;
-                if (pocket.item.entityType === 'villager') return pocket;
-                return { ...pocket, quantity: pocket.quantity + 1 };
+            const pocket = prev.find((p) => p.item.id === id);
+            if (!pocket) return prev;
+            if (pocket.item.entityType === 'villager') return prev; // Villagers cannot have quantity > 1
+            const regularCount = prev
+                .filter((p) => p.item.entityType !== 'villager')
+                .reduce((acc, curr) => acc + curr.quantity, 0);
+            if (regularCount >= ORDER_BOT_MAX) return prev;
+            return prev.map((p) => {
+                if (p.item.id !== id) return p;
+                return { ...p, quantity: p.quantity + 1 };
             });
         });
     }, []);
@@ -135,12 +155,16 @@ export const useCommandBuilderPockets = () => {
         setOrderItems((prev) => prev.filter((pocket) => pocket.item.id !== id));
     }, []);
 
+    const removeOrderVillager = useCallback(() => {
+        setOrderItems((prev) => prev.filter((pocket) => pocket.item.entityType !== 'villager'));
+    }, []);
+
     // ── Drop pocket operations ─────────────────────────────────────────────
     const decreaseDropQuantity = useCallback((id: string) => {
         setDropItems((prev) => {
             const existing = prev.find((p) => p.item.id === id);
             if (!existing) return prev;
-            if (existing.quantity <= 1) {
+            if (existing.quantity <= 1 || existing.item.entityType === 'villager') {
                 return prev.filter((p) => p.item.id !== id);
             }
             return prev.map((pocket) => {
@@ -152,13 +176,13 @@ export const useCommandBuilderPockets = () => {
 
     const increaseDropQuantity = useCallback((id: string) => {
         setDropItems((prev) => {
-            const count = prev.reduce((acc, curr) => acc + curr.quantity, 0);
-            if (count >= DROP_BOT_MAX) return prev; // silently block; UI disables the button
             const pocket = prev.find((p) => p.item.id === id);
             if (!pocket) return prev;
             if (pocket.item.entityType === 'villager') return prev; // Only 1 villager allowed
-            // guard: adding 1 more would exceed cap
-            if (count + 1 > DROP_BOT_MAX) return prev;
+            const regularCount = prev
+                .filter((p) => p.item.entityType !== 'villager')
+                .reduce((acc, curr) => acc + curr.quantity, 0);
+            if (regularCount >= DROP_BOT_MAX) return prev; // silently block; UI disables the button
             return prev.map((p) => {
                 if (p.item.id !== id) return p;
                 return { ...p, quantity: p.quantity + 1 };
@@ -170,6 +194,10 @@ export const useCommandBuilderPockets = () => {
         setDropItems((prev) => prev.filter((pocket) => pocket.item.id !== id));
     }, []);
 
+    const removeDropVillager = useCallback(() => {
+        setDropItems((prev) => prev.filter((pocket) => pocket.item.entityType !== 'villager'));
+    }, []);
+
     // ── Legacy aliases (used by some pages still referencing old API) ──────
     const decreaseQuantity = decreaseOrderQuantity;
     const increaseQuantity = increaseOrderQuantity;
@@ -177,62 +205,81 @@ export const useCommandBuilderPockets = () => {
 
     // ── Add to pockets ─────────────────────────────────────────────────────
     const addItemToOrderPockets = useCallback((item: PocketItem): { success: boolean; message: string } => {
-        if (totalOrderCount >= ORDER_BOT_MAX) {
-            return { success: false, message: `Order pockets are full (${ORDER_BOT_MAX} items). Remove an item first.` };
-        }
-        let message = 'Added to Order pockets!';
-        let success = true;
-        setOrderItems((prev) => {
-            if (item.entityType === 'villager') {
-                const existingVillager = prev.find(p => p.item.entityType === 'villager');
+        if (item.entityType === 'villager') {
+            let message = `${item.name} added to Order as moving-in Villager (1/1)!`;
+            let success = true;
+            setOrderItems((prev) => {
+                const existingVillager = prev.find((p) => p.item.entityType === 'villager');
                 if (existingVillager && existingVillager.item.id === item.id) {
-                    message = 'Villager is already in Order pockets.';
+                    message = `${item.name} is already selected as your Order Villager.`;
                     success = false;
                     return prev;
                 }
                 if (existingVillager) {
-                    message = `Replaced ${existingVillager.item.name} with ${item.name} in Order pockets!`;
-                } else {
-                    message = `${item.name} added to Order pockets!`;
+                    message = `Replaced ${existingVillager.item.name} with ${item.name} in Order Villager box!`;
                 }
-                const withoutVillagers = prev.filter(p => p.item.entityType !== 'villager');
+                const withoutVillagers = prev.filter((p) => p.item.entityType !== 'villager');
                 return [...withoutVillagers, { item, quantity: 1 }];
-            }
+            });
+            return { success, message };
+        }
 
+        // Regular item: check if 40 item slots are filled
+        const regularCount = orderItems
+            .filter((p) => p.item.entityType !== 'villager')
+            .reduce((acc, curr) => acc + curr.quantity, 0);
+
+        if (regularCount >= ORDER_BOT_MAX) {
+            return { success: false, message: `Order item slots are full (${ORDER_BOT_MAX}/40 items). Remove an item first.` };
+        }
+
+        let message = `Added ${item.name} to Order pockets!`;
+        let success = true;
+        setOrderItems((prev) => {
             const existing = prev.find((p) => p.item.id === item.id);
             if (existing) {
-                return prev.map((p) => p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p);
+                return prev.map((p) => (p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p));
             }
             return [...prev, { item, quantity: 1 }];
         });
         return { success, message };
-    }, [totalOrderCount]);
+    }, [orderItems]);
 
     const addItemToDropPockets = useCallback((item: PocketItem): { success: boolean; message: string } => {
-        if (totalDropCount >= DROP_BOT_MAX) {
-            return { success: false, message: `Drop pockets are full (${DROP_BOT_MAX} items). Remove an item first.` };
-        }
-        let message = 'Added to Drop pockets!';
-        let success = true;
-        setDropItems((prev) => {
-            if (item.entityType === 'villager') {
-                const existingVillager = prev.find(p => p.item.id === item.id);
+        if (item.entityType === 'villager') {
+            let message = `${item.name} added to Drop pockets!`;
+            let success = true;
+            setDropItems((prev) => {
+                const existingVillager = prev.find((p) => p.item.id === item.id);
                 if (existingVillager) {
-                    message = 'Villager is already in Drop pockets.';
+                    message = `${item.name} is already in Drop pockets.`;
                     success = false;
                     return prev;
                 }
                 return [...prev, { item, quantity: 1 }];
-            }
+            });
+            return { success, message };
+        }
 
+        const regularCount = dropItems
+            .filter((p) => p.item.entityType !== 'villager')
+            .reduce((acc, curr) => acc + curr.quantity, 0);
+
+        if (regularCount >= DROP_BOT_MAX) {
+            return { success: false, message: `Drop pockets are full (${DROP_BOT_MAX} items). Remove an item first.` };
+        }
+
+        let message = `Added ${item.name} to Drop pockets!`;
+        let success = true;
+        setDropItems((prev) => {
             const existing = prev.find((p) => p.item.id === item.id);
             if (existing) {
-                return prev.map((p) => p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p);
+                return prev.map((p) => (p.item.id === item.id ? { ...p, quantity: p.quantity + 1 } : p));
             }
             return [...prev, { item, quantity: 1 }];
         });
         return { success, message };
-    }, [totalDropCount]);
+    }, [dropItems]);
 
     // Legacy alias — adds to order by default
     const addItemToPockets = addItemToOrderPockets;
@@ -240,8 +287,10 @@ export const useCommandBuilderPockets = () => {
     // ── Fill helpers (order only) ──────────────────────────────────────────
     const fillWithItemName = useCallback((name: string) => {
         setOrderItems((prev) => {
-            const count = prev.reduce((acc, curr) => acc + curr.quantity, 0);
-            const remaining = ORDER_BOT_MAX - count;
+            const regularCount = prev
+                .filter((p) => p.item.entityType !== 'villager')
+                .reduce((acc, curr) => acc + curr.quantity, 0);
+            const remaining = ORDER_BOT_MAX - regularCount;
             if (remaining <= 0) return prev;
 
             const bufferOption = Object.values(BUFFER_OPTIONS).find((buffer) => buffer.name === name);
@@ -268,7 +317,7 @@ export const useCommandBuilderPockets = () => {
 
             const existing = prev.find((p) => p.item.id === item!.id);
             if (existing) {
-                return prev.map((p) => p.item.id === item!.id ? { ...p, quantity: p.quantity + remaining } : p);
+                return prev.map((p) => (p.item.id === item!.id ? { ...p, quantity: p.quantity + remaining } : p));
             }
             return [...prev, { item, quantity: remaining }];
         });
@@ -489,63 +538,64 @@ export const useCommandBuilderPockets = () => {
         }
     }, [loadBundleIntoOrder, loadBundleIntoDrop]);
 
-
-
     // ── Command text ───────────────────────────────────────────────────────
     const orderItemsOnlyCommand = useMemo(() => {
-        const regularItems = orderItems.filter(p => p.item.entityType !== 'villager');
+        const regularItems = orderItems.filter((p) => p.item.entityType !== 'villager');
         if (regularItems.length === 0) return '';
         const itemsList = regularItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
         return itemsList ? `!order ${itemsList}` : '';
     }, [orderItems]);
 
     const orderVillagerCommand = useMemo(() => {
-        const villagers = orderItems.concat(dropItems).filter(p => p.item.entityType === 'villager');
-        if (villagers.length === 0) return '';
-        const uniqueIds = Array.from(new Set(villagers.map(p => p.item.id)));
-        return `!order ${uniqueIds.map(id => `villager:${id}`).join(' ')}`;
-    }, [orderItems, dropItems]);
+        const villager = orderItems.find((p) => p.item.entityType === 'villager');
+        if (!villager) return '';
+        return `!order villager:${villager.item.id}`;
+    }, [orderItems]);
 
     const injectVillagerCommand = useMemo(() => {
-        const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
+        const villagers = dropItems.concat(orderItems).filter((p) => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const uniqueNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        const uniqueNames = Array.from(new Set(villagers.map((p) => p.item.name)));
         return `!injectvillager ${uniqueNames.join(' ')}`;
     }, [dropItems, orderItems]);
 
     const mviVillagerCommand = useMemo(() => {
-        const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
+        const villagers = dropItems.concat(orderItems).filter((p) => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const uniqueNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        const uniqueNames = Array.from(new Set(villagers.map((p) => p.item.name)));
         return `!mvi ${uniqueNames.join(' ')}`;
     }, [dropItems, orderItems]);
 
     const dropVillagerCommand = useMemo(() => {
-        const villagers = dropItems.concat(orderItems).filter(p => p.item.entityType === 'villager');
+        const villagers = dropItems.concat(orderItems).filter((p) => p.item.entityType === 'villager');
         if (villagers.length === 0) return '';
-        const uniqueNames = Array.from(new Set(villagers.map(p => p.item.name)));
+        const uniqueNames = Array.from(new Set(villagers.map((p) => p.item.name)));
         return uniqueNames.length === 1 ? `!injectvillager ${uniqueNames[0]}` : `!mvi ${uniqueNames.join(' ')}`;
     }, [dropItems, orderItems]);
 
     const dropItemsOnlyCommand = useMemo(() => {
-        const regularItems = dropItems.concat(orderItems).filter(p => p.item.entityType !== 'villager');
+        const regularItems = dropItems.concat(orderItems).filter((p) => p.item.entityType !== 'villager');
         if (regularItems.length === 0) return '';
-        const itemsList = regularItems.slice(0, DROP_BOT_MAX).flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item))).slice(0, DROP_BOT_MAX).join(' ');
+        const itemsList = regularItems
+            .slice(0, DROP_BOT_MAX)
+            .flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item)))
+            .slice(0, DROP_BOT_MAX)
+            .join(' ');
         return itemsList ? `!drop ${itemsList}` : '';
     }, [dropItems, orderItems]);
 
     const orderCommandText = useMemo(() => {
         if (orderItems.length === 0) return '';
-        const seenVillagers = new Set<string>();
-        const itemsList = orderItems.flatMap((p) => {
-            if (p.item.entityType === 'villager') {
-                if (seenVillagers.has(p.item.id)) return [];
-                seenVillagers.add(p.item.id);
-                return [`villager:${p.item.id}`];
-            }
-            return Array(p.quantity).fill(getItemCommandId(p.item));
-        }).join(' ');
-        return itemsList ? `!order ${itemsList}` : '';
+        const regularItems = orderItems.filter((p) => p.item.entityType !== 'villager');
+        const villager = orderItems.find((p) => p.item.entityType === 'villager');
+
+        // All regular item hexes FIRST
+        const itemsList = regularItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item)));
+        // Moving-in villager token at the END
+        const villagerList = villager ? [`villager:${villager.item.id}`] : [];
+
+        const combined = [...itemsList, ...villagerList];
+        return combined.length > 0 ? `!order ${combined.join(' ')}` : '';
     }, [orderItems]);
 
     const dropCommandText = useMemo(() => {
@@ -692,6 +742,17 @@ export const useCommandBuilderPockets = () => {
         totalOrderCount,
         totalDropCount,
         totalItemsCount,
+        totalOrderItemsCount,
+        totalOrderVillagersCount,
+        totalDropItemsCount,
+        totalDropVillagersCount,
+
+        // Villager helpers
+        orderVillager,
+        dropVillager,
+        canAddOrderVillager,
+        removeOrderVillager,
+        removeDropVillager,
 
         // Can-increase flags
         canIncrease,

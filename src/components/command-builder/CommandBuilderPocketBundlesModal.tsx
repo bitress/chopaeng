@@ -217,21 +217,21 @@ export const CommandBuilderPocketBundlesModal = ({
                 <div className="modal-content rounded-5 border-0 shadow-lg overflow-hidden" style={{ backgroundColor: 'var(--paper, #fdfbf7)' }}>
                     
                     {/* Header */}
-                    <div className="modal-header border-0 px-4 py-3 shadow-sm d-flex align-items-center justify-content-between" style={{ backgroundColor: 'var(--card-bg, #ffffff)' }}>
-                        <div className="d-flex align-items-center gap-2">
+                    <div className="modal-header border-0 px-3 px-md-4 py-3 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-2" style={{ backgroundColor: 'var(--card-bg, #ffffff)' }}>
+                        <div className="d-flex align-items-center gap-2 min-w-0">
                             <div
-                                className="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
+                                className="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm flex-shrink-0"
                                 style={{ width: '42px', height: '42px', background: 'var(--nook-green, #2b8a3e)' }}
                             >
                                 <i className="fa-solid fa-box-open fs-5"></i>
                             </div>
-                            <div>
-                                <h2 className="modal-title h5 fw-black text-dark mb-0 ac-font">Pocket Bundles</h2>
-                                <p className="tiny-text text-muted mb-0">1-click themed item sets & database presets</p>
+                            <div className="min-w-0">
+                                <h2 className="modal-title h5 fw-black text-dark mb-0 ac-font text-truncate">Pocket Bundles</h2>
+                                <p className="tiny-text text-muted mb-0 text-truncate">1-click themed item sets & database presets</p>
                             </div>
                         </div>
 
-                        <div className="d-flex align-items-center gap-2">
+                        <div className="d-flex align-items-center gap-2 flex-shrink-0">
                             <button
                                 type="button"
                                 className={`btn btn-sm rounded-pill px-3 fw-bold transition-all ${showSaveForm ? 'btn-outline-secondary' : 'btn-nook text-white shadow-sm'}`}

@@ -9,6 +9,7 @@ export interface PocketBundleItem {
     name: string;
     quantity: number;
     category?: string;
+    entityType?: 'item' | 'villager';
     /** Variation id string like "0_0", "1_0", or "NA" — used for generateFullItemHex */
     variantId?: string;
     variantLabel?: string;

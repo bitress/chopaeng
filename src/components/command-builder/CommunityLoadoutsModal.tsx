@@ -373,13 +373,13 @@ export const CommunityLoadoutsModal = ({
                                 <i className="fa-solid fa-boxes-stacked fs-5"></i>
                             </div>
                             <div>
-                                <h4 className="modal-title fw-black ac-font mb-0 text-white d-flex align-items-center gap-2">
+                                <h4 className="modal-title fw-black ac-font mb-0 text-white d-flex align-items-center gap-2 flex-wrap">
                                     <span>Community Loadouts & Bundles</span>
                                     <span className="badge bg-white bg-opacity-20 text-white rounded-pill x-small fw-bold font-monospace">
                                         40-Slot Sets
                                     </span>
                                 </h4>
-                                <p className="tiny-text mb-0 text-white-50">
+                                <p className="tiny-text mb-0 text-white-50 text-truncate" style={{ maxWidth: '400px' }}>
                                     Discover, clone, and share curated 40-slot island order builds
                                 </p>
                             </div>
@@ -599,7 +599,7 @@ export const CommunityLoadoutsModal = ({
                                                     ))}
                                                 </select>
                                             </div>
-                                            <div className="col-12 col-md-3 d-flex gap-1">
+                                            <div className="col-12 col-md-3 d-flex gap-1 flex-wrap">
                                                 <button
                                                     type="button"
                                                     onClick={handleSaveToLocalVault}
@@ -773,7 +773,7 @@ export const CommunityLoadoutsModal = ({
                                                             </div>
 
                                                             {/* Card Footer Actions */}
-                                                            <div className="mt-auto d-flex align-items-center justify-content-between pt-2 border-top">
+                                                            <div className="mt-auto d-flex flex-wrap align-items-center justify-content-between pt-2 border-top gap-2">
                                                                 <button
                                                                     type="button"
                                                                     className="btn btn-sm btn-light border rounded-pill px-2 py-0 tiny-text font-monospace fw-bold text-muted transition-all hover-text-dark"
@@ -941,7 +941,7 @@ export const CommunityLoadoutsModal = ({
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="d-flex gap-2">
+                                    <div className="d-flex flex-wrap gap-2">
                                         <button
                                             type="button"
                                             className="btn btn-outline-success btn-sm rounded-pill fw-bold px-3 shadow-2xs"

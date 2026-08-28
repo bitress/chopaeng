@@ -69,8 +69,14 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
     const [dragSourceIdx, setDragSourceIdx] = useState<number | null>(null);
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-    const orderCount = useMemo(() => orderPockets.reduce((sum, p) => sum + p.quantity, 0), [orderPockets]);
-    const dropCount = useMemo(() => dropPockets.reduce((sum, p) => sum + p.quantity, 0), [dropPockets]);
+    const orderCount = useMemo(
+        () => orderPockets.filter((p) => p.item.entityType !== 'villager').reduce((sum, p) => sum + p.quantity, 0),
+        [orderPockets]
+    );
+    const dropCount = useMemo(
+        () => dropPockets.filter((p) => p.item.entityType !== 'villager').reduce((sum, p) => sum + p.quantity, 0),
+        [dropPockets]
+    );
 
     // Find any villager currently loaded in order or drop pockets
     const currentVillager = useMemo(() => {
@@ -81,12 +87,13 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
         return null;
     }, [orderPockets, dropPockets]);
 
-    // ── Build 40-slot expanded array for Order Bot ───────────────────────────────────────────
+    // ── Build 40-slot expanded array for Order Bot (Regular items only) ───────────────────────
     const orderGridSlots = useMemo<OrderSlot[]>(() => {
         const slots: OrderSlot[] = [];
+        const regularOrderPockets = orderPockets.filter((p) => p.item.entityType !== 'villager');
 
         if (expandIndividualSlots) {
-            for (const pocket of orderPockets) {
+            for (const pocket of regularOrderPockets) {
                 for (let q = 0; q < pocket.quantity; q++) {
                     if (slots.length < ORDER_BOT_MAX) {
                         slots.push({
@@ -99,7 +106,7 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
                 }
             }
         } else {
-            for (const pocket of orderPockets) {
+            for (const pocket of regularOrderPockets) {
                 if (slots.length < ORDER_BOT_MAX) {
                     slots.push({
                         item: pocket.item,
@@ -118,10 +125,11 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
         return slots;
     }, [orderPockets, expandIndividualSlots]);
 
-    // ── Build 9-slot expanded array for Drop Bot ────────────────────────────
+    // ── Build 9-slot expanded array for Drop Bot (Regular items only) ─────────────────────────
     const dropGridSlots = useMemo<DropSlot[]>(() => {
         const slots: DropSlot[] = [];
-        for (const pocket of dropPockets) {
+        const regularDropPockets = dropPockets.filter((p) => p.item.entityType !== 'villager');
+        for (const pocket of regularDropPockets) {
             for (let q = 0; q < pocket.quantity; q++) {
                 if (slots.length < DROP_BOT_MAX) {
                     slots.push({
@@ -844,6 +852,15 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
                     display: grid;
                     grid-template-columns: repeat(5, minmax(0, 1fr));
                     gap: 6px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                @media (max-width: 380px) {
+                    .inventory-grid {
+                        grid-template-columns: repeat(4, minmax(0, 1fr));
+                        gap: 4px;
+                    }
                 }
                 @media (min-width: 576px) {
                     .inventory-grid {
@@ -860,6 +877,7 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
                 .pocket-slot-tile {
                     touch-action: manipulation;
                     -webkit-tap-highlight-color: transparent;
+                    box-sizing: border-box;
                 }
                 .pocket-slot-tile:hover {
                     transform: translateY(-2px);
@@ -888,7 +906,7 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
                 }
                 @media (max-width: 576px) {
                     .pocket-slot-tile {
-                        min-height: 48px;
+                        min-height: 44px;
                     }
                 }
             `}</style>

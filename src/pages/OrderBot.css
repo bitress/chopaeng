@@ -28,6 +28,9 @@
     min-height: 100vh;
     background-color: var(--nook-bg, #f2f4e6);
     padding-bottom: 5rem;
+    overflow-x: clip;
+    width: 100%;
+    max-width: 100vw;
 }
 
 /* ── Hero & Telemetry Banner ─────────────────────────────────── */
@@ -144,6 +147,7 @@
     max-width: 540px;
     width: 100%;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
 }
 
 .ob-mode-btn {
@@ -151,16 +155,18 @@
     border-radius: var(--ob-radius-pill);
     font-weight: 800;
     font-size: 0.85rem;
-    padding: 0.6rem 1.25rem;
+    padding: 0.6rem 1.1rem;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     color: #64748b;
     background: transparent;
     cursor: pointer;
     flex: 1;
+    min-width: 0;
+    text-align: center;
     white-space: nowrap;
 }
 
@@ -181,13 +187,29 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
+@media (max-width: 575px) {
+    .ob-mode-toggle-wrap {
+        border-radius: 18px;
+        padding: 4px;
+    }
+    .ob-mode-btn {
+        font-size: 0.76rem;
+        padding: 0.5rem 0.65rem;
+        border-radius: 14px;
+        white-space: normal;
+        line-height: 1.25;
+    }
+}
+
 /* ── Step Progress Indicator ─────────────────────────────────── */
 .ob-steps {
     display: flex;
     align-items: flex-start;
     gap: 0;
     max-width: 480px;
+    width: 100%;
     margin: 0 auto 1.5rem;
+    box-sizing: border-box;
 }
 
 .ob-step {
@@ -196,6 +218,7 @@
     flex-direction: column;
     align-items: center;
     position: relative;
+    min-width: 0;
 }
 
 .ob-step + .ob-step::before {
@@ -350,16 +373,19 @@
     background: #ffffff;
     border: 1.5px solid #e2e8f0;
     border-radius: var(--ob-radius-pill);
-    padding: 0.4rem 0.85rem;
+    padding: 0.35rem 0.75rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     cursor: pointer;
     transition: all 0.15s ease;
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: #1e293b;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    white-space: nowrap;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .ob-preset-chip:hover {
@@ -380,7 +406,7 @@
     gap: 6px;
     width: 100%;
     max-width: 100%;
-    overflow: hidden;
+    box-sizing: border-box;
 }
 
 @media (max-width: 1199px) {
@@ -393,7 +419,14 @@
 @media (max-width: 767px) {
     .ob-interactive-pocket-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 5px;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 400px) {
+    .ob-interactive-pocket-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 4px;
     }
 }
 
@@ -403,6 +436,7 @@
     min-width: 0;
     min-height: 0;
     width: 100%;
+    max-width: 100%;
     background: #ffffff;
     border: 1.5px solid #e2e8f0;
     border-radius: 12px;
@@ -411,7 +445,8 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: 3px;
+    padding: 2px;
+    box-sizing: border-box;
     transition: all 0.15s ease;
     user-select: none;
     overflow: hidden;
@@ -437,8 +472,8 @@
 }
 
 .ob-tile-img {
-    width: 68%;
-    height: 68%;
+    width: 65%;
+    height: 65%;
     object-fit: contain;
     pointer-events: none;
 }
@@ -456,37 +491,41 @@
     line-height: 1.1;
     margin-top: 1px;
     padding: 0 2px;
+    box-sizing: border-box;
 }
 
 .ob-tile-qty {
     position: absolute;
     bottom: 2px;
-    right: 3px;
-    font-size: 0.58rem;
+    right: 2px;
+    font-size: 0.55rem;
     font-weight: 800;
     background: #1e293b;
     color: #ffffff;
-    border-radius: 5px;
-    padding: 0 3px;
-    line-height: 1.3;
+    border-radius: 4px;
+    padding: 0 2.5px;
+    line-height: 1.25;
 }
 
 /* Hover action overlay controls */
 .ob-tile-actions {
     position: absolute;
     inset: 0;
-    background: #1e293b;
+    background: rgba(30, 41, 59, 0.95);
     border-radius: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 2px;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s ease;
     padding: 2px;
+    box-sizing: border-box;
     z-index: 5;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .ob-tile-actions-row {
@@ -494,19 +533,23 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .ob-tile-hover-name {
-    font-size: 0.48rem;
+    font-size: 0.46rem;
     font-weight: 800;
     color: #f1f5f9;
     text-align: center;
     width: 100%;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 1.1;
     padding: 0 2px;
+    box-sizing: border-box;
 }
 
 .ob-interactive-tile:hover .ob-tile-actions {
@@ -515,18 +558,21 @@
 }
 
 .ob-tile-btn {
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
+    width: 18px;
+    height: 18px;
+    min-width: 0;
+    border-radius: 4px;
     border: none;
     font-weight: 800;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: transform 0.1s ease;
     color: #ffffff;
+    padding: 0;
+    flex-shrink: 0;
 }
 
 .ob-tile-btn:active {
@@ -563,6 +609,7 @@
     border: 2px dashed #cbd5e1;
     border-radius: 20px;
     padding: 2.5rem 1.5rem;
+    box-sizing: border-box;
 }
 
 /* ── Terminal & Command Drawer ───────────────────────────────── */
@@ -575,6 +622,11 @@
     font-size: 0.82rem;
     color: #37b06d;
     position: relative;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .ob-copy-chip {
@@ -725,6 +777,8 @@
     overflow: hidden;
     border: 2px solid #37b06d;
     box-shadow: 0 8px 24px rgba(35, 77, 56, 0.18);
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .ob-pass-header {
@@ -744,15 +798,21 @@
 .ob-pass-body {
     background: #1e3f2e;
     padding: 2rem 1.5rem;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .ob-pass-dodo-display {
-    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-size: clamp(1.8rem, 6.5vw, 3.8rem);
     font-weight: 900;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.12em;
     font-family: monospace;
     color: #ffffff;
     user-select: all;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    max-width: 100%;
 }
 
 .ob-pass-footer {
@@ -810,11 +870,7 @@
     background: #f8fafc;
     border: 1.5px solid #e2e8f0;
     transition: background 0.15s ease;
-}
-
-.ob-queue-row.is-me {
-    background: #f0fdf4;
-    border-color: #86efac;
+    min-width: 0;
 }
 
 .ob-queue-badge {
@@ -845,6 +901,7 @@
     transition: all 0.2s ease;
     cursor: pointer;
     position: relative;
+    max-width: 100%;
 }
 
 .ob-island-sub-card:hover {
@@ -864,6 +921,7 @@
     position: relative;
     overflow: hidden;
     background: #1e293b;
+    max-width: 100%;
 }
 
 .ob-island-card-img {
@@ -894,22 +952,27 @@
     overflow: hidden;
     box-shadow: 0 8px 24px rgba(45, 77, 92, 0.18);
     border: 2px solid #f5c452;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .ob-dodo-code-chip {
     background: #ffffff;
     color: #2d4d5c;
     border-radius: 16px;
-    padding: 0.65rem 1.25rem;
-    font-size: 1.35rem;
+    padding: 0.5rem 1rem;
+    font-size: clamp(1.1rem, 4vw, 1.35rem);
     font-weight: 900;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.14em;
     font-family: monospace;
     display: inline-flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 2px solid #f5c452;
+    max-width: 100%;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 /* ── Drop Slot Tile ──────────────────────────────────────────── */
@@ -917,7 +980,7 @@
     background: #ffffff;
     border: 1.5px solid #e9ecef;
     border-radius: 18px;
-    padding: 0.75rem;
+    padding: 0.65rem 0.4rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -925,6 +988,10 @@
     position: relative;
     transition: all 0.15s ease;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .ob-drop-slot-tile:hover {
@@ -943,6 +1010,8 @@
     box-shadow: var(--ob-shadow);
     position: relative;
     overflow: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .ob-radar-badge-pulse {
@@ -979,6 +1048,10 @@
     border-radius: 18px;
     padding: 1rem;
     transition: all 0.2s ease;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .ob-radar-hud-box.active {
@@ -998,6 +1071,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .ob-radar-payload-pill {

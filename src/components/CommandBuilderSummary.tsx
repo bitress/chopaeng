@@ -100,8 +100,22 @@ export const CommandBuilderSummary = ({
     };
     const [listSearchQuery, setListSearchQuery] = useState('');
 
-    const orderCount = useMemo(() => orderPockets.reduce((sum, p) => sum + (p.item.entityType === 'villager' ? 1 : p.quantity), 0), [orderPockets]);
-    const dropCount = useMemo(() => dropPockets.reduce((sum, p) => sum + (p.item.entityType === 'villager' ? 1 : p.quantity), 0), [dropPockets]);
+    const orderItemsCount = useMemo(
+        () => orderPockets.filter((p) => p.item.entityType !== 'villager').reduce((sum, p) => sum + p.quantity, 0),
+        [orderPockets]
+    );
+    const orderVillager = useMemo(
+        () => orderPockets.find((p) => p.item.entityType === 'villager')?.item || null,
+        [orderPockets]
+    );
+
+    const dropItemsCount = useMemo(
+        () => dropPockets.filter((p) => p.item.entityType !== 'villager').reduce((sum, p) => sum + p.quantity, 0),
+        [dropPockets]
+    );
+
+    const orderCount = orderItemsCount;
+    const dropCount = dropItemsCount;
     const totalCount = orderCount + dropCount;
     const isEmpty = orderPockets.length === 0 && dropPockets.length === 0;
 
@@ -162,23 +176,18 @@ export const CommandBuilderSummary = ({
         };
     }, []);
 
-    // 1. Copy Item Order Command (!order <hexes>)
-    const orderItemsOnlyCmd = useMemo(() => {
-        const regularItems = orderPockets.filter(p => p.item.entityType !== 'villager');
-        if (regularItems.length === 0) return '';
-        const list = regularItems.flatMap(p => Array(p.quantity).fill(getItemCommandId(p.item))).join(' ');
-        return list ? `!order ${list}` : '';
+    // 1. Unified Order Command: Items FIRST, Villager LAST (!order <itemHexes...> villager:<id>)
+    const unifiedOrderCmd = useMemo(() => {
+        const regularItems = orderPockets.filter((p) => p.item.entityType !== 'villager');
+        const villager = orderPockets.find((p) => p.item.entityType === 'villager');
+        const itemsList = regularItems.flatMap((p) => Array(p.quantity).fill(getItemCommandId(p.item)));
+        const villagerList = villager ? [`villager:${villager.item.id}`] : [];
+        const combined = [...itemsList, ...villagerList];
+        return combined.length > 0 ? `!order ${combined.join(' ')}` : '';
     }, [orderPockets]);
 
-    // 2. Copy Villager Order Command (!order villager:<id>) - Deduplicated
-    const orderVillagerOnlyCmd = useMemo(() => {
-        const villagers = orderPockets.concat(dropPockets).filter(p => p.item.entityType === 'villager');
-        if (villagers.length === 0) return '';
-        const uniqueIds = Array.from(new Set(villagers.map(p => p.item.id)));
-        return `!order ${uniqueIds.map(id => `villager:${id}`).join(' ')}`;
-    }, [orderPockets, dropPockets]);
-
-    // 3. Copy Drop Item Command (!drop <hexes>)
+    // 2. Copy Item-Only Order Command (!order <hexes>)
+    // 2. Copy Drop Item Command (!drop <hexes>)
     const dropItemsOnlyCmd = useMemo(() => {
         const regularItems = dropPockets.concat(orderPockets).filter(p => p.item.entityType !== 'villager');
         if (regularItems.length === 0) return '';
@@ -358,7 +367,7 @@ export const CommandBuilderSummary = ({
             </div>
 
             {/* ── Quick Action Toolbar (Bundles, Smart Tools & Share) ─────────────────────────── */}
-            <div className="d-flex flex-wrap gap-2 mb-3">
+            <div className="d-flex flex-wrap gap-2 mb-3 min-w-0">
                 {onOpenCommunityLoadoutsModal && (
                     <button
                         type="button"
@@ -366,12 +375,13 @@ export const CommandBuilderSummary = ({
                             onOpenCommunityLoadoutsModal();
                             playChimeClick();
                         }}
-                        className="btn btn-sm text-white rounded-pill fw-bold px-3 py-2 shadow-sm flex-grow-1 transition-all d-flex align-items-center justify-content-center gap-2"
+                        className="btn btn-sm text-white rounded-pill fw-bold px-3 py-2 shadow-sm flex-grow-1 transition-all d-flex align-items-center justify-content-center gap-2 text-nowrap"
                         title="Browse Community Loadouts & Official Bundles"
                         style={{
                             background: 'linear-gradient(135deg, #37b06d 0%, #2ea466 100%)',
                             border: 'none',
                             fontSize: '0.8rem',
+                            minHeight: '34px',
                         }}
                     >
                         <i className="fa-solid fa-box-open text-warning"></i>
@@ -948,19 +958,19 @@ export const CommandBuilderSummary = ({
                                     )}
                                 </div>
 
-                                {/* 1. Order Items Command */}
+                                {/* 1. Primary Unified Order Command (Items FIRST + Villager LAST) */}
                                 {(terminalTab === 'all' || terminalTab === 'order') && (
                                     <div className="mb-3">
                                         <div className="d-flex justify-content-between align-items-center mb-1">
                                             <span className="badge rounded-pill fw-bold font-monospace x-small bg-success text-white">
-                                                <i className="fa-solid fa-cart-flatbed me-1"></i>!order items ({orderPockets.filter(p => p.item.entityType !== 'villager').reduce((s, p) => s + p.quantity, 0)} slots)
+                                                <i className="fa-solid fa-cart-flatbed me-1"></i>!order {orderItemsCount > 0 ? `(${orderItemsCount}/40 items${orderVillager ? ` + ${orderVillager.name}` : ''})` : orderVillager ? `(${orderVillager.name})` : ''}
                                             </span>
                                             <span className="tiny-text text-muted font-monospace">
                                                 <kbd className="bg-dark text-light border border-secondary px-1" style={{ fontSize: '0.65rem' }}>Ctrl+⇧+O</kbd>
                                             </span>
                                         </div>
                                         <div className="tiny-text mb-1 font-monospace" style={{ fontSize: '0.68rem', color: '#86efac' }}>
-                                            <i className="fa-brands fa-discord me-1"></i>For Discord <strong>#order-bot</strong> queue
+                                            <i className="fa-brands fa-discord me-1"></i>For Discord <strong>#order-bot</strong> queue (Items + Villager)
                                         </div>
                                         <div 
                                             className="p-2 rounded-3 font-monospace text-light mb-2 select-all"
@@ -975,56 +985,17 @@ export const CommandBuilderSummary = ({
                                                 color: '#a3e635'
                                             }}
                                         >
-                                            {orderItemsOnlyCmd || <span className="text-muted fst-italic">&gt; Add items to order to generate !order items command...</span>}
+                                            {unifiedOrderCmd || <span className="text-muted fst-italic">&gt; Add items or villager to generate !order command...</span>}
                                         </div>
                                         <button
                                             type="button"
-                                            className={`btn w-100 rounded-pill py-2 fw-bold btn-sm shadow-sm transition-all d-flex align-items-center justify-content-center gap-2 ${copiedKey === 'orderItems' ? 'btn-success text-white' : 'btn-nook text-white'}`}
-                                            onClick={() => copyToClipboardWithFeedback(orderItemsOnlyCmd, 'orderItems', 'order')}
-                                            disabled={!orderItemsOnlyCmd}
-                                            title="Copy !order items command (Ctrl+Shift+O)"
+                                            className={`btn w-100 rounded-pill py-2 fw-bold btn-sm shadow-sm transition-all d-flex align-items-center justify-content-center gap-2 ${copiedKey === 'orderUnified' ? 'btn-success text-white' : 'btn-nook text-white'}`}
+                                            onClick={() => copyToClipboardWithFeedback(unifiedOrderCmd, 'orderUnified', 'order')}
+                                            disabled={!unifiedOrderCmd}
+                                            title="Copy unified !order command (Ctrl+Shift+O)"
                                         >
-                                            <i className={`fa-solid ${copiedKey === 'orderItems' ? 'fa-check' : 'fa-box'}`}></i>
-                                            <span>{copiedKey === 'orderItems' ? 'Copied !order Items!' : 'Copy !order Items Command'}</span>
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* 2. Order Villager Command */}
-                                {(terminalTab === 'all' || terminalTab === 'order') && (
-                                    <div className="mb-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                                        <div className="d-flex justify-content-between align-items-center mb-1">
-                                            <span className="badge rounded-pill fw-bold font-monospace x-small text-dark" style={{ backgroundColor: '#facc15' }}>
-                                                <i className="fa-solid fa-user-tag me-1"></i>!order villager
-                                            </span>
-                                        </div>
-                                        <div className="tiny-text mb-1 font-monospace" style={{ fontSize: '0.68rem', color: '#fde047' }}>
-                                            <i className="fa-brands fa-discord me-1"></i>For Discord <strong>#order-bot</strong> queue
-                                        </div>
-                                        <div 
-                                            className="p-2 rounded-3 font-monospace text-light mb-2 select-all"
-                                            style={{ 
-                                                backgroundColor: '#111713', 
-                                                border: '1px solid rgba(255,255,255,0.08)',
-                                                fontSize: '0.8rem',
-                                                minHeight: '44px',
-                                                maxHeight: '76px',
-                                                overflowY: 'auto',
-                                                wordBreak: 'break-all',
-                                                color: '#facc15'
-                                            }}
-                                        >
-                                            {orderVillagerOnlyCmd || <span className="text-muted fst-italic">&gt; Add a villager to generate !order villager command...</span>}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className={`btn w-100 rounded-pill py-2 fw-bold btn-sm shadow-sm transition-all d-flex align-items-center justify-content-center gap-2 ${copiedKey === 'orderVillager' ? 'btn-success text-white' : 'btn-warning text-dark'}`}
-                                            onClick={() => copyToClipboardWithFeedback(orderVillagerOnlyCmd, 'orderVillager', 'order')}
-                                            disabled={!orderVillagerOnlyCmd}
-                                            title="Copy !order villager:<id> command"
-                                        >
-                                            <i className={`fa-solid ${copiedKey === 'orderVillager' ? 'fa-check' : 'fa-user-tag'}`}></i>
-                                            <span>{copiedKey === 'orderVillager' ? 'Copied !order Villager!' : 'Copy !order Villager Command'}</span>
+                                            <i className={`fa-solid ${copiedKey === 'orderUnified' ? 'fa-check' : 'fa-box-open'}`}></i>
+                                            <span>{copiedKey === 'orderUnified' ? 'Copied !order Command!' : 'Copy !order Command'}</span>
                                         </button>
                                     </div>
                                 )}
@@ -1112,7 +1083,7 @@ export const CommandBuilderSummary = ({
                                 )}
 
                                 {/* Order Bot quick-link */}
-                                {(terminalTab === 'all' || terminalTab === 'order') && (orderItemsOnlyCmd || orderVillagerOnlyCmd) && (
+                                {(terminalTab === 'all' || terminalTab === 'order') && unifiedOrderCmd && (
                                     <Link
                                         to="/order"
                                         className="btn w-100 rounded-pill py-2 fw-bold btn-sm d-flex align-items-center justify-content-center gap-2 mt-2"

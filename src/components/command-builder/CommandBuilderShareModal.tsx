@@ -164,18 +164,18 @@ export const CommandBuilderShareModal = ({
                                 {/* Generated Link box */}
                                 <div>
                                     <label className="form-label small fw-bold text-muted">Shareable Link</label>
-                                    <div className="input-group shadow-sm">
+                                    <div className="input-group shadow-sm flex-nowrap">
                                         <input
                                             type="text"
                                             readOnly
-                                            className="form-control rounded-start-pill bg-light font-monospace small border text-truncate"
+                                            className="form-control rounded-start-pill bg-light font-monospace small border text-truncate min-w-0"
                                             value={isGenerating ? 'Generating short link...' : shareUrl}
                                             onClick={(e) => (e.target as HTMLInputElement).select()}
                                         />
                                         <button
                                             type="button"
                                             disabled={isGenerating || !shareUrl}
-                                            className={`btn rounded-end-pill px-4 fw-bold transition-all ${
+                                            className={`btn rounded-end-pill px-3 px-sm-4 fw-bold transition-all flex-shrink-0 ${
                                                 copyStatus === 'copied' ? 'btn-success text-white' : 'btn-primary'
                                             }`}
                                             onClick={handleCopy}

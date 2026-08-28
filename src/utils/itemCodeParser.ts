@@ -122,42 +122,66 @@ export const parseItemCodes = (
             // Clean hex prefixes: `0x1024` -> `1024`
             coreToken = coreToken.replace(/^0x/i, '');
 
-            // Pattern for hex with variant: `1024-1` or `1024_2` or `1024:3`
-            const variantMatch = coreToken.match(/^([0-9a-fA-F]+)[_\-:](\d+)$/);
-            if (variantMatch) {
-                hexId = variantMatch[1].toUpperCase();
-                variantId = variantMatch[2];
-            } else if (/^[0-9a-fA-F]{8}$/.test(coreToken)) {
-                // 8-character full item hex e.g. 31E20000 -> Item 31E2, Variant 0
-                hexId = coreToken.slice(0, 4).toUpperCase();
-                const rawVar = parseInt(coreToken.slice(4, 6), 16);
-                if (!isNaN(rawVar) && rawVar > 0) {
-                    variantId = String(rawVar);
-                }
-            } else if (/^[0-9a-fA-F]{2,6}$/.test(coreToken)) {
-                hexId = coreToken.toUpperCase();
-            } else {
-                // Check if it matches a catalog item name
-                const matchedByName = catalogByName.get(coreToken.toLowerCase());
-                if (matchedByName) {
-                    hexId = matchedByName.id.toUpperCase();
+            // Check for villager token: `villager:dog01` or `villager:butch`
+            const isVillagerToken = /^villager:/i.test(coreToken);
+            let isVillager = isVillagerToken;
+            let villagerId = '';
+
+            if (isVillagerToken) {
+                villagerId = coreToken.replace(/^villager:/i, '').trim();
+                const matchedVillager = catalogById.get(villagerId.toLowerCase()) || catalogById.get(villagerId.toUpperCase()) || catalogByName.get(villagerId.toLowerCase());
+                if (matchedVillager) {
+                    hexId = matchedVillager.id;
+                    isVillager = true;
                 } else {
-                    unrecognizedTokens.push(token);
-                    continue;
+                    hexId = villagerId;
+                    isVillager = true;
+                }
+            } else {
+                // Pattern for hex with variant: `1024-1` or `1024_2` or `1024:3`
+                const variantMatch = coreToken.match(/^([0-9a-fA-F]+)[_\-:](\d+)$/);
+                if (variantMatch) {
+                    hexId = variantMatch[1].toUpperCase();
+                    variantId = variantMatch[2];
+                } else if (/^[0-9a-fA-F]{8}$/.test(coreToken)) {
+                    // 8-character full item hex e.g. 31E20000 -> Item 31E2, Variant 0
+                    hexId = coreToken.slice(0, 4).toUpperCase();
+                    const rawVar = parseInt(coreToken.slice(4, 6), 16);
+                    if (!isNaN(rawVar) && rawVar > 0) {
+                        variantId = String(rawVar);
+                    }
+                } else if (/^[0-9a-fA-F]{2,6}$/.test(coreToken)) {
+                    hexId = coreToken.toUpperCase();
+                } else {
+                    // Check if it matches a catalog item name
+                    const matchedByName = catalogByName.get(coreToken.toLowerCase());
+                    if (matchedByName) {
+                        hexId = matchedByName.id.toUpperCase();
+                        if (matchedByName.entityType === 'villager' || matchedByName.category === 'Villagers') {
+                            isVillager = true;
+                        }
+                    } else {
+                        unrecognizedTokens.push(token);
+                        continue;
+                    }
                 }
             }
 
             // Lookup entity in catalog
-            const catalogItem = catalogById.get(hexId) || catalogById.get(hexId.toLowerCase());
-            const dedupeKey = variantId ? `${hexId}-${variantId}` : hexId;
+            const catalogItem = catalogById.get(hexId) || catalogById.get(hexId.toLowerCase()) || catalogById.get(hexId.toUpperCase());
+            if (catalogItem?.entityType === 'villager' || catalogItem?.category === 'Villagers') {
+                isVillager = true;
+            }
+
+            const dedupeKey = isVillager ? `villager-${hexId}` : variantId ? `${hexId}-${variantId}` : hexId;
 
             const existing = accumulatedItems.get(dedupeKey);
             if (existing) {
-                existing.count += qty;
+                existing.count = isVillager ? 1 : existing.count + qty;
                 existing.item.quantity = existing.count;
             } else {
-                const name = catalogItem ? catalogItem.name : `Item (${hexId})`;
-                const category = catalogItem?.category || 'Custom Hex';
+                const name = catalogItem ? catalogItem.name : isVillager ? `Villager (${hexId})` : `Item (${hexId})`;
+                const category = catalogItem?.category || (isVillager ? 'Villagers' : 'Custom Hex');
                 let image = catalogItem?.image || FALLBACK_IMAGE;
                 let variantLabel: string | undefined = undefined;
 
@@ -176,13 +200,14 @@ export const parseItemCodes = (
                     item: {
                         itemId: hexId,
                         name,
-                        quantity: qty,
+                        quantity: isVillager ? 1 : qty,
                         category,
                         image,
+                        entityType: isVillager ? 'villager' : 'item',
                         variantId: variantId || undefined,
                         variantLabel: variantLabel || undefined,
                     },
-                    count: qty,
+                    count: isVillager ? 1 : qty,
                 });
             }
         }
