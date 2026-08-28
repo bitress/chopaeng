@@ -101,6 +101,8 @@ export const ResidentVillagerPill = ({ villagerName }: { villagerName: string })
                         src={displayImg}
                         alt={villagerName}
                         className="w-100 h-100 object-fit-contain"
+                        loading="lazy"
+                        decoding="async"
                         onError={() => setImgError(true)}
                     />
                 ) : (

@@ -23,6 +23,7 @@ import { CommandBuilderShareModal } from "../components/command-builder/CommandB
 import { CommunityLoadoutsModal } from "../components/command-builder/CommunityLoadoutsModal";
 import { MobileCommandBar } from "../components/command-builder/MobileCommandBar";
 import type { MobileTab } from "../components/command-builder/MobileCommandBar";
+import { HowItWorksExplainer, COMMAND_BUILDER_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
 import { decodePocketShareData, fetchSharedPocket } from "../utils/pocketSharing";
 import { fetchLoadoutByCode } from "../utils/communityLoadoutsApi";
 import { useFavorites } from "../hooks/useFavorites";
@@ -419,6 +420,9 @@ const CommandBuilder = () => {
                 </section>
 
                 <section className="container py-4">
+                    {/* ── REUSABLE HOW IT WORKS EXPLAINER ── */}
+                    <HowItWorksExplainer {...COMMAND_BUILDER_EXPLAINER_CONFIG} className="mb-4" defaultExpanded={false} />
+
                     <div className="row gy-4">
                         {/* MOBILE: Catalog tab panel — hidden when on pockets/command tab on mobile */}
                         <div className={`col-lg-7 ${mobileTab === 'catalog' ? 'd-block' : 'd-none d-lg-block'

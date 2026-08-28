@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@300..700&family=Varela+Round&display=swap');
 @import './cursors.css';
 @import './page-enhancements.css';
+@import './passport.css';
 
 :root {
     /* Fonts */
@@ -260,6 +261,37 @@ i.text-white, [data-theme="celeste"] i.text-white, [data-theme="roost"] i.text-w
 [data-theme="celeste"] textarea::placeholder {
     color: #818cf8 !important;
     opacity: 0.8 !important;
+}
+
+[data-theme="celeste"] select option,
+[data-theme="celeste"] .form-select option,
+[data-theme="celeste"] select optgroup,
+[data-theme="celeste"] .form-select optgroup {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="celeste"] .input-group.bg-white,
+[data-theme="celeste"] .input-group-lg.bg-white {
+    background-color: #0f172a !important;
+    border: 1px solid rgba(167, 139, 250, 0.35) !important;
+}
+
+[data-theme="celeste"] .dropdown-menu {
+    background-color: #1e293b !important;
+    border-color: rgba(167, 139, 250, 0.3) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="celeste"] .dropdown-item {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="celeste"] .dropdown-item:hover,
+[data-theme="celeste"] .dropdown-item:focus,
+[data-theme="celeste"] .dropdown-item.active {
+    background-color: #2b3658 !important;
+    color: #fcd34d !important;
 }
 
 [data-theme="celeste"] .input-group-text,
@@ -721,6 +753,37 @@ i.text-white, [data-theme="celeste"] i.text-white, [data-theme="roost"] i.text-w
 [data-theme="roost"] textarea::placeholder {
     color: #a89587 !important;
     opacity: 0.8 !important;
+}
+
+[data-theme="roost"] select option,
+[data-theme="roost"] .form-select option,
+[data-theme="roost"] select optgroup,
+[data-theme="roost"] .form-select optgroup {
+    background-color: #1c1917 !important;
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .input-group.bg-white,
+[data-theme="roost"] .input-group-lg.bg-white {
+    background-color: #1c1917 !important;
+    border: 1px solid rgba(217, 119, 6, 0.35) !important;
+}
+
+[data-theme="roost"] .dropdown-menu {
+    background-color: #292524 !important;
+    border-color: rgba(217, 119, 6, 0.3) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="roost"] .dropdown-item {
+    color: #fafaf9 !important;
+}
+
+[data-theme="roost"] .dropdown-item:hover,
+[data-theme="roost"] .dropdown-item:focus,
+[data-theme="roost"] .dropdown-item.active {
+    background-color: #40362f !important;
+    color: #fcd34d !important;
 }
 
 [data-theme="roost"] .input-group-text,

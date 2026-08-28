@@ -595,8 +595,14 @@ export const PROFILE_EXPLAINER_CONFIG: HowItWorksExplainerProps = {
             icon: 'fa-users-gear',
             title: '3. Multi-Character Slots',
             description: 'Switch between multiple Switch profiles, family members, or alternate islands with saved character loadouts.',
-            tip: 'Click "+ Add Character" to save separate Dodo flight names.',
+            tip: 'Click "+ Add Character" to customize slots. Note: "Sync from Discord" parses your server nickname and replaces existing slots.',
             badge: 'Character Profiles',
+        },
+    ],
+    faqs: [
+        {
+            question: 'What does "Sync from Discord" do to my saved characters?',
+            answer: 'Sync from Discord automatically extracts your in-game name and island from your server nickname (e.g. "IGN / Island"). Warning: Using sync will overwrite and replace your current character slots.',
         },
     ],
     action: {
@@ -641,6 +647,87 @@ export const TRIP_PLANNER_EXPLAINER_CONFIG: HowItWorksExplainerProps = {
     ],
 };
 
+export const FIND_ITEMS_EXPLAINER_CONFIG: HowItWorksExplainerProps = {
+    id: 'find-items-guide',
+    title: 'How does the Item & Villager Finder work?',
+    subtitle: 'Instantly locate which live treasure islands have the furniture, recipes, materials, or villagers you need.',
+    badge: 'Island Locator',
+    icon: 'fa-magnifying-glass-location',
+    storageKey: 'find_items_explainer',
+    steps: [
+        {
+            stepNumber: 1,
+            icon: 'fa-toggle-on',
+            title: '1. Select Search Mode',
+            description: 'Toggle between "Items" (furniture, DIYs, clothes, materials) and "Villagers" (neighbors in boxes ready to move).',
+            tip: 'Use fuzzy matching — you can type partial names like "Ironwood" or "Raymond".',
+            badge: 'Mode Toggle',
+        },
+        {
+            stepNumber: 2,
+            icon: 'fa-server',
+            title: '2. Real-Time Index Query',
+            description: 'Our engine queries live inventory maps across all 24/7 public and supporter treasure islands.',
+            tip: 'Green badges indicate free public islands; purple/gold badges indicate sub member islands.',
+            badge: 'Live Scan',
+        },
+        {
+            stepNumber: 3,
+            icon: 'fa-plane-departure',
+            title: '3. Jump to Destination',
+            description: 'Click any matching island to copy its live Dodo code or open Island Trip Planner to map multiple stops.',
+            tip: 'Check the live visitor counter on the island card to avoid queue wait times.',
+            badge: 'Fly & Collect',
+        },
+    ],
+    faqs: [
+        {
+            question: 'How accurate is the item finder?',
+            answer: 'Item listings are synchronized directly with live in-game island layouts and auto-refresh whenever islands reset.',
+        },
+    ],
+    action: {
+        label: 'Open Island Trip Planner',
+        to: '/trip-planner',
+        icon: 'fa-route',
+    },
+};
+
+export const DODO_DECRYPTOR_EXPLAINER_CONFIG: HowItWorksExplainerProps = {
+    id: 'dodo-decryptor-guide',
+    title: 'How does Dodo Translator work?',
+    subtitle: 'Decrypt secure member flight hashes using your unique Whisper Key to reveal live Dodo codes.',
+    badge: 'Security Guide',
+    icon: 'fa-shield-halved',
+    storageKey: 'dodo_decryptor_explainer',
+    steps: [
+        {
+            stepNumber: 1,
+            icon: 'fa-code',
+            title: '1. Paste Encrypted Hash',
+            description: 'Copy the encrypted hash string received from community alerts or subscriber bot channels.',
+            tip: 'If you clicked a shared link, the hash is already auto-filled for you.',
+            badge: 'Signal Input',
+        },
+        {
+            stepNumber: 2,
+            icon: 'fa-key',
+            title: '2. Enter Whisper Key',
+            description: 'Enter your numeric Whisper Key (passcode) corresponding to the event or island flight.',
+            tip: 'Whisper keys are 4-digit numbers shared in the private subscriber channels.',
+            badge: 'Passcode',
+        },
+        {
+            stepNumber: 3,
+            icon: 'fa-plane-arrival',
+            title: '3. Reveal Flight Code',
+            description: 'The decrypted 5-character Dodo code appears instantly on screen. Head to DAL airport and fly!',
+            tip: 'Have your empty pockets and Nintendo Switch Online ready before revealing.',
+            badge: 'Instant Decrypt',
+        },
+    ],
+};
+
 export const COMMAND_BUILDER_EXPLAINER_CONFIG: HowItWorksExplainerProps = {
     id: 'command-builder-guide',
     title: 'How does Command Builder work?',
@@ -669,7 +756,7 @@ export const COMMAND_BUILDER_EXPLAINER_CONFIG: HowItWorksExplainerProps = {
             stepNumber: 3,
             icon: 'fa-paper-plane',
             title: '3. Export or Send to Bot',
-            description: 'Copy your raw $order hex string or click "Send to Order Bot" to queue delivery in 1-click.',
+            description: 'Copy your raw $order or !order string or click "Send to Order Bot" to queue delivery in 1-click.',
             tip: 'Share your custom pocket bundles with friends using our shareable bundle links.',
             badge: 'Export & Order',
         },

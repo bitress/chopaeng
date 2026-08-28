@@ -256,27 +256,38 @@ async function getBlogPostPages() {
     return [];
 }
 
-// ─── 5. Popular Villagers Directory (SEO Enhancements) ───────────────────────
-function getPopularVillagerPages() {
+// ─── 5. Villagers Directory (SEO Profile Pages) ─────────────────────────────
+async function getVillagerPages() {
+    const now = nowIso();
+    try {
+        const { villagers } = await import('@bitress/animal-crossing');
+        if (Array.isArray(villagers) && villagers.length > 0) {
+            return villagers
+                .filter((v) => v && v.name)
+                .map((v) => {
+                    const slug = v.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                    const img = v.iconImage || v.photoImage;
+                    return {
+                        loc: `${SITE}/villager/${encodeURIComponent(slug)}`,
+                        lastmod: now,
+                        changefreq: 'monthly',
+                        priority: '0.65',
+                        image: img ? {
+                            loc: img,
+                            title: `${v.name} - Animal Crossing New Horizons Villager`,
+                        } : undefined,
+                    };
+                });
+        }
+    } catch {
+        console.log('ℹ️  [Sitemap] Animal Crossing dataset not loaded, falling back to popular villagers.');
+    }
+
     const topVillagers = [
-        'raymond',
-        'marshal',
-        'judy',
-        'ankha',
-        'coco',
-        'stitches',
-        'fauna',
-        'sherb',
-        'punchy',
-        'bob',
-        'shino',
-        'sasha',
-        'ione',
-        'audie',
-        'dom',
+        'raymond', 'marshal', 'judy', 'ankha', 'coco', 'stitches',
+        'fauna', 'sherb', 'punchy', 'bob', 'shino', 'sasha', 'ione', 'audie', 'dom'
     ];
 
-    const now = nowIso();
     return topVillagers.map((v) => ({
         loc: `${SITE}/villager/${v}`,
         lastmod: now,
@@ -297,7 +308,7 @@ async function main() {
         Promise.resolve(getCatalogCategoryPages()),
         getIslandPages(),
         getBlogPostPages(),
-        Promise.resolve(getPopularVillagerPages()),
+        getVillagerPages(),
     ]);
 
     // Combine & deduplicate by location

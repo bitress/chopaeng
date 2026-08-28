@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; // Import Link
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ACNH_FINDER_API_BASE } from "../config/api";
 import DisclaimerBanner from "../components/DisclaimerBanner";
+import { HowItWorksExplainer, FIND_ITEMS_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
 
 interface SearchResult {
     found: boolean;
@@ -32,14 +34,12 @@ const FindItems = () => {
 
         try {
             const endpoint = searchMode === 'item' ? 'find' : 'villager';
-
             const response = await fetch(`${ACNH_FINDER_API_BASE}/api/${endpoint}?q=${encodeURIComponent(term)}`);
 
             if (!response.ok) throw new Error("Server error");
 
             const result: SearchResult = await response.json();
             setData(result);
-
         } catch (err) {
             console.error(err);
             setError("Could not reach NookNet services. Is the bot online?");
@@ -48,69 +48,39 @@ const FindItems = () => {
         }
     };
 
-    useEffect(() => {
-        const site = window.location.origin;
-        const url = `${site}/finder`;
-        const img = `${site}/banner.png`;
+    const title =
+        searchMode === "item"
+            ? "Find Items on ACNH Fan Islands | Chopaeng Community"
+            : "Find Villager Matching on ACNH Fan Islands | Chopaeng Community";
 
-        const title =
-            searchMode === "item"
-                ? "Find Items on ACNH Fan Islands | Chopaeng Community"
-                : "Find Villager Matching on ACNH Fan Islands | Chopaeng Community";
-
-        const desc =
-            searchMode === "item"
-                ? "Search which live community-hosted ACNH islands on Chopaeng currently feature the item you want. Real-time item lookup across free and supporter islands."
-                : "Search which live community-hosted ACNH islands on Chopaeng currently offer villager matching for your favorite villager. Real-time villager request lookup across free and supporter islands.";
-
-
-        document.title = title;
-
-        const setMeta = (attr: string, key: string, value: string) => {
-            let el = document.querySelector(`meta[${attr}="${key}"]`);
-            if (!el) {
-                el = document.createElement("meta");
-                el.setAttribute(attr, key);
-                document.head.appendChild(el);
-            }
-            el.setAttribute("content", value);
-        };
-
-        const setLink = (rel: string, href: string) => {
-            let el = document.querySelector(`link[rel="${rel}"]`);
-            if (!el) {
-                el = document.createElement("link");
-                el.setAttribute("rel", rel);
-                document.head.appendChild(el);
-            }
-            el.setAttribute("href", href);
-        };
-
-        // Basic SEO
-        setMeta("name", "description", desc);
-        setLink("canonical", url);
-
-        // Open Graph (Facebook)
-        setMeta("property", "og:type", "website");
-        setMeta("property", "og:site_name", "Chopaeng");
-        setMeta("property", "og:url", url);
-        setMeta("property", "og:title", title);
-        setMeta("property", "og:description", desc);
-        setMeta("property", "og:image", img);
-
-        // Twitter
-        setMeta("name", "twitter:card", "summary_large_image");
-        setMeta("name", "twitter:title", title);
-        setMeta("name", "twitter:description", desc);
-        setMeta("name", "twitter:image", img);
-    }, [searchMode]);
-
+    const desc =
+        searchMode === "item"
+            ? "Search which live community-hosted ACNH islands on Chopaeng currently feature the item you want. Real-time item lookup across free and supporter islands."
+            : "Search which live community-hosted ACNH islands on Chopaeng currently offer villager matching for your favorite villager. Real-time villager request lookup across free and supporter islands.";
 
     return (
         <div className="nook-catalog min-vh-100 font-nunito bg-pattern d-flex flex-column align-items-center">
+            <Helmet>
+                <title>{title}</title>
+                <meta name="description" content={desc} />
+                <link rel="canonical" href="https://www.chopaeng.com/find" />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Chopaeng" />
+                <meta property="og:url" content="https://www.chopaeng.com/find" />
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={desc} />
+                <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={desc} />
+                <meta name="twitter:image" content="https://www.chopaeng.com/banner.png" />
+            </Helmet>
 
             {/* 1. HEADER & SEARCH */}
-            <header className="w-100 bg-nook-green pt-4 pb-4 py-sm-5 position-relative shadow-sm rounded-bottom-5 mb-5 overflow-hidden">
+            <header
+                className="w-100 pt-4 pb-4 py-sm-5 position-relative shadow-sm rounded-bottom-5 mb-5 overflow-hidden"
+                style={{ background: 'var(--nook-green, #37b06d)' }}
+            >
                 <div className="container position-relative z-1 text-center">
                     <span className="badge bg-white text-nook-green rounded-pill mb-3 px-3 py-2 fw-black text-uppercase tracking-wide shadow-sm">
                         <i className="fa-solid fa-wifi me-2"></i> Connected to ChoBot Community Assistant
@@ -123,14 +93,14 @@ const FindItems = () => {
                     <div className="d-flex flex-wrap justify-content-center gap-2 gap-sm-3 mb-4">
                         <button
                             onClick={() => setSearchMode('item')}
-                            className={`btn rounded-pill px-3 px-sm-4 py-2 fw-bold transition-all ${searchMode === 'item' ? 'bg-white text-nook-green shadow' : 'bg-success-dark text-white opacity-75'}`}
+                            className={`btn rounded-pill px-3 px-sm-4 py-2 fw-bold transition-all ${searchMode === 'item' ? 'bg-white text-nook-green shadow' : 'bg-dark bg-opacity-25 text-white'}`}
                             aria-pressed={searchMode === 'item'}
                         >
                             <i className="fa-solid fa-couch me-2"></i> Items
                         </button>
                         <button
                             onClick={() => setSearchMode('villager')}
-                            className={`btn rounded-pill px-3 px-sm-4 py-2 fw-bold transition-all ${searchMode === 'villager' ? 'bg-white text-nook-green shadow' : 'bg-success-dark text-white opacity-75'}`}
+                            className={`btn rounded-pill px-3 px-sm-4 py-2 fw-bold transition-all ${searchMode === 'villager' ? 'bg-white text-nook-green shadow' : 'bg-dark bg-opacity-25 text-white'}`}
                             aria-pressed={searchMode === 'villager'}
                         >
                             <i className="fa-solid fa-user-tag me-2"></i> Villagers
@@ -143,7 +113,7 @@ const FindItems = () => {
                             <div className="input-group input-group-lg shadow-lg rounded-pill bg-white p-2">
                                 <input
                                     type="text"
-                                    className="form-control border-0 bg-transparent fw-bold text-dark shadow-none ps-4"
+                                    className="form-control border-0 bg-transparent fw-bold shadow-none ps-4"
                                     placeholder={searchMode === 'item' ? "Search 'Ironwood Dresser'..." : "Search 'Raymond'..."}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -171,6 +141,8 @@ const FindItems = () => {
 
             {/* 2. RESULTS SECTION */}
             <section className="container px-3 mb-5" style={{ maxWidth: '800px' }}>
+                {/* ── REUSABLE HOW IT WORKS EXPLAINER ── */}
+                <HowItWorksExplainer {...FIND_ITEMS_EXPLAINER_CONFIG} className="mb-4" defaultExpanded={false} />
 
                 {/* ERROR STATE */}
                 {error && (

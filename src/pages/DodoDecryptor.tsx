@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { HowItWorksExplainer, DODO_DECRYPTOR_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
 
 const DODO_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXY0123456789';
 
@@ -56,60 +58,31 @@ const DodoDecryptor: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        const site = window.location.origin;
-        const url = `${site}/dodo-translator`;
-        const img = `${site}/banner.png`;
+    const title = hasHashInUrl
+        ? "Dodo Translator – Decrypt Code | Chopaeng"
+        : "Dodo Translator | Chopaeng";
 
-        const title = hasHashInUrl
-            ? "Dodo Translator – Decrypt Code | Chopaeng"
-            : "Dodo Translator | Chopaeng";
-
-        const desc = hasHashInUrl
-            ? "Decrypt a Chopaeng Dodo hash using your Whisper Key to reveal the destination code."
-            : "Paste your encrypted Dodo hash and enter the Whisper Key to reveal the destination code.";
-
-        document.title = title;
-
-        const setMeta = (attr: string, key: string, value: string) => {
-            let el = document.querySelector(`meta[${attr}="${key}"]`);
-            if (!el) {
-                el = document.createElement("meta");
-                el.setAttribute(attr, key);
-                document.head.appendChild(el);
-            }
-            el.setAttribute("content", value);
-        };
-
-        const setLink = (rel: string, href: string) => {
-            let el = document.querySelector(`link[rel="${rel}"]`);
-            if (!el) {
-                el = document.createElement("link");
-                el.setAttribute("rel", rel);
-                document.head.appendChild(el);
-            }
-            el.setAttribute("href", href);
-        };
-
-        setMeta("name", "description", desc);
-        setLink("canonical", url);
-
-        setMeta("property", "og:type", "website");
-        setMeta("property", "og:site_name", "Chopaeng");
-        setMeta("property", "og:url", url);
-        setMeta("property", "og:title", title);
-        setMeta("property", "og:description", desc);
-        setMeta("property", "og:image", img);
-
-        setMeta("name", "twitter:card", "summary_large_image");
-        setMeta("name", "twitter:title", title);
-        setMeta("name", "twitter:description", desc);
-        setMeta("name", "twitter:image", img);
-    }, [hasHashInUrl]);
-
+    const desc = hasHashInUrl
+        ? "Decrypt a Chopaeng Dodo hash using your Whisper Key to reveal the destination code."
+        : "Paste your encrypted Dodo hash and enter the Whisper Key to reveal the destination code.";
 
     return (
         <div className="nook-os min-vh-100 py-5 font-nunito position-relative overflow-hidden d-flex flex-column justify-content-center">
+            <Helmet>
+                <title>{title}</title>
+                <meta name="description" content={desc} />
+                <link rel="canonical" href="https://www.chopaeng.com/dodo" />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Chopaeng" />
+                <meta property="og:url" content="https://www.chopaeng.com/dodo" />
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={desc} />
+                <meta property="og:image" content="https://www.chopaeng.com/banner.png" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={desc} />
+                <meta name="twitter:image" content="https://www.chopaeng.com/banner.png" />
+            </Helmet>
 
             {/* Background Decoration */}
             <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block pointer-events-none">
@@ -119,7 +92,10 @@ const DodoDecryptor: React.FC = () => {
                 <i className="fa-solid fa-plane text-info" style={{ fontSize: '20rem', transform: 'rotate(-15deg)' }}></i>
             </div>
 
-            <div className="container position-relative z-1" style={{ maxWidth: "650px" }}>
+            <div className="container position-relative z-1" style={{ maxWidth: "680px" }}>
+
+                {/* ── REUSABLE HOW IT WORKS EXPLAINER ── */}
+                <HowItWorksExplainer {...DODO_DECRYPTOR_EXPLAINER_CONFIG} className="mb-4" defaultExpanded={false} />
 
                 {/* Header */}
                 <div className="d-flex align-items-center justify-content-between mb-4">
@@ -132,11 +108,11 @@ const DodoDecryptor: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-5 shadow-lg border-0 overflow-hidden position-relative animate-up">
-                    <div className="p-5">
+                <div className="card rounded-5 shadow-lg border-0 overflow-hidden position-relative animate-up">
+                    <div className="p-4 p-md-5">
 
                         <div className="text-center mb-5">
-                            <h1 className="display-5 fw-black ac-font text-dark mb-2">Dodo Translator</h1>
+                            <h1 className="display-5 fw-black ac-font mb-2">Dodo Translator</h1>
                             <p className="text-muted fw-bold">
                                 {hasHashInUrl ? "Signal received! Enter the Whisper Key to decrypt." : "Enter your encrypted hash to reveal the destination."}
                             </p>

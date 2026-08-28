@@ -164,6 +164,7 @@ const IslandMaps = () => {
                                                 alt={island.name}
                                                 className={`map-img ${island.status === 'OFFLINE' ? 'sepia' : ''}`}
                                                 loading="lazy"
+                                                decoding="async"
                                                 onError={handleImageError}
                                             />
 

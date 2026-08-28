@@ -290,13 +290,12 @@ const QueueList: React.FC<{ queue: QueueEntry[]; myOrderId?: string }> = ({ queu
                             </div>
                         </div>
                         <span
-                            className={`badge rounded-pill fw-bold ${
-                                e.status === 'ready'
+                            className={`badge rounded-pill fw-bold ${e.status === 'ready'
                                     ? 'bg-success text-white'
                                     : e.status === 'preparing'
-                                    ? 'bg-warning text-dark border-0 d-inline-flex align-items-center gap-1'
-                                    : 'bg-light text-secondary border'
-                            }`}
+                                        ? 'bg-warning text-dark border-0 d-inline-flex align-items-center gap-1'
+                                        : 'bg-light text-secondary border'
+                                }`}
                             style={{ fontSize: '.65rem' }}
                         >
                             {e.status === 'preparing' ? (
@@ -877,9 +876,8 @@ const OrderBot: React.FC = () => {
         triggerInAppToast({
             type: 'success',
             title: 'Order Submitted!',
-            message: `Your order is in queue at position #${res.queuePosition ?? 1}. Estimated wait: ~${
-                res.estimatedMinutes ?? 2
-            }m.`,
+            message: `Your order is in queue at position #${res.queuePosition ?? 1}. Estimated wait: ~${res.estimatedMinutes ?? 2
+                }m.`,
         });
     };
 
@@ -918,7 +916,7 @@ const OrderBot: React.FC = () => {
     // ── Copy Command ──
     const handleCopyCommand = () => {
         if (!orderCommandText) return;
-        navigator.clipboard.writeText(orderCommandText).catch(() => {});
+        navigator.clipboard.writeText(orderCommandText).catch(() => { });
         playSound();
         setCommandCopied(true);
         setTimeout(() => setCommandCopied(false), 2500);
@@ -934,7 +932,7 @@ const OrderBot: React.FC = () => {
 
     const handleCopySpecific = (cmd: string, label: string) => {
         if (!cmd) return;
-        navigator.clipboard.writeText(cmd).catch(() => {});
+        navigator.clipboard.writeText(cmd).catch(() => { });
         playSound();
         triggerInAppToast({
             type: 'info',
@@ -998,7 +996,7 @@ const OrderBot: React.FC = () => {
             const rawCode = String(data.dodo_code || '');
             const code = rawCode.split(': ').pop() || rawCode;
             setDropDodoCode(code);
-            navigator.clipboard.writeText(code).catch(() => {});
+            navigator.clipboard.writeText(code).catch(() => { });
             playSound();
             setDropDodoCopied(true);
             setTimeout(() => setDropDodoCopied(false), 2500);
@@ -1017,7 +1015,7 @@ const OrderBot: React.FC = () => {
 
     const handleCopyDropIslandDodo = (code: string) => {
         if (!code) return;
-        navigator.clipboard.writeText(code).catch(() => {});
+        navigator.clipboard.writeText(code).catch(() => { });
         playSound();
         setDropDodoCopied(true);
         setTimeout(() => setDropDodoCopied(false), 2500);
@@ -1113,14 +1111,13 @@ const OrderBot: React.FC = () => {
 
     const handleCopyDropForDiscord = () => {
         if (!dropCommandText) return;
-        navigator.clipboard.writeText(dropCommandText).catch(() => {});
+        navigator.clipboard.writeText(dropCommandText).catch(() => { });
         playSound();
         triggerInAppToast({
             type: 'success',
             title: 'Copied !drop for Discord!',
-            message: `Redirecting to Discord ${
-                selectedDropIsland?.name ? `(${selectedDropIsland.name})` : ''
-            }... Paste command in the channel!`,
+            message: `Redirecting to Discord ${selectedDropIsland?.name ? `(${selectedDropIsland.name})` : ''
+                }... Paste command in the channel!`,
         });
         setTimeout(() => {
             const targetUrl = (selectedDropIsland as any)?.channel_id
@@ -1466,9 +1463,8 @@ const OrderBot: React.FC = () => {
                                             title="Refresh status"
                                         >
                                             <i
-                                                className={`fa-solid fa-arrows-rotate ${
-                                                    statusLoading ? 'fa-spin text-success' : 'text-muted'
-                                                }`}
+                                                className={`fa-solid fa-arrows-rotate ${statusLoading ? 'fa-spin text-success' : 'text-muted'
+                                                    }`}
                                                 aria-hidden="true"
                                             />
                                             <span>Refresh</span>
@@ -1641,9 +1637,8 @@ const OrderBot: React.FC = () => {
                                             style={{ height: '8px', borderRadius: '10px', background: '#e2e8f0' }}
                                         >
                                             <div
-                                                className={`progress-bar transition-all ${
-                                                    capacityPct === 100 ? 'bg-success' : 'bg-success'
-                                                }`}
+                                                className={`progress-bar transition-all ${capacityPct === 100 ? 'bg-success' : 'bg-success'
+                                                    }`}
                                                 role="progressbar"
                                                 style={{ width: `${capacityPct}%` }}
                                                 aria-valuenow={totalOrderCount}
@@ -1793,9 +1788,8 @@ const OrderBot: React.FC = () => {
                                                         onClick={() => setShowTerminal((s) => !s)}
                                                     >
                                                         <i
-                                                            className={`fa-solid fa-chevron-${
-                                                                showTerminal ? 'down' : 'right'
-                                                            }`}
+                                                            className={`fa-solid fa-chevron-${showTerminal ? 'down' : 'right'
+                                                                }`}
                                                         />
                                                         <span>{showTerminal ? 'Hide' : 'View'} Raw Command Strings</span>
                                                     </button>
@@ -1903,9 +1897,8 @@ const OrderBot: React.FC = () => {
                                                             onClick={handleCopyCommand}
                                                         >
                                                             <i
-                                                                className={`fa-solid ${
-                                                                    commandCopied ? 'fa-check text-success' : 'fa-copy'
-                                                                } me-1`}
+                                                                className={`fa-solid ${commandCopied ? 'fa-check text-success' : 'fa-copy'
+                                                                    } me-1`}
                                                             />
                                                             {commandCopied ? 'Copied' : 'Copy All'}
                                                         </button>
@@ -1924,10 +1917,9 @@ const OrderBot: React.FC = () => {
                                                         style={{ width: 42, height: 42, fontSize: '1.1rem' }}
                                                     >
                                                         <i
-                                                            className={`fa-solid ${
-                                                                characters.find((c) => c.id === orderProfile?.characterId)
+                                                            className={`fa-solid ${characters.find((c) => c.id === orderProfile?.characterId)
                                                                     ?.icon || 'fa-leaf'
-                                                            }`}
+                                                                }`}
                                                         />
                                                     </div>
                                                     <div className="lh-sm">
@@ -2098,8 +2090,8 @@ const OrderBot: React.FC = () => {
                                                         {statusStr === 'preparing'
                                                             ? 'Laying items on ground...'
                                                             : isReady
-                                                            ? 'Landed at airport gate!'
-                                                            : 'In transit to island...'}
+                                                                ? 'Landed at airport gate!'
+                                                                : 'In transit to island...'}
                                                     </span>
                                                 </div>
                                                 <span className="tiny-text fw-black text-success">
@@ -2145,11 +2137,10 @@ const OrderBot: React.FC = () => {
                                                 <span className="ob-prog-text">Submitted</span>
                                             </div>
                                             <div
-                                                className={`ob-prog-step ${
-                                                    ['queued', 'preparing', 'ready', 'completed'].includes(statusStr)
+                                                className={`ob-prog-step ${['queued', 'preparing', 'ready', 'completed'].includes(statusStr)
                                                         ? 'active'
                                                         : ''
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="ob-prog-dot">
                                                     {statusStr === 'queued' ? (
@@ -2167,11 +2158,10 @@ const OrderBot: React.FC = () => {
                                                 </span>
                                             </div>
                                             <div
-                                                className={`ob-prog-step ${
-                                                    ['preparing', 'ready', 'completed'].includes(statusStr)
+                                                className={`ob-prog-step ${['preparing', 'ready', 'completed'].includes(statusStr)
                                                         ? 'active'
                                                         : ''
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="ob-prog-dot">
                                                     {statusStr === 'preparing' ? (
@@ -2185,9 +2175,8 @@ const OrderBot: React.FC = () => {
                                                 <span className="ob-prog-text">Preparing Items</span>
                                             </div>
                                             <div
-                                                className={`ob-prog-step ${
-                                                    isReady || statusStr === 'completed' ? 'active ready-step' : ''
-                                                }`}
+                                                className={`ob-prog-step ${isReady || statusStr === 'completed' ? 'active ready-step' : ''
+                                                    }`}
                                             >
                                                 <div className="ob-prog-dot">
                                                     {isReady ? (
@@ -2264,8 +2253,8 @@ const OrderBot: React.FC = () => {
                                                                 {statusStr === 'preparing'
                                                                     ? 'Up Next'
                                                                     : orderStatus.queuePosition > 0
-                                                                    ? `#${orderStatus.queuePosition}`
-                                                                    : 'Next Up'}
+                                                                        ? `#${orderStatus.queuePosition}`
+                                                                        : 'Next Up'}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2351,11 +2340,10 @@ const OrderBot: React.FC = () => {
                                                     <div className="d-flex justify-content-center gap-2 mt-3">
                                                         <button
                                                             id="ob-copy-dodo-btn"
-                                                            className={`btn btn-lg rounded-pill fw-black px-5 py-3 shadow-sm d-inline-flex align-items-center gap-2 ${
-                                                                dodoCopied
+                                                            className={`btn btn-lg rounded-pill fw-black px-5 py-3 shadow-sm d-inline-flex align-items-center gap-2 ${dodoCopied
                                                                     ? 'btn-success text-white'
                                                                     : 'btn-warning text-dark'
-                                                            }`}
+                                                                }`}
                                                             onClick={handleCopyDodo}
                                                             aria-label={
                                                                 dodoCopied
@@ -2364,9 +2352,8 @@ const OrderBot: React.FC = () => {
                                                             }
                                                         >
                                                             <i
-                                                                className={`fa-solid ${
-                                                                    dodoCopied ? 'fa-check' : 'fa-copy'
-                                                                }`}
+                                                                className={`fa-solid ${dodoCopied ? 'fa-check' : 'fa-copy'
+                                                                    }`}
                                                                 aria-hidden="true"
                                                             />
                                                             <span>
@@ -2691,11 +2678,10 @@ const OrderBot: React.FC = () => {
                                                 setDropFilter('all');
                                                 playSound();
                                             }}
-                                            className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${
-                                                dropFilter === 'all'
+                                            className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${dropFilter === 'all'
                                                     ? 'btn-dark text-white shadow-2xs'
                                                     : 'text-muted border-0 bg-transparent'
-                                            }`}
+                                                }`}
                                             style={{ fontSize: '0.72rem' }}
                                         >
                                             All Sub Islands ({subMemberIslands.length})
@@ -2706,11 +2692,10 @@ const OrderBot: React.FC = () => {
                                                 setDropFilter('unlocked');
                                                 playSound();
                                             }}
-                                            className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${
-                                                dropFilter === 'unlocked'
+                                            className={`btn btn-xs rounded-pill fw-bold px-3 py-1 transition-all ${dropFilter === 'unlocked'
                                                     ? 'btn-dark text-white shadow-2xs'
                                                     : 'text-muted border-0 bg-transparent'
-                                            }`}
+                                                }`}
                                             style={{ fontSize: '0.72rem' }}
                                         >
                                             <i className="fa-solid fa-crown me-1 text-warning"></i>
@@ -2728,33 +2713,33 @@ const OrderBot: React.FC = () => {
                                 {/* Sub Requirement Notice for Guest / Non-Sub */}
                                 {(!user ||
                                     subMemberIslands.every((i) => !user || !canAccessIsland(i.requiredRoles))) && (
-                                    <div className="alert alert-warning rounded-4 border-0 p-3 mb-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 shadow-2xs">
-                                        <div className="d-flex align-items-center gap-2">
-                                            <i className="fa-solid fa-crown text-warning fs-5 flex-shrink-0"></i>
-                                            <span className="small fw-bold text-dark">
-                                                {user
-                                                    ? 'You do not currently have an active Sub Member subscription tier.'
-                                                    : 'Log in with your Discord account to access your Sub Islands.'}
-                                            </span>
+                                        <div className="alert alert-warning rounded-4 border-0 p-3 mb-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 shadow-2xs">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <i className="fa-solid fa-crown text-warning fs-5 flex-shrink-0"></i>
+                                                <span className="small fw-bold text-dark">
+                                                    {user
+                                                        ? 'You do not currently have an active Sub Member subscription tier.'
+                                                        : 'Log in with your Discord account to access your Sub Islands.'}
+                                                </span>
+                                            </div>
+                                            {user ? (
+                                                <Link
+                                                    to="/membership"
+                                                    className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap"
+                                                >
+                                                    View Memberships
+                                                </Link>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={login}
+                                                    className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap"
+                                                >
+                                                    <i className="fa-brands fa-discord me-1"></i> Log In
+                                                </button>
+                                            )}
                                         </div>
-                                        {user ? (
-                                            <Link
-                                                to="/membership"
-                                                className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap"
-                                            >
-                                                View Memberships
-                                            </Link>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                onClick={login}
-                                                className="btn btn-sm btn-dark rounded-pill fw-bold px-3 text-nowrap"
-                                            >
-                                                <i className="fa-brands fa-discord me-1"></i> Log In
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+                                    )}
 
                                 {/* Island Dropdown Selector */}
                                 {islandsLoading ? (
@@ -2815,17 +2800,17 @@ const OrderBot: React.FC = () => {
                                             {availableDropIslands.filter(
                                                 (i) => !!user && canAccessIsland(i.requiredRoles)
                                             ).length > 0 && (
-                                                <optgroup label="My Sub Member Islands (Subscribed)">
-                                                    {availableDropIslands
-                                                        .filter((i) => !!user && canAccessIsland(i.requiredRoles))
-                                                        .map((isl) => (
-                                                            <option key={isl.id} value={isl.id}>
-                                                                {isl.name} · {isl.type || 'Treasure Island'} (
-                                                                {isl.visitors ?? 0}/7 Flying)
-                                                            </option>
-                                                        ))}
-                                                </optgroup>
-                                            )}
+                                                    <optgroup label="My Sub Member Islands (Subscribed)">
+                                                        {availableDropIslands
+                                                            .filter((i) => !!user && canAccessIsland(i.requiredRoles))
+                                                            .map((isl) => (
+                                                                <option key={isl.id} value={isl.id}>
+                                                                    {isl.name} · {isl.type || 'Treasure Island'} (
+                                                                    {isl.visitors ?? 0}/7 Flying)
+                                                                </option>
+                                                            ))}
+                                                    </optgroup>
+                                                )}
                                             {dropFilter === 'all' &&
                                                 availableDropIslands.filter(
                                                     (i) => !user || !canAccessIsland(i.requiredRoles)
@@ -2931,24 +2916,22 @@ const OrderBot: React.FC = () => {
                                             </div>
                                         </div>
                                         <span
-                                            className={`badge rounded-pill px-3 py-1 fw-black x-small ${
-                                                alreadyOnIsland
+                                            className={`badge rounded-pill px-3 py-1 fw-black x-small ${alreadyOnIsland
                                                     ? 'bg-success text-white'
                                                     : dropDodoCode
-                                                    ? 'bg-warning text-dark'
-                                                    : 'bg-secondary text-white'
-                                            }`}
+                                                        ? 'bg-warning text-dark'
+                                                        : 'bg-secondary text-white'
+                                                }`}
                                         >
                                             <i
-                                                className={`fa-solid ${
-                                                    alreadyOnIsland ? 'fa-circle-check' : 'fa-plane'
-                                                } me-1`}
+                                                className={`fa-solid ${alreadyOnIsland ? 'fa-circle-check' : 'fa-plane'
+                                                    } me-1`}
                                             ></i>
                                             {alreadyOnIsland
                                                 ? 'ON-SITE CONFIRMED'
                                                 : dropDodoCode
-                                                ? 'FLIGHT PASS ACTIVE'
-                                                : 'LOGGING REQUIRED'}
+                                                    ? 'FLIGHT PASS ACTIVE'
+                                                    : 'LOGGING REQUIRED'}
                                         </span>
                                     </div>
 
@@ -2980,11 +2963,10 @@ const OrderBot: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleCopyDropIslandDodo(dropDodoCode)}
-                                                    className={`btn rounded-pill fw-black px-4 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${
-                                                        dropDodoCopied
+                                                    className={`btn rounded-pill fw-black px-4 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${dropDodoCopied
                                                             ? 'btn-success text-white'
                                                             : 'btn-warning text-dark hover-scale'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {dropDodoCopied ? (
                                                         <>
@@ -3030,16 +3012,14 @@ const OrderBot: React.FC = () => {
                                                         message: `Confirmed on ${selectedDropIsland.name}! Proceed to Step 3 to drop items.`,
                                                     });
                                                 }}
-                                                className={`btn rounded-pill fw-black px-3 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${
-                                                    alreadyOnIsland
+                                                className={`btn rounded-pill fw-black px-3 py-2 shadow-sm d-flex align-items-center gap-2 transition-all ${alreadyOnIsland
                                                         ? 'btn-success text-white'
                                                         : 'btn-outline-light text-white hover-scale'
-                                                }`}
+                                                    }`}
                                             >
                                                 <i
-                                                    className={`fa-solid ${
-                                                        alreadyOnIsland ? 'fa-check-double' : 'fa-location-dot'
-                                                    }`}
+                                                    className={`fa-solid ${alreadyOnIsland ? 'fa-check-double' : 'fa-location-dot'
+                                                        }`}
                                                 ></i>
                                                 <span>
                                                     {alreadyOnIsland
@@ -3346,18 +3326,16 @@ const OrderBot: React.FC = () => {
                                             <i className="fa-solid fa-box me-1 text-success"></i> Slot Capacity
                                         </span>
                                         <span
-                                            className={`tiny-text fw-black ${
-                                                totalDropCount >= DROP_MAX ? 'text-success' : 'text-primary'
-                                            }`}
+                                            className={`tiny-text fw-black ${totalDropCount >= DROP_MAX ? 'text-success' : 'text-primary'
+                                                }`}
                                         >
                                             {totalDropCount} / {DROP_MAX} Slots
                                         </span>
                                     </div>
                                     <div className="progress" style={{ height: 6, borderRadius: 99 }}>
                                         <div
-                                            className={`progress-bar transition-all ${
-                                                totalDropCount >= DROP_MAX ? 'bg-success' : 'bg-primary'
-                                            }`}
+                                            className={`progress-bar transition-all ${totalDropCount >= DROP_MAX ? 'bg-success' : 'bg-primary'
+                                                }`}
                                             role="progressbar"
                                             style={{ width: `${(totalDropCount / DROP_MAX) * 100}%` }}
                                             aria-valuenow={totalDropCount}
@@ -3433,35 +3411,31 @@ const OrderBot: React.FC = () => {
                                     </span>
                                     <div className={`ob-radar-diag-item ${selectedDropIsland ? 'done' : 'pending'}`}>
                                         <i
-                                            className={`fa-solid ${
-                                                selectedDropIsland
+                                            className={`fa-solid ${selectedDropIsland
                                                     ? 'fa-check-circle text-success'
                                                     : 'fa-circle-dot text-muted'
-                                            }`}
+                                                }`}
                                         />
                                         <span>1. Sub Island Target Set</span>
                                     </div>
                                     <div
-                                        className={`ob-radar-diag-item ${
-                                            alreadyOnIsland || dropDodoCode ? 'done' : 'pending'
-                                        }`}
+                                        className={`ob-radar-diag-item ${alreadyOnIsland || dropDodoCode ? 'done' : 'pending'
+                                            }`}
                                     >
                                         <i
-                                            className={`fa-solid ${
-                                                alreadyOnIsland || dropDodoCode
+                                            className={`fa-solid ${alreadyOnIsland || dropDodoCode
                                                     ? 'fa-check-circle text-success'
                                                     : 'fa-circle-dot text-muted'
-                                            }`}
+                                                }`}
                                         />
                                         <span>2. Webhook &amp; On-Island Presence</span>
                                     </div>
                                     <div className={`ob-radar-diag-item ${totalDropCount > 0 ? 'done' : 'pending'}`}>
                                         <i
-                                            className={`fa-solid ${
-                                                totalDropCount > 0
+                                            className={`fa-solid ${totalDropCount > 0
                                                     ? 'fa-check-circle text-success'
                                                     : 'fa-circle-dot text-muted'
-                                            }`}
+                                                }`}
                                         />
                                         <span>
                                             3. 9-Slot Payload Loaded ({totalDropCount}/{DROP_MAX})
@@ -3701,14 +3675,13 @@ const OrderBot: React.FC = () => {
                                                             #{order.id.slice(0, 14)}
                                                         </span>
                                                         <span
-                                                            className={`badge rounded-pill x-small fw-bold ${
-                                                                order.status === 'ready' ||
-                                                                order.status === 'completed'
+                                                            className={`badge rounded-pill x-small fw-bold ${order.status === 'ready' ||
+                                                                    order.status === 'completed'
                                                                     ? 'bg-success text-white'
                                                                     : order.status === 'preparing'
-                                                                    ? 'bg-warning text-dark border-0'
-                                                                    : 'bg-light text-dark border'
-                                                            }`}
+                                                                        ? 'bg-warning text-dark border-0'
+                                                                        : 'bg-light text-dark border'
+                                                                }`}
                                                         >
                                                             {order.status === 'preparing'
                                                                 ? 'Preparing'
@@ -3936,7 +3909,7 @@ const OrderBot: React.FC = () => {
                                 <div className="text-center mb-4">
                                     {user.avatar ? (
                                         <img
-                                            src={`https://cdn.discordapp.com/avatars/${user.user_id}/${user.avatar}.png?size=80`}
+                                            src={`${user.avatar}`}
                                             alt={user.username}
                                             style={{
                                                 width: 64,
@@ -4051,11 +4024,10 @@ const OrderBot: React.FC = () => {
                                                 key={char.id}
                                                 type="button"
                                                 id={`setup-char-${char.id}`}
-                                                className={`d-flex align-items-center gap-3 p-3 rounded-4 w-100 text-start border-2 ${
-                                                    isSelected
+                                                className={`d-flex align-items-center gap-3 p-3 rounded-4 w-100 text-start border-2 ${isSelected
                                                         ? 'border-success bg-success bg-opacity-10'
                                                         : 'border-light-subtle bg-light'
-                                                }`}
+                                                    }`}
                                                 style={{ cursor: 'pointer', transition: 'all .2s' }}
                                                 onClick={() => {
                                                     setSetupSelectedCharId(char.id);
@@ -4247,9 +4219,8 @@ const OrderBot: React.FC = () => {
                                 <div className="mt-2">
                                     <button
                                         type="button"
-                                        className={`btn btn-xs rounded-pill fw-bold px-3 py-1 ${
-                                            inAppToast.type === 'dodo' ? 'btn-light text-dark' : 'btn-success text-white'
-                                        }`}
+                                        className={`btn btn-xs rounded-pill fw-bold px-3 py-1 ${inAppToast.type === 'dodo' ? 'btn-light text-dark' : 'btn-success text-white'
+                                            }`}
                                         style={inAppToast.type !== 'dodo' ? { backgroundColor: '#37b06d', borderColor: '#37b06d' } : {}}
                                         onClick={() => {
                                             inAppToast.onAction?.();

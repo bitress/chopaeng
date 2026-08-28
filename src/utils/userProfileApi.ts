@@ -20,6 +20,7 @@ export interface PublicPassportData {
     favouriteVillagers: string[]; // up to 10 villager names
     primaryIgn?: string;
     primaryIsland?: string;
+    avatarUrl?: string;
     updatedAt?: number;
 }
 

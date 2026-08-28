@@ -16,6 +16,8 @@ export const IslandMapPolaroid: React.FC<IslandMapPolaroidProps> = ({ mapImageSr
                         src={mapImageSrc}
                         alt={islandName}
                         className="img-fluid"
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             if (target.src.includes(".png")) target.src = target.src.replace(".png", ".jpg");
