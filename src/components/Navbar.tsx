@@ -1069,6 +1069,22 @@ export const Navbar: React.FC = () => {
                             </button>
                         )}
 
+                        {/* Quick Search Spotlight (Ctrl+K / ⌘K) */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                playChimeClick();
+                                window.dispatchEvent(new CustomEvent('chopaeng_open_search'));
+                            }}
+                            className="chopaeng-action-btn d-inline-flex align-items-center gap-1.5 px-2.5"
+                            style={{ height: '36px' }}
+                            title="Quick Search (Ctrl+K or /)"
+                            aria-label="Open Search Command Palette"
+                        >
+                            <i className="fa-solid fa-magnifying-glass text-muted" aria-hidden="true" />
+                            <span className="d-none d-lg-inline-block font-monospace text-muted" style={{ fontSize: '0.68rem', fontWeight: 700 }}>⌘K</span>
+                        </button>
+
                         {/* K.K. Slider Jukebox */}
                         <button
                             type="button"
@@ -1275,6 +1291,23 @@ export const Navbar: React.FC = () => {
 
                     {/* Drawer Navigation List */}
                     <div className="p-3">
+                        {/* Quick Search Action */}
+                        <button
+                            type="button"
+                            className="btn btn-light border rounded-pill w-100 py-2 mb-3 text-start d-flex align-items-center justify-content-between px-3 shadow-2xs"
+                            onClick={() => {
+                                playChimeClick();
+                                setIsMobileMenuOpen(false);
+                                window.dispatchEvent(new CustomEvent('chopaeng_open_search'));
+                            }}
+                        >
+                            <span className="d-flex align-items-center gap-2 text-muted fw-bold small">
+                                <i className="fa-solid fa-magnifying-glass text-success" />
+                                <span>Search pages, items, villagers...</span>
+                            </span>
+                            <span className="badge bg-dark text-white rounded-pill font-monospace" style={{ fontSize: '0.65rem' }}>⌘K</span>
+                        </button>
+
                         <div className="fw-bold text-muted text-uppercase mb-2" style={{ letterSpacing: '0.06em', fontSize: '0.62rem' }}>
                             Navigation
                         </div>

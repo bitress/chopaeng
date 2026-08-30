@@ -21,6 +21,41 @@
     --ob-radius-pill: 9999px;
     --ob-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
     --ob-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+    --ob-text-primary: #1e293b;
+    --ob-text-secondary: #64748b;
+    --ob-notch-bg: #ffffff;
+}
+
+[data-theme="celeste"] {
+    --ob-green: #8b5cf6;
+    --ob-green-dark: #7c3aed;
+    --ob-green-light: #a78bfa;
+    --ob-green-subtle: rgba(139, 92, 246, 0.2);
+    --ob-surface: #1e293b;
+    --ob-surface-subtle: #0f172a;
+    --ob-border: rgba(139, 92, 246, 0.28);
+    --ob-border-strong: #475569;
+    --ob-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --ob-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --ob-text-primary: #f8fafc;
+    --ob-text-secondary: #a5b4fc;
+    --ob-notch-bg: #0b0f19;
+}
+
+[data-theme="roost"] {
+    --ob-green: #d97706;
+    --ob-green-dark: #b45309;
+    --ob-green-light: #f59e0b;
+    --ob-green-subtle: rgba(217, 119, 6, 0.2);
+    --ob-surface: #292524;
+    --ob-surface-subtle: #1c1917;
+    --ob-border: rgba(217, 119, 6, 0.28);
+    --ob-border-strong: #57483d;
+    --ob-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --ob-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --ob-text-primary: #fafaf9;
+    --ob-text-secondary: #d1beaf;
+    --ob-notch-bg: #1c1917;
 }
 
 /* ── Page Shell ─────────────────────────────────────────────── */
@@ -35,9 +70,9 @@
 
 /* ── Hero & Telemetry Banner ─────────────────────────────────── */
 .ob-hero {
-    background-color: #ffffff;
+    background-color: var(--ob-surface, #ffffff);
     padding: 2rem 0 1.5rem;
-    color: var(--text, #5e564d);
+    color: var(--ob-text-primary, #5e564d);
     position: relative;
     border-bottom: 1.5px solid var(--ob-border, #e9ecef);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
@@ -1401,15 +1436,16 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CELESTE / ROOST / DARK THEME OVERRIDES (Solid Dark Colors)
+   CELESTE / ROOST / DARK THEME OVERRIDES (Full Component Support)
    ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. Hero, Status & Mode Toggle ── */
 [data-theme="celeste"] .ob-hero,
 [data-theme="dark"] .ob-hero {
     background: #1e293b;
     border-color: rgba(139, 92, 246, 0.28);
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-hero {
     background: #292524;
     border-color: rgba(217, 119, 6, 0.28);
@@ -1421,7 +1457,6 @@
     background: #0f172a;
     border-color: #334155;
 }
-
 [data-theme="roost"] .ob-hero-stat {
     background: #1c1917;
     border-color: #44372e;
@@ -1429,33 +1464,173 @@
 
 [data-theme="celeste"] .ob-hero-stat-val,
 [data-theme="dark"] .ob-hero-stat-val {
-    color: #f1f5f9;
+    color: #f8fafc;
 }
-
 [data-theme="roost"] .ob-hero-stat-val {
     color: #fafaf9;
 }
 
+[data-theme="celeste"] .ob-hero-stat-lbl,
+[data-theme="dark"] .ob-hero-stat-lbl {
+    color: #a5b4fc;
+}
+[data-theme="roost"] .ob-hero-stat-lbl {
+    color: #d1beaf;
+}
+
+[data-theme="celeste"] .ob-mode-toggle-wrap,
+[data-theme="dark"] .ob-mode-toggle-wrap {
+    background: #0f172a;
+    border-color: #334155;
+}
+[data-theme="roost"] .ob-mode-toggle-wrap {
+    background: #1c1917;
+    border-color: #44372e;
+}
+
+[data-theme="celeste"] .ob-mode-btn,
+[data-theme="dark"] .ob-mode-btn {
+    color: #cbd5e1;
+}
+[data-theme="roost"] .ob-mode-btn {
+    color: #d1beaf;
+}
+
+[data-theme="celeste"] .ob-mode-btn:hover,
+[data-theme="dark"] .ob-mode-btn:hover {
+    color: #ffffff;
+    background: #1e293b;
+}
+[data-theme="roost"] .ob-mode-btn:hover {
+    color: #ffffff;
+    background: #292524;
+}
+
+[data-theme="celeste"] .ob-mode-btn.active.order {
+    background: #7c3aed;
+    color: #ffffff;
+}
+[data-theme="roost"] .ob-mode-btn.active.order {
+    background: #b45309;
+    color: #ffffff;
+}
+
+[data-theme="celeste"] .ob-mode-btn.active.drop {
+    background: #0284c7;
+    color: #ffffff;
+}
+[data-theme="roost"] .ob-mode-btn.active.drop {
+    background: #78350f;
+    color: #ffffff;
+}
+
+/* ── 2. Steps Indicator ── */
+[data-theme="celeste"] .ob-step + .ob-step::before,
+[data-theme="dark"] .ob-step + .ob-step::before {
+    background: #334155;
+}
+[data-theme="roost"] .ob-step + .ob-step::before {
+    background: #44372e;
+}
+
+[data-theme="celeste"] .ob-step-dot,
+[data-theme="dark"] .ob-step-dot {
+    background: #0f172a;
+    border-color: #475569;
+    color: #94a3b8;
+}
+[data-theme="roost"] .ob-step-dot {
+    background: #1c1917;
+    border-color: #57483d;
+    color: #a8a29e;
+}
+
+[data-theme="celeste"] .ob-step.active .ob-step-dot,
+[data-theme="dark"] .ob-step.active .ob-step-dot {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3);
+}
+[data-theme="roost"] .ob-step.active .ob-step-dot {
+    background: #d97706;
+    border-color: #d97706;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.3);
+}
+
+[data-theme="celeste"] .ob-step.done .ob-step-dot,
+[data-theme="dark"] .ob-step.done .ob-step-dot {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: #a78bfa;
+    color: #c4b5fd;
+}
+[data-theme="roost"] .ob-step.done .ob-step-dot {
+    background: rgba(217, 119, 6, 0.2);
+    border-color: #f59e0b;
+    color: #fde68a;
+}
+
+[data-theme="celeste"] .ob-step-label,
+[data-theme="dark"] .ob-step-label {
+    color: #94a3b8;
+}
+[data-theme="roost"] .ob-step-label {
+    color: #a8a29e;
+}
+
+[data-theme="celeste"] .ob-step.active .ob-step-label,
+[data-theme="dark"] .ob-step.active .ob-step-label {
+    color: #c4b5fd;
+}
+[data-theme="roost"] .ob-step.active .ob-step-label {
+    color: #fed7aa;
+}
+
+[data-theme="celeste"] .ob-step.done .ob-step-label,
+[data-theme="dark"] .ob-step.done .ob-step-label {
+    color: #cbd5e1;
+}
+[data-theme="roost"] .ob-step.done .ob-step-label {
+    color: #e7e5e4;
+}
+
+/* ── 3. Cards & Panels ── */
 [data-theme="celeste"] .ob-card,
 [data-theme="dark"] .ob-card {
     background: #1e293b;
     border-color: rgba(139, 92, 246, 0.28);
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-card {
     background: #292524;
     border-color: rgba(217, 119, 6, 0.28);
     color: #fafaf9;
 }
 
+[data-theme="celeste"] .ob-card.accent-green {
+    border-top-color: #8b5cf6;
+}
+[data-theme="roost"] .ob-card.accent-green {
+    border-top-color: #d97706;
+}
+
+[data-theme="celeste"] .ob-card-icon {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+}
+[data-theme="roost"] .ob-card-icon {
+    background: rgba(217, 119, 6, 0.2);
+    color: #fed7aa;
+}
+
+/* ── 4. Interactive Pocket Tiles & Grids ── */
 [data-theme="celeste"] .ob-interactive-tile,
 [data-theme="dark"] .ob-interactive-tile {
     background: #0f172a;
     border-color: #334155;
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-interactive-tile {
     background: #1c1917;
     border-color: #44372e;
@@ -1467,86 +1642,56 @@
     background: #1e293b;
     border-color: #475569;
 }
-
 [data-theme="roost"] .ob-interactive-tile.empty {
     background: #292524;
     border-color: #57483d;
+}
+
+[data-theme="celeste"] .ob-interactive-tile.empty:hover {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: #a78bfa;
+}
+[data-theme="roost"] .ob-interactive-tile.empty:hover {
+    background: rgba(217, 119, 6, 0.15);
+    border-color: #f59e0b;
 }
 
 [data-theme="celeste"] .ob-tile-label,
 [data-theme="dark"] .ob-tile-label {
     color: #cbd5e1;
 }
-
 [data-theme="roost"] .ob-tile-label {
     color: #ded1c7;
 }
 
-[data-theme="celeste"] .ob-radar-card,
-[data-theme="dark"] .ob-radar-card {
-    background: #1e293b;
-    border-color: rgba(64, 144, 189, 0.4);
-    color: #f1f5f9;
+[data-theme="celeste"] .ob-tile-qty,
+[data-theme="dark"] .ob-tile-qty {
+    background: #334155;
+    color: #f8fafc;
 }
-
-[data-theme="roost"] .ob-radar-card {
-    background: #292524;
-    border-color: rgba(217, 119, 6, 0.4);
+[data-theme="roost"] .ob-tile-qty {
+    background: #44372e;
     color: #fafaf9;
 }
 
-[data-theme="celeste"] .ob-radar-hud-box,
-[data-theme="dark"] .ob-radar-hud-box {
+[data-theme="celeste"] .ob-empty-pocket,
+[data-theme="dark"] .ob-empty-pocket {
     background: #0f172a;
     border-color: #334155;
+    color: #cbd5e1;
 }
-
-[data-theme="roost"] .ob-radar-hud-box {
+[data-theme="roost"] .ob-empty-pocket {
     background: #1c1917;
     border-color: #44372e;
+    color: #ded1c7;
 }
 
-[data-theme="celeste"] .ob-modal-card,
-[data-theme="dark"] .ob-modal-card {
-    background: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
-}
-
-[data-theme="roost"] .ob-modal-card {
-    background: #292524;
-    border-color: #44372e;
-    color: #fafaf9;
-}
-
-[data-theme="celeste"] .ob-modal-header,
-[data-theme="dark"] .ob-modal-header {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-[data-theme="roost"] .ob-modal-header {
-    background: #292524;
-    border-color: #44372e;
-}
-
-[data-theme="celeste"] .ob-passport-card,
-[data-theme="dark"] .ob-passport-card {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-[data-theme="roost"] .ob-passport-card {
-    background: #292524;
-    border-color: #44372e;
-}
-
+/* ── 5. Presets, Tools, & Banners ── */
 [data-theme="celeste"] .ob-presets-container,
 [data-theme="dark"] .ob-presets-container {
     background: #0f172a;
     border-color: #334155;
 }
-
 [data-theme="roost"] .ob-presets-container {
     background: #1c1917;
     border-color: #44372e;
@@ -1558,11 +1703,31 @@
     border-color: #475569;
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-preset-chip {
     background: #292524;
     border-color: #57483d;
     color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-preset-chip:hover {
+    background: #2b3658;
+    border-color: #a78bfa;
+}
+[data-theme="roost"] .ob-preset-chip:hover {
+    background: #44372e;
+    border-color: #f59e0b;
+}
+
+[data-theme="celeste"] .ob-copy-chip,
+[data-theme="dark"] .ob-copy-chip {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+[data-theme="roost"] .ob-copy-chip {
+    background: #1c1917;
+    border-color: #44372e;
+    color: #ded1c7;
 }
 
 [data-theme="celeste"] .ob-action-chip,
@@ -1571,9 +1736,20 @@
     border-color: #334155;
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-action-chip {
     background: #1c1917;
+    border-color: #44372e;
+    color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-passport-card,
+[data-theme="dark"] .ob-passport-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-passport-card {
+    background: #292524;
     border-color: #44372e;
     color: #fafaf9;
 }
@@ -1584,20 +1760,233 @@
     border-color: #334155;
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-tool-link {
     background: #1c1917;
     border-color: #44372e;
     color: #fafaf9;
 }
 
+[data-theme="celeste"] .ob-tool-icon {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+}
+[data-theme="roost"] .ob-tool-icon {
+    background: rgba(217, 119, 6, 0.2);
+    color: #fed7aa;
+}
+
+[data-theme="celeste"] .ob-notify-bar {
+    background: #1e293b;
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-notify-bar {
+    background: #292524;
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fafaf9;
+}
+
+/* ── 6. Flight Progress & Boarding Pass ── */
+[data-theme="celeste"] .ob-order-progress-steps,
+[data-theme="dark"] .ob-order-progress-steps {
+    background: #0f172a;
+    border-color: #334155;
+}
+[data-theme="roost"] .ob-order-progress-steps {
+    background: #1c1917;
+    border-color: #44372e;
+}
+
+[data-theme="celeste"] .ob-prog-dot,
+[data-theme="dark"] .ob-prog-dot {
+    background: #1e293b;
+    border-color: #475569;
+    color: #94a3b8;
+}
+[data-theme="roost"] .ob-prog-dot {
+    background: #292524;
+    border-color: #57483d;
+    color: #a8a29e;
+}
+
+[data-theme="celeste"] .ob-prog-text,
+[data-theme="dark"] .ob-prog-text {
+    color: #94a3b8;
+}
+[data-theme="roost"] .ob-prog-text {
+    color: #a8a29e;
+}
+
+[data-theme="celeste"] .ob-prog-step.active .ob-prog-text,
+[data-theme="dark"] .ob-prog-step.active .ob-prog-text {
+    color: #f8fafc;
+}
+[data-theme="roost"] .ob-prog-step.active .ob-prog-text {
+    color: #fafaf9;
+}
+
+/* Boarding pass ticket notches match page background */
+[data-theme="celeste"] .ob-boarding-pass-card::before,
+[data-theme="celeste"] .ob-boarding-pass-card::after,
+[data-theme="dark"] .ob-boarding-pass-card::before,
+[data-theme="dark"] .ob-boarding-pass-card::after {
+    background-color: #0b0f19;
+}
+[data-theme="roost"] .ob-boarding-pass-card::before,
+[data-theme="roost"] .ob-boarding-pass-card::after {
+    background-color: #1c1917;
+}
+
+/* ── 7. Queue & Island Cards ── */
+[data-theme="celeste"] .ob-queue-row,
+[data-theme="dark"] .ob-queue-row {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-queue-row {
+    background: #1c1917;
+    border-color: #44372e;
+    color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-queue-badge,
+[data-theme="dark"] .ob-queue-badge {
+    background: #1e293b;
+    color: #cbd5e1;
+}
+[data-theme="roost"] .ob-queue-badge {
+    background: #292524;
+    color: #ded1c7;
+}
+
+[data-theme="celeste"] .ob-island-sub-card,
+[data-theme="dark"] .ob-island-sub-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-island-sub-card {
+    background: #292524;
+    border-color: #44372e;
+    color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-island-sub-card.selected {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 2px #8b5cf6, 0 8px 20px rgba(139, 92, 246, 0.25);
+    background: rgba(139, 92, 246, 0.15);
+}
+[data-theme="roost"] .ob-island-sub-card.selected {
+    border-color: #d97706;
+    box-shadow: 0 0 0 2px #d97706, 0 8px 20px rgba(217, 119, 6, 0.25);
+    background: rgba(217, 119, 6, 0.15);
+}
+
+[data-theme="celeste"] .ob-drop-slot-tile,
+[data-theme="dark"] .ob-drop-slot-tile {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-drop-slot-tile {
+    background: #1c1917;
+    border-color: #44372e;
+    color: #fafaf9;
+}
+
+/* ── 8. Radar & Diagnostic HUD ── */
+[data-theme="celeste"] .ob-radar-card,
+[data-theme="dark"] .ob-radar-card {
+    background: #1e293b;
+    border-color: rgba(64, 144, 189, 0.4);
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-radar-card {
+    background: #292524;
+    border-color: rgba(217, 119, 6, 0.4);
+    color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-radar-hud-box,
+[data-theme="dark"] .ob-radar-hud-box {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-radar-hud-box {
+    background: #1c1917;
+    border-color: #44372e;
+    color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-radar-payload-pill,
+[data-theme="dark"] .ob-radar-payload-pill {
+    background: #1e293b;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-radar-payload-pill {
+    background: #292524;
+    border-color: #57483d;
+    color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-radar-diag-item,
+[data-theme="dark"] .ob-radar-diag-item {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+[data-theme="roost"] .ob-radar-diag-item {
+    background: #1c1917;
+    border-color: #44372e;
+    color: #a8a29e;
+}
+
+[data-theme="celeste"] .ob-radar-diag-item.done {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: #a78bfa;
+    color: #c4b5fd;
+}
+[data-theme="roost"] .ob-radar-diag-item.done {
+    background: rgba(217, 119, 6, 0.15);
+    border-color: #f59e0b;
+    color: #fde68a;
+}
+
+/* ── 9. Modals & Overlays ── */
+[data-theme="celeste"] .ob-modal-card,
+[data-theme="dark"] .ob-modal-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-modal-card {
+    background: #292524;
+    border-color: #44372e;
+    color: #fafaf9;
+}
+
+[data-theme="celeste"] .ob-modal-header,
+[data-theme="dark"] .ob-modal-header {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+[data-theme="roost"] .ob-modal-header {
+    background: #292524;
+    border-color: #44372e;
+    color: #fafaf9;
+}
+
+/* ── 10. Toasts, Sound Buttons, Flightpaths, Loadouts ── */
 [data-theme="celeste"] .ob-in-app-toast,
 [data-theme="dark"] .ob-in-app-toast {
     background: #1e293b;
     border-color: #334155;
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-in-app-toast {
     background: #292524;
     border-color: #44372e;
@@ -1610,7 +1999,6 @@
     border-color: #334155;
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-sound-btn {
     background: #1c1917;
     border-color: #44372e;
@@ -1622,7 +2010,6 @@
     background: #0f172a;
     border-color: #334155;
 }
-
 [data-theme="roost"] .ob-flightpath-container {
     background: #1c1917;
     border-color: #44372e;
@@ -1634,7 +2021,6 @@
     border-color: #334155;
     color: #f1f5f9;
 }
-
 [data-theme="roost"] .ob-loadout-card {
     background: #1c1917;
     border-color: #44372e;

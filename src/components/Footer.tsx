@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.webp";
 import { openSuggestionModal } from "../utils/suggestionsApi";
+import { APP_VERSION } from "../version";
 
 const Footer = () => {
     const [email, setEmail] = useState("");
@@ -141,7 +142,7 @@ const Footer = () => {
                         </p>
                     </div>
 
-                    <div className="d-flex gap-4">
+                    <div className="d-flex align-items-center gap-3 flex-wrap">
                         <Link
                             to="/privacy"
                             className="text-decoration-none small text-muted hover-success"
@@ -164,6 +165,10 @@ const Footer = () => {
                         >
                             CC BY-SA 4.0
                         </a>
+
+                        <span className="badge bg-light text-muted border rounded-pill font-monospace" style={{ fontSize: '0.65rem' }}>
+                            v{APP_VERSION}
+                        </span>
                     </div>
                 </div>
             </div>

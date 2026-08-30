@@ -51,6 +51,7 @@ type CommandBuilderSummaryProps = {
     onOpenBundlesModal?: () => void;
     onOpenShareModal?: () => void;
     onOpenCommunityLoadoutsModal?: () => void;
+    onOpenBatchImportModal?: () => void;
     onFlipOrderAndDrop?: () => void;
 };
 
@@ -87,6 +88,7 @@ export const CommandBuilderSummary = ({
     showTerminal = true,
     onOpenShareModal,
     onOpenCommunityLoadoutsModal,
+    onOpenBatchImportModal,
 }: CommandBuilderSummaryProps) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState<'all' | 'order' | 'drop'>('all');
@@ -146,7 +148,7 @@ export const CommandBuilderSummary = ({
 
     const copyToClipboardWithFeedback = (text: string, key: string, instructionType: 'order' | 'drop') => {
         if (!text) return;
-        navigator.clipboard.writeText(text).catch(() => {});
+        navigator.clipboard.writeText(text).catch(() => { });
         setCopiedKey(key);
         setCopiedInstruction(instructionType);
         playChimeClick();
@@ -235,9 +237,9 @@ export const CommandBuilderSummary = ({
     }, [orderCommandText, dropCommandText, onCopyOrder, onCopyDrop]);
 
     return (
-        <div 
+        <div
             className="command-builder-summary rounded-4 border shadow-sm p-3 p-md-4 transition-all"
-            style={{ 
+            style={{
                 borderTop: '5px solid var(--nook-green)',
                 backgroundColor: 'var(--card-bg, #ffffff)',
                 borderColor: 'var(--card-border, #e9ecef)',
@@ -252,13 +254,13 @@ export const CommandBuilderSummary = ({
             <div className="d-flex flex-column gap-3 mb-3">
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center gap-2">
-                        <div 
+                        <div
                             className="d-flex align-items-center justify-content-center rounded-circle shadow-sm"
-                            style={{ 
-                                width: '40px', 
-                                height: '40px', 
+                            style={{
+                                width: '40px',
+                                height: '40px',
                                 background: 'linear-gradient(135deg, #e8f7ec 0%, #c3edd0 100%)',
-                                color: 'var(--nook-green)' 
+                                color: 'var(--nook-green)'
                             }}
                         >
                             <i className="fa-solid fa-bag-shopping fs-5"></i>
@@ -306,9 +308,9 @@ export const CommandBuilderSummary = ({
                 <div className="row g-2">
                     {/* Order Capacity Meter */}
                     <div className="col-6">
-                        <div 
+                        <div
                             className="p-2 rounded-3 border transition-all"
-                            style={{ 
+                            style={{
                                 backgroundColor: orderFull ? 'rgba(220, 53, 69, 0.08)' : 'var(--subtle-bg, #f4fbf6)',
                                 borderColor: orderFull ? '#f5c6cb' : 'var(--card-border, #d2f0dd)'
                             }}
@@ -322,12 +324,12 @@ export const CommandBuilderSummary = ({
                                 </span>
                             </div>
                             <div className="progress" style={{ height: '6px', backgroundColor: '#e9ecef', borderRadius: '10px' }}>
-                                <div 
+                                <div
                                     className={`progress-bar transition-all ${orderFull ? 'bg-danger' : orderPercent > 75 ? 'bg-warning' : 'bg-success'}`}
-                                    role="progressbar" 
-                                    style={{ width: `${orderPercent}%`, borderRadius: '10px' }} 
-                                    aria-valuenow={orderCount} 
-                                    aria-valuemin={0} 
+                                    role="progressbar"
+                                    style={{ width: `${orderPercent}%`, borderRadius: '10px' }}
+                                    aria-valuenow={orderCount}
+                                    aria-valuemin={0}
                                     aria-valuemax={ORDER_BOT_MAX}
                                 />
                             </div>
@@ -336,9 +338,9 @@ export const CommandBuilderSummary = ({
 
                     {/* Drop Capacity Meter */}
                     <div className="col-6">
-                        <div 
+                        <div
                             className="p-2 rounded-3 border transition-all"
-                            style={{ 
+                            style={{
                                 backgroundColor: dropFull ? 'rgba(220, 53, 69, 0.08)' : dropCount > 0 ? 'rgba(23, 162, 184, 0.08)' : 'var(--subtle-bg, #f8f9fa)',
                                 borderColor: dropFull ? '#f5c6cb' : 'var(--card-border, #e9ecef)'
                             }}
@@ -352,12 +354,12 @@ export const CommandBuilderSummary = ({
                                 </span>
                             </div>
                             <div className="progress" style={{ height: '6px', backgroundColor: '#e9ecef', borderRadius: '10px' }}>
-                                <div 
+                                <div
                                     className={`progress-bar transition-all ${dropFull ? 'bg-danger' : 'bg-info'}`}
-                                    role="progressbar" 
-                                    style={{ width: `${dropPercent}%`, borderRadius: '10px' }} 
-                                    aria-valuenow={dropCount} 
-                                    aria-valuemin={0} 
+                                    role="progressbar"
+                                    style={{ width: `${dropPercent}%`, borderRadius: '10px' }}
+                                    aria-valuenow={dropCount}
+                                    aria-valuemin={0}
                                     aria-valuemax={DROP_BOT_MAX}
                                 />
                             </div>
@@ -366,7 +368,7 @@ export const CommandBuilderSummary = ({
                 </div>
             </div>
 
-            {/* ── Quick Action Toolbar (Bundles, Smart Tools & Share) ─────────────────────────── */}
+            {/* ── Quick Action Toolbar (Bundles, Smart Tools, Batch Import & Share) ─────────────────────────── */}
             <div className="d-flex flex-wrap gap-2 mb-3 min-w-0">
                 {onOpenCommunityLoadoutsModal && (
                     <button
@@ -386,6 +388,26 @@ export const CommandBuilderSummary = ({
                     >
                         <i className="fa-solid fa-box-open text-warning"></i>
                         <span>Loadouts & Bundles</span>
+                    </button>
+                )}
+
+                {onOpenBatchImportModal && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onOpenBatchImportModal();
+                            playChimeClick();
+                        }}
+                        className="btn btn-sm btn-white border rounded-pill fw-bold px-3 py-2 shadow-2xs transition-all d-flex align-items-center justify-content-center gap-2"
+                        title="Batch import raw hex codes, $order commands, or item lists"
+                        style={{
+                            borderColor: '#cbd5e1',
+                            fontSize: '0.8rem',
+                            minHeight: '34px',
+                        }}
+                    >
+                        <i className="fa-solid fa-file-import text-success"></i>
+                        <span>Batch Import</span>
                     </button>
                 )}
 
@@ -451,14 +473,14 @@ export const CommandBuilderSummary = ({
                 <div id={POCKETS_LIST_ID}>
                     {/* Empty State */}
                     {isEmpty ? (
-                        <div 
-                            className="text-center py-4 px-3 rounded-4 mb-3" 
-                            style={{ 
-                                backgroundColor: 'var(--subtle-bg, #fbfcf9)', 
-                                border: '2px dashed var(--card-border, #d5e8db)' 
+                        <div
+                            className="text-center py-4 px-3 rounded-4 mb-3"
+                            style={{
+                                backgroundColor: 'var(--subtle-bg, #fbfcf9)',
+                                border: '2px dashed var(--card-border, #d5e8db)'
                             }}
                         >
-                            <div 
+                            <div
                                 className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
                                 style={{ width: '48px', height: '48px', backgroundColor: '#eef8f2', color: 'var(--nook-green)' }}
                             >
@@ -537,9 +559,9 @@ export const CommandBuilderSummary = ({
                                             </span>
                                         </div>
                                         {onClearOrderPockets && orderPockets.length > 0 && (
-                                            <button 
-                                                type="button" 
-                                                onClick={onClearOrderPockets} 
+                                            <button
+                                                type="button"
+                                                onClick={onClearOrderPockets}
                                                 className="btn btn-sm btn-outline-danger rounded-pill transition-all fw-bold py-0 px-2"
                                                 style={{ fontSize: '0.7rem' }}
                                                 title="Clear all order items"
@@ -556,18 +578,18 @@ export const CommandBuilderSummary = ({
                                     ) : (
                                         <div className="d-flex flex-column gap-1 overflow-auto" style={{ maxHeight: '280px', paddingRight: '2px' }}>
                                             {filteredOrderPockets.map((pocket) => (
-                                                <div 
-                                                    key={pocket.item.id} 
+                                                <div
+                                                    key={pocket.item.id}
                                                     className="d-flex align-items-center gap-2 p-2 rounded-3 bg-white border shadow-2xs transition-all hover-shadow-sm"
                                                 >
-                                                    <div 
-                                                        className="ratio ratio-1x1 bg-light rounded-2 border d-flex align-items-center justify-content-center" 
+                                                    <div
+                                                        className="ratio ratio-1x1 bg-light rounded-2 border d-flex align-items-center justify-content-center"
                                                         style={{ width: '38px', minWidth: '38px', overflow: 'hidden' }}
                                                     >
-                                                        <img 
-                                                            src={pocket.item.image} 
-                                                            alt={pocket.item.name} 
-                                                            className="w-100 h-100 object-fit-contain p-1" 
+                                                        <img
+                                                            src={pocket.item.image}
+                                                            alt={pocket.item.name}
+                                                            className="w-100 h-100 object-fit-contain p-1"
                                                             loading="lazy"
                                                             onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
                                                         />
@@ -657,38 +679,38 @@ export const CommandBuilderSummary = ({
                                             </div>
                                             <div className="d-flex gap-1">
                                                 {onFillTickets && (
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => { onFillTickets(); playChimeClick(); }} 
-                                                        className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1" 
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { onFillTickets(); playChimeClick(); }}
+                                                        className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1"
                                                         title="Fill remaining slots with Nook Miles Tickets"
                                                         style={{ fontSize: '0.75rem' }}
                                                     >
-                                                        <i className="fa-solid fa-ticket text-primary"></i> 
+                                                        <i className="fa-solid fa-ticket text-primary"></i>
                                                         <span>Tickets</span>
                                                     </button>
                                                 )}
                                                 {onFillCrowns && (
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => { onFillCrowns(); playChimeClick(); }} 
-                                                        className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1" 
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { onFillCrowns(); playChimeClick(); }}
+                                                        className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1"
                                                         title="Fill remaining slots with Royal Crowns"
                                                         style={{ fontSize: '0.75rem' }}
                                                     >
-                                                        <i className="fa-solid fa-crown text-warning"></i> 
+                                                        <i className="fa-solid fa-crown text-warning"></i>
                                                         <span>Crowns</span>
                                                     </button>
                                                 )}
                                                 {onFillBells && (
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => { onFillBells(); playChimeClick(); }} 
-                                                        className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1" 
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { onFillBells(); playChimeClick(); }}
+                                                        className="btn btn-sm btn-white border rounded-pill shadow-2xs fw-bold flex-grow-1 py-1 transition-all d-flex align-items-center justify-content-center gap-1"
                                                         title="Fill remaining slots with 99,000 Bells"
                                                         style={{ fontSize: '0.75rem' }}
                                                     >
-                                                        <i className="fa-solid fa-sack-dollar text-success"></i> 
+                                                        <i className="fa-solid fa-sack-dollar text-success"></i>
                                                         <span>Bells</span>
                                                     </button>
                                                 )}
@@ -711,9 +733,9 @@ export const CommandBuilderSummary = ({
                                             </span>
                                         </div>
                                         {onClearDropPockets && dropPockets.length > 0 && (
-                                            <button 
-                                                type="button" 
-                                                onClick={onClearDropPockets} 
+                                            <button
+                                                type="button"
+                                                onClick={onClearDropPockets}
                                                 className="btn btn-sm btn-outline-danger rounded-pill transition-all fw-bold py-0 px-2"
                                                 style={{ fontSize: '0.7rem' }}
                                                 title="Clear all drop items"
@@ -730,18 +752,18 @@ export const CommandBuilderSummary = ({
                                     ) : (
                                         <div className="d-flex flex-column gap-1 overflow-auto" style={{ maxHeight: '200px', paddingRight: '2px' }}>
                                             {filteredDropPockets.map((pocket) => (
-                                                <div 
-                                                    key={pocket.item.id} 
+                                                <div
+                                                    key={pocket.item.id}
                                                     className="d-flex align-items-center gap-2 p-2 rounded-3 bg-white border shadow-2xs transition-all hover-shadow-sm"
                                                 >
-                                                    <div 
-                                                        className="ratio ratio-1x1 bg-light rounded-2 border d-flex align-items-center justify-content-center" 
+                                                    <div
+                                                        className="ratio ratio-1x1 bg-light rounded-2 border d-flex align-items-center justify-content-center"
                                                         style={{ width: '38px', minWidth: '38px', overflow: 'hidden' }}
                                                     >
-                                                        <img 
-                                                            src={pocket.item.image} 
-                                                            alt={pocket.item.name} 
-                                                            className="w-100 h-100 object-fit-contain p-1" 
+                                                        <img
+                                                            src={pocket.item.image}
+                                                            alt={pocket.item.name}
+                                                            className="w-100 h-100 object-fit-contain p-1"
                                                             loading="lazy"
                                                             onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
                                                         />
@@ -827,17 +849,17 @@ export const CommandBuilderSummary = ({
 
                     {/* ── Terminal / Command Output ─────────────────────────────── */}
                     {showTerminal && (
-                        <div 
+                        <div
                             className="terminal-window rounded-4 shadow-sm mb-3 overflow-hidden border"
-                            style={{ 
+                            style={{
                                 borderColor: 'rgba(55, 176, 109, 0.3)',
                                 background: '#1c2420',
                             }}
                         >
                             {/* Terminal Top Window Bar */}
-                            <div 
+                            <div
                                 className="d-flex align-items-center justify-content-between px-3 py-2"
-                                style={{ 
+                                style={{
                                     background: 'linear-gradient(90deg, #18201b 0%, #202b24 100%)',
                                     borderBottom: '1px solid rgba(255,255,255,0.08)'
                                 }}
@@ -859,9 +881,9 @@ export const CommandBuilderSummary = ({
                             <div className="p-3">
                                 {/* Target Bot Switcher */}
                                 <div className="mb-3">
-                                    <div 
+                                    <div
                                         className="d-flex p-1 rounded-4 border position-relative"
-                                        style={{ 
+                                        style={{
                                             backgroundColor: '#111713',
                                             borderColor: 'rgba(255, 255, 255, 0.12)',
                                             boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
@@ -870,11 +892,10 @@ export const CommandBuilderSummary = ({
                                         <button
                                             type="button"
                                             onClick={() => { setTerminalTab('all'); playChimeClick(); }}
-                                            className={`btn btn-xs rounded-3 flex-grow-1 py-1 px-2 fw-bold font-monospace transition-all d-flex align-items-center justify-content-center gap-1 ${
-                                                terminalTab === 'all'
-                                                    ? 'text-white shadow-sm'
-                                                    : 'text-light border-0 opacity-60'
-                                            }`}
+                                            className={`btn btn-xs rounded-3 flex-grow-1 py-1 px-2 fw-bold font-monospace transition-all d-flex align-items-center justify-content-center gap-1 ${terminalTab === 'all'
+                                                ? 'text-white shadow-sm'
+                                                : 'text-light border-0 opacity-60'
+                                                }`}
                                             style={{
                                                 fontSize: '0.74rem',
                                                 backgroundColor: terminalTab === 'all' ? '#27342b' : 'transparent',
@@ -888,11 +909,10 @@ export const CommandBuilderSummary = ({
                                         <button
                                             type="button"
                                             onClick={() => { setTerminalTab('drop'); playChimeClick(); }}
-                                            className={`btn btn-xs rounded-3 flex-grow-1 py-1 px-2 fw-bold font-monospace transition-all d-flex align-items-center justify-content-center gap-1 ${
-                                                terminalTab === 'drop'
-                                                    ? 'text-white shadow-sm'
-                                                    : 'text-light border-0 opacity-60'
-                                            }`}
+                                            className={`btn btn-xs rounded-3 flex-grow-1 py-1 px-2 fw-bold font-monospace transition-all d-flex align-items-center justify-content-center gap-1 ${terminalTab === 'drop'
+                                                ? 'text-white shadow-sm'
+                                                : 'text-light border-0 opacity-60'
+                                                }`}
                                             style={{
                                                 fontSize: '0.74rem',
                                                 background: terminalTab === 'drop' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'transparent',
@@ -913,11 +933,10 @@ export const CommandBuilderSummary = ({
                                         <button
                                             type="button"
                                             onClick={() => { setTerminalTab('order'); playChimeClick(); }}
-                                            className={`btn btn-xs rounded-3 flex-grow-1 py-1 px-2 fw-bold font-monospace transition-all d-flex align-items-center justify-content-center gap-1 ${
-                                                terminalTab === 'order'
-                                                    ? 'text-white shadow-sm'
-                                                    : 'text-light border-0 opacity-60'
-                                            }`}
+                                            className={`btn btn-xs rounded-3 flex-grow-1 py-1 px-2 fw-bold font-monospace transition-all d-flex align-items-center justify-content-center gap-1 ${terminalTab === 'order'
+                                                ? 'text-white shadow-sm'
+                                                : 'text-light border-0 opacity-60'
+                                                }`}
                                             style={{
                                                 fontSize: '0.74rem',
                                                 background: terminalTab === 'order' ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)' : 'transparent',
@@ -938,7 +957,7 @@ export const CommandBuilderSummary = ({
 
                                     {/* Contextual guidance banner based on selected tab */}
                                     {terminalTab === 'drop' && (
-                                        <div 
+                                        <div
                                             className="px-2 py-1 rounded-3 font-monospace mb-2 text-info d-flex align-items-center gap-2"
                                             style={{ backgroundColor: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', fontSize: '0.7rem' }}
                                         >
@@ -948,7 +967,7 @@ export const CommandBuilderSummary = ({
                                     )}
 
                                     {terminalTab === 'order' && (
-                                        <div 
+                                        <div
                                             className="px-2 py-1 rounded-3 font-monospace mb-2 text-success d-flex align-items-center gap-2"
                                             style={{ backgroundColor: 'rgba(22, 163, 74, 0.12)', border: '1px solid rgba(22, 163, 74, 0.25)', fontSize: '0.7rem' }}
                                         >
@@ -972,10 +991,10 @@ export const CommandBuilderSummary = ({
                                         <div className="tiny-text mb-1 font-monospace" style={{ fontSize: '0.68rem', color: '#86efac' }}>
                                             <i className="fa-brands fa-discord me-1"></i>For Discord <strong>#order-bot</strong> queue (Items + Villager)
                                         </div>
-                                        <div 
+                                        <div
                                             className="p-2 rounded-3 font-monospace text-light mb-2 select-all"
-                                            style={{ 
-                                                backgroundColor: '#111713', 
+                                            style={{
+                                                backgroundColor: '#111713',
                                                 border: '1px solid rgba(255,255,255,0.08)',
                                                 fontSize: '0.8rem',
                                                 minHeight: '44px',
@@ -1014,10 +1033,10 @@ export const CommandBuilderSummary = ({
                                         <div className="tiny-text mb-1 font-monospace" style={{ fontSize: '0.68rem', color: '#7dd3fc' }}>
                                             <i className="fa-solid fa-umbrella-beach me-1"></i>For in-game chat on <strong>Treasure Islands</strong> (9 slots)
                                         </div>
-                                        <div 
+                                        <div
                                             className="p-2 rounded-3 font-monospace text-light mb-2 select-all"
-                                            style={{ 
-                                                backgroundColor: '#111713', 
+                                            style={{
+                                                backgroundColor: '#111713',
                                                 border: '1px solid rgba(255,255,255,0.08)',
                                                 fontSize: '0.8rem',
                                                 minHeight: '44px',
@@ -1054,10 +1073,10 @@ export const CommandBuilderSummary = ({
                                         <div className="tiny-text mb-1 font-monospace" style={{ fontSize: '0.68rem', color: '#fca5a5' }}>
                                             <i className="fa-solid fa-umbrella-beach me-1"></i>For in-game chat on <strong>Treasure Islands</strong>
                                         </div>
-                                        <div 
+                                        <div
                                             className="p-2 rounded-3 font-monospace text-light mb-2 select-all"
-                                            style={{ 
-                                                backgroundColor: '#111713', 
+                                            style={{
+                                                backgroundColor: '#111713',
                                                 border: '1px solid rgba(255,255,255,0.08)',
                                                 fontSize: '0.8rem',
                                                 minHeight: '44px',

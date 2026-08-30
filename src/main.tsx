@@ -8,6 +8,15 @@ import { initTheme } from './utils/theme';
 
 initTheme();
 
+// Register PWA Service Worker in production and supported environments
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator && !window.location.host.startsWith('localhost:3000')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.warn('[PWA] Service worker registration failed:', err);
+    });
+  });
+}
+
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')!).render(
@@ -19,3 +28,4 @@ createRoot(document.getElementById('root')!).render(
     </HelmetProvider>
   </StrictMode>,
 )
+

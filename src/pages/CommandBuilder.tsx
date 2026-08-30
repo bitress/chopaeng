@@ -19,6 +19,7 @@ import { CommandBuilderFilters } from "../components/command-builder/CommandBuil
 import { CommandBuilderItemCard } from "../components/command-builder/CommandBuilderItemCard";
 import { CommandBuilderVariantModal } from "../components/command-builder/CommandBuilderVariantModal";
 import { CommandBuilderPocketBundlesModal } from "../components/command-builder/CommandBuilderPocketBundlesModal";
+import { CommandBuilderBatchImportModal } from "../components/command-builder/CommandBuilderBatchImportModal";
 import { CommandBuilderShareModal } from "../components/command-builder/CommandBuilderShareModal";
 import { CommunityLoadoutsModal } from "../components/command-builder/CommunityLoadoutsModal";
 import { MobileCommandBar } from "../components/command-builder/MobileCommandBar";
@@ -27,6 +28,7 @@ import { HowItWorksExplainer, COMMAND_BUILDER_EXPLAINER_CONFIG } from "../compon
 import { decodePocketShareData, fetchSharedPocket } from "../utils/pocketSharing";
 import { fetchLoadoutByCode } from "../utils/communityLoadoutsApi";
 import { useFavorites } from "../hooks/useFavorites";
+import { useTranslationSearch } from "../hooks/useTranslationSearch";
 
 type ItemData = PocketItem;
 
@@ -73,6 +75,7 @@ const CommandBuilder = () => {
     const [mobileTab, setMobileTab] = useState<MobileTab>('catalog');
 
     // --- Search & Pagination ---
+    const { searchLang, setSearchLang, getMatchingEnglishNames, isLoadingTranslations } = useTranslationSearch();
     const [searchInput, setSearchInput] = useState(savedState?.searchInput || "");
     const [debouncedSearch, setDebouncedSearch] = useState(savedState?.debouncedSearch || savedState?.searchInput || "");
     const [currentPage, setCurrentPage] = useState(savedState?.currentPage || 1);
@@ -87,6 +90,7 @@ const CommandBuilder = () => {
     const [isBundlesModalOpen, setIsBundlesModalOpen] = useState(false);
     const [isCommunityModalOpen, setIsCommunityModalOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isBatchImportModalOpen, setIsBatchImportModalOpen] = useState(false);
     const [sharedNotice, setSharedNotice] = useState<string | null>(null);
 
     // --- Data State ---
@@ -253,9 +257,18 @@ const CommandBuilder = () => {
     const uniqueColours = useMemo(() => uniqueValues(catalogEntities, 'colour'), [catalogEntities]);
 
     const filteredItems = useMemo(() => {
+        const matchingEnNames = debouncedSearch.trim() ? getMatchingEnglishNames(debouncedSearch) : null;
+
         return expandedCatalogItems.filter((item) => {
-            const lowerName = `${item.name}${item.variantLabel ? ` ${item.variantLabel}` : ''}`.toLowerCase();
-            const matchesSearch = lowerName.includes(debouncedSearch.toLowerCase());
+            let matchesSearch = true;
+            if (debouncedSearch.trim()) {
+                if (matchingEnNames !== null) {
+                    matchesSearch = matchingEnNames.has(item.name.toLowerCase());
+                } else {
+                    const lowerName = `${item.name}${item.variantLabel ? ` ${item.variantLabel}` : ''}`.toLowerCase();
+                    matchesSearch = lowerName.includes(debouncedSearch.toLowerCase());
+                }
+            }
             const matchesCategory = category === "All" || item.category === category;
             const matchesTheme = theme === "All" || item.theme === theme;
             const matchesSeries = series === "All" || item.series === series;
@@ -270,7 +283,7 @@ const CommandBuilder = () => {
 
             return matchesSearch && matchesCategory && matchesTheme && matchesSeries && matchesInteractivity && matchesColour && matchesKind && matchesVillagerType && matchesFavorites;
         });
-    }, [expandedCatalogItems, category, theme, series, interactivity, colour, debouncedSearch, kindFilter, villagerType, onlyFavorites, isFavorite]);
+    }, [expandedCatalogItems, category, theme, series, interactivity, colour, debouncedSearch, kindFilter, villagerType, onlyFavorites, isFavorite, getMatchingEnglishNames]);
 
     // 5. Restore scroll & card focus when catalog data is ready
     const hasRestoredSpotRef = useRef(false);
@@ -384,6 +397,9 @@ const CommandBuilder = () => {
                     <CommandBuilderFilters
                         searchInput={searchInput}
                         setSearchInput={setSearchInput}
+                        searchLang={searchLang}
+                        setSearchLang={setSearchLang}
+                        isLoadingTranslations={isLoadingTranslations}
                         showFiltersMobile={showFiltersMobile}
                         setShowFiltersMobile={setShowFiltersMobile}
                         activeFilterCount={activeFilterCount}
@@ -706,6 +722,7 @@ const CommandBuilder = () => {
                                     showTerminal={true}
                                     onOpenBundlesModal={() => setIsBundlesModalOpen(true)}
                                     onOpenCommunityLoadoutsModal={() => setIsCommunityModalOpen(true)}
+                                    onOpenBatchImportModal={() => setIsBatchImportModalOpen(true)}
                                     onOpenShareModal={() => setIsShareModalOpen(true)}
                                 />
                             </div>
@@ -805,6 +822,17 @@ const CommandBuilder = () => {
                 currentDropPockets={dropItems}
                 onApplyBundleToOrder={(items, mode) => loadBundleIntoOrder(items, mode)}
                 onApplyBundleToDrop={(items, mode) => loadBundleIntoDrop(items, mode)}
+            />
+
+            {/* Batch Hex & SysBot Command Importer Modal */}
+            <CommandBuilderBatchImportModal
+                isOpen={isBatchImportModalOpen}
+                onClose={() => setIsBatchImportModalOpen(false)}
+                catalogItems={catalogEntities}
+                onImportOrder={(items, mode) => loadBundleIntoOrder(items, mode === 'append' ? 'merge' : 'replace')}
+                onImportDrop={(items, mode) => loadBundleIntoDrop(items, mode === 'append' ? 'merge' : 'replace')}
+                currentOrderCount={totalOrderCount}
+                currentDropCount={totalDropCount}
             />
 
             {/* Share Pocket Modal */}

@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { ACNH_FINDER_API_BASE } from "../config/api";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 import { HowItWorksExplainer, FIND_ITEMS_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
+import { buildTranslationIndex, searchAllTranslations } from "../utils/translationSearch";
 
 interface SearchResult {
     found: boolean;
@@ -23,6 +24,7 @@ const FindItems = () => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<SearchResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [resolvedEnglishTerm, setResolvedEnglishTerm] = useState<string | null>(null);
 
     const handleSearch = async (term: string = searchTerm) => {
         if (!term.trim()) return;
@@ -30,11 +32,30 @@ const FindItems = () => {
         setLoading(true);
         setData(null);
         setError(null);
+        setResolvedEnglishTerm(null);
         setSearchTerm(term);
 
         try {
+            let finalQuery = term.trim();
+
+            // Try resolving foreign language search query to English item name
+            if (searchMode === 'item') {
+                try {
+                    const idxMap = await buildTranslationIndex();
+                    const matches = searchAllTranslations(idxMap, finalQuery);
+                    if (matches.length > 0) {
+                        finalQuery = matches[0].name;
+                        if (finalQuery.toLowerCase() !== term.trim().toLowerCase()) {
+                            setResolvedEnglishTerm(`${matches[0].translatedName} → ${finalQuery}`);
+                        }
+                    }
+                } catch {
+                    // ignore and use original query
+                }
+            }
+
             const endpoint = searchMode === 'item' ? 'find' : 'villager';
-            const response = await fetch(`${ACNH_FINDER_API_BASE}/api/${endpoint}?q=${encodeURIComponent(term)}`);
+            const response = await fetch(`${ACNH_FINDER_API_BASE}/api/${endpoint}?q=${encodeURIComponent(finalQuery)}`);
 
             if (!response.ok) throw new Error("Server error");
 
@@ -143,6 +164,16 @@ const FindItems = () => {
             <section className="container px-3 mb-5" style={{ maxWidth: '800px' }}>
                 {/* ── REUSABLE HOW IT WORKS EXPLAINER ── */}
                 <HowItWorksExplainer {...FIND_ITEMS_EXPLAINER_CONFIG} className="mb-4" defaultExpanded={false} />
+
+                {/* TRANSLATION BADGE */}
+                {resolvedEnglishTerm && (
+                    <div className="alert alert-info rounded-4 border-0 shadow-sm d-flex align-items-center gap-2 mb-3 py-2 px-3">
+                        <i className="fa-solid fa-language text-info fs-5" aria-hidden="true" />
+                        <div className="small fw-bold">
+                            Auto-translated: <span className="badge bg-white text-dark border px-2 py-1 ms-1">{resolvedEnglishTerm}</span>
+                        </div>
+                    </div>
+                )}
 
                 {/* ERROR STATE */}
                 {error && (

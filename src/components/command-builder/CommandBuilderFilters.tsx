@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import LanguageSelectorPill from "../LanguageSelectorPill";
 
 interface FilterChip {
     key: string;
@@ -9,6 +10,9 @@ interface FilterChip {
 interface CommandBuilderFiltersProps {
     searchInput: string;
     setSearchInput: (val: string) => void;
+    searchLang?: string;
+    setSearchLang?: (lang: string) => void;
+    isLoadingTranslations?: boolean;
     showFiltersMobile: boolean;
     setShowFiltersMobile: (val: boolean) => void;
     activeFilterCount: number;
@@ -63,7 +67,8 @@ const QUICK_CATEGORY_PILLS: QuickPill[] = [
 ];
 
 export const CommandBuilderFilters: React.FC<CommandBuilderFiltersProps> = ({
-    searchInput, setSearchInput, showFiltersMobile, setShowFiltersMobile,
+    searchInput, setSearchInput, searchLang, setSearchLang, isLoadingTranslations,
+    showFiltersMobile, setShowFiltersMobile,
     activeFilterCount, activeFilterChips, hideVariants, setHideVariants,
     compactMode, setCompactMode, kindFilter, setKindFilter,
     category, setCategory, villagerType, setVillagerType,
@@ -98,25 +103,34 @@ export const CommandBuilderFilters: React.FC<CommandBuilderFiltersProps> = ({
             {/* Top Search Bar & Mobile Filter Toggle */}
             <div className="row g-2 align-items-center mb-3">
                 <div className="col">
-                    <div className="position-relative">
-                        <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                        <input
-                            type="search"
-                            className="form-control bg-white rounded-pill border shadow-xs ps-5 pe-5 py-2 fw-medium"
-                            placeholder="Search by item, recipe, or villager name (e.g. Ironwood, Raymond)..."
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            aria-label="Search catalog"
-                        />
-                        {searchInput && (
-                            <button
-                                type="button"
-                                className="btn btn-link text-muted position-absolute top-50 end-0 translate-middle-y me-2 p-1 border-0"
-                                onClick={() => setSearchInput('')}
-                                aria-label="Clear search input"
-                            >
-                                <i className="fa-solid fa-circle-xmark fs-6"></i>
-                            </button>
+                    <div className="d-flex align-items-center gap-2">
+                        <div className="position-relative flex-grow-1">
+                            <i className="fa-solid fa-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input
+                                type="search"
+                                className="form-control bg-white rounded-pill border shadow-xs ps-5 pe-5 py-2 fw-medium"
+                                placeholder={searchLang && searchLang !== 'en' ? `Search in selected language...` : "Search by item, recipe, or villager name (e.g. Ironwood, Raymond)..."}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                aria-label="Search catalog"
+                            />
+                            {searchInput && (
+                                <button
+                                    type="button"
+                                    className="btn btn-link text-muted position-absolute top-50 end-0 translate-middle-y me-2 p-1 border-0"
+                                    onClick={() => setSearchInput('')}
+                                    aria-label="Clear search input"
+                                >
+                                    <i className="fa-solid fa-circle-xmark fs-6"></i>
+                                </button>
+                            )}
+                        </div>
+                        {searchLang && setSearchLang && (
+                            <LanguageSelectorPill
+                                searchLang={searchLang}
+                                onChangeLang={setSearchLang}
+                                isLoading={isLoadingTranslations}
+                            />
                         )}
                     </div>
                 </div>

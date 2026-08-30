@@ -247,6 +247,29 @@ export const playChimeClick = () => {
 };
 
 /**
+ * Play order status chime alert
+ * - 'preparing': Gentle 2-note upward chime
+ * - 'ready': 4-note triumphant DAL boarding pass arrival fanfare
+ */
+export const playOrderAlertChime = (type: 'preparing' | 'ready' | 'alert' = 'ready') => {
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        if (type === 'preparing') {
+            playPluckNote(392.00, 0.35, 0.15, 'sine'); // G4
+            setTimeout(() => playPluckNote(523.25, 0.45, 0.18, 'triangle'), 140); // C5
+        } else {
+            // 'ready' or 'alert' - 4 note DAL flight chime
+            playPluckNote(523.25, 0.3, 0.14, 'triangle'); // C5
+            setTimeout(() => playPluckNote(659.25, 0.3, 0.15, 'triangle'), 120); // E5
+            setTimeout(() => playPluckNote(783.99, 0.35, 0.16, 'triangle'), 240); // G5
+            setTimeout(() => playPluckNote(1046.50, 0.6, 0.20, 'sine'), 380);    // C6
+        }
+    } catch { /* ignore */ }
+};
+
+/**
  * Plucks an acoustic instrument note (guitar / vibraphone)
  */
 export const playPluckNote = (freq: number, duration = 0.45, volume = 0.12, type: 'triangle' | 'sine' = 'triangle') => {

@@ -1,8 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { pollOrderStatus, type OrderStatusResponse } from '../utils/orderBotApi';
 import { getAuthToken } from '../context/authToken';
 import { playChimeClick } from '../utils/kkAudioSynthesizer';
+import {
+    notifyOrderStatusChange,
+    requestNotificationPermission,
+    getNotificationPermission,
+    areNotificationsEnabled,
+    setNotificationsEnabled,
+} from '../utils/orderNotifications';
 
 const LS_ORDER_KEY = 'chopaeng_active_order';
 const POLL_INTERVAL = 15_000;
@@ -14,6 +21,10 @@ export const GlobalOrderTrackerPill: React.FC = () => {
     const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
     const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(null);
     const [isDismissed, setIsDismissed] = useState(false);
+    const [notificationsOn, setNotificationsOn] = useState<boolean>(() => areNotificationsEnabled() && getNotificationPermission() === 'granted');
+
+    const previousStatusRef = useRef<string | null>(null);
+    const previousDodoRef = useRef<string | null>(null);
 
     // Read active order from localStorage
     const checkActiveOrder = useCallback(() => {
@@ -34,9 +45,57 @@ export const GlobalOrderTrackerPill: React.FC = () => {
         return null;
     }, []);
 
+    const handleToggleNotifications = async () => {
+        playChimeClick();
+        if (!notificationsOn) {
+            const granted = await requestNotificationPermission();
+            setNotificationsOn(granted);
+            if (granted) {
+                notifyOrderStatusChange('Chopaeng Order Alerts Enabled', 'You will be notified when your Dodo flight pass is ready!', 'preparing');
+            }
+        } else {
+            setNotificationsEnabled(false);
+            setNotificationsOn(false);
+        }
+    };
+
     const pollStatus = useCallback(async (orderId: string) => {
         const status = await pollOrderStatus(orderId, token);
         setOrderStatus(status);
+
+        // Check for state transitions and alert the user
+        const prev = previousStatusRef.current;
+        const current = status.status;
+        const currentDodo = status.dodoCode;
+
+        if (prev && prev !== current) {
+            if (current === 'preparing' && prev === 'queued') {
+                notifyOrderStatusChange(
+                    'Order Preparing!',
+                    'Your items are now being spawned on the island...',
+                    'preparing'
+                );
+            } else if (current === 'ready' || (currentDodo && currentDodo !== previousDodoRef.current)) {
+                notifyOrderStatusChange(
+                    'Dodo Flight Pass Ready!',
+                    `Dodo Code: ${currentDodo || 'ACTIVE'}. Click to view your boarding pass!`,
+                    'ready'
+                );
+            }
+        } else if (!prev && (current === 'ready' || currentDodo)) {
+            // Initial load already ready
+            if (currentDodo && currentDodo !== previousDodoRef.current) {
+                notifyOrderStatusChange(
+                    'Dodo Flight Pass Ready!',
+                    `Dodo Code: ${currentDodo}. Click to view your boarding pass!`,
+                    'ready'
+                );
+            }
+        }
+
+        previousStatusRef.current = current;
+        if (currentDodo) previousDodoRef.current = currentDodo;
+
         if (['completed', 'cancelled', 'error'].includes(status.status)) {
             try {
                 localStorage.removeItem(LS_ORDER_KEY);
@@ -129,6 +188,15 @@ export const GlobalOrderTrackerPill: React.FC = () => {
                         </span>
                     </div>
                 </Link>
+                <button
+                    type="button"
+                    className={`btn btn-sm btn-link p-0 ms-1 ${notificationsOn ? 'text-success' : 'text-muted'}`}
+                    onClick={handleToggleNotifications}
+                    title={notificationsOn ? 'Browser notifications active' : 'Enable browser notifications'}
+                    aria-label={notificationsOn ? 'Disable order notifications' : 'Enable order notifications'}
+                >
+                    <i className={`fa-solid ${notificationsOn ? 'fa-bell' : 'fa-bell-slash'} x-small`} />
+                </button>
                 <button
                     type="button"
                     className="btn btn-sm btn-link text-muted hover-text-dark p-0 ms-1"
