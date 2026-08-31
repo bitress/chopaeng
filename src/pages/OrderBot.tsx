@@ -4102,11 +4102,6 @@ const OrderBot: React.FC = () => {
                                                         <i className="fa-solid fa-mountain-sun text-success" />
                                                         <span>{char.islandName}</span>
                                                     </div>
-                                                    {char.title && (
-                                                        <div className="tiny-text text-muted opacity-75">
-                                                            {char.title}
-                                                        </div>
-                                                    )}
                                                 </div>
                                                 <div className="d-flex flex-column align-items-end gap-1">
                                                     {char.isDefault && (

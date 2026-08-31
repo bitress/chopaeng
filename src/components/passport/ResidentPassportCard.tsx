@@ -146,9 +146,6 @@ export const ResidentPassportCard: React.FC<ResidentPassportCardProps> = ({
                                     <div className="ac-passport-ign text-truncate">
                                         {passport.primaryIgn || passport.username || "Resident"}
                                     </div>
-                                    <div className="tiny-text text-muted fw-bold">
-                                        Island Representative
-                                    </div>
                                     {passport.showCharacterAndIsland && (
                                         <div className="ac-passport-island-pill text-truncate">
                                             <i className="fa-solid fa-tree text-success"></i>

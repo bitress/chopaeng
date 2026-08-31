@@ -289,7 +289,6 @@ const Profile = () => {
     const [editingCharId, setEditingCharId] = useState<string | null>(null);
     const [charIgn, setCharIgn] = useState("");
     const [charIsland, setCharIsland] = useState("");
-    const [charTitle, setCharTitle] = useState("Island Resident");
     const [charIcon, setCharIcon] = useState("fa-leaf");
     const [charError, setCharError] = useState("");
 
@@ -297,7 +296,6 @@ const Profile = () => {
         setEditingCharId(null);
         setCharIgn("");
         setCharIsland("");
-        setCharTitle("Island Resident");
         setCharIcon("fa-leaf");
         setCharError("");
         setCharacterModalOpen(true);
@@ -308,7 +306,6 @@ const Profile = () => {
         setEditingCharId(char.id);
         setCharIgn(char.ign);
         setCharIsland(char.islandName);
-        setCharTitle(char.title || "Island Resident");
         setCharIcon(char.icon || "fa-leaf");
         setCharError("");
         setCharacterModalOpen(true);
@@ -330,13 +327,12 @@ const Profile = () => {
             updateCharacter(editingCharId, {
                 ign: charIgn.trim(),
                 islandName: charIsland.trim(),
-                title: charTitle.trim() || "Island Resident",
                 icon: charIcon,
             });
             playChimeClick();
             setPrefNotice(`Character "${charIgn.trim()}" updated and synced to database!`);
         } else {
-            const ok = addCharacter(charIgn.trim(), charIsland.trim(), charTitle.trim() || "Island Resident", charIcon);
+            const ok = addCharacter(charIgn.trim(), charIsland.trim(), charIcon);
             if (!ok) {
                 setCharError(`Maximum ${maxSlots} character slots reached.`);
                 return;
@@ -570,11 +566,6 @@ const Profile = () => {
                                             <i className="fa-solid fa-tree text-success me-1"></i>
                                             Island: <strong className="text-dark">{activeCharacter.islandName || "Island"}</strong>
                                         </span>
-                                        <span>•</span>
-                                        <span>
-                                            <i className="fa-solid fa-tag text-warning me-1"></i>
-                                            {activeCharacter.title || "Resident"}
-                                        </span>
                                     </div>
 
                                     {/* Unified Role Badges & Member Since */}
@@ -768,7 +759,7 @@ const Profile = () => {
                                                                         {char.ign}
                                                                     </div>
                                                                     <div className="tiny-text text-muted fw-bold text-truncate">
-                                                                        {char.title || (slotIdx === 0 ? "Main Character" : `Slot #${slotIdx + 1}`)}
+                                                                        {slotIdx === 0 ? "Main Character" : `Slot #${slotIdx + 1}`}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -2290,21 +2281,6 @@ const Profile = () => {
                                     maxLength={24}
                                 />
                                 <div className="form-text">Your Animal Crossing island name.</div>
-                            </div>
-
-                            <div className="mb-3">
-                                <label className="form-label fw-bold small text-dark" htmlFor="profileCharTitle">
-                                    Resident Title / Role <span className="text-muted fw-normal">(optional)</span>
-                                </label>
-                                <input
-                                    id="profileCharTitle"
-                                    type="text"
-                                    className="form-control rounded-3 border-2"
-                                    placeholder="e.g. Island Representative, Resident, Botanist"
-                                    value={charTitle}
-                                    onChange={(e) => setCharTitle(e.target.value)}
-                                    maxLength={30}
-                                />
                             </div>
 
                             {/* Icon Picker */}

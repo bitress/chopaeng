@@ -171,7 +171,6 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
                     id: `char_dc_${Date.now()}_${idx}`,
                     ign: p.ign,
                     islandName: p.islandName,
-                    title: idx === 0 ? 'Island Representative' : 'Island Resident',
                     icon: idx === 0 ? 'fa-crown' : 'fa-leaf',
                     isDefault: idx === 0,
                     createdAt: new Date().toISOString(),
@@ -190,13 +189,12 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
             id: 'char_default',
             ign: rawDiscordName ? parseDiscordNicknameToCharacters(rawDiscordName)[0]?.ign || rawDiscordName : 'Resident',
             islandName: rawDiscordName ? parseDiscordNicknameToCharacters(rawDiscordName)[0]?.islandName || 'Island' : 'Island',
-            title: 'Island Representative',
             icon: 'fa-leaf',
             isDefault: true,
         };
 
     const addCharacter = useCallback(
-        (ign: string, islandName: string, title = 'Island Resident', icon = 'fa-user'): boolean => {
+        (ign: string, islandName: string, icon = 'fa-leaf'): boolean => {
             const current = getStoredCharacters();
             if (current.length >= maxSlots) {
                 return false;
@@ -206,7 +204,6 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
                 id: `char_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
                 ign: ign.trim(),
                 islandName: islandName.trim(),
-                title: title.trim(),
                 icon,
                 isDefault: current.length === 0,
                 createdAt: new Date().toISOString(),
@@ -292,7 +289,6 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
                 id: `char_sync_${Date.now()}_${idx}`,
                 ign: p.ign,
                 islandName: p.islandName,
-                title: idx === 0 ? 'Island Representative' : 'Island Resident',
                 icon: idx === 0 ? 'fa-crown' : 'fa-leaf',
                 isDefault: idx === 0,
                 createdAt: new Date().toISOString(),
