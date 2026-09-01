@@ -2237,11 +2237,11 @@ const OrderBot: React.FC = () => {
                                             >
                                                 <div className="d-flex align-items-center gap-2 mb-1">
                                                     <i className="fa-solid fa-circle-xmark fs-5 text-danger" />
-                                                    <strong className="text-danger">Order Cancelled or Timed Out</strong>
+                                                    <strong className="text-danger">Flight Gate Expired or Cancelled</strong>
                                                 </div>
                                                 <p className="tiny-text text-dark mb-3">
                                                     {orderStatus?.message ||
-                                                        'Your order request was cancelled or timed out before arrival.'}
+                                                        'The flight arrival window has ended or the order was cancelled. You can easily re-order your items anytime!'}
                                                 </p>
                                                 <button
                                                     type="button"
@@ -2421,7 +2421,7 @@ const OrderBot: React.FC = () => {
                                         )}
 
                                         {/* Message alert if any */}
-                                        {orderStatus?.message && (
+                                        {!isDone && orderStatus?.message && (
                                             <div className="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3 rounded-3">
                                                 <i className="fa-solid fa-circle-info text-primary flex-shrink-0" />
                                                 <span>{orderStatus.message}</span>

@@ -59,7 +59,8 @@ export const CommandBuilderOrderStatusModal = ({
 
     if (!isOpen) return null;
 
-    const isReady = statusData.status === 'ready' || Boolean(statusData.dodoCode);
+    const isCancelled = statusData.status === 'cancelled';
+    const isReady = (statusData.status === 'ready' || Boolean(statusData.dodoCode)) && !isCancelled;
 
     return (
         <div
@@ -77,9 +78,9 @@ export const CommandBuilderOrderStatusModal = ({
                         <div className="d-flex align-items-center gap-2">
                             <div
                                 className="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
-                                style={{ width: '42px', height: '42px', background: isReady ? 'var(--nook-green, #2b8a3e)' : '#0d6efd' }}
+                                style={{ width: '42px', height: '42px', background: isCancelled ? '#dc3545' : isReady ? 'var(--nook-green, #2b8a3e)' : '#0d6efd' }}
                             >
-                                <i className={`fa-solid ${isReady ? 'fa-plane-departure' : 'fa-hourglass-half'} fs-5`}></i>
+                                <i className={`fa-solid ${isCancelled ? 'fa-circle-xmark' : isReady ? 'fa-plane-departure' : 'fa-hourglass-half'} fs-5`}></i>
                             </div>
                             <div>
                                 <h2 className="modal-title h5 fw-black text-dark mb-0 ac-font">Order Bot Status</h2>
@@ -97,7 +98,17 @@ export const CommandBuilderOrderStatusModal = ({
 
                     {/* Body */}
                     <div className="modal-body p-4 text-center">
-                        {isReady ? (
+                        {isCancelled ? (
+                            <div className="animate-up">
+                                <div className="icon-circle bg-danger-subtle text-danger mx-auto mb-3" style={{ width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <i className="fa-solid fa-plane-slash fs-2"></i>
+                                </div>
+                                <h3 className="h5 fw-black text-dark mb-1 ac-font">Flight Gate Expired</h3>
+                                <p className="small text-muted mb-4">
+                                    {statusData.message || 'The flight arrival window has ended or the order was cancelled. You can easily re-order your items anytime!'}
+                                </p>
+                            </div>
+                        ) : isReady ? (
                             <div className="animate-up">
                                 <div className="icon-circle bg-success-subtle text-success mx-auto mb-3" style={{ width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <i className="fa-solid fa-plane-arrival fs-2"></i>

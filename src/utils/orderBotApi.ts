@@ -250,6 +250,34 @@ export const submitOrderToBot = async (
     }
 };
 
+/**
+ * Transforms raw SysBot console messages into user-friendly Animal Crossing themed text.
+ */
+export const formatOrderMessage = (rawMessage?: string | null): string | undefined => {
+    if (!rawMessage) return undefined;
+    const msg = rawMessage.trim();
+    if (!msg) return undefined;
+
+    const lower = msg.toLowerCase();
+    if (
+        lower.includes('visitor failed to arrive') ||
+        lower.includes('request has been removed') ||
+        lower.includes('failed to arrive')
+    ) {
+        return 'Flight Gate Expired: The arrival window has ended. You can easily re-order your items anytime!';
+    }
+    if (lower.includes('order cancelled') || lower.includes('cancelled by user')) {
+        return 'Your order was successfully cancelled.';
+    }
+    if (lower.includes('pickup completed') || lower.includes('order completed')) {
+        return 'Order pickup completed! Thank you for flying with Dodo Airlines.';
+    }
+    if (lower.includes('timed out') || lower.includes('gate closed')) {
+        return 'The flight gate has closed. Click Re-Order below to generate a new pickup request.';
+    }
+    return msg;
+};
+
 // ─── Poll Order Status ─────────────────────────────────────────────────────
 
 /**
@@ -270,8 +298,10 @@ export const pollOrderStatus = async (
 
         if (res.ok) {
             const data = await res.json();
-            const hasDodo = isValidDodo(data.dodo_code);
-            const status = hasDodo ? 'ready' as const : normalizeStatus(data.status);
+            const rawStatus = normalizeStatus(data.status);
+            const isTerminal = rawStatus === 'cancelled' || rawStatus === 'completed' || rawStatus === 'error';
+            const hasDodo = !isTerminal && isValidDodo(data.dodo_code);
+            const status = isTerminal ? rawStatus : (hasDodo ? ('ready' as const) : rawStatus);
 
             let queuePos = typeof data.queue_position === 'number' ? data.queue_position : undefined;
             if (queuePos !== undefined && queuePos <= 0 && status !== 'ready' && status !== 'preparing') {
@@ -279,6 +309,7 @@ export const pollOrderStatus = async (
             }
 
             const estMin = parseEtaMinutes(data);
+            const formattedMsg = formatOrderMessage(data.message);
 
             return {
                 status,
@@ -288,7 +319,7 @@ export const pollOrderStatus = async (
                 eta: typeof data.eta === 'string' ? data.eta : undefined,
                 dodoCode: hasDodo ? data.dodo_code : undefined,
                 islandName: data.island_name || 'Sinta',
-                message: data.message,
+                message: formattedMsg,
             };
         }
     } catch { /* network error — return error state */ }
