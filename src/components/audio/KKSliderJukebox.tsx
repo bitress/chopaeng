@@ -5,38 +5,214 @@ import {
     startJukeboxPlayback,
     stopJukeboxPlayback,
 } from '../../utils/kkAudioSynthesizer';
+import {
+    hourlyBgm,
+    type HourlyBgmState,
+    type BgmWeather,
+} from '../../utils/hourlyBgmEngine';
+import { HOURLY_BGM_TRACKS } from '../../data/hourlyBgmData';
+import { getStoredTheme, type ThemeMode } from '../../utils/theme';
 
+type JukeboxMode = 'kk' | 'hourly';
+
+const STORAGE_KEY_MODE = 'chopaeng_audio_mode';
 const STORAGE_KEY_TRACK = 'chopaeng_jukebox_track_id';
 const STORAGE_KEY_VOLUME = 'chopaeng_jukebox_volume';
 const STORAGE_KEY_SHOW_VOL = 'chopaeng_jukebox_show_volume';
 
+const THEME_JUKEBOX_STYLES: Record<ThemeMode, {
+    widgetBg: string;
+    widgetBorder: string;
+    widgetText: string;
+    subtleBg: string;
+    subtleBorder: string;
+    pillBg: string;
+    pillBorder: string;
+    pillText: string;
+    accentBtnBg: string;
+    accentBtnText: string;
+    accentBtnBorder: string;
+    activeTabBg: string;
+    dropdownBg: string;
+    dropdownBorder: string;
+    dropdownItemHover: string;
+    isDark: boolean;
+}> = {
+    nook: {
+        widgetBg: '#fffdfa',
+        widgetBorder: '#2f3e35',
+        widgetText: '#1e293b',
+        subtleBg: '#f8fafc',
+        subtleBorder: '#e2e8f0',
+        pillBg: '#fffdfa',
+        pillBorder: '#2f3e35',
+        pillText: '#1e293b',
+        accentBtnBg: '#37b06d',
+        accentBtnText: '#ffffff',
+        accentBtnBorder: '#2f3e35',
+        activeTabBg: '#16a34a',
+        dropdownBg: '#fffdfa',
+        dropdownBorder: '#2f3e35',
+        dropdownItemHover: 'rgba(55, 176, 109, 0.15)',
+        isDark: false,
+    },
+    celeste: {
+        widgetBg: '#1e293b',
+        widgetBorder: '#4f46e5',
+        widgetText: '#f8fafc',
+        subtleBg: '#0f172a',
+        subtleBorder: 'rgba(167, 139, 250, 0.28)',
+        pillBg: '#0f172a',
+        pillBorder: 'rgba(167, 139, 250, 0.35)',
+        pillText: '#f8fafc',
+        accentBtnBg: '#7c3aed',
+        accentBtnText: '#ffffff',
+        accentBtnBorder: '#a78bfa',
+        activeTabBg: '#7c3aed',
+        dropdownBg: '#1e293b',
+        dropdownBorder: 'rgba(167, 139, 250, 0.4)',
+        dropdownItemHover: 'rgba(139, 92, 246, 0.2)',
+        isDark: true,
+    },
+    roost: {
+        widgetBg: '#292524',
+        widgetBorder: '#78350f',
+        widgetText: '#fdf8f5',
+        subtleBg: '#1c1917',
+        subtleBorder: 'rgba(217, 119, 6, 0.28)',
+        pillBg: '#1c1917',
+        pillBorder: 'rgba(212, 163, 115, 0.35)',
+        pillText: '#fdf8f5',
+        accentBtnBg: '#a06b43',
+        accentBtnText: '#ffffff',
+        accentBtnBorder: '#d4a373',
+        activeTabBg: '#a06b43',
+        dropdownBg: '#292524',
+        dropdownBorder: 'rgba(212, 163, 115, 0.4)',
+        dropdownItemHover: 'rgba(217, 119, 6, 0.2)',
+        isDark: true,
+    },
+    sakura: {
+        widgetBg: '#ffffff',
+        widgetBorder: 'rgba(236, 72, 153, 0.4)',
+        widgetText: '#4a2040',
+        subtleBg: '#fdf2f8',
+        subtleBorder: 'rgba(236, 72, 153, 0.25)',
+        pillBg: '#ffffff',
+        pillBorder: 'rgba(236, 72, 153, 0.35)',
+        pillText: '#4a2040',
+        accentBtnBg: '#ec4899',
+        accentBtnText: '#ffffff',
+        accentBtnBorder: '#db2777',
+        activeTabBg: '#ec4899',
+        dropdownBg: '#ffffff',
+        dropdownBorder: 'rgba(236, 72, 153, 0.4)',
+        dropdownItemHover: 'rgba(236, 72, 153, 0.15)',
+        isDark: false,
+    },
+    dal: {
+        widgetBg: '#1e293b',
+        widgetBorder: '#0284c7',
+        widgetText: '#f8fafc',
+        subtleBg: '#0f172a',
+        subtleBorder: 'rgba(56, 189, 248, 0.28)',
+        pillBg: '#0f172a',
+        pillBorder: 'rgba(56, 189, 248, 0.35)',
+        pillText: '#f8fafc',
+        accentBtnBg: '#0284c7',
+        accentBtnText: '#ffffff',
+        accentBtnBorder: '#38bdf8',
+        activeTabBg: '#0284c7',
+        dropdownBg: '#1e293b',
+        dropdownBorder: 'rgba(56, 189, 248, 0.4)',
+        dropdownItemHover: 'rgba(2, 132, 199, 0.2)',
+        isDark: true,
+    },
+    nooklink: {
+        widgetBg: '#111827',
+        widgetBorder: '#10b981',
+        widgetText: '#f8fafc',
+        subtleBg: '#090d16',
+        subtleBorder: 'rgba(16, 185, 129, 0.3)',
+        pillBg: '#090d16',
+        pillBorder: 'rgba(16, 185, 129, 0.35)',
+        pillText: '#f8fafc',
+        accentBtnBg: '#10b981',
+        accentBtnText: '#ffffff',
+        accentBtnBorder: '#34d399',
+        activeTabBg: '#10b981',
+        dropdownBg: '#111827',
+        dropdownBorder: 'rgba(16, 185, 129, 0.4)',
+        dropdownItemHover: 'rgba(16, 185, 129, 0.2)',
+        isDark: true,
+    },
+};
+
 export const KKSliderJukebox: React.FC = () => {
-    // Widget visible / open state (togglable) — closed by default, opened from Navbar
+    // Current theme synchronization
+    const [currentTheme, setCurrentTheme] = useState<ThemeMode>(getStoredTheme);
+
+    // Mode: 'kk' (K.K. Slider songs) or 'hourly' (24h Live Island BGM)
+    const [audioMode, setAudioMode] = useState<JukeboxMode>(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_MODE) as JukeboxMode | null;
+        return saved === 'hourly' ? 'hourly' : 'kk';
+    });
+
+    // Widget visible / open state
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    // Bottom volume row visible / collapsed state
-    const [showVolume, setShowVolume] = useState<boolean>(() => {
+    // Bottom volume row visible state
+    const [showVolume] = useState<boolean>(() => {
         const saved = localStorage.getItem(STORAGE_KEY_SHOW_VOL);
         return saved !== null ? saved === 'true' : true;
     });
 
-    const [isPlaying, setIsPlaying] = useState(false);
+    // K.K. state
+    const [isKKPlaying, setIsKKPlaying] = useState(false);
     const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+    const [isLooping, setIsLooping] = useState(false);
+    const [isShuffling, setIsShuffling] = useState(false);
+    const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    // Hourly BGM state
+    const [hourlyState, setHourlyState] = useState<HourlyBgmState>(hourlyBgm.getState());
+    const [hourDropdownOpen, setHourDropdownOpen] = useState(false);
+
+    // Shared Volume
     const [volume, setVolume] = useState<number>(() => {
         const saved = localStorage.getItem(STORAGE_KEY_VOLUME);
         return saved ? parseFloat(saved) : 0.65;
     });
     const [isMuted, setIsMuted] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [isLooping, setIsLooping] = useState(false);
-    const [isShuffling, setIsShuffling] = useState(false);
-    const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const dropdownRef = useRef<HTMLDivElement | null>(null);
+    const hourDropdownRef = useRef<HTMLDivElement | null>(null);
 
-    const activeTrack: JukeboxTrack = useMemo(() => {
+    const activeKKTrack: JukeboxTrack = useMemo(() => {
         return KK_JUKEBOX_TRACKS[currentTrackIndex] || KK_JUKEBOX_TRACKS[0];
     }, [currentTrackIndex]);
+
+    // Sync theme updates
+    useEffect(() => {
+        const handleThemeUpdate = (e: any) => {
+            if (e.detail?.theme) {
+                setCurrentTheme(e.detail.theme);
+            } else {
+                setCurrentTheme(getStoredTheme());
+            }
+        };
+        window.addEventListener('chopaeng_theme_updated', handleThemeUpdate);
+        return () => window.removeEventListener('chopaeng_theme_updated', handleThemeUpdate);
+    }, []);
+
+    // Subscribe to Hourly BGM Engine state
+    useEffect(() => {
+        const unsubscribe = hourlyBgm.subscribe((newState) => {
+            setHourlyState(newState);
+        });
+        return unsubscribe;
+    }, []);
 
     // Restore saved track on mount
     useEffect(() => {
@@ -47,141 +223,182 @@ export const KKSliderJukebox: React.FC = () => {
         }
     }, []);
 
-    // Save volume to local storage
+    // Save mode & volume
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_MODE, audioMode);
+    }, [audioMode]);
+
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY_VOLUME, String(volume));
+        hourlyBgm.setVolume(volume);
     }, [volume]);
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY_SHOW_VOL, String(showVolume));
     }, [showVolume]);
 
-    // Close track dropdown on outside click
+    // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
                 setDropdownOpen(false);
+            }
+            if (hourDropdownRef.current && !hourDropdownRef.current.contains(e.target as Node)) {
+                setHourDropdownOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Listen for custom global events from navbar
+    // Global toggle listener
     useEffect(() => {
         const handleOpenJukebox = () => {
+            setIsOpen(true);
+            playChimeClick();
+        };
+        const handleToggleJukebox = () => {
             setIsOpen((prev) => !prev);
             playChimeClick();
         };
+
         window.addEventListener('chopaeng_open_jukebox', handleOpenJukebox);
-        window.addEventListener('chopaeng_toggle_jukebox', handleOpenJukebox);
+        window.addEventListener('chopaeng_toggle_jukebox', handleToggleJukebox);
+
         return () => {
             window.removeEventListener('chopaeng_open_jukebox', handleOpenJukebox);
-            window.removeEventListener('chopaeng_toggle_jukebox', handleOpenJukebox);
+            window.removeEventListener('chopaeng_toggle_jukebox', handleToggleJukebox);
         };
     }, []);
 
-    // Manage Volume
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = isMuted ? 0 : volume;
-        }
-        localStorage.setItem(STORAGE_KEY_VOLUME, String(volume));
-    }, [volume, isMuted]);
-
-    const handleNextTrack = useCallback(() => {
-        playChimeClick();
-        let nextIdx = currentTrackIndex + 1;
-        if (isShuffling) {
-            nextIdx = Math.floor(Math.random() * KK_JUKEBOX_TRACKS.length);
-        } else if (nextIdx >= KK_JUKEBOX_TRACKS.length) {
-            nextIdx = 0;
-        }
-        setCurrentTrackIndex(nextIdx);
-        localStorage.setItem(STORAGE_KEY_TRACK, KK_JUKEBOX_TRACKS[nextIdx].id);
-    }, [currentTrackIndex, isShuffling]);
-
-    const handlePrevTrack = useCallback(() => {
-        playChimeClick();
-        let prevIdx = currentTrackIndex - 1;
-        if (prevIdx < 0) {
-            prevIdx = KK_JUKEBOX_TRACKS.length - 1;
-        }
-        setCurrentTrackIndex(prevIdx);
-        localStorage.setItem(STORAGE_KEY_TRACK, KK_JUKEBOX_TRACKS[prevIdx].id);
-    }, [currentTrackIndex]);
-
-    const playRealAudio = useCallback(async (track: JukeboxTrack) => {
-        stopJukeboxPlayback();
-        if (audioRef.current) {
-            try {
-                setIsLoadingAudio(true);
-                const streamUrl = track.audioUrl;
-                if (audioRef.current.src !== streamUrl) {
-                    audioRef.current.src = streamUrl;
-                    audioRef.current.load();
-                }
-                audioRef.current.volume = isMuted ? 0 : volume;
-                await audioRef.current.play();
-                setIsPlaying(true);
-                setIsLoadingAudio(false);
-            } catch (err) {
-                console.warn('Real audio stream blocked/failed, falling back to Web Audio synth:', err);
-                setIsLoadingAudio(false);
-                startJukeboxPlayback(
-                    track.id,
-                    isMuted ? 0 : volume,
-                    undefined,
-                    () => {
-                        if (isLooping) playRealAudio(track);
-                        else handleNextTrack();
-                    }
-                );
-                setIsPlaying(true);
-            }
-        }
-    }, [volume, isMuted, isLooping, handleNextTrack]);
-
-    const stopAudioStream = () => {
+    // Handle K.K. audio playback
+    const stopKKAudio = useCallback(() => {
         if (audioRef.current) {
             audioRef.current.pause();
+            audioRef.current.currentTime = 0;
         }
         stopJukeboxPlayback();
-    };
+        setIsKKPlaying(false);
+    }, []);
+
+    const playKKAudio = useCallback(async (track: JukeboxTrack) => {
+        // Stop hourly if playing
+        hourlyBgm.pause();
+
+        if (track.audioUrl) {
+            if (audioRef.current) {
+                stopJukeboxPlayback();
+                audioRef.current.src = track.audioUrl;
+                audioRef.current.volume = isMuted ? 0 : volume;
+                setIsLoadingAudio(true);
+                try {
+                    await audioRef.current.play();
+                    setIsKKPlaying(true);
+                } catch {
+                    // Fallback to Web Audio synthesizer
+                    startJukeboxPlayback(track.id, isMuted ? 0 : volume);
+                    setIsKKPlaying(true);
+                } finally {
+                    setIsLoadingAudio(false);
+                }
+            }
+        } else {
+            if (audioRef.current) audioRef.current.pause();
+            startJukeboxPlayback(track.id, isMuted ? 0 : volume);
+            setIsKKPlaying(true);
+        }
+    }, [isMuted, volume]);
 
     const togglePlay = () => {
         playChimeClick();
-        if (isPlaying) {
-            stopAudioStream();
-            setIsPlaying(false);
+        if (audioMode === 'kk') {
+            if (isKKPlaying) {
+                stopKKAudio();
+            } else {
+                playKKAudio(activeKKTrack);
+            }
         } else {
-            playRealAudio(activeTrack);
+            if (hourlyState.isPlaying) {
+                hourlyBgm.pause();
+            } else {
+                stopKKAudio();
+                hourlyBgm.play();
+            }
         }
     };
 
-    // When activeTrack changes while playing, play new track
-    useEffect(() => {
-        if (isPlaying) {
-            playRealAudio(activeTrack);
+    const handleNextTrack = () => {
+        playChimeClick();
+        let nextIndex: number;
+        if (isShuffling) {
+            nextIndex = Math.floor(Math.random() * KK_JUKEBOX_TRACKS.length);
+        } else {
+            nextIndex = (currentTrackIndex + 1) % KK_JUKEBOX_TRACKS.length;
         }
-    }, [activeTrack, playRealAudio]);
+        setCurrentTrackIndex(nextIndex);
+        localStorage.setItem(STORAGE_KEY_TRACK, KK_JUKEBOX_TRACKS[nextIndex].id);
+        if (isKKPlaying) {
+            playKKAudio(KK_JUKEBOX_TRACKS[nextIndex]);
+        }
+    };
 
-    const selectTrack = (index: number) => {
+    const handlePrevTrack = () => {
+        playChimeClick();
+        const prevIndex = (currentTrackIndex - 1 + KK_JUKEBOX_TRACKS.length) % KK_JUKEBOX_TRACKS.length;
+        setCurrentTrackIndex(prevIndex);
+        localStorage.setItem(STORAGE_KEY_TRACK, KK_JUKEBOX_TRACKS[prevIndex].id);
+        if (isKKPlaying) {
+            playKKAudio(KK_JUKEBOX_TRACKS[prevIndex]);
+        }
+    };
+
+    const selectKKTrack = (index: number) => {
         playChimeClick();
         setCurrentTrackIndex(index);
         localStorage.setItem(STORAGE_KEY_TRACK, KK_JUKEBOX_TRACKS[index].id);
         setDropdownOpen(false);
-        playRealAudio(KK_JUKEBOX_TRACKS[index]);
+        if (isKKPlaying) {
+            playKKAudio(KK_JUKEBOX_TRACKS[index]);
+        }
     };
 
-    const toggleWidget = () => {
+    const selectHour = (hour: number) => {
         playChimeClick();
-        setIsOpen(!isOpen);
+        hourlyBgm.setHour(hour, true);
+        setHourDropdownOpen(false);
+        if (!hourlyState.isPlaying) {
+            stopKKAudio();
+            hourlyBgm.play();
+        }
     };
+
+    const toggleAudioMode = (mode: JukeboxMode) => {
+        playChimeClick();
+        setAudioMode(mode);
+        if (mode === 'hourly') {
+            stopKKAudio();
+            if (isKKPlaying) {
+                hourlyBgm.play();
+            }
+        } else {
+            hourlyBgm.pause();
+            if (hourlyState.isPlaying) {
+                playKKAudio(activeKKTrack);
+            }
+        }
+    };
+
+    const openAnimaleseStudio = () => {
+        playChimeClick();
+        window.dispatchEvent(new CustomEvent('chopaeng_open_animalese_modal'));
+    };
+
+    const isCurrentPlaying = audioMode === 'kk' ? isKKPlaying : hourlyState.isPlaying;
+    const themeStyle = THEME_JUKEBOX_STYLES[currentTheme] || THEME_JUKEBOX_STYLES.nook;
 
     return (
         <>
-            {/* Hidden HTML5 Audio Element for Real K.K. Slider MP3 Playback */}
+            {/* Hidden HTML5 Audio for K.K. Slider */}
             <audio
                 ref={audioRef}
                 crossOrigin="anonymous"
@@ -198,14 +415,13 @@ export const KKSliderJukebox: React.FC = () => {
                 }}
                 onError={() => {
                     setIsLoadingAudio(false);
-                    if (isPlaying) {
-                        startJukeboxPlayback(activeTrack.id, isMuted ? 0 : volume);
+                    if (isKKPlaying) {
+                        startJukeboxPlayback(activeKKTrack.id, isMuted ? 0 : volume);
                     }
                 }}
             />
 
-
-            {/* ── 2. FULL EXPANDED PILL WIDGET (When widget is open) ── */}
+            {/* ── EXPANDED FLOATING ISLAND RADIO & JUKEBOX WIDGET ── */}
             {isOpen && (
                 <div
                     className="kk-widget-container position-fixed shadow-lg animate-up"
@@ -213,325 +429,490 @@ export const KKSliderJukebox: React.FC = () => {
                         bottom: '20px',
                         left: '20px',
                         zIndex: 1060,
-                        backgroundColor: '#fffdfa',
-                        border: '3px solid #2f3e35',
-                        borderRadius: '36px',
-                        padding: showVolume ? '10px 16px 10px 14px' : '8px 14px',
-                        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0,0,0,0.08)',
+                        backgroundColor: themeStyle.widgetBg,
+                        border: `3px solid ${themeStyle.widgetBorder}`,
+                        borderRadius: '28px',
+                        padding: '12px 16px',
+                        color: themeStyle.widgetText,
+                        boxShadow: `0 16px 40px rgba(0, 0, 0, ${themeStyle.isDark ? '0.5' : '0.2'}), 0 2px 6px rgba(0,0,0,0.08)`,
                         transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
                         maxWidth: 'calc(100vw - 32px)',
+                        width: '360px',
                     }}
                 >
-                    {/* ── Top Main Control Row ── */}
-                    <div className="d-flex align-items-center gap-2 position-relative">
-
-                        {/* Previous Button */}
-                        <button
-                            type="button"
-                            onClick={handlePrevTrack}
-                            className="btn rounded-circle d-flex align-items-center justify-content-center transition-all p-0"
+                    {/* Mode Selector Tabs */}
+                    <div
+                        className="d-flex align-items-center justify-content-between gap-1 mb-2.5 pb-2 border-bottom"
+                        style={{ borderColor: themeStyle.subtleBorder }}
+                    >
+                        <div
+                            className="d-flex align-items-center gap-1 rounded-pill p-1 border"
                             style={{
-                                width: '36px',
-                                height: '36px',
-                                minWidth: '36px',
-                                backgroundColor: '#fffdfa',
-                                border: '2.5px solid #2f3e35',
-                                color: '#2f3e35',
+                                backgroundColor: themeStyle.subtleBg,
+                                borderColor: themeStyle.subtleBorder,
                             }}
-                            title="Previous Track"
-                            aria-label="Previous Track"
                         >
-                            <i className="fa-solid fa-backward-step" style={{ fontSize: '0.82rem' }}></i>
-                        </button>
+                            <button
+                                type="button"
+                                onClick={() => toggleAudioMode('kk')}
+                                className={`btn btn-xs rounded-pill px-2.5 py-1 fw-black transition-all ${
+                                    audioMode === 'kk' ? 'shadow-xs' : 'btn-link text-muted text-decoration-none'
+                                }`}
+                                style={{
+                                    fontSize: '0.72rem',
+                                    backgroundColor: audioMode === 'kk' ? themeStyle.activeTabBg : 'transparent',
+                                    color: audioMode === 'kk' ? '#ffffff' : (themeStyle.isDark ? '#94a3b8' : '#64748b'),
+                                }}
+                            >
+                                <i className="fa-solid fa-guitar me-1" /> K.K. Slider
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => toggleAudioMode('hourly')}
+                                className={`btn btn-xs rounded-pill px-2.5 py-1 fw-black transition-all ${
+                                    audioMode === 'hourly' ? 'shadow-xs' : 'btn-link text-muted text-decoration-none'
+                                }`}
+                                style={{
+                                    fontSize: '0.72rem',
+                                    backgroundColor: audioMode === 'hourly' ? themeStyle.activeTabBg : 'transparent',
+                                    color: audioMode === 'hourly' ? '#ffffff' : (themeStyle.isDark ? '#94a3b8' : '#64748b'),
+                                }}
+                            >
+                                <i className="fa-solid fa-clock me-1" /> Hourly BGM
+                            </button>
+                        </div>
 
-                        {/* Play / Pause Main Button (Chopaeng ACNH Green) */}
+                        <div className="d-flex align-items-center gap-1.5">
+                            <button
+                                type="button"
+                                onClick={openAnimaleseStudio}
+                                className="btn btn-xs rounded-pill px-2 py-1 fw-bold d-flex align-items-center gap-1 border"
+                                style={{
+                                    fontSize: '0.7rem',
+                                    borderColor: themeStyle.accentBtnBorder,
+                                    color: themeStyle.accentBtnBg,
+                                    backgroundColor: themeStyle.subtleBg,
+                                }}
+                                title="Open Animalese Voice Studio"
+                            >
+                                <i className="fa-solid fa-comment-dots" /> Speak
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsOpen(false)}
+                                className="btn btn-link p-0 border-0"
+                                style={{
+                                    fontSize: '0.9rem',
+                                    color: themeStyle.isDark ? '#94a3b8' : '#64748b',
+                                }}
+                                title="Close Radio Widget"
+                            >
+                                <i className="fa-solid fa-xmark" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* ── Main Control Row ── */}
+                    <div className="d-flex align-items-center gap-2 position-relative mb-2">
+                        {/* Prev (KK Mode Only) */}
+                        {audioMode === 'kk' ? (
+                            <button
+                                type="button"
+                                onClick={handlePrevTrack}
+                                className="btn rounded-circle d-flex align-items-center justify-content-center transition-all p-0 flex-shrink-0"
+                                style={{
+                                    width: '34px',
+                                    height: '34px',
+                                    backgroundColor: themeStyle.pillBg,
+                                    border: `2px solid ${themeStyle.pillBorder}`,
+                                    color: themeStyle.pillText,
+                                }}
+                                title="Previous Track"
+                            >
+                                <i className="fa-solid fa-backward-step" style={{ fontSize: '0.75rem' }} />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    playChimeClick();
+                                    hourlyBgm.setHour((hourlyState.hour + 23) % 24, true);
+                                }}
+                                className="btn rounded-circle d-flex align-items-center justify-content-center transition-all p-0 flex-shrink-0"
+                                style={{
+                                    width: '34px',
+                                    height: '34px',
+                                    backgroundColor: themeStyle.pillBg,
+                                    border: `2px solid ${themeStyle.pillBorder}`,
+                                    color: themeStyle.pillText,
+                                }}
+                                title="Previous Hour"
+                            >
+                                <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.75rem' }} />
+                            </button>
+                        )}
+
+                        {/* Play / Pause Main Button */}
                         <button
                             type="button"
                             onClick={togglePlay}
-                            className="btn rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm transition-all p-0"
+                            className="btn rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm transition-all p-0 flex-shrink-0"
                             style={{
-                                width: '46px',
-                                height: '46px',
-                                minWidth: '46px',
-                                backgroundColor: 'var(--nook-green, #37b06d)',
-                                border: '2.5px solid #2f3e35',
-                                transform: isPlaying ? 'scale(1.04)' : 'scale(1)',
+                                width: '42px',
+                                height: '42px',
+                                backgroundColor: themeStyle.accentBtnBg,
+                                border: `2.5px solid ${themeStyle.accentBtnBorder}`,
+                                transform: isCurrentPlaying ? 'scale(1.04)' : 'scale(1)',
                             }}
-                            title={isPlaying ? 'Pause' : 'Play K.K. Slider'}
-                            aria-label={isPlaying ? 'Pause' : 'Play'}
+                            title={isCurrentPlaying ? 'Pause' : 'Play Music'}
                         >
                             {isLoadingAudio ? (
                                 <span className="spinner-border spinner-border-sm" role="status" />
                             ) : (
                                 <i
-                                    className={`fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`}
+                                    className={`fa-solid ${isCurrentPlaying ? 'fa-pause' : 'fa-play'}`}
                                     style={{
-                                        fontSize: '1.15rem',
-                                        marginLeft: isPlaying ? '0' : '3px',
+                                        fontSize: '1rem',
+                                        marginLeft: isCurrentPlaying ? '0' : '2px',
                                     }}
-                                ></i>
+                                />
                             )}
                         </button>
 
-                        {/* Next Button */}
-                        <button
-                            type="button"
-                            onClick={handleNextTrack}
-                            className="btn rounded-circle d-flex align-items-center justify-content-center transition-all p-0"
-                            style={{
-                                width: '36px',
-                                height: '36px',
-                                minWidth: '36px',
-                                backgroundColor: '#fffdfa',
-                                border: '2.5px solid #2f3e35',
-                                color: '#2f3e35',
-                            }}
-                            title="Next Track"
-                            aria-label="Next Track"
-                        >
-                            <i className="fa-solid fa-forward-step" style={{ fontSize: '0.82rem' }}></i>
-                        </button>
-
-                        {/* Track Selection Dropdown Pill */}
-                        <div className="position-relative" ref={dropdownRef} style={{ minWidth: '150px', maxWidth: '210px' }}>
+                        {/* Next / Forward Button */}
+                        {audioMode === 'kk' ? (
+                            <button
+                                type="button"
+                                onClick={handleNextTrack}
+                                className="btn rounded-circle d-flex align-items-center justify-content-center transition-all p-0 flex-shrink-0"
+                                style={{
+                                    width: '34px',
+                                    height: '34px',
+                                    backgroundColor: themeStyle.pillBg,
+                                    border: `2px solid ${themeStyle.pillBorder}`,
+                                    color: themeStyle.pillText,
+                                }}
+                                title="Next Track"
+                            >
+                                <i className="fa-solid fa-forward-step" style={{ fontSize: '0.75rem' }} />
+                            </button>
+                        ) : (
                             <button
                                 type="button"
                                 onClick={() => {
                                     playChimeClick();
-                                    setDropdownOpen(!dropdownOpen);
+                                    hourlyBgm.setHour((hourlyState.hour + 1) % 24, true);
                                 }}
-                                className="btn rounded-pill d-flex align-items-center justify-content-between px-3 py-1 text-dark fw-black w-100 transition-all text-truncate"
+                                className="btn rounded-circle d-flex align-items-center justify-content-center transition-all p-0 flex-shrink-0"
                                 style={{
-                                    backgroundColor: '#fffdfa',
-                                    border: '2.5px solid #2f3e35',
-                                    height: '38px',
-                                    fontSize: '0.88rem',
-                                    letterSpacing: '0.2px',
+                                    width: '34px',
+                                    height: '34px',
+                                    backgroundColor: themeStyle.pillBg,
+                                    border: `2px solid ${themeStyle.pillBorder}`,
+                                    color: themeStyle.pillText,
                                 }}
-                                title={activeTrack.title}
+                                title="Next Hour"
                             >
-                                <span className="text-truncate me-1">
-                                    {currentTrackIndex + 1}. {activeTrack.title}
-                                </span>
-                                <i
-                                    className={`fa-solid fa-caret-down text-muted transition-all ${dropdownOpen ? 'rotate-180' : ''}`}
-                                    style={{ fontSize: '0.75rem' }}
-                                ></i>
+                                <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.75rem' }} />
                             </button>
+                        )}
 
-                            {/* Track Dropdown Menu */}
-                            {dropdownOpen && (
-                                <div
-                                    className="position-absolute bottom-100 start-0 mb-2 w-100 rounded-4 shadow-xl border overflow-hidden animate-up"
+                        {/* Dropdown Selector Pill */}
+                        {audioMode === 'kk' ? (
+                            <div className="position-relative flex-grow-1" ref={dropdownRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        playChimeClick();
+                                        setDropdownOpen(!dropdownOpen);
+                                    }}
+                                    className="btn rounded-pill d-flex align-items-center justify-content-between px-3 py-1 fw-black w-100 transition-all text-truncate"
                                     style={{
-                                        backgroundColor: '#fffdfa',
-                                        borderColor: '#2f3e35',
-                                        borderWidth: '2.5px',
-                                        maxHeight: '260px',
-                                        overflowY: 'auto',
-                                        zIndex: 1070,
-                                        minWidth: '220px',
+                                        backgroundColor: themeStyle.pillBg,
+                                        border: `2px solid ${themeStyle.pillBorder}`,
+                                        color: themeStyle.pillText,
+                                        height: '36px',
+                                        fontSize: '0.82rem',
                                     }}
                                 >
-                                    <div className="p-2 border-bottom bg-light d-flex align-items-center justify-content-between">
-                                        <span className="tiny-text fw-bold text-muted text-uppercase">
-                                            <i className="fa-solid fa-music text-success me-1"></i> K.K. Tracks ({KK_JUKEBOX_TRACKS.length})
-                                        </span>
-                                        <div className="d-flex align-items-center gap-1">
+                                    <span className="text-truncate me-1">
+                                        {currentTrackIndex + 1}. {activeKKTrack.title}
+                                    </span>
+                                    <i className={`fa-solid fa-caret-down text-muted transition-all ${dropdownOpen ? 'rotate-180' : ''}`} style={{ fontSize: '0.75rem' }} />
+                                </button>
+
+                                {dropdownOpen && (
+                                    <div
+                                        className="position-absolute bottom-100 start-0 mb-2 w-100 rounded-4 shadow-xl border overflow-hidden animate-up"
+                                        style={{
+                                            backgroundColor: themeStyle.dropdownBg,
+                                            borderColor: themeStyle.dropdownBorder,
+                                            borderWidth: '2.5px',
+                                            maxHeight: '240px',
+                                            overflowY: 'auto',
+                                            zIndex: 1070,
+                                            minWidth: '230px',
+                                        }}
+                                    >
+                                        <div
+                                            className="p-2 border-bottom d-flex align-items-center justify-content-between"
+                                            style={{
+                                                backgroundColor: themeStyle.subtleBg,
+                                                borderColor: themeStyle.subtleBorder,
+                                            }}
+                                        >
+                                            <span className="tiny-text fw-bold text-muted text-uppercase">
+                                                <i className="fa-solid fa-music me-1" style={{ color: themeStyle.accentBtnBg }} /> K.K. Tracks ({KK_JUKEBOX_TRACKS.length})
+                                            </span>
+                                            <div className="d-flex align-items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsShuffling(!isShuffling);
+                                                        playChimeClick();
+                                                    }}
+                                                    className="btn btn-xs rounded-circle p-0 d-flex align-items-center justify-content-center border"
+                                                    style={{
+                                                        width: '22px',
+                                                        height: '22px',
+                                                        backgroundColor: isShuffling ? themeStyle.accentBtnBg : themeStyle.pillBg,
+                                                        color: isShuffling ? '#ffffff' : (themeStyle.isDark ? '#94a3b8' : '#64748b'),
+                                                        borderColor: themeStyle.subtleBorder,
+                                                    }}
+                                                >
+                                                    <i className="fa-solid fa-shuffle x-small" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsLooping(!isLooping);
+                                                        playChimeClick();
+                                                    }}
+                                                    className="btn btn-xs rounded-circle p-0 d-flex align-items-center justify-content-center border"
+                                                    style={{
+                                                        width: '22px',
+                                                        height: '22px',
+                                                        backgroundColor: isLooping ? themeStyle.accentBtnBg : themeStyle.pillBg,
+                                                        color: isLooping ? '#ffffff' : (themeStyle.isDark ? '#94a3b8' : '#64748b'),
+                                                        borderColor: themeStyle.subtleBorder,
+                                                    }}
+                                                >
+                                                    <i className="fa-solid fa-repeat x-small" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        {KK_JUKEBOX_TRACKS.map((track, idx) => {
+                                            const isSelected = idx === currentTrackIndex;
+                                            return (
+                                                <button
+                                                    key={track.id}
+                                                    type="button"
+                                                    onClick={() => selectKKTrack(idx)}
+                                                    className="btn btn-sm w-100 text-start px-3 py-1.5 d-flex align-items-center justify-content-between border-0 transition-all"
+                                                    style={{
+                                                        backgroundColor: isSelected ? themeStyle.accentBtnBg : 'transparent',
+                                                        color: isSelected ? '#ffffff' : themeStyle.widgetText,
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: isSelected ? 'bold' : '600',
+                                                    }}
+                                                >
+                                                    <span className="text-truncate">{idx + 1}. {track.title}</span>
+                                                    {isSelected && isKKPlaying && <i className="fa-solid fa-volume-high x-small ms-2" />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            /* Hourly Track Selector */
+                            <div className="position-relative flex-grow-1" ref={hourDropdownRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        playChimeClick();
+                                        setHourDropdownOpen(!hourDropdownOpen);
+                                    }}
+                                    className="btn rounded-pill d-flex align-items-center justify-content-between px-3 py-1 fw-black w-100 transition-all text-truncate"
+                                    style={{
+                                        backgroundColor: themeStyle.pillBg,
+                                        border: `2px solid ${themeStyle.pillBorder}`,
+                                        color: themeStyle.pillText,
+                                        height: '36px',
+                                        fontSize: '0.82rem',
+                                    }}
+                                >
+                                    <span className="text-truncate me-1">
+                                        🕒 {hourlyState.currentTrack.title}
+                                    </span>
+                                    <i className={`fa-solid fa-caret-down text-muted transition-all ${hourDropdownOpen ? 'rotate-180' : ''}`} style={{ fontSize: '0.75rem' }} />
+                                </button>
+
+                                {hourDropdownOpen && (
+                                    <div
+                                        className="position-absolute bottom-100 start-0 mb-2 w-100 rounded-4 shadow-xl border overflow-hidden animate-up"
+                                        style={{
+                                            backgroundColor: themeStyle.dropdownBg,
+                                            borderColor: themeStyle.dropdownBorder,
+                                            borderWidth: '2.5px',
+                                            maxHeight: '240px',
+                                            overflowY: 'auto',
+                                            zIndex: 1070,
+                                            minWidth: '240px',
+                                        }}
+                                    >
+                                        <div
+                                            className="p-2 border-bottom d-flex align-items-center justify-content-between"
+                                            style={{
+                                                backgroundColor: themeStyle.subtleBg,
+                                                borderColor: themeStyle.subtleBorder,
+                                            }}
+                                        >
+                                            <span className="tiny-text fw-bold text-muted text-uppercase">
+                                                <i className="fa-solid fa-clock me-1" style={{ color: themeStyle.accentBtnBg }} /> 24 Hours
+                                            </span>
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    setIsShuffling(!isShuffling);
+                                                    hourlyBgm.setLiveSync(true);
                                                     playChimeClick();
                                                 }}
-                                                className={`btn btn-xs rounded-circle p-0 d-flex align-items-center justify-content-center ${isShuffling ? 'btn-success text-white' : 'btn-white border text-muted'}`}
-                                                style={{ width: '22px', height: '22px' }}
-                                                title={isShuffling ? 'Shuffle On' : 'Shuffle Off'}
-                                            >
-                                                <i className="fa-solid fa-shuffle x-small"></i>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsLooping(!isLooping);
-                                                    playChimeClick();
+                                                className="btn btn-xs rounded-pill px-2 py-0.5 fw-bold border"
+                                                style={{
+                                                    fontSize: '0.68rem',
+                                                    backgroundColor: hourlyState.isLiveSync ? themeStyle.accentBtnBg : themeStyle.pillBg,
+                                                    color: hourlyState.isLiveSync ? '#ffffff' : (themeStyle.isDark ? '#94a3b8' : '#64748b'),
+                                                    borderColor: themeStyle.subtleBorder,
                                                 }}
-                                                className={`btn btn-xs rounded-circle p-0 d-flex align-items-center justify-content-center ${isLooping ? 'btn-success text-white' : 'btn-white border text-muted'}`}
-                                                style={{ width: '22px', height: '22px' }}
-                                                title={isLooping ? 'Loop Single Track On' : 'Loop Off'}
                                             >
-                                                <i className="fa-solid fa-repeat x-small"></i>
+                                                ⚡ Live Sync
                                             </button>
                                         </div>
+                                        {HOURLY_BGM_TRACKS.map((track) => {
+                                            const isSelected = track.hour === hourlyState.hour;
+                                            return (
+                                                <button
+                                                    key={track.hour}
+                                                    type="button"
+                                                    onClick={() => selectHour(track.hour)}
+                                                    className="btn btn-sm w-100 text-start px-3 py-1.5 d-flex align-items-center justify-content-between border-0 transition-all"
+                                                    style={{
+                                                        backgroundColor: isSelected ? themeStyle.accentBtnBg : 'transparent',
+                                                        color: isSelected ? '#ffffff' : themeStyle.widgetText,
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: isSelected ? 'bold' : '600',
+                                                    }}
+                                                >
+                                                    <span className="text-truncate">{track.title}</span>
+                                                    <span className="x-small opacity-75">{track.mood.split(',')[0]}</span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
-                                    {KK_JUKEBOX_TRACKS.map((track, idx) => {
-                                        const isSelected = idx === currentTrackIndex;
-                                        return (
-                                            <button
-                                                key={track.id}
-                                                type="button"
-                                                onClick={() => selectTrack(idx)}
-                                                className={`btn btn-sm w-100 text-start px-3 py-2 d-flex align-items-center justify-content-between border-0 transition-all ${
-                                                    isSelected
-                                                        ? 'text-white'
-                                                        : 'text-dark hover-bg-light'
-                                                }`}
-                                                style={{
-                                                    backgroundColor: isSelected ? 'var(--nook-green, #37b06d)' : 'transparent',
-                                                    fontSize: '0.82rem',
-                                                    fontWeight: isSelected ? 'bold' : '600',
-                                                }}
-                                            >
-                                                <span className="text-truncate">
-                                                    {idx + 1}. {track.title}
-                                                </span>
-                                                {isSelected && isPlaying && (
-                                                    <i className="fa-solid fa-volume-high x-small ms-2"></i>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Minimize / Close Button */}
-                        <button
-                            type="button"
-                            onClick={toggleWidget}
-                            className="btn btn-link text-muted p-0 ms-1 border-0"
-                            style={{ color: '#2f3e35', fontSize: '0.85rem' }}
-                            title="Minimize widget"
-                            aria-label="Minimize"
-                        >
-                            <i className="fa-solid fa-xmark"></i>
-                        </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
-                    {/* ── Bottom Secondary Row: Volume Slider + Collapse Chevron ── */}
-                    {showVolume ? (
-                        <div className="d-flex align-items-center justify-content-center gap-2 mt-2 pt-1">
-                            {/* Volume Mute Toggle */}
+                    {/* Hourly Mode Details: Weather Selector & Live Sync Chip */}
+                    {audioMode === 'hourly' && (
+                        <div
+                            className="d-flex align-items-center justify-content-between p-1.5 px-2.5 rounded-3 mb-2 border"
+                            style={{
+                                backgroundColor: themeStyle.subtleBg,
+                                borderColor: themeStyle.subtleBorder,
+                            }}
+                        >
+                            <div className="d-flex align-items-center gap-1">
+                                {(['sunny', 'rainy', 'snowy'] as BgmWeather[]).map((w) => (
+                                    <button
+                                        key={w}
+                                        type="button"
+                                        onClick={() => {
+                                            hourlyBgm.setWeather(w);
+                                            playChimeClick();
+                                        }}
+                                        className="btn btn-xs rounded-pill px-2 py-0.5 fw-bold border"
+                                        style={{
+                                            fontSize: '0.68rem',
+                                            backgroundColor: hourlyState.weather === w ? themeStyle.accentBtnBg : themeStyle.pillBg,
+                                            color: hourlyState.weather === w ? '#ffffff' : (themeStyle.isDark ? '#94a3b8' : '#64748b'),
+                                            borderColor: themeStyle.subtleBorder,
+                                        }}
+                                    >
+                                        {w === 'sunny' ? '☀️ Sun' : w === 'rainy' ? '🌧️ Rain' : '❄️ Snow'}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    hourlyBgm.toggleChime();
+                                    playChimeClick();
+                                }}
+                                className="btn btn-xs rounded-pill px-2 py-0.5 fw-bold border"
+                                style={{
+                                    fontSize: '0.68rem',
+                                    backgroundColor: hourlyState.chimeEnabled ? (themeStyle.isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7') : themeStyle.pillBg,
+                                    color: hourlyState.chimeEnabled ? '#22c55e' : (themeStyle.isDark ? '#94a3b8' : '#64748b'),
+                                    borderColor: hourlyState.chimeEnabled ? '#86efac' : themeStyle.subtleBorder,
+                                }}
+                                title="Town Hall Bell Chime on the Hour"
+                            >
+                                <i className="fa-solid fa-bell me-1" /> Chime
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ── Volume Slider ── */}
+                    {showVolume && (
+                        <div
+                            className="d-flex align-items-center justify-content-between gap-2 pt-1 border-top"
+                            style={{ borderColor: themeStyle.subtleBorder }}
+                        >
                             <button
                                 type="button"
                                 onClick={() => {
                                     setIsMuted(!isMuted);
+                                    hourlyBgm.toggleMute();
                                     playChimeClick();
                                 }}
-                                className="btn btn-link text-muted p-0 border-0"
+                                className="btn btn-link p-0 border-0"
                                 title={isMuted ? 'Unmute' : 'Mute'}
-                                style={{ color: '#2f3e35' }}
+                                style={{ color: themeStyle.isDark ? '#94a3b8' : '#64748b' }}
                             >
-                                <i
-                                    className={`fa-solid ${
-                                        isMuted || volume === 0
-                                            ? 'fa-volume-xmark text-danger'
-                                            : 'fa-volume-low'
-                                    }`}
-                                    style={{ fontSize: '0.85rem' }}
-                                ></i>
+                                <i className={`fa-solid ${isMuted || volume === 0 ? 'fa-volume-xmark text-danger' : 'fa-volume-low'}`} style={{ fontSize: '0.8rem' }} />
                             </button>
 
-                            {/* Chopaeng Green Volume Slider */}
-                            <div style={{ width: '130px' }}>
-                                <input
-                                    type="range"
-                                    className="form-range kk-custom-range"
-                                    min={0}
-                                    max={1}
-                                    step={0.05}
-                                    value={isMuted ? 0 : volume}
-                                    onChange={(e) => {
-                                        setVolume(parseFloat(e.target.value));
-                                        setIsMuted(false);
-                                    }}
-                                    style={{
-                                        height: '6px',
-                                        accentColor: 'var(--nook-green, #37b06d)',
-                                    }}
-                                />
-                            </div>
-
-                            {/* Collapse Volume Chevron */}
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    playChimeClick();
-                                    setShowVolume(false);
+                            <input
+                                type="range"
+                                className="form-range flex-grow-1"
+                                min={0}
+                                max={1}
+                                step={0.05}
+                                value={isMuted ? 0 : volume}
+                                onChange={(e) => {
+                                    setVolume(parseFloat(e.target.value));
+                                    setIsMuted(false);
                                 }}
-                                className="btn rounded-circle d-flex align-items-center justify-content-center p-0 transition-all"
+                                style={{ height: '4px', accentColor: themeStyle.accentBtnBg }}
+                            />
+
+                            <span
+                                className="fw-bold x-small"
                                 style={{
-                                    width: '22px',
-                                    height: '22px',
-                                    backgroundColor: '#fffdfa',
-                                    border: '1.5px solid #2f3e35',
-                                    color: '#2f3e35',
+                                    fontSize: '0.7rem',
+                                    minWidth: '28px',
+                                    color: themeStyle.isDark ? '#94a3b8' : '#64748b',
                                 }}
-                                title="Collapse volume slider"
-                                aria-label="Collapse volume"
                             >
-                                <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.62rem' }}></i>
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="text-center mt-1">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    playChimeClick();
-                                    setShowVolume(true);
-                                }}
-                                className="btn btn-link text-muted p-0 border-0"
-                                style={{ fontSize: '0.68rem', color: '#2f3e35' }}
-                                title="Expand volume slider"
-                            >
-                                <i className="fa-solid fa-chevron-up"></i>
-                            </button>
+                                {isMuted ? '0%' : `${Math.round(volume * 100)}%`}
+                            </span>
                         </div>
                     )}
                 </div>
             )}
-
-            {/* Custom Styling for the ACNH Widget */}
-            <style>{`
-                .kk-custom-range::-webkit-slider-runnable-track {
-                    background: #e4e0d7;
-                    height: 6px;
-                    border-radius: 4px;
-                    border: 1px solid #2f3e35;
-                }
-                .kk-custom-range::-webkit-slider-thumb {
-                    background: var(--nook-green, #37b06d);
-                    border: 2px solid #2f3e35;
-                    width: 14px;
-                    height: 14px;
-                    margin-top: -5px;
-                    border-radius: 50%;
-                    cursor: pointer;
-                }
-                .rotate-180 {
-                    transform: rotate(180deg);
-                }
-                @keyframes bounceSlow {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-4px); }
-                }
-                .animate-bounce {
-                    display: inline-block;
-                    animation: bounceSlow 1.2s infinite ease-in-out;
-                }
-                .equalizer-bar {
-                    width: 3px;
-                    height: 100%;
-                    background-color: var(--nook-green, #37b06d);
-                    border-radius: 2px;
-                    animation: eqDance 0.8s ease-in-out infinite alternate;
-                }
-                @keyframes eqDance {
-                    0% { height: 20%; }
-                    100% { height: 100%; }
-                }
-            `}</style>
         </>
     );
 };

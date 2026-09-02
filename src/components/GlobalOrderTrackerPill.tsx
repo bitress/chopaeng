@@ -96,7 +96,7 @@ export const GlobalOrderTrackerPill: React.FC = () => {
         previousStatusRef.current = current;
         if (currentDodo) previousDodoRef.current = currentDodo;
 
-        if (['completed', 'cancelled', 'error'].includes(status.status)) {
+        if (['completed', 'cancelled'].includes(status.status)) {
             try {
                 localStorage.removeItem(LS_ORDER_KEY);
             } catch {

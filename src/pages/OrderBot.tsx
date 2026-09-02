@@ -112,6 +112,7 @@ type SetupStep = 'username' | 'select-character';
 interface SavedOrder {
     orderId: string;
     submittedAt: number;
+    userId?: string | null;
 }
 interface OrderProfile {
     displayName: string;
@@ -129,18 +130,26 @@ interface SavedCustomLoadout {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
-const saveOrder = (id: string) => {
+const saveOrder = (id: string, userId?: string | null) => {
     try {
-        localStorage.setItem(LS_ORDER_KEY, JSON.stringify({ orderId: id, submittedAt: Date.now() }));
+        localStorage.setItem(
+            LS_ORDER_KEY,
+            JSON.stringify({ orderId: id, userId: userId || null, submittedAt: Date.now() })
+        );
     } catch {
         /**/
     }
 };
 
-const loadOrder = (): SavedOrder | null => {
+const loadOrder = (currentUserId?: string | null): SavedOrder | null => {
     try {
         const v = localStorage.getItem(LS_ORDER_KEY);
-        return v ? JSON.parse(v) : null;
+        if (!v) return null;
+        const parsed = JSON.parse(v) as SavedOrder;
+        if (currentUserId && parsed.userId && parsed.userId !== currentUserId) {
+            return null;
+        }
+        return parsed;
     } catch {
         return null;
     }
@@ -676,14 +685,28 @@ const OrderBot: React.FC = () => {
         setInAppToast(null);
     };
 
-    // ── Restore active order on mount ──
+    // ── Restore active order on mount or user login sync ──
     useEffect(() => {
-        const saved = loadOrder();
-        if (saved) {
+        const saved = loadOrder(user?.user_id);
+        if (saved?.orderId) {
             setActiveOrderId(saved.orderId);
             setStage('tracker');
+        } else if (user) {
+            // Check if logged in user has an active order in remote DB (order_bot_queue)
+            fetchUserOrderHistory(token).then((res) => {
+                if (res.success && res.orders && res.orders.length > 0) {
+                    const activeRemote = res.orders.find((o) =>
+                        ['queued', 'preparing', 'ready'].includes(o.status)
+                    );
+                    if (activeRemote) {
+                        saveOrder(activeRemote.id, user.user_id);
+                        setActiveOrderId(activeRemote.id);
+                        setStage('tracker');
+                    }
+                }
+            }).catch(() => {});
         }
-    }, []);
+    }, [user?.user_id, token]);
 
     // ── Bot status polling ──
     const refreshStatus = useCallback(async () => {
@@ -762,9 +785,12 @@ const OrderBot: React.FC = () => {
                 onAction: handleCopyDodo,
             });
         }
-        if (['completed', 'cancelled', 'error'].includes(d.status)) {
+        if (['completed', 'cancelled'].includes(d.status)) {
             if (pollTimerRef.current) clearInterval(pollTimerRef.current);
             if (d.status !== 'ready') clearOrder();
+        } else if (d.status === 'error') {
+            // Transient network error: pause polling loop but do NOT delete saved order on refresh
+            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
         }
     }, [activeOrderId, orderCommandText, token, triggerInAppToast, handleCopyDodo, playSound]);
 
@@ -833,12 +859,13 @@ const OrderBot: React.FC = () => {
             setNotifGranted(granted);
         }
 
+        const defaultChar = characters.find((c) => c.isDefault) || characters[0];
         const res = await submitOrderToBot(
             orderCommandText,
             token,
-            orderProfile?.orderFor,
-            orderProfile?.displayName,
-            orderProfile?.islandName
+            orderProfile?.orderFor || defaultChar?.ign || user?.username || 'Player',
+            orderProfile?.displayName || user?.username || 'Player',
+            orderProfile?.islandName || defaultChar?.islandName || ''
         );
         setSubmitLoading(false);
 
@@ -849,7 +876,7 @@ const OrderBot: React.FC = () => {
 
         notifiedRef.current = false;
         preparingNotifiedRef.current = false;
-        saveOrder(res.orderId);
+        saveOrder(res.orderId, user?.user_id);
         setActiveOrderId(res.orderId);
 
         saveLocalOrderBackup({

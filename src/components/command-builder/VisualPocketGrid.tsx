@@ -887,12 +887,48 @@ export const VisualPocketGrid: React.FC<VisualPocketGridProps> = ({
                     box-shadow: 0 0 0 3px rgba(55, 176, 109, 0.45) !important;
                     background-color: #f0fbf4 !important;
                 }
+                [data-theme="celeste"] .pocket-slot-tile.selected-slot {
+                    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.55) !important;
+                    background-color: #1e1b4b !important;
+                }
+                [data-theme="roost"] .pocket-slot-tile.selected-slot {
+                    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.55) !important;
+                    background-color: #381e11 !important;
+                }
+                [data-theme="sakura"] .pocket-slot-tile.selected-slot {
+                    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.55) !important;
+                    background-color: #fdf2f8 !important;
+                }
+                [data-theme="dal"] .pocket-slot-tile.selected-slot {
+                    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.55) !important;
+                    background-color: #0c4a6e !important;
+                }
+                [data-theme="nooklink"] .pocket-slot-tile.selected-slot {
+                    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.55) !important;
+                    background-color: #064e3b !important;
+                }
+
                 .pocket-slot-tile.drag-source-slot {
                     cursor: grabbing !important;
                 }
                 .pocket-slot-tile.drag-target-slot {
                     transform: scale(1.04);
                     box-shadow: 0 0 0 3px rgba(55, 176, 109, 0.6) !important;
+                }
+                [data-theme="celeste"] .pocket-slot-tile.drag-target-slot {
+                    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.7) !important;
+                }
+                [data-theme="roost"] .pocket-slot-tile.drag-target-slot {
+                    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.7) !important;
+                }
+                [data-theme="sakura"] .pocket-slot-tile.drag-target-slot {
+                    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.7) !important;
+                }
+                [data-theme="dal"] .pocket-slot-tile.drag-target-slot {
+                    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.7) !important;
+                }
+                [data-theme="nooklink"] .pocket-slot-tile.drag-target-slot {
+                    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.7) !important;
                 }
                 .pocket-slot-tile[draggable="true"]:active {
                     cursor: grabbing !important;

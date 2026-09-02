@@ -659,3 +659,317 @@
     background: rgba(217, 119, 6, 0.15) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SAKURA THEME (Profile.css)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="sakura"] .profile-page-wrapper {
+    --pf-text-main: #3b072c;
+    --pf-text-muted: #9d4e7f;
+    --pf-border-subtle: rgba(236, 72, 153, 0.25);
+    --pf-card-bg: #ffffff;
+    --pf-green-dark: #be185d;
+    --pf-green: #ec4899;
+    --pf-green-light: #f472b6;
+    --pf-green-subtle: rgba(236, 72, 153, 0.2);
+    --pf-green-tint: rgba(236, 72, 153, 0.12);
+    --pf-sand-border: rgba(236, 72, 153, 0.25);
+    color: #4a2040;
+    background-color: #fdf2f8;
+}
+
+[data-theme="sakura"] .pf-hero-card,
+[data-theme="sakura"] .pf-card,
+[data-theme="sakura"] .pf-char-card,
+[data-theme="sakura"] .pf-island-card,
+[data-theme="sakura"] .pf-order-card,
+[data-theme="sakura"] .pf-empty-state {
+    background-color: #ffffff !important;
+    color: #4a2040 !important;
+    border-color: rgba(236, 72, 153, 0.25) !important;
+}
+
+[data-theme="sakura"] .pf-stats-ribbon {
+    background: rgba(236, 72, 153, 0.1) !important;
+    border-color: rgba(236, 72, 153, 0.25) !important;
+}
+
+[data-theme="sakura"] .pf-char-card.primary {
+    background: linear-gradient(180deg, #ffffff 0%, #fdf2f8 100%) !important;
+    border-color: #ec4899 !important;
+}
+
+[data-theme="sakura"] .pf-tab-btn.active {
+    background: #ec4899 !important;
+    color: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DAL THEME (Profile.css)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="dal"] .profile-page-wrapper {
+    --pf-text-main: #f8fafc;
+    --pf-text-muted: #94a3b8;
+    --pf-border-subtle: rgba(56, 189, 248, 0.28);
+    --pf-card-bg: #1e293b;
+    --pf-green-dark: #38bdf8;
+    --pf-green: #0284c7;
+    --pf-green-light: #38bdf8;
+    --pf-green-subtle: rgba(56, 189, 248, 0.25);
+    --pf-green-tint: rgba(2, 132, 199, 0.15);
+    --pf-sand-border: rgba(56, 189, 248, 0.3);
+    color: #f8fafc;
+    background-color: #0f172a;
+}
+
+[data-theme="dal"] .pf-hero-card,
+[data-theme="dal"] .pf-card,
+[data-theme="dal"] .pf-char-card,
+[data-theme="dal"] .pf-island-card,
+[data-theme="dal"] .pf-order-card,
+[data-theme="dal"] .pf-empty-state {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: rgba(56, 189, 248, 0.28) !important;
+}
+
+[data-theme="dal"] .pf-stats-ribbon {
+    background: rgba(2, 132, 199, 0.15) !important;
+    border-color: rgba(56, 189, 248, 0.25) !important;
+}
+
+[data-theme="dal"] .pf-char-card.primary {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: #38bdf8 !important;
+}
+
+[data-theme="dal"] .pf-tab-btn.active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NOOKLINK THEME (Profile.css)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="nooklink"] .profile-page-wrapper {
+    --pf-text-main: #f8fafc;
+    --pf-text-muted: #94a3b8;
+    --pf-border-subtle: rgba(16, 185, 129, 0.3);
+    --pf-card-bg: #111827;
+    --pf-green-dark: #34d399;
+    --pf-green: #10b981;
+    --pf-green-light: #34d399;
+    --pf-green-subtle: rgba(16, 185, 129, 0.25);
+    --pf-green-tint: rgba(16, 185, 129, 0.15);
+    --pf-sand-border: rgba(16, 185, 129, 0.3);
+    color: #f8fafc;
+    background-color: #090d16;
+}
+
+[data-theme="nooklink"] .pf-hero-card,
+[data-theme="nooklink"] .pf-card,
+[data-theme="nooklink"] .pf-char-card,
+[data-theme="nooklink"] .pf-island-card,
+[data-theme="nooklink"] .pf-order-card,
+[data-theme="nooklink"] .pf-empty-state {
+    background-color: #111827 !important;
+    color: #f8fafc !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="nooklink"] .pf-stats-ribbon {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+[data-theme="nooklink"] .pf-char-card.primary {
+    background: linear-gradient(180deg, #111827 0%, #090d16 100%) !important;
+    border-color: #10b981 !important;
+}
+
+[data-theme="nooklink"] .pf-tab-btn.active {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PASSPORT STUDIO & LIVE PREVIEW ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════════ */
+.studio-nav-pill {
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid var(--pf-border-subtle);
+    background: #ffffff;
+    color: #475569;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.studio-nav-pill:hover {
+    background: #f8fafc;
+    border-color: var(--pf-green);
+    color: var(--pf-green);
+    transform: translateY(-1px);
+}
+
+.studio-nav-pill.active {
+    background: var(--pf-green) !important;
+    color: #ffffff !important;
+    border-color: var(--pf-green) !important;
+    box-shadow: 0 4px 12px -2px rgba(45, 106, 79, 0.3);
+}
+
+.fruit-selector-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 0.6rem 0.4rem;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 64px;
+    position: relative;
+    cursor: pointer;
+    width: 100%;
+}
+
+.fruit-selector-card:hover {
+    border-color: #86efac;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+.fruit-selector-card.active {
+    border-color: #22c55e;
+    background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+    box-shadow: 0 6px 16px -2px rgba(34, 197, 94, 0.25);
+}
+
+.fruit-selector-card.active .fruit-card-name {
+    color: #15803d;
+    font-weight: 900;
+}
+
+.fruit-card-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #334155;
+    margin-top: 0.25rem;
+}
+
+.popular-villager-chip {
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    border: 1px dashed #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.popular-villager-chip:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #1d4ed8;
+    transform: scale(1.05);
+}
+
+.preview-frame-card {
+    border-radius: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1.5px solid #e2e8f0;
+    padding: 0.5rem;
+    box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s ease;
+}
+
+.preview-frame-card:hover {
+    box-shadow: 0 16px 36px -8px rgba(45, 106, 79, 0.15);
+    border-color: #86efac;
+}
+
+/* ── DISCORD NICKNAME SYNC & PREVIEW MODAL ───────────────────────── */
+.discord-chat-preview-box {
+    background-color: #313338;
+    color: #dbdee1;
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.discord-avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #5865f2;
+    flex-shrink: 0;
+}
+
+.discord-member-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #5865f2;
+}
+
+.discord-char-chip {
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+}
+
+.discord-char-chip:hover {
+    border-color: #5865f2;
+    background: #f0f2ff;
+    color: #5865f2;
+    transform: translateY(-1px);
+}
+
+.discord-preset-card {
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.discord-preset-card:hover {
+    border-color: #5865f2;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.12);
+    transform: translateY(-1px);
+}
+
+.discord-preset-card.active {
+    border-color: #5865f2;
+    background: #f0f2ff;
+    outline: 2px solid #5865f2;
+}
+
+
+

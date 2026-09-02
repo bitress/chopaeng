@@ -204,14 +204,12 @@ const DodoDecryptor: React.FC = () => {
                     to { opacity: 1; transform: translateY(0); }
                 }
 
-                @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
-                :root { --nook-bg: #f2f4e6; --nook-green: #37b06d; }
                 .font-nunito { font-family: 'Nunito', sans-serif; }
                 .ac-font { font-family: 'Fredoka One', cursive; letter-spacing: 0.5px; }
                 .fw-black { font-weight: 900; }
-                .text-nook { color: var(--nook-green); }
-                .bg-cream { background-color: #fffdf0; }
-                .nook-os { background-color: var(--nook-bg); background-image: radial-gradient(#dce2c8 15%, transparent 16%); background-size: 30px 30px; }
+                .text-nook { color: var(--nook-green, #37b06d); }
+                .bg-cream { background-color: var(--card-bg, #fffdf0); }
+                .nook-os { background-color: var(--nook-bg, #f2f4e6); background-image: radial-gradient(var(--pattern-dot, #dce2c8) 15%, transparent 16%); background-size: 30px 30px; }
                 .pointer-events-none { pointer-events: none; }
                 .opacity-10 { opacity: 0.1; }
                 .x-small { font-size: 0.75rem; }

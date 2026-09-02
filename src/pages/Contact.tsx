@@ -136,8 +136,8 @@ const Contact = () => {
                 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
 
                 .nook-os {
-                    background-color: #f2f4e6;
-                    background-image: radial-gradient(#dce2c8 15%, transparent 16%);
+                    background-color: var(--nook-bg, #f2f4e6);
+                    background-image: radial-gradient(var(--pattern-dot, #dce2c8) 15%, transparent 16%);
                     background-size: 30px 30px;
                     font-family: 'Nunito', sans-serif;
                 }

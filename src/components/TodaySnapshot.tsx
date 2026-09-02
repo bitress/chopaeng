@@ -50,6 +50,15 @@ const styles = `
 [data-theme="roost"] .snapshot-header {
     background-color: #a06b43;
 }
+[data-theme="sakura"] .snapshot-header {
+    background-color: #ec4899;
+}
+[data-theme="dal"] .snapshot-header {
+    background-color: #0284c7;
+}
+[data-theme="nooklink"] .snapshot-header {
+    background-color: #10b981;
+}
 
 .snapshot-title {
     font-size: 1.15rem;
@@ -130,6 +139,18 @@ const styles = `
     background-color: #1c1917;
     border-color: rgba(217,119,6,0.25);
 }
+[data-theme="sakura"] .snapshot-section--critters {
+    background-color: #fdf2f8;
+    border-color: rgba(236,72,153,0.25);
+}
+[data-theme="dal"] .snapshot-section--critters {
+    background-color: #0f172a;
+    border-color: rgba(56,189,248,0.28);
+}
+[data-theme="nooklink"] .snapshot-section--critters {
+    background-color: #090d16;
+    border-color: rgba(16,185,129,0.3);
+}
 
 .snapshot-section--birthdays {
     background-color: #fffcf0;
@@ -143,6 +164,18 @@ const styles = `
 [data-theme="roost"] .snapshot-section--birthdays {
     background-color: #1c1917;
     border-color: rgba(245,158,11,0.25);
+}
+[data-theme="sakura"] .snapshot-section--birthdays {
+    background-color: #fff1f2;
+    border-color: rgba(244,63,94,0.25);
+}
+[data-theme="dal"] .snapshot-section--birthdays {
+    background-color: #0f172a;
+    border-color: rgba(251,191,36,0.25);
+}
+[data-theme="nooklink"] .snapshot-section--birthdays {
+    background-color: #090d16;
+    border-color: rgba(250,204,21,0.25);
 }
 
 /* ── Section headers ── */
@@ -166,6 +199,15 @@ const styles = `
 [data-theme="roost"] .snapshot-section-label {
     color: #fafaf9;
 }
+[data-theme="sakura"] .snapshot-section-label {
+    color: #3b072c;
+}
+[data-theme="dal"] .snapshot-section-label {
+    color: #f8fafc;
+}
+[data-theme="nooklink"] .snapshot-section-label {
+    color: #f8fafc;
+}
 .snapshot-section-label i {
     font-size: 0.95rem;
 }
@@ -188,6 +230,18 @@ const styles = `
     background: rgba(217,119,6,0.22);
     color: #fcd34d;
 }
+[data-theme="sakura"] .snapshot-count-badge--critters {
+    background: rgba(236,72,153,0.18);
+    color: #db2777;
+}
+[data-theme="dal"] .snapshot-count-badge--critters {
+    background: rgba(2,132,199,0.22);
+    color: #38bdf8;
+}
+[data-theme="nooklink"] .snapshot-count-badge--critters {
+    background: rgba(16,185,129,0.22);
+    color: #34d399;
+}
 .snapshot-count-badge--birthdays {
     background: rgba(240,173,78,0.14);
     color: #c88a2a;
@@ -199,6 +253,18 @@ const styles = `
 [data-theme="roost"] .snapshot-count-badge--birthdays {
     background: rgba(245,158,11,0.22);
     color: #fcd34d;
+}
+[data-theme="sakura"] .snapshot-count-badge--birthdays {
+    background: rgba(244,63,94,0.18);
+    color: #e11d48;
+}
+[data-theme="dal"] .snapshot-count-badge--birthdays {
+    background: rgba(251,191,36,0.22);
+    color: #fbbf24;
+}
+[data-theme="nooklink"] .snapshot-count-badge--birthdays {
+    background: rgba(250,204,21,0.22);
+    color: #facc15;
 }
 
 /* ── Creature / villager chips ── */
@@ -234,6 +300,30 @@ const styles = `
     border-color: rgba(245,158,11,0.5);
     box-shadow: 0 4px 14px rgba(217,119,6,0.25);
 }
+[data-theme="sakura"] .snapshot-chip {
+    background: #ffffff;
+    border-color: rgba(236,72,153,0.25);
+}
+[data-theme="sakura"] .snapshot-chip:hover {
+    border-color: #ec4899;
+    box-shadow: 0 4px 14px rgba(236,72,153,0.25);
+}
+[data-theme="dal"] .snapshot-chip {
+    background: #1e293b;
+    border-color: rgba(56,189,248,0.28);
+}
+[data-theme="dal"] .snapshot-chip:hover {
+    border-color: #38bdf8;
+    box-shadow: 0 4px 14px rgba(56,189,248,0.28);
+}
+[data-theme="nooklink"] .snapshot-chip {
+    background: #111827;
+    border-color: rgba(16,185,129,0.3);
+}
+[data-theme="nooklink"] .snapshot-chip:hover {
+    border-color: #10b981;
+    box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+}
 
 .snapshot-chip-icon {
     width: 30px;
@@ -250,6 +340,15 @@ const styles = `
 [data-theme="roost"] .snapshot-chip-icon {
     background: rgba(217,119,6,0.18);
 }
+[data-theme="sakura"] .snapshot-chip-icon {
+    background: rgba(236,72,153,0.15);
+}
+[data-theme="dal"] .snapshot-chip-icon {
+    background: rgba(56,189,248,0.18);
+}
+[data-theme="nooklink"] .snapshot-chip-icon {
+    background: rgba(16,185,129,0.18);
+}
 
 .snapshot-chip-name {
     font-size: 0.72rem;
@@ -263,6 +362,15 @@ const styles = `
 [data-theme="roost"] .snapshot-chip-name {
     color: #fafaf9;
 }
+[data-theme="sakura"] .snapshot-chip-name {
+    color: #3b072c;
+}
+[data-theme="dal"] .snapshot-chip-name {
+    color: #f8fafc;
+}
+[data-theme="nooklink"] .snapshot-chip-name {
+    color: #f8fafc;
+}
 
 .snapshot-chip-price {
     font-size: 0.65rem;
@@ -274,6 +382,9 @@ const styles = `
 }
 [data-theme="celeste"] .snapshot-chip-price { color: #fde047; }
 [data-theme="roost"] .snapshot-chip-price { color: #fcd34d; }
+[data-theme="sakura"] .snapshot-chip-price { color: #db2777; }
+[data-theme="dal"] .snapshot-chip-price { color: #fbbf24; }
+[data-theme="nooklink"] .snapshot-chip-price { color: #facc15; }
 
 .snapshot-chip-species {
     font-size: 0.62rem;
@@ -282,6 +393,9 @@ const styles = `
 }
 [data-theme="celeste"] .snapshot-chip-species { color: #a5b4fc; }
 [data-theme="roost"] .snapshot-chip-species { color: #fed7aa; }
+[data-theme="sakura"] .snapshot-chip-species { color: #9d4e7f; }
+[data-theme="dal"] .snapshot-chip-species { color: #94a3b8; }
+[data-theme="nooklink"] .snapshot-chip-species { color: #94a3b8; }
 
 /* ── Empty state ── */
 .snapshot-empty {
@@ -295,6 +409,9 @@ const styles = `
 }
 [data-theme="celeste"] .snapshot-empty { color: #94a3b8; }
 [data-theme="roost"] .snapshot-empty { color: #a8a29e; }
+[data-theme="sakura"] .snapshot-empty { color: #9d4e7f; }
+[data-theme="dal"] .snapshot-empty { color: #94a3b8; }
+[data-theme="nooklink"] .snapshot-empty { color: #94a3b8; }
 .snapshot-empty i { font-size: 1.1rem; opacity: 0.5; }
 
 /* ── Section CTA button ── */
@@ -326,6 +443,18 @@ const styles = `
 [data-theme="roost"] .snapshot-cta:hover { color: #fbbf24; }
 [data-theme="roost"] .snapshot-cta--warn { color: #f59e0b; }
 [data-theme="roost"] .snapshot-cta--warn:hover { color: #fbbf24; }
+[data-theme="sakura"] .snapshot-cta { color: #ec4899; }
+[data-theme="sakura"] .snapshot-cta:hover { color: #db2777; }
+[data-theme="sakura"] .snapshot-cta--warn { color: #f43f5e; }
+[data-theme="sakura"] .snapshot-cta--warn:hover { color: #e11d48; }
+[data-theme="dal"] .snapshot-cta { color: #0284c7; }
+[data-theme="dal"] .snapshot-cta:hover { color: #38bdf8; }
+[data-theme="dal"] .snapshot-cta--warn { color: #fbbf24; }
+[data-theme="dal"] .snapshot-cta--warn:hover { color: #fcd34d; }
+[data-theme="nooklink"] .snapshot-cta { color: #10b981; }
+[data-theme="nooklink"] .snapshot-cta:hover { color: #34d399; }
+[data-theme="nooklink"] .snapshot-cta--warn { color: #facc15; }
+[data-theme="nooklink"] .snapshot-cta--warn:hover { color: #fde047; }
 
 /* ── Quick links ── */
 .snapshot-links {
@@ -338,6 +467,9 @@ const styles = `
 }
 [data-theme="celeste"] .snapshot-links { border-color: rgba(167,139,250,0.15); }
 [data-theme="roost"] .snapshot-links { border-color: rgba(217,119,6,0.15); }
+[data-theme="sakura"] .snapshot-links { border-color: rgba(236,72,153,0.2); }
+[data-theme="dal"] .snapshot-links { border-color: rgba(56,189,248,0.2); }
+[data-theme="nooklink"] .snapshot-links { border-color: rgba(16,185,129,0.2); }
 
 .snapshot-link-btn {
     display: inline-flex;

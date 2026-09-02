@@ -55,27 +55,16 @@ const Chopaeng404: React.FC = () => {
         <div className="dal-bg min-vh-100 d-flex align-items-center justify-content-center p-3 font-nunito">
             {/* CUSTOM CSS STYLES */}
             <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;800;900&display=swap');
-
-        :root {
-            --dal-blue: #4090bd;
-            --dal-yellow: #f5c452;
-            --dal-text: #2d4d5c;
-            --paper: #fdfbf7;
-            --nook-green: #7ec9b1;
-            --resetti-red: #e06c75;
-        }
-
         .font-nunito { font-family: 'Nunito', sans-serif; }
         .font-fredoka { font-family: 'Fredoka One', cursive; }
 
         .dal-bg {
-            background-color: #f0f4e4;
-            background-image: linear-gradient(30deg, #e6ebd6 12%, transparent 12.5%, transparent 87%, #e6ebd6 87.5%, #e6ebd6),
-            linear-gradient(150deg, #e6ebd6 12%, transparent 12.5%, transparent 87%, #e6ebd6 87.5%, #e6ebd6),
-            linear-gradient(30deg, #e6ebd6 12%, transparent 12.5%, transparent 87%, #e6ebd6 87.5%, #e6ebd6),
-            linear-gradient(150deg, #e6ebd6 12%, transparent 12.5%, transparent 87%, #e6ebd6 87.5%, #e6ebd6),
-            radial-gradient(#e6ebd6 20%, transparent 20%);
+            background-color: var(--nook-bg, #f0f4e4);
+            background-image: linear-gradient(30deg, var(--pattern-dot, #e6ebd6) 12%, transparent 12.5%, transparent 87%, var(--pattern-dot, #e6ebd6) 87.5%, var(--pattern-dot, #e6ebd6)),
+            linear-gradient(150deg, var(--pattern-dot, #e6ebd6) 12%, transparent 12.5%, transparent 87%, var(--pattern-dot, #e6ebd6) 87.5%, var(--pattern-dot, #e6ebd6)),
+            linear-gradient(30deg, var(--pattern-dot, #e6ebd6) 12%, transparent 12.5%, transparent 87%, var(--pattern-dot, #e6ebd6) 87.5%, var(--pattern-dot, #e6ebd6)),
+            linear-gradient(150deg, var(--pattern-dot, #e6ebd6) 12%, transparent 12.5%, transparent 87%, var(--pattern-dot, #e6ebd6) 87.5%, var(--pattern-dot, #e6ebd6)),
+            radial-gradient(var(--pattern-dot, #e6ebd6) 20%, transparent 20%);
             background-size: 80px 140px;
         }
 

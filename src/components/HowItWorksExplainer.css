@@ -711,3 +711,318 @@
     border-color: rgba(217, 119, 6, 0.3);
     color: #ded1c7;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME OVERRIDES: SAKURA THEME (Cherry Blossom Soft Pink)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="sakura"] .hiw-container {
+    background: #ffffff;
+    border-color: rgba(236, 72, 153, 0.3);
+    box-shadow: 0 4px 18px rgba(236, 72, 153, 0.1);
+}
+[data-theme="sakura"] .hiw-header.cursor-pointer:hover .hiw-title {
+    color: #ec4899;
+}
+[data-theme="sakura"] .hiw-icon-badge {
+    background: rgba(236, 72, 153, 0.15);
+    color: #ec4899;
+}
+[data-theme="sakura"] .hiw-badge {
+    background: rgba(236, 72, 153, 0.18);
+    color: #db2777;
+}
+[data-theme="sakura"] .hiw-title {
+    color: #3b072c;
+}
+[data-theme="sakura"] .hiw-subtitle {
+    color: #9d4e7f;
+}
+[data-theme="sakura"] .hiw-collapse-btn {
+    background: #fdf2f8;
+    border-color: rgba(236, 72, 153, 0.25);
+    color: #4a2040;
+}
+[data-theme="sakura"] .hiw-collapse-btn:hover {
+    background: #fce7f3;
+    color: #ec4899;
+}
+[data-theme="sakura"] .hiw-body {
+    border-top-color: rgba(236, 72, 153, 0.22);
+}
+[data-theme="sakura"] .hiw-step-card {
+    background: #fdf2f8;
+    border-color: rgba(236, 72, 153, 0.25);
+}
+[data-theme="sakura"] .hiw-step-card:hover {
+    border-color: #ec4899;
+    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.2);
+}
+[data-theme="sakura"] .hiw-step-num {
+    background: #fce7f3;
+    color: #be185d;
+}
+[data-theme="sakura"] .hiw-step-icon {
+    background: #ec4899;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(236, 72, 153, 0.4);
+}
+[data-theme="sakura"] .hiw-step-badge {
+    background: rgba(236, 72, 153, 0.18);
+    color: #be185d;
+    border-color: rgba(236, 72, 153, 0.3);
+}
+[data-theme="sakura"] .hiw-step-title {
+    color: #3b072c;
+}
+[data-theme="sakura"] .hiw-step-desc {
+    color: #4a2040;
+}
+[data-theme="sakura"] .hiw-step-tip {
+    border-top-color: rgba(236, 72, 153, 0.2);
+    color: #9d4e7f;
+}
+[data-theme="sakura"] .hiw-faqs-section {
+    border-top-color: rgba(236, 72, 153, 0.22) !important;
+}
+[data-theme="sakura"] .hiw-faqs-section h4 {
+    color: #3b072c !important;
+}
+[data-theme="sakura"] .hiw-faq-item {
+    background: #fdf2f8;
+    border-color: rgba(236, 72, 153, 0.25);
+}
+[data-theme="sakura"] .hiw-faq-item.open {
+    border-color: #ec4899;
+}
+[data-theme="sakura"] .hiw-faq-question {
+    color: #3b072c;
+}
+[data-theme="sakura"] .hiw-faq-toggle {
+    color: #ec4899;
+}
+[data-theme="sakura"] .hiw-faq-answer {
+    color: #4a2040;
+}
+[data-theme="sakura"] .hiw-modal-dialog {
+    background: #ffffff;
+    border-color: rgba(236, 72, 153, 0.35);
+}
+[data-theme="sakura"] .hiw-modal-header {
+    background: #fdf2f8;
+    border-bottom-color: rgba(236, 72, 153, 0.25);
+}
+[data-theme="sakura"] .hiw-close-btn {
+    background: #fdf2f8;
+    border-color: rgba(236, 72, 153, 0.3);
+    color: #4a2040;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME OVERRIDES: DAL THEME (Aviation Slate Navy & Sky Blue)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="dal"] .hiw-container {
+    background: #1e293b;
+    border-color: rgba(56, 189, 248, 0.28);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dal"] .hiw-header.cursor-pointer:hover .hiw-title {
+    color: #38bdf8;
+}
+[data-theme="dal"] .hiw-icon-badge {
+    background: rgba(2, 132, 199, 0.25);
+    color: #38bdf8;
+}
+[data-theme="dal"] .hiw-badge {
+    background: rgba(2, 132, 199, 0.25);
+    color: #7dd3fc;
+}
+[data-theme="dal"] .hiw-title {
+    color: #f8fafc;
+}
+[data-theme="dal"] .hiw-subtitle {
+    color: #94a3b8;
+}
+[data-theme="dal"] .hiw-collapse-btn {
+    background: #0f172a;
+    border-color: rgba(56, 189, 248, 0.25);
+    color: #cbd5e1;
+}
+[data-theme="dal"] .hiw-collapse-btn:hover {
+    background: #162033;
+    color: #38bdf8;
+}
+[data-theme="dal"] .hiw-body {
+    border-top-color: rgba(56, 189, 248, 0.22);
+}
+[data-theme="dal"] .hiw-step-card {
+    background: #0f172a;
+    border-color: rgba(56, 189, 248, 0.22);
+}
+[data-theme="dal"] .hiw-step-card:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dal"] .hiw-step-num {
+    background: #1e293b;
+    color: #cbd5e1;
+}
+[data-theme="dal"] .hiw-step-icon {
+    background: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5);
+}
+[data-theme="dal"] .hiw-step-badge {
+    background: rgba(2, 132, 199, 0.25);
+    color: #bae6fd;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+[data-theme="dal"] .hiw-step-title {
+    color: #f8fafc;
+}
+[data-theme="dal"] .hiw-step-desc {
+    color: #cbd5e1;
+}
+[data-theme="dal"] .hiw-step-tip {
+    border-top-color: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+}
+[data-theme="dal"] .hiw-faqs-section {
+    border-top-color: rgba(56, 189, 248, 0.22) !important;
+}
+[data-theme="dal"] .hiw-faqs-section h4 {
+    color: #f8fafc !important;
+}
+[data-theme="dal"] .hiw-faq-item {
+    background: #0f172a;
+    border-color: rgba(56, 189, 248, 0.22);
+}
+[data-theme="dal"] .hiw-faq-item.open {
+    border-color: rgba(56, 189, 248, 0.5);
+}
+[data-theme="dal"] .hiw-faq-question {
+    color: #f8fafc;
+}
+[data-theme="dal"] .hiw-faq-toggle {
+    color: #38bdf8;
+}
+[data-theme="dal"] .hiw-faq-answer {
+    color: #cbd5e1;
+}
+[data-theme="dal"] .hiw-modal-dialog {
+    background: #1e293b;
+    border-color: rgba(56, 189, 248, 0.4);
+}
+[data-theme="dal"] .hiw-modal-header {
+    background: #0f172a;
+    border-bottom-color: rgba(56, 189, 248, 0.25);
+}
+[data-theme="dal"] .hiw-close-btn {
+    background: #0f172a;
+    border-color: rgba(56, 189, 248, 0.3);
+    color: #cbd5e1;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME OVERRIDES: NOOKLINK THEME (Obsidian Cyber & Emerald)
+   ═══════════════════════════════════════════════════════════════ */
+[data-theme="nooklink"] .hiw-container {
+    background: #111827;
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+[data-theme="nooklink"] .hiw-header.cursor-pointer:hover .hiw-title {
+    color: #34d399;
+}
+[data-theme="nooklink"] .hiw-icon-badge {
+    background: rgba(16, 185, 129, 0.25);
+    color: #10b981;
+}
+[data-theme="nooklink"] .hiw-badge {
+    background: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+}
+[data-theme="nooklink"] .hiw-title {
+    color: #f8fafc;
+}
+[data-theme="nooklink"] .hiw-subtitle {
+    color: #94a3b8;
+}
+[data-theme="nooklink"] .hiw-collapse-btn {
+    background: #090d16;
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #cbd5e1;
+}
+[data-theme="nooklink"] .hiw-collapse-btn:hover {
+    background: #1f2937;
+    color: #34d399;
+}
+[data-theme="nooklink"] .hiw-body {
+    border-top-color: rgba(16, 185, 129, 0.22);
+}
+[data-theme="nooklink"] .hiw-step-card {
+    background: #090d16;
+    border-color: rgba(16, 185, 129, 0.22);
+}
+[data-theme="nooklink"] .hiw-step-card:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+[data-theme="nooklink"] .hiw-step-num {
+    background: #111827;
+    color: #cbd5e1;
+}
+[data-theme="nooklink"] .hiw-step-icon {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.5);
+}
+[data-theme="nooklink"] .hiw-step-badge {
+    background: rgba(16, 185, 129, 0.25);
+    color: #a7f3d0;
+    border-color: rgba(16, 185, 129, 0.35);
+}
+[data-theme="nooklink"] .hiw-step-title {
+    color: #f8fafc;
+}
+[data-theme="nooklink"] .hiw-step-desc {
+    color: #cbd5e1;
+}
+[data-theme="nooklink"] .hiw-step-tip {
+    border-top-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+[data-theme="nooklink"] .hiw-faqs-section {
+    border-top-color: rgba(16, 185, 129, 0.22) !important;
+}
+[data-theme="nooklink"] .hiw-faqs-section h4 {
+    color: #f8fafc !important;
+}
+[data-theme="nooklink"] .hiw-faq-item {
+    background: #090d16;
+    border-color: rgba(16, 185, 129, 0.22);
+}
+[data-theme="nooklink"] .hiw-faq-item.open {
+    border-color: rgba(16, 185, 129, 0.5);
+}
+[data-theme="nooklink"] .hiw-faq-question {
+    color: #f8fafc;
+}
+[data-theme="nooklink"] .hiw-faq-toggle {
+    color: #34d399;
+}
+[data-theme="nooklink"] .hiw-faq-answer {
+    color: #cbd5e1;
+}
+[data-theme="nooklink"] .hiw-modal-dialog {
+    background: #111827;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+[data-theme="nooklink"] .hiw-modal-header {
+    background: #090d16;
+    border-bottom-color: rgba(16, 185, 129, 0.25);
+}
+[data-theme="nooklink"] .hiw-close-btn {
+    background: #090d16;
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #cbd5e1;
+}

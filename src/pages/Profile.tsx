@@ -8,10 +8,10 @@ import { useCatalogData } from "../hooks/useCatalogData";
 import { useFavoriteIslands, getStoredFavoriteIslands, saveStoredFavoriteIslands } from "../hooks/useFavoriteIslands";
 import { useSavedCharacters, type SavedCharacter } from "../hooks/useSavedCharacters";
 import { parseItemCodes } from "../utils/itemCodeParser";
-import { parseDiscordNicknameToCharacters } from "../utils/characterParser";
+import { parseDiscordNicknameToCharacters, generateNicknamePresets } from "../utils/characterParser";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
 import { fetchUserOrderHistory, type OrderHistoryItem } from "../utils/orderBotApi";
-import { getStoredPassport, savePassportToDb, fetchPublicPassportFromDb, type PublicPassportData } from "../utils/userProfileApi";
+import { getStoredPassport, savePassportToDb, fetchPublicPassportFromDb, updateDiscordNickname, type PublicPassportData } from "../utils/userProfileApi";
 import { HowItWorksExplainer, PROFILE_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
 import { ResidentPassportCard, FRUIT_ICONS, ZODIAC_SIGNS, PERSONALITY_THEMES } from "../components/passport/ResidentPassportCard";
 import "./Profile.css";
@@ -351,6 +351,59 @@ const Profile = () => {
             playChimeClick();
             setPrefNotice(`Character "${char.ign}" deleted.`);
             setTimeout(() => setPrefNotice(null), 3500);
+        }
+    };
+
+    // Discord Server Nickname Modal State
+    const [discordNickModalOpen, setDiscordNickModalOpen] = useState(false);
+    const [newDiscordNick, setNewDiscordNick] = useState("");
+    const [updatingNick, setUpdatingNick] = useState(false);
+    const [nickModalMessage, setNickModalMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
+
+    const handleOpenDiscordNickModal = (initialVal?: string) => {
+        setNickModalMessage(null);
+        if (initialVal !== undefined) {
+            setNewDiscordNick(initialVal.slice(0, 32));
+        } else if (activeCharacter?.ign && activeCharacter?.islandName) {
+            setNewDiscordNick(`${activeCharacter.ign} | ${activeCharacter.islandName}`.slice(0, 32));
+        } else {
+            setNewDiscordNick((profile?.user?.nickname || rawDiscordName || "").slice(0, 32));
+        }
+        setDiscordNickModalOpen(true);
+        playChimeClick();
+    };
+
+    const handleSaveDiscordNick = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const clean = newDiscordNick.trim();
+        if (!clean) return;
+        setUpdatingNick(true);
+        setNickModalMessage(null);
+        playChimeClick();
+
+        const token = getAuthToken();
+        const res = await updateDiscordNickname(clean, token);
+        setUpdatingNick(false);
+
+        if (res.success) {
+            const updated = res.nickname || clean;
+            setNickModalMessage({ type: "success", text: res.message || "Nickname updated on Discord!" });
+            if (profile) {
+                setProfile({
+                    ...profile,
+                    user: {
+                        ...profile.user,
+                        nickname: updated,
+                    },
+                });
+            }
+            setPrefNotice(`Discord server nickname updated to "${updated}"!`);
+            setTimeout(() => {
+                setDiscordNickModalOpen(false);
+                setNickModalMessage(null);
+            }, 1800);
+        } else {
+            setNickModalMessage({ type: "danger", text: res.message || "Failed to update Discord nickname." });
         }
     };
 
@@ -708,8 +761,8 @@ const Profile = () => {
                                     </div>
 
                                     {/* Action buttons */}
-                                    {rawDiscordName && (
-                                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                                        {rawDiscordName && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -722,8 +775,19 @@ const Profile = () => {
                                                 <i className="fa-brands fa-discord text-primary"></i>
                                                 <span>Sync from Discord</span>
                                             </button>
-                                        </div>
-                                    )}
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                handleOpenDiscordNickModal();
+                                            }}
+                                            className="btn btn-sm btn-outline-primary rounded-pill fw-bold px-3 d-flex align-items-center gap-1 shadow-2xs"
+                                            title="Update your server nickname on the ChoPaeng Discord server"
+                                        >
+                                            <i className="fa-solid fa-pen-to-square"></i>
+                                            <span>Update Discord Nick</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Warning Callout on Discord Sync */}
@@ -1530,6 +1594,29 @@ const Profile = () => {
                                 </div>
 
                                 <div className="passport-field mb-3">
+                                    <div className="d-flex align-items-center justify-content-between mb-1">
+                                        <span className="tiny-text text-muted fw-black text-uppercase">Discord Server Nickname</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenDiscordNickModal()}
+                                            className="btn btn-link p-0 tiny-text fw-bold text-primary text-decoration-none d-flex align-items-center gap-1"
+                                        >
+                                            <i className="fa-solid fa-pen"></i>
+                                            <span>Change</span>
+                                        </button>
+                                    </div>
+                                    <div className="fw-bold text-dark font-monospace small d-flex align-items-center justify-content-between p-2 px-3 bg-light rounded-3 border">
+                                        <div className="d-flex align-items-center gap-2 text-truncate">
+                                            <i className="fa-solid fa-id-card text-muted"></i>
+                                            <span className="text-truncate">{profileUser?.nickname || rawDiscordName || "Not Set"}</span>
+                                        </div>
+                                        <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill x-small fw-bold">
+                                            Server Nick
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="passport-field mb-3">
                                     <div className="tiny-text text-muted fw-black text-uppercase mb-1">Discord ID</div>
                                     <div className="tiny-text text-muted font-monospace">{profileUser?.id || authUser?.user_id || "N/A"}</div>
                                 </div>
@@ -2331,6 +2418,167 @@ const Profile = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── 3. UPDATE DISCORD SERVER NICKNAME MODAL ───────────────────── */}
+            {discordNickModalOpen && (
+                <div className="modal show d-block" style={{ backgroundColor: "rgba(0, 0, 0, 0.65)", zIndex: 1060, backdropFilter: "blur(4px)" }} tabIndex={-1}>
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "520px" }}>
+                        <div className="modal-content rounded-4 border-0 shadow-lg overflow-hidden animate-fade">
+                            <div className="modal-header text-white p-3 px-4" style={{ background: "linear-gradient(135deg, #5865F2 0%, #4752C4 100%)" }}>
+                                <div className="d-flex align-items-center gap-2">
+                                    <div className="icon-bubble bg-white bg-opacity-20 text-white" style={{ width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                        <i className="fa-brands fa-discord"></i>
+                                    </div>
+                                    <div>
+                                        <h5 className="modal-title ac-font fw-bold mb-0 text-white">Update Discord Server Nickname</h5>
+                                        <span className="tiny-text text-white text-opacity-75">Syncs directly to ChoPaeng Discord server</span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    onClick={() => setDiscordNickModalOpen(false)}
+                                    aria-label="Close"
+                                />
+                            </div>
+
+                            <form onSubmit={handleSaveDiscordNick}>
+                                <div className="modal-body p-4">
+                                    {nickModalMessage && (
+                                        <div className={`alert alert-${nickModalMessage.type} p-3 rounded-3 small mb-3 animate-fade`}>
+                                            <i className={`fa-solid ${nickModalMessage.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'} me-2`}></i>
+                                            {nickModalMessage.text}
+                                        </div>
+                                    )}
+
+                                    {/* Discord Visual Preview Box */}
+                                    <label className="text-uppercase tiny-text fw-bold text-muted d-block mb-1">
+                                        Discord Member Preview
+                                    </label>
+                                    <div className="discord-chat-preview-box mb-3 d-flex align-items-center gap-3">
+                                        <img
+                                            src={profileUser?.avatar || authUser?.avatar || "https://cdn.discordapp.com/embed/avatars/0.png"}
+                                            alt="Avatar"
+                                            className="discord-avatar-circle"
+                                        />
+                                        <div className="overflow-hidden">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="discord-member-name text-truncate">
+                                                    {newDiscordNick.trim() || profileUser?.discord_name || authUser?.username || "Resident"}
+                                                </span>
+                                                <span className="badge bg-secondary text-white tiny-text py-0 px-1" style={{ fontSize: '0.65rem' }}>
+                                                    MEMBER
+                                                </span>
+                                            </div>
+                                            <span className="tiny-text text-secondary d-block">
+                                                @{profileUser?.discord_name || authUser?.username}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Quick Preset Generator from Saved Characters */}
+                                    {(() => {
+                                        const presets = generateNicknamePresets(characters);
+                                        if (presets.length === 0) return null;
+
+                                        return (
+                                            <div className="mb-3">
+                                                <div className="d-flex align-items-center justify-content-between mb-1">
+                                                    <label className="text-uppercase tiny-text fw-bold text-muted mb-0">
+                                                        Auto-Format Presets ({presets.length} Formats)
+                                                    </label>
+                                                    <span className="tiny-text text-muted">Click to populate</span>
+                                                </div>
+                                                <div className="row g-2">
+                                                    {presets.map((preset) => {
+                                                        const isSelected = newDiscordNick.trim().toLowerCase() === preset.value.toLowerCase();
+                                                        return (
+                                                            <div key={preset.id} className="col-12 col-sm-6">
+                                                                <div
+                                                                    className={`discord-preset-card ${isSelected ? "active" : ""}`}
+                                                                    onClick={() => {
+                                                                        setNewDiscordNick(preset.value);
+                                                                        playChimeClick();
+                                                                    }}
+                                                                    role="button"
+                                                                    tabIndex={0}
+                                                                >
+                                                                    <div className="d-flex align-items-center gap-2 overflow-hidden">
+                                                                        <i className={`fa-solid ${preset.icon || "fa-id-badge"} ${isSelected ? "text-primary" : "text-muted"}`}></i>
+                                                                        <div className="overflow-hidden">
+                                                                            <strong className="d-block text-truncate font-monospace small text-dark">
+                                                                                {preset.value}
+                                                                            </strong>
+                                                                            <span className="tiny-text text-muted text-truncate d-block">
+                                                                                {preset.description}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    {preset.badge && (
+                                                                        <span className={`badge rounded-pill x-small flex-shrink-0 ${isSelected ? "bg-primary text-white" : "bg-light text-secondary border"}`}>
+                                                                            {preset.badge}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Nickname Input Field */}
+                                    <div className="mb-3">
+                                        <div className="d-flex align-items-center justify-content-between mb-1">
+                                            <label className="text-uppercase tiny-text fw-bold text-dark" htmlFor="discordNickInput">
+                                                Server Nickname
+                                            </label>
+                                            <span className={`tiny-text font-monospace ${newDiscordNick.length > 32 ? 'text-danger fw-bold' : 'text-muted'}`}>
+                                                {newDiscordNick.length} / 32 chars
+                                            </span>
+                                        </div>
+                                        <input
+                                            id="discordNickInput"
+                                            type="text"
+                                            maxLength={32}
+                                            className="form-control rounded-3 font-monospace fw-bold"
+                                            placeholder="e.g. Character Name | Island Name"
+                                            value={newDiscordNick}
+                                            onChange={(e) => setNewDiscordNick(e.target.value)}
+                                            required
+                                        />
+                                        <span className="tiny-text text-muted d-block mt-1">
+                                            <i className="fa-solid fa-circle-info me-1 text-primary"></i>
+                                            Server standard format: <code>Character Name | Island Name</code>. Max 32 characters.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="modal-footer border-top bg-light p-3 px-4 d-flex justify-content-between align-items-center">
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary rounded-pill fw-bold px-4"
+                                        onClick={() => setDiscordNickModalOpen(false)}
+                                        disabled={updatingNick}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={updatingNick || !newDiscordNick.trim() || newDiscordNick.length > 32}
+                                        className="btn btn-primary fw-bold rounded-pill px-4 shadow-sm d-flex align-items-center gap-2"
+                                        style={{ backgroundColor: '#5865F2', borderColor: '#5865F2' }}
+                                    >
+                                        <i className={updatingNick ? "fa-solid fa-spinner fa-spin" : "fa-brands fa-discord"}></i>
+                                        <span>{updatingNick ? "Updating Discord..." : "Update on Discord"}</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}

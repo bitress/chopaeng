@@ -1,4 +1,4 @@
-export type ThemeMode = 'nook' | 'celeste' | 'roost';
+export type ThemeMode = 'nook' | 'celeste' | 'roost' | 'sakura' | 'dal' | 'nooklink';
 
 export interface ThemeOption {
     id: ThemeMode;
@@ -6,38 +6,68 @@ export interface ThemeOption {
     description: string;
     icon: string;
     badgeColor: string;
+    accentColor: string;
 }
 
 export const THEME_OPTIONS: ThemeOption[] = [
     {
         id: 'nook',
-        name: 'Nook Day',
+        name: 'Nook Classic',
         description: 'Classic island sand & vibrant Nook green',
         icon: 'fa-leaf',
         badgeColor: '#28a745',
+        accentColor: '#16a34a',
     },
     {
         id: 'celeste',
-        name: 'Celeste Stargazing',
+        name: 'Celeste Galaxy',
         description: 'Deep midnight navy with golden starlight accents',
         icon: 'fa-star',
         badgeColor: '#c084fc',
+        accentColor: '#8b5cf6',
     },
     {
         id: 'roost',
-        name: 'The Roost Cozy',
+        name: 'The Roost Cafe',
         description: 'Warm espresso, rich mahogany & cafe tones',
         icon: 'fa-mug-hot',
         badgeColor: '#d4a373',
+        accentColor: '#b45309',
+    },
+    {
+        id: 'sakura',
+        name: 'Cherry Blossom',
+        description: 'Pastel sakura pink & spring petals',
+        icon: 'fa-heart',
+        badgeColor: '#f472b6',
+        accentColor: '#ec4899',
+    },
+    {
+        id: 'dal',
+        name: 'Dodo Airlines',
+        description: 'Aviation navy with vibrant canary wings',
+        icon: 'fa-plane',
+        badgeColor: '#38bdf8',
+        accentColor: '#0284c7',
+    },
+    {
+        id: 'nooklink',
+        name: 'NookLink Dark',
+        description: 'Sleek cyber obsidian with emerald highlights',
+        icon: 'fa-mobile-screen',
+        badgeColor: '#10b981',
+        accentColor: '#059669',
     },
 ];
 
 const THEME_STORAGE_KEY = 'chopaeng_active_theme';
 
+const VALID_THEMES: Set<ThemeMode> = new Set(['nook', 'celeste', 'roost', 'sakura', 'dal', 'nooklink']);
+
 export const getStoredTheme = (): ThemeMode => {
     try {
         const saved = localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null;
-        if (saved && (saved === 'nook' || saved === 'celeste' || saved === 'roost')) {
+        if (saved && VALID_THEMES.has(saved)) {
             return saved;
         }
     } catch {
@@ -56,8 +86,11 @@ export const applyTheme = (theme: ThemeMode): void => {
         nook: '#fefae0',
         celeste: '#182035',
         roost: '#26201c',
+        sakura: '#fdf2f8',
+        dal: '#0f172a',
+        nooklink: '#090d16',
     };
-    if (metaTheme) {
+    if (metaTheme && colorMap[theme]) {
         metaTheme.setAttribute('content', colorMap[theme]);
     }
 };

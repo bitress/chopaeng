@@ -52,6 +52,8 @@ interface ResidentPassportCardProps {
     interactive?: boolean;
     onShareClick?: () => void;
     shareCopied?: boolean;
+    compact?: boolean;
+    className?: string;
 }
 
 export const ResidentPassportCard: React.FC<ResidentPassportCardProps> = ({
@@ -61,6 +63,8 @@ export const ResidentPassportCard: React.FC<ResidentPassportCardProps> = ({
     interactive = true,
     onShareClick,
     shareCopied = false,
+    compact = false,
+    className = '',
 }) => {
     const [imgError, setImgError] = React.useState(false);
     const displayAvatar = avatarUrl || passport.avatarUrl;
@@ -72,7 +76,7 @@ export const ResidentPassportCard: React.FC<ResidentPassportCardProps> = ({
     const passportNumber = `CP-${(passport.username || 'RESIDENT').toUpperCase().slice(0, 8)}-${passport.birthDay || '01'}`;
 
     return (
-        <div className="ac-passport-wrapper">
+        <div className={`ac-passport-wrapper ${compact ? 'compact' : ''} ${className}`}>
             <div className="ac-passport-booklet">
                 {/* DAL Circular Watermark Seal */}
                 <div className="ac-passport-stamp-seal d-none d-md-flex">

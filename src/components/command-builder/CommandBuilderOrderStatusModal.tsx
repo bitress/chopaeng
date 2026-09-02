@@ -74,7 +74,7 @@ export const CommandBuilderOrderStatusModal = ({
                 <div className="modal-content rounded-5 border-0 shadow-lg overflow-hidden" style={{ backgroundColor: 'var(--paper, #fdfbf7)' }}>
                     
                     {/* Header */}
-                    <div className="modal-header border-0 bg-white px-4 py-3 shadow-sm d-flex align-items-center justify-content-between">
+                    <div className="modal-header border-0 px-4 py-3 shadow-sm d-flex align-items-center justify-content-between">
                         <div className="d-flex align-items-center gap-2">
                             <div
                                 className="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
@@ -90,7 +90,7 @@ export const CommandBuilderOrderStatusModal = ({
 
                         <button
                             type="button"
-                            className="btn-close rounded-circle p-2"
+                            className="btn-close rounded-circle p-2 shadow-none"
                             onClick={onClose}
                             aria-label="Close"
                         />
@@ -119,7 +119,7 @@ export const CommandBuilderOrderStatusModal = ({
                                 </p>
 
                                 {/* Dodo Code Card */}
-                                <div className="bg-white rounded-4 border p-3 mb-4 shadow-sm">
+                                <div className="card rounded-4 border p-3 mb-4 shadow-sm">
                                     <span className="tiny-text fw-bold text-muted text-uppercase tracking-widest d-block mb-1">
                                         Island: {statusData.islandName || 'Sinta'}
                                     </span>
@@ -160,7 +160,7 @@ export const CommandBuilderOrderStatusModal = ({
                                 {/* Queue Cards */}
                                 <div className="row g-3 mb-4">
                                     <div className="col-6">
-                                        <div className="bg-white rounded-4 border p-3 shadow-sm">
+                                        <div className="card rounded-4 border p-3 shadow-sm">
                                             <span className="tiny-text fw-bold text-muted text-uppercase d-block mb-1">Queue Position</span>
                                             <span className="h3 fw-black text-dark mb-0 ac-font">
                                                 {statusData.status === 'preparing' ? 'Up Next' : `#${statusData.queuePosition ?? 1}`}
@@ -168,7 +168,7 @@ export const CommandBuilderOrderStatusModal = ({
                                         </div>
                                     </div>
                                     <div className="col-6">
-                                        <div className="bg-white rounded-4 border p-3 shadow-sm">
+                                        <div className="card rounded-4 border p-3 shadow-sm">
                                             <span className="tiny-text fw-bold text-muted text-uppercase d-block mb-1">Est. Wait</span>
                                             <span className="h3 fw-black text-primary mb-0 ac-font">
                                                 {statusData.eta || `~${statusData.estimatedMinutes ?? 2}m`}
@@ -190,7 +190,7 @@ export const CommandBuilderOrderStatusModal = ({
                     </div>
 
                     {/* Footer */}
-                    <div className="modal-footer border-0 bg-white px-4 py-3 d-flex justify-content-end">
+                    <div className="modal-footer border-0 px-4 py-3 d-flex justify-content-end">
                         <button type="button" className="btn btn-outline-secondary rounded-pill px-4 fw-bold btn-sm" onClick={onClose}>
                             Close
                         </button>

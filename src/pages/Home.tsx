@@ -134,6 +134,22 @@ const Home = () => {
                 .home-hero-bg {
                     background: radial-gradient(circle at 10% 20%, rgba(220, 252, 231, 0.45) 0%, rgba(240, 253, 244, 0.2) 50%, rgba(255, 255, 255, 1) 100%);
                 }
+                [data-theme="celeste"] .home-hero-bg {
+                    background: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, rgba(30, 41, 59, 0.4) 50%, #0b0f19 100%) !important;
+                }
+                [data-theme="roost"] .home-hero-bg {
+                    background: radial-gradient(circle at 10% 20%, rgba(217, 119, 6, 0.15) 0%, rgba(41, 37, 36, 0.4) 50%, #141210 100%) !important;
+                }
+                [data-theme="sakura"] .home-hero-bg {
+                    background: radial-gradient(circle at 10% 20%, rgba(244, 114, 182, 0.25) 0%, rgba(253, 242, 248, 0.6) 50%, #ffffff 100%) !important;
+                }
+                [data-theme="dal"] .home-hero-bg {
+                    background: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.15) 0%, rgba(30, 41, 59, 0.4) 50%, #0f172a 100%) !important;
+                }
+                [data-theme="nooklink"] .home-hero-bg {
+                    background: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.15) 0%, rgba(17, 24, 39, 0.4) 50%, #090d16 100%) !important;
+                }
+
                 .hero-tab-btn {
                     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 }
@@ -142,6 +158,27 @@ const Home = () => {
                     color: #ffffff !important;
                     box-shadow: 0 4px 12px rgba(27, 45, 36, 0.2);
                 }
+                [data-theme="celeste"] .hero-tab-btn.active {
+                    background-color: #7c3aed !important;
+                    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35) !important;
+                }
+                [data-theme="roost"] .hero-tab-btn.active {
+                    background-color: #a06b43 !important;
+                    box-shadow: 0 4px 12px rgba(160, 107, 67, 0.35) !important;
+                }
+                [data-theme="sakura"] .hero-tab-btn.active {
+                    background-color: #ec4899 !important;
+                    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35) !important;
+                }
+                [data-theme="dal"] .hero-tab-btn.active {
+                    background-color: #0284c7 !important;
+                    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
+                }
+                [data-theme="nooklink"] .hero-tab-btn.active {
+                    background-color: #10b981 !important;
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35) !important;
+                }
+
                 .interactive-sandbox-slot {
                     transition: all 0.15s ease;
                     user-select: none;
@@ -158,6 +195,16 @@ const Home = () => {
                     background-color: #f8fafc;
                     transform: translateY(-1px);
                 }
+                [data-theme="celeste"] .departure-row:hover,
+                [data-theme="roost"] .departure-row:hover,
+                [data-theme="dal"] .departure-row:hover,
+                [data-theme="nooklink"] .departure-row:hover {
+                    background-color: rgba(255, 255, 255, 0.05) !important;
+                }
+                [data-theme="sakura"] .departure-row:hover {
+                    background-color: rgba(236, 72, 153, 0.08) !important;
+                }
+
                 .transform-active:active { transform: scale(0.96); }
                 .faq-item[open] summary .fa-chevron-down { transform: rotate(180deg); }
                 .faq-item summary .fa-chevron-down { transition: transform 0.2s ease; }

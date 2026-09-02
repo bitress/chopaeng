@@ -159,3 +159,77 @@ export const fetchPublicPassportFromDb = async (
     return null;
 };
 
+export interface UpdateNicknameResult {
+    success: boolean;
+    nickname?: string;
+    message?: string;
+}
+
+/**
+ * Sends a request to ChoPaeng backend to update the user's Discord guild nickname.
+ */
+export const updateDiscordNickname = async (
+    newNickname: string,
+    token?: string | null
+): Promise<UpdateNicknameResult> => {
+    const authToken = token || getAuthToken();
+    const cleanNick = newNickname.trim();
+
+    if (!cleanNick) {
+        return { success: false, message: 'Nickname cannot be empty.' };
+    }
+
+    if (cleanNick.length > 32) {
+        return { success: false, message: 'Discord nicknames cannot exceed 32 characters.' };
+    }
+
+    if (!authToken) {
+        return { success: false, message: 'You must be logged in to update your Discord nickname.' };
+    }
+
+    const endpoints = [
+        `${DODO_API_BASE}/api/user/nickname`,
+        `${DODO_API_BASE}/api/profile/nickname`,
+        `${DODO_API_BASE}/api/user/update-nickname`,
+        `${DODO_API_BASE}/api/profile/update-nickname`,
+    ];
+
+    let lastError = 'Unable to update nickname on Discord. Please check your backend bot connection.';
+
+    for (const ep of endpoints) {
+        try {
+            const resp = await fetch(ep, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${authToken}`,
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    nickname: cleanNick,
+                    nick: cleanNick,
+                }),
+            });
+
+            const data = await resp.json().catch(() => ({}));
+
+            if (resp.ok && data.success !== false) {
+                return {
+                    success: true,
+                    nickname: data.nickname || data.nick || cleanNick,
+                    message: data.message || `Successfully updated your Discord server nickname to "${cleanNick}"!`,
+                };
+            }
+
+            if (data.error || data.message) {
+                lastError = data.error || data.message;
+            }
+        } catch {
+            // continue to next endpoint
+        }
+    }
+
+    return { success: false, message: lastError };
+};
+
+

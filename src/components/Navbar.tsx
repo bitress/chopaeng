@@ -5,7 +5,20 @@ import { useAuth } from "../context/useAuth";
 import { THEME_OPTIONS, getStoredTheme, setStoredTheme, type ThemeMode } from "../utils/theme";
 import { openSuggestionModal } from "../utils/suggestionsApi";
 import { KKSliderJukebox } from "./audio/KKSliderJukebox";
+import { AnimaleseVoiceModal } from "./audio/AnimaleseVoiceModal";
+import { NookPhoneDock } from "./NookPhoneDock";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
+
+// Short, stable labels for the theme chips — derived from the theme id rather than
+// splitting the display name (which broke for multi-word names like "The Roost Cozy").
+const THEME_SHORT_LABEL: Record<string, string> = {
+    nook: "Nook",
+    celeste: "Celeste",
+    roost: "Roost",
+    sakura: "Sakura",
+    dal: "DAL",
+    nooklink: "NookLink",
+};
 
 export const Navbar: React.FC = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -113,6 +126,16 @@ export const Navbar: React.FC = () => {
         }
     };
 
+    const openJukebox = () => {
+        playChimeClick();
+        window.dispatchEvent(new CustomEvent('chopaeng_toggle_jukebox'));
+    };
+
+    const openSearch = () => {
+        playChimeClick();
+        window.dispatchEvent(new CustomEvent('chopaeng_open_search'));
+    };
+
     const userAvatarUrl = useMemo(() => {
         if (!user || !user.avatar) return null;
         if (user.avatar.startsWith("http")) return user.avatar;
@@ -124,14 +147,14 @@ export const Navbar: React.FC = () => {
         { name: "Home", path: "/", icon: "fa-house" },
         { name: "Islands", path: "/islands", icon: "fa-map-location-dot" },
         { name: "Catalogue", path: "/catalog", icon: "fa-boxes-stacked" },
-        { name: "Builder", path: "/command-builder", icon: "fa-cubes-stacked" },
+        { name: "Builder", path: "/command-builder", icon: "fa-cubes" },
     ], []);
 
     // "Explore" dropdown links — secondary features
     const exploreLinks = useMemo(() => [
         { name: "Trip Planner", path: "/trip-planner", icon: "fa-route", color: "#10b981", desc: "Optimal island flight routes" },
         { name: "Find Items", path: "/find", icon: "fa-magnifying-glass", color: "#6366f1", desc: "Instant item search" },
-        { name: "Critters", path: "/critters", icon: "fa-fish", color: "#0ea5e9", desc: "Availability calendar" },
+        { name: "Critters", path: "/critters", icon: "fa-fish-fins", color: "#0ea5e9", desc: "Availability calendar" },
         { name: "Events", path: "/events", icon: "fa-calendar-days", color: "#f59e0b", desc: "Seasons & holidays" },
         { name: "NPCs", path: "/npcs", icon: "fa-users", color: "#ec4899", desc: "Villager gallery" },
         { name: "Guides", path: "/guides", icon: "fa-book-open", color: "#8b5cf6", desc: "Tips & tutorials" },
@@ -143,7 +166,7 @@ export const Navbar: React.FC = () => {
         { name: "Trip Planner", path: "/trip-planner", icon: "fa-route", color: "#10b981" },
         { name: "My Wishlist", path: "/wishlist", icon: "fa-heart", color: "#ef4444" },
         { name: "My Collection", path: "/my-collection", icon: "fa-clipboard-check", color: "#f59e0b" },
-        { name: "Pocket Inventory", path: "/pockets", icon: "fa-boxes-packing", color: "#3b82f6" },
+        { name: "Pocket Inventory", path: "/pockets", icon: "fa-box-archive", color: "#3b82f6" },
         { name: "Order Bot", path: "/order", icon: "fa-paper-plane", color: "#06b6d4" },
     ], []);
 
@@ -154,10 +177,10 @@ export const Navbar: React.FC = () => {
         { name: "Trip Planner", path: "/trip-planner", icon: "fa-route" },
         { name: "Find", path: "/find", icon: "fa-magnifying-glass" },
         { name: "Catalogue", path: "/catalog", icon: "fa-boxes-stacked" },
-        { name: "Critters", path: "/critters", icon: "fa-fish" },
+        { name: "Critters", path: "/critters", icon: "fa-fish-fins" },
         { name: "Events", path: "/events", icon: "fa-calendar-days" },
         { name: "NPCs", path: "/npcs", icon: "fa-users" },
-        { name: "Builder", path: "/command-builder", icon: "fa-cubes-stacked" },
+        { name: "Builder", path: "/command-builder", icon: "fa-cubes" },
         { name: "Guides", path: "/guides", icon: "fa-book-open" },
     ], []);
 
@@ -327,6 +350,7 @@ export const Navbar: React.FC = () => {
                     flex-shrink: 0;
                 }
 
+                /* Standalone action button (search) */
                 .chopaeng-action-btn {
                     width: 36px;
                     height: 36px;
@@ -348,6 +372,39 @@ export const Navbar: React.FC = () => {
                     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
                     color: var(--nook-green, #16a34a);
                     border-color: rgba(22, 163, 74, 0.2);
+                }
+
+                /* Grouped secondary-actions toolbar (jukebox / theme / discord) — one pill,
+                   one shadow, instead of three separate floating circles */
+                .chopaeng-toolbar {
+                    background: var(--nav-pill-bg, rgba(255, 255, 255, 0.85));
+                    border: 1px solid var(--card-border, rgba(0, 0, 0, 0.06));
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+                    border-radius: 50px;
+                    padding: 3px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 1px;
+                }
+
+                .chopaeng-toolbar-btn {
+                    width: 30px;
+                    height: 30px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    border: none;
+                    background: transparent;
+                    color: var(--text-muted, #64748b);
+                    font-size: 0.82rem;
+                    transition: all 0.16s ease;
+                    text-decoration: none;
+                }
+
+                .chopaeng-toolbar-btn:hover {
+                    background: rgba(0, 0, 0, 0.05);
+                    color: var(--nook-green, #16a34a);
                 }
 
                 /* Mobile Flyout Navigation */
@@ -390,6 +447,12 @@ export const Navbar: React.FC = () => {
 
                 .chopaeng-drawer-header {
                     flex-shrink: 0;
+                }
+
+                .chopaeng-drawer-header-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
                 }
 
                 .chopaeng-drawer-body {
@@ -602,6 +665,7 @@ export const Navbar: React.FC = () => {
                 .chopaeng-explore-trigger:focus-visible,
                 .chopaeng-explore-link:focus-visible,
                 .chopaeng-action-btn:focus-visible,
+                .chopaeng-toolbar-btn:focus-visible,
                 .chopaeng-user-pill:focus-visible,
                 .chopaeng-hamburger:focus-visible,
                 .chopaeng-user-dropdown-item:focus-visible,
@@ -625,6 +689,7 @@ export const Navbar: React.FC = () => {
                     .chopaeng-user-dropdown-item,
                     .mobile-nav-link,
                     .chopaeng-action-btn,
+                    .chopaeng-toolbar-btn,
                     .chopaeng-user-pill,
                     .mobile-quick-link {
                         transition: none !important;
@@ -639,7 +704,8 @@ export const Navbar: React.FC = () => {
                     background-color: rgba(11, 15, 25, 0.95);
                     border-bottom-color: rgba(167, 139, 250, 0.25);
                 }
-                [data-theme="celeste"] .chopaeng-nav-pill-container {
+                [data-theme="celeste"] .chopaeng-nav-pill-container,
+                [data-theme="celeste"] .chopaeng-toolbar {
                     background: rgba(30, 41, 59, 0.88);
                     border-color: rgba(167, 139, 250, 0.3);
                 }
@@ -693,6 +759,13 @@ export const Navbar: React.FC = () => {
                     color: #fcd34d;
                     border-color: #a78bfa;
                 }
+                [data-theme="celeste"] .chopaeng-toolbar-btn {
+                    color: #cbd5e1;
+                }
+                [data-theme="celeste"] .chopaeng-toolbar-btn:hover {
+                    background: rgba(167, 139, 250, 0.18);
+                    color: #fcd34d;
+                }
                 [data-theme="celeste"] .chopaeng-hamburger span {
                     background: #f8fafc;
                 }
@@ -736,7 +809,8 @@ export const Navbar: React.FC = () => {
                     background-color: rgba(20, 18, 16, 0.95);
                     border-bottom-color: rgba(217, 119, 6, 0.25);
                 }
-                [data-theme="roost"] .chopaeng-nav-pill-container {
+                [data-theme="roost"] .chopaeng-nav-pill-container,
+                [data-theme="roost"] .chopaeng-toolbar {
                     background: rgba(41, 37, 36, 0.88);
                     border-color: rgba(217, 119, 6, 0.3);
                 }
@@ -790,6 +864,13 @@ export const Navbar: React.FC = () => {
                     color: #e6be94;
                     border-color: #f59e0b;
                 }
+                [data-theme="roost"] .chopaeng-toolbar-btn {
+                    color: #d1beaf;
+                }
+                [data-theme="roost"] .chopaeng-toolbar-btn:hover {
+                    background: rgba(217, 119, 6, 0.18);
+                    color: #e6be94;
+                }
                 [data-theme="roost"] .chopaeng-hamburger span {
                     background: #fafaf9;
                 }
@@ -826,30 +907,362 @@ export const Navbar: React.FC = () => {
                     color: #e6be94;
                 }
 
-                /* Preserve Action Button & Nav Icons */
+                /* ═══════════════════════════════════════════════════════════
+                   SAKURA, DAL, AND NOOKLINK THEME OVERRIDES (Navbar.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="sakura"] .chopaeng-navbar.scrolled {
+                    background-color: rgba(253, 242, 248, 0.95);
+                    border-bottom-color: rgba(236, 72, 153, 0.25);
+                }
+                [data-theme="sakura"] .chopaeng-nav-pill-container,
+                [data-theme="sakura"] .chopaeng-toolbar {
+                    background: rgba(255, 255, 255, 0.92);
+                    border-color: rgba(236, 72, 153, 0.25);
+                }
+                [data-theme="sakura"] .chopaeng-nav-item {
+                    color: #9d4e7f;
+                }
+                [data-theme="sakura"] .chopaeng-nav-item:hover {
+                    color: #3b072c;
+                    background-color: rgba(236, 72, 153, 0.12);
+                }
+                [data-theme="sakura"] .chopaeng-nav-item.active {
+                    background: linear-gradient(135deg, #ec4899, #db2777);
+                    color: #ffffff !important;
+                    box-shadow: 0 2px 10px rgba(236, 72, 153, 0.35);
+                }
+                [data-theme="sakura"] .chopaeng-explore-trigger {
+                    color: #9d4e7f;
+                }
+                [data-theme="sakura"] .chopaeng-explore-trigger:hover,
+                [data-theme="sakura"] .chopaeng-explore-trigger.open {
+                    color: #3b072c;
+                    background-color: rgba(236, 72, 153, 0.12);
+                }
+                [data-theme="sakura"] .chopaeng-explore-trigger.has-active {
+                    color: #ec4899;
+                }
+                [data-theme="sakura"] .chopaeng-explore-dropdown,
+                [data-theme="sakura"] .chopaeng-user-dropdown {
+                    background: #ffffff;
+                    border-color: rgba(236, 72, 153, 0.28);
+                }
+                [data-theme="sakura"] .chopaeng-explore-link,
+                [data-theme="sakura"] .chopaeng-user-dropdown-item {
+                    color: #3b072c;
+                }
+                [data-theme="sakura"] .chopaeng-explore-link:hover,
+                [data-theme="sakura"] .chopaeng-user-dropdown-item:hover {
+                    background: #fdf2f8;
+                    color: #db2777;
+                }
+                [data-theme="sakura"] .chopaeng-action-btn,
+                [data-theme="sakura"] .chopaeng-hamburger,
+                [data-theme="sakura"] .chopaeng-user-pill {
+                    background: #ffffff;
+                    border-color: rgba(236, 72, 153, 0.28);
+                    color: #3b072c;
+                }
+                [data-theme="sakura"] .chopaeng-action-btn:hover,
+                [data-theme="sakura"] .chopaeng-user-pill:hover {
+                    background: #fdf2f8;
+                    color: #ec4899;
+                    border-color: #ec4899;
+                }
+                [data-theme="sakura"] .chopaeng-toolbar-btn {
+                    color: #9d4e7f;
+                }
+                [data-theme="sakura"] .chopaeng-toolbar-btn:hover {
+                    background: rgba(236, 72, 153, 0.15);
+                    color: #ec4899;
+                }
+                [data-theme="sakura"] .chopaeng-hamburger span {
+                    background: #3b072c;
+                }
+                [data-theme="sakura"] .chopaeng-mobile-drawer {
+                    background: #ffffff;
+                    color: #3b072c;
+                }
+                [data-theme="sakura"] .chopaeng-drawer-header,
+                [data-theme="sakura"] .chopaeng-drawer-footer {
+                    background: #fdf2f8 !important;
+                    border-color: rgba(236, 72, 153, 0.25) !important;
+                }
+                [data-theme="sakura"] .mobile-nav-link {
+                    color: #3b072c;
+                }
+                [data-theme="sakura"] .mobile-nav-link:hover {
+                    background: rgba(236, 72, 153, 0.12);
+                    color: #ec4899;
+                }
+                [data-theme="sakura"] .mobile-nav-link.active {
+                    background: #ec4899;
+                    color: #ffffff !important;
+                }
+                [data-theme="sakura"] .mobile-nav-link .mobile-nav-icon {
+                    background: #fdf2f8;
+                }
+                [data-theme="sakura"] .mobile-quick-link {
+                    color: #3b072c;
+                    background: #fdf2f8;
+                    border-color: rgba(236, 72, 153, 0.25);
+                }
+                [data-theme="sakura"] .mobile-quick-link:hover {
+                    background: #fce7f3;
+                    color: #ec4899;
+                }
+
+                [data-theme="dal"] .chopaeng-navbar.scrolled {
+                    background-color: rgba(15, 23, 42, 0.95);
+                    border-bottom-color: rgba(56, 189, 248, 0.25);
+                }
+                [data-theme="dal"] .chopaeng-nav-pill-container,
+                [data-theme="dal"] .chopaeng-toolbar {
+                    background: rgba(30, 41, 59, 0.9);
+                    border-color: rgba(56, 189, 248, 0.25);
+                }
+                [data-theme="dal"] .chopaeng-nav-item {
+                    color: #94a3b8;
+                }
+                [data-theme="dal"] .chopaeng-nav-item:hover {
+                    color: #f8fafc;
+                    background-color: rgba(56, 189, 248, 0.15);
+                }
+                [data-theme="dal"] .chopaeng-nav-item.active {
+                    background: linear-gradient(135deg, #0284c7, #0369a1);
+                    color: #ffffff !important;
+                    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+                }
+                [data-theme="dal"] .chopaeng-explore-trigger {
+                    color: #94a3b8;
+                }
+                [data-theme="dal"] .chopaeng-explore-trigger:hover,
+                [data-theme="dal"] .chopaeng-explore-trigger.open {
+                    color: #f8fafc;
+                    background-color: rgba(56, 189, 248, 0.15);
+                }
+                [data-theme="dal"] .chopaeng-explore-trigger.has-active {
+                    color: #38bdf8;
+                }
+                [data-theme="dal"] .chopaeng-explore-dropdown,
+                [data-theme="dal"] .chopaeng-user-dropdown {
+                    background: #1e293b;
+                    border-color: rgba(56, 189, 248, 0.3);
+                }
+                [data-theme="dal"] .chopaeng-explore-link,
+                [data-theme="dal"] .chopaeng-user-dropdown-item {
+                    color: #f8fafc;
+                }
+                [data-theme="dal"] .chopaeng-explore-link:hover,
+                [data-theme="dal"] .chopaeng-user-dropdown-item:hover {
+                    background: #0f172a;
+                    color: #38bdf8;
+                }
+                [data-theme="dal"] .chopaeng-action-btn,
+                [data-theme="dal"] .chopaeng-hamburger,
+                [data-theme="dal"] .chopaeng-user-pill {
+                    background: #1e293b;
+                    border-color: rgba(56, 189, 248, 0.3);
+                    color: #f8fafc;
+                }
+                [data-theme="dal"] .chopaeng-action-btn:hover,
+                [data-theme="dal"] .chopaeng-user-pill:hover {
+                    background: #0f172a;
+                    color: #38bdf8;
+                    border-color: #38bdf8;
+                }
+                [data-theme="dal"] .chopaeng-toolbar-btn {
+                    color: #94a3b8;
+                }
+                [data-theme="dal"] .chopaeng-toolbar-btn:hover {
+                    background: rgba(56, 189, 248, 0.15);
+                    color: #38bdf8;
+                }
+                [data-theme="dal"] .chopaeng-hamburger span {
+                    background: #f8fafc;
+                }
+                [data-theme="dal"] .chopaeng-mobile-drawer {
+                    background: #1e293b;
+                    color: #f8fafc;
+                }
+                [data-theme="dal"] .chopaeng-drawer-header,
+                [data-theme="dal"] .chopaeng-drawer-footer {
+                    background: #0f172a !important;
+                    border-color: rgba(56, 189, 248, 0.25) !important;
+                }
+                [data-theme="dal"] .mobile-nav-link {
+                    color: #f8fafc;
+                }
+                [data-theme="dal"] .mobile-nav-link:hover {
+                    background: rgba(56, 189, 248, 0.15);
+                    color: #38bdf8;
+                }
+                [data-theme="dal"] .mobile-nav-link.active {
+                    background: #0284c7;
+                    color: #ffffff !important;
+                }
+                [data-theme="dal"] .mobile-nav-link .mobile-nav-icon {
+                    background: #0f172a;
+                }
+                [data-theme="dal"] .mobile-quick-link {
+                    color: #f8fafc;
+                    background: #0f172a;
+                    border-color: rgba(56, 189, 248, 0.25);
+                }
+                [data-theme="dal"] .mobile-quick-link:hover {
+                    background: #162033;
+                    color: #38bdf8;
+                }
+
+                [data-theme="nooklink"] .chopaeng-navbar.scrolled {
+                    background-color: rgba(9, 13, 22, 0.95);
+                    border-bottom-color: rgba(16, 185, 129, 0.3);
+                }
+                [data-theme="nooklink"] .chopaeng-nav-pill-container,
+                [data-theme="nooklink"] .chopaeng-toolbar {
+                    background: rgba(17, 24, 39, 0.92);
+                    border-color: rgba(16, 185, 129, 0.3);
+                }
+                [data-theme="nooklink"] .chopaeng-nav-item {
+                    color: #94a3b8;
+                }
+                [data-theme="nooklink"] .chopaeng-nav-item:hover {
+                    color: #f8fafc;
+                    background-color: rgba(16, 185, 129, 0.15);
+                }
+                [data-theme="nooklink"] .chopaeng-nav-item.active {
+                    background: linear-gradient(135deg, #10b981, #059669);
+                    color: #ffffff !important;
+                    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+                }
+                [data-theme="nooklink"] .chopaeng-explore-trigger {
+                    color: #94a3b8;
+                }
+                [data-theme="nooklink"] .chopaeng-explore-trigger:hover,
+                [data-theme="nooklink"] .chopaeng-explore-trigger.open {
+                    color: #f8fafc;
+                    background-color: rgba(16, 185, 129, 0.15);
+                }
+                [data-theme="nooklink"] .chopaeng-explore-trigger.has-active {
+                    color: #10b981;
+                }
+                [data-theme="nooklink"] .chopaeng-explore-dropdown,
+                [data-theme="nooklink"] .chopaeng-user-dropdown {
+                    background: #111827;
+                    border-color: rgba(16, 185, 129, 0.35);
+                }
+                [data-theme="nooklink"] .chopaeng-explore-link,
+                [data-theme="nooklink"] .chopaeng-user-dropdown-item {
+                    color: #f8fafc;
+                }
+                [data-theme="nooklink"] .chopaeng-explore-link:hover,
+                [data-theme="nooklink"] .chopaeng-user-dropdown-item:hover {
+                    background: #090d16;
+                    color: #34d399;
+                }
+                [data-theme="nooklink"] .chopaeng-action-btn,
+                [data-theme="nooklink"] .chopaeng-hamburger,
+                [data-theme="nooklink"] .chopaeng-user-pill {
+                    background: #111827;
+                    border-color: rgba(16, 185, 129, 0.35);
+                    color: #f8fafc;
+                }
+                [data-theme="nooklink"] .chopaeng-action-btn:hover,
+                [data-theme="nooklink"] .chopaeng-user-pill:hover {
+                    background: #090d16;
+                    color: #10b981;
+                    border-color: #10b981;
+                }
+                [data-theme="nooklink"] .chopaeng-toolbar-btn {
+                    color: #94a3b8;
+                }
+                [data-theme="nooklink"] .chopaeng-toolbar-btn:hover {
+                    background: rgba(16, 185, 129, 0.15);
+                    color: #34d399;
+                }
+                [data-theme="nooklink"] .chopaeng-hamburger span {
+                    background: #f8fafc;
+                }
+                [data-theme="nooklink"] .chopaeng-mobile-drawer {
+                    background: #111827;
+                    color: #f8fafc;
+                }
+                [data-theme="nooklink"] .chopaeng-drawer-header,
+                [data-theme="nooklink"] .chopaeng-drawer-footer {
+                    background: #090d16 !important;
+                    border-color: rgba(16, 185, 129, 0.25) !important;
+                }
+                [data-theme="nooklink"] .mobile-nav-link {
+                    color: #f8fafc;
+                }
+                [data-theme="nooklink"] .mobile-nav-link:hover {
+                    background: rgba(16, 185, 129, 0.15);
+                    color: #34d399;
+                }
+                [data-theme="nooklink"] .mobile-nav-link.active {
+                    background: #10b981;
+                    color: #ffffff !important;
+                }
+                [data-theme="nooklink"] .mobile-nav-link .mobile-nav-icon {
+                    background: #090d16;
+                }
+                [data-theme="nooklink"] .mobile-quick-link {
+                    color: #f8fafc;
+                    background: #090d16;
+                    border-color: rgba(16, 185, 129, 0.25);
+                }
+                [data-theme="nooklink"] .mobile-quick-link:hover {
+                    background: #1f2937;
+                    color: #34d399;
+                }
+
+                /* Preserve Action Button & Nav Icons Across All Themes */
                 .chopaeng-action-btn i.text-success,
                 [data-theme="celeste"] .chopaeng-action-btn i.text-success,
-                [data-theme="roost"] .chopaeng-action-btn i.text-success {
+                [data-theme="roost"] .chopaeng-action-btn i.text-success,
+                [data-theme="sakura"] .chopaeng-action-btn i.text-success,
+                [data-theme="dal"] .chopaeng-action-btn i.text-success,
+                [data-theme="nooklink"] .chopaeng-action-btn i.text-success {
                     color: #22c55e !important;
                 }
-                .chopaeng-action-btn i.text-warning,
-                [data-theme="celeste"] .chopaeng-action-btn i.text-warning,
-                [data-theme="roost"] .chopaeng-action-btn i.text-warning {
+                .chopaeng-toolbar-btn i.text-success,
+                [data-theme="celeste"] .chopaeng-toolbar-btn i.text-success,
+                [data-theme="roost"] .chopaeng-toolbar-btn i.text-success,
+                [data-theme="sakura"] .chopaeng-toolbar-btn i.text-success,
+                [data-theme="dal"] .chopaeng-toolbar-btn i.text-success,
+                [data-theme="nooklink"] .chopaeng-toolbar-btn i.text-success {
+                    color: #22c55e !important;
+                }
+                .chopaeng-toolbar-btn i.text-warning,
+                [data-theme="celeste"] .chopaeng-toolbar-btn i.text-warning,
+                [data-theme="roost"] .chopaeng-toolbar-btn i.text-warning,
+                [data-theme="sakura"] .chopaeng-toolbar-btn i.text-warning,
+                [data-theme="dal"] .chopaeng-toolbar-btn i.text-warning,
+                [data-theme="nooklink"] .chopaeng-toolbar-btn i.text-warning {
                     color: #f59e0b !important;
                 }
-                .chopaeng-action-btn i.text-amber,
-                [data-theme="celeste"] .chopaeng-action-btn i.text-amber,
-                [data-theme="roost"] .chopaeng-action-btn i.text-amber {
+                .chopaeng-toolbar-btn i.text-amber,
+                [data-theme="celeste"] .chopaeng-toolbar-btn i.text-amber,
+                [data-theme="roost"] .chopaeng-toolbar-btn i.text-amber,
+                [data-theme="sakura"] .chopaeng-toolbar-btn i.text-amber,
+                [data-theme="dal"] .chopaeng-toolbar-btn i.text-amber,
+                [data-theme="nooklink"] .chopaeng-toolbar-btn i.text-amber {
                     color: #f59e0b !important;
                 }
-                .chopaeng-action-btn i.text-primary,
-                [data-theme="celeste"] .chopaeng-action-btn i.text-primary,
-                [data-theme="roost"] .chopaeng-action-btn i.text-primary {
+                .chopaeng-toolbar-btn i.text-primary,
+                [data-theme="celeste"] .chopaeng-toolbar-btn i.text-primary,
+                [data-theme="roost"] .chopaeng-toolbar-btn i.text-primary,
+                [data-theme="sakura"] .chopaeng-toolbar-btn i.text-primary,
+                [data-theme="dal"] .chopaeng-toolbar-btn i.text-primary,
+                [data-theme="nooklink"] .chopaeng-toolbar-btn i.text-primary {
                     color: #3b82f6 !important;
                 }
                 .mobile-nav-icon i.text-success,
                 [data-theme="celeste"] .mobile-nav-icon i.text-success,
-                [data-theme="roost"] .mobile-nav-icon i.text-success {
+                [data-theme="roost"] .mobile-nav-icon i.text-success,
+                [data-theme="sakura"] .mobile-nav-icon i.text-success,
+                [data-theme="dal"] .mobile-nav-icon i.text-success,
+                [data-theme="nooklink"] .mobile-nav-icon i.text-success {
                     color: #22c55e !important;
                 }
             `}</style>
@@ -1069,13 +1482,11 @@ export const Navbar: React.FC = () => {
                             </button>
                         )}
 
-                        {/* Quick Search Spotlight (Ctrl+K / ⌘K) */}
+                        {/* Quick Search Spotlight (Ctrl+K / ⌘K) — kept standalone, it's the one secondary
+                            action worth a dedicated, always-visible button */}
                         <button
                             type="button"
-                            onClick={() => {
-                                playChimeClick();
-                                window.dispatchEvent(new CustomEvent('chopaeng_open_search'));
-                            }}
+                            onClick={openSearch}
                             className="chopaeng-action-btn d-inline-flex align-items-center gap-1.5 px-2.5"
                             style={{ height: '36px' }}
                             title="Quick Search (Ctrl+K or /)"
@@ -1085,92 +1496,95 @@ export const Navbar: React.FC = () => {
                             <span className="d-none d-lg-inline-block font-monospace text-muted" style={{ fontSize: '0.68rem', fontWeight: 700 }}>⌘K</span>
                         </button>
 
-                        {/* K.K. Slider Jukebox */}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                playChimeClick();
-                                window.dispatchEvent(new CustomEvent('chopaeng_toggle_jukebox'));
-                            }}
-                            className="chopaeng-action-btn d-none d-sm-inline-flex"
-                            title="K.K. Slider Jukebox"
-                            aria-label="Open K.K. Slider Jukebox"
-                        >
-                            <i className="fa-solid fa-guitar text-success" aria-hidden="true" />
-                        </button>
-
-                        {/* Theme Switcher */}
-                        <div className="position-relative d-none d-sm-block" ref={themeDropdownRef}>
+                        {/* Secondary actions toolbar — jukebox / theme / discord grouped into one pill
+                            instead of three separate floating circles. Tablet/desktop only; on phones
+                            these live in the drawer where there's room. */}
+                        <div className="chopaeng-toolbar d-none d-md-inline-flex">
                             <button
                                 type="button"
-                                onClick={() => {
-                                    playChimeClick();
-                                    setShowThemeDropdown((prev) => !prev);
-                                }}
-                                className="chopaeng-action-btn"
-                                title={`Theme: ${currentTheme === 'celeste' ? 'Celeste Stargazing' : currentTheme === 'roost' ? 'The Roost Cozy' : 'Nook Day'}`}
-                                aria-label="Toggle Theme"
-                                aria-haspopup="menu"
-                                aria-expanded={showThemeDropdown}
+                                onClick={openJukebox}
+                                className="chopaeng-toolbar-btn"
+                                title="K.K. Slider Jukebox"
+                                aria-label="Open K.K. Slider Jukebox"
                             >
-                                <i className={`fa-solid ${currentTheme === 'celeste' ? 'fa-star text-warning' :
-                                    currentTheme === 'roost' ? 'fa-mug-hot text-amber' :
-                                        'fa-leaf text-success'
-                                    }`} aria-hidden="true" />
+                                <i className="fa-solid fa-guitar text-success" aria-hidden="true" />
                             </button>
 
-                            {showThemeDropdown && (
-                                <div
-                                    className="chopaeng-user-dropdown"
-                                    role="menu"
-                                    style={{ width: '230px' }}
+                            <div className="position-relative" ref={themeDropdownRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        playChimeClick();
+                                        setShowThemeDropdown((prev) => !prev);
+                                    }}
+                                    className="chopaeng-toolbar-btn"
+                                    title={`Theme: ${currentTheme === 'celeste' ? 'Celeste Stargazing' : currentTheme === 'roost' ? 'The Roost Cozy' : 'Nook Day'}`}
+                                    aria-label="Toggle Theme"
+                                    aria-haspopup="menu"
+                                    aria-expanded={showThemeDropdown}
                                 >
-                                    <div className="px-3 py-2 mb-1">
-                                        <div className="fw-bold text-muted text-uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.08em' }}>
-                                            Island Theme
-                                        </div>
-                                    </div>
-                                    {THEME_OPTIONS.map((opt) => (
-                                        <button
-                                            key={opt.id}
-                                            type="button"
-                                            role="menuitemradio"
-                                            aria-checked={currentTheme === opt.id}
-                                            onClick={() => {
-                                                playChimeClick();
-                                                setStoredTheme(opt.id);
-                                                setCurrentTheme(opt.id);
-                                                setShowThemeDropdown(false);
-                                            }}
-                                            className={`chopaeng-user-dropdown-item ${currentTheme === opt.id ? 'fw-bold' : ''}`}
-                                        >
-                                            <div className="dropdown-icon" style={{ backgroundColor: `${opt.badgeColor}15`, color: opt.badgeColor }}>
-                                                <i className={`fa-solid ${opt.icon}`} />
-                                            </div>
-                                            <div className="flex-grow-1">
-                                                <div style={{ fontSize: '0.82rem' }}>{opt.name}</div>
-                                                <div className="text-muted" style={{ fontSize: '0.65rem' }}>{opt.description}</div>
-                                            </div>
-                                            {currentTheme === opt.id && (
-                                                <i className="fa-solid fa-circle-check text-success" style={{ fontSize: '0.75rem' }} aria-hidden="true" />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                    <i className={`fa-solid ${
+                                        currentTheme === 'celeste' ? 'fa-star text-warning' :
+                                        currentTheme === 'roost' ? 'fa-mug-hot text-amber' :
+                                        currentTheme === 'sakura' ? 'fa-heart text-danger' :
+                                        currentTheme === 'dal' ? 'fa-plane text-info' :
+                                        currentTheme === 'nooklink' ? 'fa-mobile-screen text-success' :
+                                        'fa-leaf text-success'
+                                    }`} aria-hidden="true" />
+                                </button>
 
-                        {/* Discord Link */}
-                        <a
-                            href="https://discord.gg/chopaeng"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="chopaeng-action-btn d-none d-md-inline-flex"
-                            title="Join our Discord Community"
-                            aria-label="Discord Community"
-                        >
-                            <i className="fa-brands fa-discord text-primary" aria-hidden="true" />
-                        </a>
+                                {showThemeDropdown && (
+                                    <div
+                                        className="chopaeng-user-dropdown"
+                                        role="menu"
+                                        style={{ width: '230px' }}
+                                    >
+                                        <div className="px-3 py-2 mb-1">
+                                            <div className="fw-bold text-muted text-uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.08em' }}>
+                                                Island Theme
+                                            </div>
+                                        </div>
+                                        {THEME_OPTIONS.map((opt) => (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                role="menuitemradio"
+                                                aria-checked={currentTheme === opt.id}
+                                                onClick={() => {
+                                                    playChimeClick();
+                                                    setStoredTheme(opt.id);
+                                                    setCurrentTheme(opt.id);
+                                                    setShowThemeDropdown(false);
+                                                }}
+                                                className={`chopaeng-user-dropdown-item ${currentTheme === opt.id ? 'fw-bold' : ''}`}
+                                            >
+                                                <div className="dropdown-icon" style={{ backgroundColor: `${opt.badgeColor}15`, color: opt.badgeColor }}>
+                                                    <i className={`fa-solid ${opt.icon}`} />
+                                                </div>
+                                                <div className="flex-grow-1">
+                                                    <div style={{ fontSize: '0.82rem' }}>{opt.name}</div>
+                                                    <div className="text-muted" style={{ fontSize: '0.65rem' }}>{opt.description}</div>
+                                                </div>
+                                                {currentTheme === opt.id && (
+                                                    <i className="fa-solid fa-circle-check text-success" style={{ fontSize: '0.75rem' }} aria-hidden="true" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <a
+                                href="https://discord.gg/chopaeng"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="chopaeng-toolbar-btn"
+                                title="Join our Discord Community"
+                                aria-label="Discord Community"
+                            >
+                                <i className="fa-brands fa-discord text-primary" aria-hidden="true" />
+                            </a>
+                        </div>
 
                         {/* Mobile Menu Toggle */}
                         <button
@@ -1209,20 +1623,32 @@ export const Navbar: React.FC = () => {
                 aria-hidden={!isMobileMenuOpen}
                 aria-label="Mobile Navigation Drawer"
             >
-                {/* Drawer Header (fixed) */}
+                {/* Drawer Header (fixed) — jukebox lives here on phones, since the top bar
+                    toolbar is hidden below the md breakpoint */}
                 <div className="chopaeng-drawer-header p-3 border-bottom d-flex align-items-center justify-content-between" style={{ background: 'var(--bg-cream, #f8faf6)' }}>
                     <div className="d-flex align-items-center gap-2">
                         <img src={logo} alt="Logo" style={{ width: 26, height: 26, objectFit: 'contain' }} />
                         <span className="ac-font fw-black text-dark" style={{ fontSize: '1rem' }}>CHOPAENG</span>
                     </div>
-                    <button
-                        ref={drawerCloseRef}
-                        type="button"
-                        className="btn-close"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        aria-label="Close menu"
-                        style={{ fontSize: '0.7rem' }}
-                    />
+                    <div className="chopaeng-drawer-header-actions">
+                        <button
+                            type="button"
+                            onClick={openJukebox}
+                            className="chopaeng-action-btn d-md-none"
+                            title="K.K. Slider Jukebox"
+                            aria-label="Open K.K. Slider Jukebox"
+                        >
+                            <i className="fa-solid fa-guitar text-success" aria-hidden="true" />
+                        </button>
+                        <button
+                            ref={drawerCloseRef}
+                            type="button"
+                            className="btn-close"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            aria-label="Close menu"
+                            style={{ fontSize: '0.7rem' }}
+                        />
+                    </div>
                 </div>
 
                 {/* Scrollable body: user card, quick links, nav list, theme selector */}
@@ -1296,9 +1722,8 @@ export const Navbar: React.FC = () => {
                             type="button"
                             className="btn btn-light border rounded-pill w-100 py-2 mb-3 text-start d-flex align-items-center justify-content-between px-3 shadow-2xs"
                             onClick={() => {
-                                playChimeClick();
                                 setIsMobileMenuOpen(false);
-                                window.dispatchEvent(new CustomEvent('chopaeng_open_search'));
+                                openSearch();
                             }}
                         >
                             <span className="d-flex align-items-center gap-2 text-muted fw-bold small">
@@ -1351,7 +1776,7 @@ export const Navbar: React.FC = () => {
                                     style={{ fontSize: '0.72rem' }}
                                 >
                                     <i className={`fa-solid ${opt.icon}`} style={{ fontSize: '0.65rem' }} aria-hidden="true" />
-                                    <span>{opt.name.split(' ')[0]}</span>
+                                    <span>{THEME_SHORT_LABEL[opt.id] ?? opt.name}</span>
                                 </button>
                             ))}
                         </div>
@@ -1386,8 +1811,14 @@ export const Navbar: React.FC = () => {
                 </div>
             </aside>
 
-            {/* K.K. Slider Jukebox Audio */}
+            {/* K.K. Slider Jukebox & 24H Hourly Radio Audio */}
             <KKSliderJukebox />
+
+            {/* Animalese Voice Studio Modal */}
+            <AnimaleseVoiceModal />
+
+            {/* NookPhone Quick App Dock */}
+            <NookPhoneDock />
         </>
     );
 };

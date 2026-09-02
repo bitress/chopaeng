@@ -299,6 +299,132 @@ const Guide: React.FC = () => {
                 [data-theme="roost"] .rule-icon-box {
                     background-color: #292524 !important;
                 }
+
+                /* ═══════════════════════════════════════════════════════════
+                   SAKURA THEME OVERRIDES (Guides.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="sakura"] .guide-nav-group {
+                    background: #fdf2f8;
+                    border-color: rgba(236, 72, 153, 0.25);
+                }
+                [data-theme="sakura"] .guide-nav-tab {
+                    color: #9d4e7f;
+                }
+                [data-theme="sakura"] .guide-nav-tab:hover {
+                    color: #3b072c;
+                    background: #ffffff;
+                }
+                [data-theme="sakura"] .guide-nav-tab.active {
+                    background: #ec4899 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 3px 12px rgba(236, 72, 153, 0.45) !important;
+                    border-color: #db2777 !important;
+                }
+                [data-theme="sakura"] .content-card,
+                [data-theme="sakura"] .guide-top-banner {
+                    background-color: #ffffff !important;
+                    border-color: rgba(236, 72, 153, 0.25) !important;
+                }
+                [data-theme="sakura"] .step-card-box {
+                    background-color: #fdf2f8 !important;
+                    border-color: rgba(236, 72, 153, 0.2) !important;
+                }
+                [data-theme="sakura"] .dialogue-bubble {
+                    background-color: #fdf2f8 !important;
+                    border-color: rgba(236, 72, 153, 0.25) !important;
+                }
+                [data-theme="sakura"] .dialogue-bubble p {
+                    background-color: #ffffff !important;
+                    border-color: rgba(236, 72, 153, 0.25) !important;
+                    color: #be185d !important;
+                }
+                [data-theme="sakura"] .rule-icon-box {
+                    background-color: #ffffff !important;
+                }
+
+                /* ═══════════════════════════════════════════════════════════
+                   DAL THEME OVERRIDES (Guides.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="dal"] .guide-nav-group {
+                    background: #0f172a;
+                    border-color: rgba(56, 189, 248, 0.28);
+                }
+                [data-theme="dal"] .guide-nav-tab {
+                    color: #94a3b8;
+                }
+                [data-theme="dal"] .guide-nav-tab:hover {
+                    color: #ffffff;
+                    background: #1e293b;
+                }
+                [data-theme="dal"] .guide-nav-tab.active {
+                    background: #0284c7 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 3px 12px rgba(2, 132, 199, 0.45) !important;
+                    border-color: #38bdf8 !important;
+                }
+                [data-theme="dal"] .content-card,
+                [data-theme="dal"] .guide-top-banner {
+                    background-color: #1e293b !important;
+                    border-color: rgba(56, 189, 248, 0.28) !important;
+                }
+                [data-theme="dal"] .step-card-box {
+                    background-color: #0f172a !important;
+                    border-color: rgba(56, 189, 248, 0.2) !important;
+                }
+                [data-theme="dal"] .dialogue-bubble {
+                    background-color: #0f172a !important;
+                    border-color: rgba(56, 189, 248, 0.28) !important;
+                }
+                [data-theme="dal"] .dialogue-bubble p {
+                    background-color: #1e293b !important;
+                    border-color: rgba(56, 189, 248, 0.28) !important;
+                    color: #38bdf8 !important;
+                }
+                [data-theme="dal"] .rule-icon-box {
+                    background-color: #1e293b !important;
+                }
+
+                /* ═══════════════════════════════════════════════════════════
+                   NOOKLINK THEME OVERRIDES (Guides.tsx)
+                   ═══════════════════════════════════════════════════════════ */
+                [data-theme="nooklink"] .guide-nav-group {
+                    background: #090d16;
+                    border-color: rgba(16, 185, 129, 0.3);
+                }
+                [data-theme="nooklink"] .guide-nav-tab {
+                    color: #94a3b8;
+                }
+                [data-theme="nooklink"] .guide-nav-tab:hover {
+                    color: #ffffff;
+                    background: #111827;
+                }
+                [data-theme="nooklink"] .guide-nav-tab.active {
+                    background: #10b981 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 3px 12px rgba(16, 185, 129, 0.45) !important;
+                    border-color: #34d399 !important;
+                }
+                [data-theme="nooklink"] .content-card,
+                [data-theme="nooklink"] .guide-top-banner {
+                    background-color: #111827 !important;
+                    border-color: rgba(16, 185, 129, 0.3) !important;
+                }
+                [data-theme="nooklink"] .step-card-box {
+                    background-color: #090d16 !important;
+                    border-color: rgba(16, 185, 129, 0.2) !important;
+                }
+                [data-theme="nooklink"] .dialogue-bubble {
+                    background-color: #090d16 !important;
+                    border-color: rgba(16, 185, 129, 0.3) !important;
+                }
+                [data-theme="nooklink"] .dialogue-bubble p {
+                    background-color: #111827 !important;
+                    border-color: rgba(16, 185, 129, 0.3) !important;
+                    color: #34d399 !important;
+                }
+                [data-theme="nooklink"] .rule-icon-box {
+                    background-color: #111827 !important;
+                }
             `}</style>
 
             <div className="app-container w-100" style={{ maxWidth: '960px' }}>

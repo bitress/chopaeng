@@ -342,8 +342,8 @@ const CatalogDetail = () => {
     return (
         <div className="bg-pattern font-nunito min-vh-100 pb-5">
             <section className="container py-5">
-                <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 mb-5">
-                    <nav aria-label="breadcrumb">
+                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4 mb-md-5">
+                    <nav aria-label="breadcrumb" className="w-100 w-md-auto">
                         <ol className="breadcrumb mb-0 small fw-bold align-items-center">
                             <li className="breadcrumb-item">
                                 <button
@@ -363,24 +363,24 @@ const CatalogDetail = () => {
                             </li>
                         </ol>
                     </nav>
-                    <div className="d-flex align-items-center gap-2">
+                    <div className="d-flex align-items-center flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
                         <button
                             type="button"
                             onClick={(e) => toggleFavorite(entry.id, e)}
-                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-flex align-items-center gap-2 ${isItemFavorited
-                                ? 'btn-warning text-white'
+                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-inline-flex align-items-center gap-1.5 ${isItemFavorited
+                                ? 'btn-danger text-white'
                                 : 'btn-white bg-white text-muted border'
                                 }`}
-                            title={isItemFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
-                            aria-label={isItemFavorited ? `Remove ${entry.name} from favorites` : `Add ${entry.name} to favorites`}
+                            title={isItemFavorited ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                            aria-label={isItemFavorited ? `Remove ${entry.name} from wishlist` : `Add ${entry.name} to wishlist`}
                         >
-                            <i className={`fa-${isItemFavorited ? 'solid' : 'regular'} fa-star`} />
-                            <span>{isItemFavorited ? 'Favorited' : 'Favorite'}</span>
+                            <i className={`fa-${isItemFavorited ? 'solid' : 'regular'} fa-heart ${isItemFavorited ? 'text-white' : 'text-danger'}`} />
+                            <span>{isItemFavorited ? 'Wishlisted' : 'Add to Wishlist'}</span>
                         </button>
                         <button
                             type="button"
                             onClick={(e) => toggleCollected(entry.id, e)}
-                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-flex align-items-center gap-2 ${isItemCollected
+                            className={`btn btn-sm rounded-pill fw-bold px-3 shadow-sm transition-all d-inline-flex align-items-center gap-1.5 ${isItemCollected
                                 ? 'btn-success text-white'
                                 : 'btn-white bg-white text-muted border'
                                 }`}
@@ -393,18 +393,21 @@ const CatalogDetail = () => {
                         <button
                             type="button"
                             onClick={handleBackToCatalog}
-                            className="btn btn-sm btn-outline-success bg-white rounded-pill fw-bold px-3 shadow-sm transition-all"
+                            className="btn btn-sm btn-outline-success bg-white rounded-pill fw-bold px-3 shadow-sm transition-all d-inline-flex align-items-center gap-1.5"
                             title="Return to catalog (saves your spot)"
                         >
-                            <i className="fa-solid fa-arrow-left me-1"></i> Back to Catalog
+                            <i className="fa-solid fa-arrow-left"></i>
+                            <span className="d-none d-sm-inline">Back to Catalog</span>
+                            <span className="d-inline d-sm-none">Catalog</span>
                         </button>
                         <button
                             type="button"
                             onClick={handleCopyLink}
-                            className="btn btn-sm btn-white border rounded-pill fw-bold px-3 shadow-sm transition-all flex-shrink-0"
+                            className="btn btn-sm btn-white border rounded-pill fw-bold px-3 shadow-sm transition-all d-inline-flex align-items-center gap-1.5 flex-shrink-0"
+                            title="Copy link to share"
                         >
-                            <i className={`fa-solid ${linkCopied ? 'fa-check' : 'fa-link'} me-2`}></i>
-                            {linkCopied ? 'Link copied!' : 'Copy link'}
+                            <i className={`fa-solid ${linkCopied ? 'fa-check text-success' : 'fa-link'}`}></i>
+                            <span>{linkCopied ? 'Copied!' : 'Copy link'}</span>
                         </button>
                     </div>
                 </div>
