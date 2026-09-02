@@ -12,7 +12,7 @@ import {
 } from '../utils/orderNotifications';
 
 const LS_ORDER_KEY = 'chopaeng_active_order';
-const POLL_INTERVAL = 15_000;
+const POLL_INTERVAL = 3_500; // Fast 3.5s real-time AJAX polling
 
 export const GlobalOrderTrackerPill: React.FC = () => {
     const location = useLocation();
@@ -116,7 +116,23 @@ export const GlobalOrderTrackerPill: React.FC = () => {
             if (currentId) pollStatus(currentId);
         };
 
+        const handleOrderCreated = (e: any) => {
+            const newId = e.detail?.orderId || checkActiveOrder();
+            if (newId) {
+                setActiveOrderId(newId);
+                pollStatus(newId);
+            }
+        };
+
+        const handleOrderCleared = () => {
+            setActiveOrderId(null);
+            setOrderStatus(null);
+        };
+
         window.addEventListener('storage', handleStorage);
+        window.addEventListener('chopaeng_order_created', handleOrderCreated);
+        window.addEventListener('chopaeng_order_cleared', handleOrderCleared);
+
         const timer = setInterval(() => {
             const currentId = checkActiveOrder();
             if (currentId) pollStatus(currentId);
@@ -124,6 +140,8 @@ export const GlobalOrderTrackerPill: React.FC = () => {
 
         return () => {
             window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('chopaeng_order_created', handleOrderCreated);
+            window.removeEventListener('chopaeng_order_cleared', handleOrderCleared);
             clearInterval(timer);
         };
     }, [checkActiveOrder, pollStatus]);

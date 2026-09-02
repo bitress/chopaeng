@@ -30,17 +30,19 @@ export const CommandBuilderOrderStatusModal = ({
 
         let isMounted = true;
         let timer: number;
-        let step = 0;
+
+        // Broadcast to NookPhone and tracker pills
+        window.dispatchEvent(new CustomEvent('chopaeng_order_created', { detail: { orderId } }));
+        window.dispatchEvent(new Event('storage'));
 
         const checkStatus = async () => {
-            step++;
             const data = await pollOrderStatus(orderId, getAuthToken());
             if (!isMounted) return;
             setStatusData(data);
         };
 
         checkStatus();
-        timer = window.setInterval(checkStatus, 3000);
+        timer = window.setInterval(checkStatus, 2500);
 
         return () => {
             isMounted = false;

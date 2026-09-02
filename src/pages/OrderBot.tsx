@@ -35,9 +35,9 @@ import {
 import './OrderBot.css';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
-const POLL_MS = 10_000;
-const STATUS_MS = 30_000;
-const QUEUE_MS = 20_000;
+const POLL_MS = 3_000;      // Fast 3s active order status AJAX polling
+const STATUS_MS = 10_000;   // 10s bot online/mode status refresh
+const QUEUE_MS = 3_500;     // Fast 3.5s real-time queue live update
 const LS_ORDER_KEY = 'chopaeng_active_order';
 const LS_PROFILE_KEY = 'chopaeng_order_profile_v1';
 const LS_LOADOUTS_KEY = 'chopaeng_saved_order_loadouts';
@@ -706,6 +706,28 @@ const OrderBot: React.FC = () => {
                 }
             }).catch(() => {});
         }
+        const handleOrderCreated = (e: any) => {
+            const newId = e.detail?.orderId;
+            if (newId) {
+                setActiveOrderId(newId);
+                setStage('tracker');
+                pollStatus();
+            }
+        };
+
+        const handleOrderCleared = () => {
+            setActiveOrderId(null);
+            setOrderStatus(null);
+            setStage('submit');
+        };
+
+        window.addEventListener('chopaeng_order_created', handleOrderCreated);
+        window.addEventListener('chopaeng_order_cleared', handleOrderCleared);
+
+        return () => {
+            window.removeEventListener('chopaeng_order_created', handleOrderCreated);
+            window.removeEventListener('chopaeng_order_cleared', handleOrderCleared);
+        };
     }, [user?.user_id, token]);
 
     // ── Bot status polling ──
@@ -899,6 +921,10 @@ const OrderBot: React.FC = () => {
         });
         setStage('tracker');
 
+        // Broadcast to NookPhone Dock, Global Tracker, and all other active tabs/widgets
+        window.dispatchEvent(new CustomEvent('chopaeng_order_created', { detail: { orderId: res.orderId } }));
+        window.dispatchEvent(new Event('storage'));
+
         triggerInAppToast({
             type: 'success',
             title: 'Order Submitted!',
@@ -920,6 +946,9 @@ const OrderBot: React.FC = () => {
         setOrderStatus(null);
         setStage('submit');
 
+        window.dispatchEvent(new CustomEvent('chopaeng_order_cleared'));
+        window.dispatchEvent(new Event('storage'));
+
         triggerInAppToast({
             type: 'warning',
             title: 'Order Cancelled',
@@ -937,6 +966,9 @@ const OrderBot: React.FC = () => {
         setDodoCopied(false);
         setStage('submit');
         playSound();
+
+        window.dispatchEvent(new CustomEvent('chopaeng_order_cleared'));
+        window.dispatchEvent(new Event('storage'));
     };
 
     // ── Copy Command ──
