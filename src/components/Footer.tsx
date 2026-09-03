@@ -40,7 +40,137 @@ const Footer = () => {
     };
 
     return (
-        <footer className="bg-white pt-5 pb-4 border-top">
+        <footer className="chopaeng-footer pt-5 pb-4 border-top">
+            <style>{`
+                .chopaeng-footer {
+                    background-color: #ffffff;
+                    border-color: rgba(0, 0, 0, 0.08) !important;
+                    color: #475569;
+                    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+                }
+                .chopaeng-footer .footer-brand-title,
+                .chopaeng-footer .footer-section-heading {
+                    color: #1e293b;
+                }
+                .chopaeng-footer .footer-newsletter-card {
+                    background-color: #f8fafc;
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                }
+                .chopaeng-footer .footer-link {
+                    color: #64748b;
+                    text-decoration: none;
+                    transition: color 0.2s ease, transform 0.2s ease;
+                }
+                .chopaeng-footer .footer-link:hover {
+                    color: var(--ac-primary, #16a34a);
+                    transform: translateX(2px);
+                }
+
+                /* ── Theme: Celeste ── */
+                [data-theme="celeste"] .chopaeng-footer {
+                    background-color: #12192c;
+                    border-color: rgba(167, 139, 250, 0.15) !important;
+                    color: #94a3b8;
+                }
+                [data-theme="celeste"] .chopaeng-footer .footer-brand-title,
+                [data-theme="celeste"] .chopaeng-footer .footer-section-heading {
+                    color: #f8fafc;
+                }
+                [data-theme="celeste"] .chopaeng-footer .footer-newsletter-card {
+                    background-color: #1a233d;
+                    border-color: rgba(167, 139, 250, 0.2);
+                }
+                [data-theme="celeste"] .chopaeng-footer .footer-link {
+                    color: #94a3b8;
+                }
+                [data-theme="celeste"] .chopaeng-footer .footer-link:hover {
+                    color: #c084fc;
+                }
+
+                /* ── Theme: Roost ── */
+                [data-theme="roost"] .chopaeng-footer {
+                    background-color: #201a15;
+                    border-color: rgba(217, 119, 6, 0.15) !important;
+                    color: #d4a373;
+                }
+                [data-theme="roost"] .chopaeng-footer .footer-brand-title,
+                [data-theme="roost"] .chopaeng-footer .footer-section-heading {
+                    color: #fef3c7;
+                }
+                [data-theme="roost"] .chopaeng-footer .footer-newsletter-card {
+                    background-color: #2d241d;
+                    border-color: rgba(217, 119, 6, 0.2);
+                }
+                [data-theme="roost"] .chopaeng-footer .footer-link {
+                    color: #c49a6c;
+                }
+                [data-theme="roost"] .chopaeng-footer .footer-link:hover {
+                    color: #f59e0b;
+                }
+
+                /* ── Theme: Sakura ── */
+                [data-theme="sakura"] .chopaeng-footer {
+                    background-color: #fff0f4;
+                    border-color: rgba(244, 114, 182, 0.2) !important;
+                    color: #9d174d;
+                }
+                [data-theme="sakura"] .chopaeng-footer .footer-brand-title,
+                [data-theme="sakura"] .chopaeng-footer .footer-section-heading {
+                    color: #831843;
+                }
+                [data-theme="sakura"] .chopaeng-footer .footer-newsletter-card {
+                    background-color: #ffe4ec;
+                    border-color: rgba(244, 114, 182, 0.3);
+                }
+                [data-theme="sakura"] .chopaeng-footer .footer-link {
+                    color: #be185d;
+                }
+                [data-theme="sakura"] .chopaeng-footer .footer-link:hover {
+                    color: #ec4899;
+                }
+
+                /* ── Theme: DAL ── */
+                [data-theme="dal"] .chopaeng-footer {
+                    background-color: #0b1a2e;
+                    border-color: rgba(56, 189, 248, 0.15) !important;
+                    color: #94a3b8;
+                }
+                [data-theme="dal"] .chopaeng-footer .footer-brand-title,
+                [data-theme="dal"] .chopaeng-footer .footer-section-heading {
+                    color: #f0f9ff;
+                }
+                [data-theme="dal"] .chopaeng-footer .footer-newsletter-card {
+                    background-color: #122845;
+                    border-color: rgba(56, 189, 248, 0.2);
+                }
+                [data-theme="dal"] .chopaeng-footer .footer-link {
+                    color: #94a3b8;
+                }
+                [data-theme="dal"] .chopaeng-footer .footer-link:hover {
+                    color: #38bdf8;
+                }
+
+                /* ── Theme: NookLink ── */
+                [data-theme="nooklink"] .chopaeng-footer {
+                    background-color: #060910;
+                    border-color: rgba(16, 185, 129, 0.15) !important;
+                    color: #8da498;
+                }
+                [data-theme="nooklink"] .chopaeng-footer .footer-brand-title,
+                [data-theme="nooklink"] .chopaeng-footer .footer-section-heading {
+                    color: #ecfdf5;
+                }
+                [data-theme="nooklink"] .chopaeng-footer .footer-newsletter-card {
+                    background-color: #0d171e;
+                    border-color: rgba(16, 185, 129, 0.25);
+                }
+                [data-theme="nooklink"] .chopaeng-footer .footer-link {
+                    color: #8da498;
+                }
+                [data-theme="nooklink"] .chopaeng-footer .footer-link:hover {
+                    color: #10b981;
+                }
+            `}</style>
             <div className="container">
                 <div className="row gy-5">
                     {/* Brand Section */}
@@ -49,7 +179,7 @@ const Footer = () => {
                             <div className="footer-logo bg-success rounded-3 d-flex align-items-center justify-content-center shadow-sm overflow-hidden">
                                 <img src={logo} alt="CHOPAENG" className="footer-logo-img" />
                             </div>
-                            <span className="h5 fw-bold mb-0 text-dark font-heading letter-spacing-1">
+                            <span className="h5 fw-bold mb-0 footer-brand-title font-heading letter-spacing-1">
                                 CHOPAENG
                             </span>
                         </Link>
@@ -70,7 +200,7 @@ const Footer = () => {
                     <div className="col-lg-4 col-md-12">
                         <div className="row">
                             <div className="col-6">
-                                <h6 className="fw-bold text-dark text-uppercase small mb-4">Islands</h6>
+                                <h6 className="fw-bold footer-section-heading text-uppercase small mb-4">Islands</h6>
                                 <ul className="list-unstyled d-flex flex-column gap-2">
                                     {footerNav.islands.map(link => (
                                         <li key={link.name}><Link to={link.path} className="footer-link">{link.name}</Link></li>
@@ -78,7 +208,7 @@ const Footer = () => {
                                 </ul>
                             </div>
                             <div className="col-6">
-                                <h6 className="fw-bold text-dark text-uppercase small mb-4">Support</h6>
+                                <h6 className="fw-bold footer-section-heading text-uppercase small mb-4">Support</h6>
                                 <ul className="list-unstyled d-flex flex-column gap-2">
                                     {footerNav.support.map(link => (
                                         <li key={link.name}>
@@ -103,8 +233,8 @@ const Footer = () => {
 
                     {/* Newsletter */}
                     <div className="col-lg-4 col-md-12">
-                        <div className="p-4 rounded-4 bg-light border-0 shadow-sm">
-                            <h6 className="fw-bold text-dark mb-2">Island Newsletter</h6>
+                        <div className="p-4 rounded-4 footer-newsletter-card shadow-sm">
+                            <h6 className="fw-bold footer-section-heading mb-2">Island Newsletter</h6>
                             <p className="small text-muted mb-3">Get notified about the latest drops.</p>
                             <form onSubmit={handleSubscribe}>
                                 <div className="input-group">

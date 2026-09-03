@@ -9,6 +9,7 @@ import {
 import { playChimeClick } from '../utils/kkAudioSynthesizer';
 import { pollOrderStatus, type OrderStatusResponse } from '../utils/orderBotApi';
 import { getAuthToken } from '../context/authToken';
+import { hourlyBgm, type HourlyBgmState, type BgmWeather } from '../utils/hourlyBgmEngine';
 import {
     notifyOrderStatusChange,
     requestNotificationPermission,
@@ -103,12 +104,23 @@ export const NookPhoneDock: React.FC = () => {
     const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(null);
     const [notificationsOn, setNotificationsOn] = useState<boolean>(() => areNotificationsEnabled() && getNotificationPermission() === 'granted');
 
+    // Audio & Island BGM / KK Slider State
+    const [hourlyState, setHourlyState] = useState<HourlyBgmState>(() => hourlyBgm.getState());
+
     const previousStatusRef = useRef<string | null>(null);
     const previousDodoRef = useRef<string | null>(null);
     const phoneRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
     const token = getAuthToken();
+
+    // Subscribe to real-time Island BGM updates
+    useEffect(() => {
+        const unsubscribe = hourlyBgm.subscribe((newState) => {
+            setHourlyState(newState);
+        });
+        return unsubscribe;
+    }, []);
 
     // Keep live clock updated
     useEffect(() => {
@@ -291,6 +303,25 @@ export const NookPhoneDock: React.FC = () => {
         }
     };
 
+    const handleToggleBgmPlay = () => {
+        playChimeClick();
+        hourlyBgm.togglePlay();
+    };
+
+    const handleWeatherChange = (weather: BgmWeather) => {
+        playChimeClick();
+        hourlyBgm.setWeather(weather);
+        if (!hourlyState.isPlaying) {
+            hourlyBgm.play();
+        }
+    };
+
+    const handleOpenKKJukebox = () => {
+        playChimeClick();
+        window.dispatchEvent(new CustomEvent('chopaeng_open_jukebox'));
+        setIsOpen(false);
+    };
+
     const currentStyle = THEME_CASE_STYLES[currentTheme] || THEME_CASE_STYLES.nook;
 
     const orderStateStatus = orderStatus?.status;
@@ -314,6 +345,20 @@ export const NookPhoneDock: React.FC = () => {
             action: () => navigate('/order'),
         },
         {
+            name: 'K.K. Slider',
+            icon: 'fa-guitar',
+            bg: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            action: () => {
+                window.dispatchEvent(new CustomEvent('chopaeng_open_jukebox'));
+            },
+        },
+        {
+            name: 'Island BGM',
+            icon: 'fa-radio',
+            bg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+            action: handleToggleBgmPlay,
+        },
+        {
             name: 'Passport',
             icon: 'fa-id-card',
             bg: 'linear-gradient(135deg, #16a34a, #15803d)',
@@ -322,16 +367,8 @@ export const NookPhoneDock: React.FC = () => {
         {
             name: 'Pockets',
             icon: 'fa-box-archive',
-            bg: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            bg: 'linear-gradient(135deg, #eab308, #ca8a04)',
             action: () => navigate('/pockets'),
-        },
-        {
-            name: 'Island Radio',
-            icon: 'fa-radio',
-            bg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-            action: () => {
-                window.dispatchEvent(new CustomEvent('chopaeng_open_jukebox'));
-            },
         },
         {
             name: 'Voice Studio',
@@ -359,12 +396,6 @@ export const NookPhoneDock: React.FC = () => {
             bg: 'linear-gradient(135deg, #06b6d4, #0891b2)',
             action: () => navigate('/islands'),
         },
-        {
-            name: 'Trip Planner',
-            icon: 'fa-route',
-            bg: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-            action: () => navigate('/trip-planner'),
-        },
     ];
 
     return (
@@ -375,6 +406,20 @@ export const NookPhoneDock: React.FC = () => {
                     overscroll-behavior: contain;
                     scrollbar-width: thin;
                 }
+                @keyframes eqPulse {
+                    0%, 100% { height: 3px; }
+                    50% { height: 11px; }
+                }
+                .nookphone-eq-bar {
+                    width: 2.5px;
+                    background-color: var(--ac-primary, #16a34a);
+                    border-radius: 1px;
+                    display: inline-block;
+                    animation: eqPulse 0.8s ease-in-out infinite;
+                }
+                .nookphone-eq-bar.bar-1 { animation-delay: 0s; }
+                .nookphone-eq-bar.bar-2 { animation-delay: 0.25s; }
+                .nookphone-eq-bar.bar-3 { animation-delay: 0.5s; }
             `}</style>
 
             {/* Floating NookPhone Button with Live Order Notification Badge */}
@@ -561,6 +606,107 @@ export const NookPhoneDock: React.FC = () => {
                                 </div>
                             )}
 
+                            {/* ── ISLAND BGM & K.K. SLIDER STATION ── */}
+                            <div
+                                className="p-2.5 rounded-3 mb-3 border shadow-xs animate-up"
+                                style={{
+                                    backgroundColor: currentStyle.isDark ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
+                                    borderColor: currentStyle.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                                }}
+                            >
+                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                    <div className="d-flex align-items-center gap-2 overflow-hidden">
+                                        <div
+                                            className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                            style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                background: hourlyState.isPlaying
+                                                    ? 'linear-gradient(135deg, #10b981, #059669)'
+                                                    : 'linear-gradient(135deg, #64748b, #475569)',
+                                                color: '#ffffff',
+                                                fontSize: '0.85rem',
+                                            }}
+                                        >
+                                            <i className={`fa-solid ${hourlyState.isPlaying ? 'fa-compact-disc fa-spin' : 'fa-music'}`} />
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <div className="d-flex align-items-center gap-1.5">
+                                                <span className="fw-black text-truncate" style={{ fontSize: '0.78rem' }}>
+                                                    {hourlyState.currentTrack.period} • {hourlyState.weather === 'snowy' ? 'Snow ❄️' : hourlyState.weather === 'rainy' ? 'Rain 🌧️' : 'Sunny ☀️'}
+                                                </span>
+                                                {hourlyState.isPlaying && (
+                                                    <div className="d-flex align-items-end gap-0.5" style={{ height: '10px' }}>
+                                                        <span className="nookphone-eq-bar bar-1" />
+                                                        <span className="nookphone-eq-bar bar-2" />
+                                                        <span className="nookphone-eq-bar bar-3" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-muted text-truncate" style={{ fontSize: '0.65rem' }}>
+                                                {hourlyState.isPlaying ? 'Live Island BGM Playing' : 'Tap to start 24h Island BGM'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Play / Pause button */}
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleBgmPlay}
+                                        className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-xs flex-shrink-0"
+                                        style={{
+                                            width: '32px',
+                                            height: '32px',
+                                            backgroundColor: hourlyState.isPlaying ? '#ef4444' : currentStyle.accentColor,
+                                            color: '#ffffff',
+                                            border: 'none',
+                                        }}
+                                        title={hourlyState.isPlaying ? 'Pause Island BGM' : 'Play Island BGM'}
+                                    >
+                                        <i className={`fa-solid ${hourlyState.isPlaying ? 'fa-pause' : 'fa-play'}`} style={{ fontSize: '0.8rem', marginLeft: hourlyState.isPlaying ? '0' : '2px' }} />
+                                    </button>
+                                </div>
+
+                                {/* Weather & Jukebox Quick Actions */}
+                                <div className="d-flex align-items-center justify-content-between pt-1 border-top" style={{ borderColor: currentStyle.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' }}>
+                                    <div className="d-flex align-items-center gap-1">
+                                        <span className="opacity-60 me-1" style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                                            Weather
+                                        </span>
+                                        {(['sunny', 'rainy', 'snowy'] as BgmWeather[]).map((w) => {
+                                            const isActive = hourlyState.weather === w;
+                                            const icon = w === 'sunny' ? '☀️' : w === 'rainy' ? '🌧️' : '❄️';
+                                            return (
+                                                <button
+                                                    key={w}
+                                                    type="button"
+                                                    onClick={() => handleWeatherChange(w)}
+                                                    className={`btn btn-xs py-0 px-1.5 rounded-pill fw-bold border-0 transition-all ${
+                                                        isActive ? 'shadow-xs' : 'opacity-60 hover-opacity-100'
+                                                    }`}
+                                                    style={{
+                                                        fontSize: '0.65rem',
+                                                        backgroundColor: isActive ? (currentStyle.isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)') : 'transparent',
+                                                    }}
+                                                >
+                                                    {icon}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenKKJukebox}
+                                        className="btn btn-xs btn-link p-0 text-decoration-none fw-bold d-flex align-items-center gap-1"
+                                        style={{ fontSize: '0.68rem', color: currentStyle.accentColor }}
+                                    >
+                                        <i className="fa-solid fa-guitar" />
+                                        <span>K.K. Slider</span>
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Apps Grid (3x3) */}
                             <div className="row g-2 mb-3">
                                 {apps.map((app, idx) => (
@@ -596,47 +742,97 @@ export const NookPhoneDock: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* Case Skin — flattened to a plain row under a divider instead of
-                                another nested card, so it reads as a footer strip rather than
-                                competing with the apps grid for attention */}
+                            {/* ── NOOKPHONE CASE SKINS (CUSTOMIZER WORKSHOP) ── */}
                             <div
-                                className="pt-2.5 border-top"
+                                className="pt-3 border-top"
                                 style={{ borderColor: currentStyle.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}
                             >
-                                <div className="d-flex align-items-center justify-content-between mb-1.5">
-                                    <span className="fw-black text-uppercase opacity-60" style={{ fontSize: '0.62rem' }}>
-                                        Case Skin
-                                    </span>
-                                    <span className="fw-bold opacity-75" style={{ fontSize: '0.68rem' }}>
+                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                    <div className="d-flex align-items-center gap-1.5">
+                                        <i className="fa-solid fa-palette opacity-75" style={{ fontSize: '0.72rem', color: currentStyle.accentColor }} />
+                                        <span className="fw-black text-uppercase tracking-wider opacity-80" style={{ fontSize: '0.64rem' }}>
+                                            Phone Case Skins
+                                        </span>
+                                    </div>
+                                    <span
+                                        className="badge rounded-pill fw-bold"
+                                        style={{
+                                            fontSize: '0.65rem',
+                                            backgroundColor: currentStyle.headerBadgeBg,
+                                            color: currentStyle.headerBadgeText,
+                                        }}
+                                    >
                                         {THEME_OPTIONS.find((t) => t.id === currentTheme)?.name || 'Classic'}
                                     </span>
                                 </div>
-                                <div className="d-flex gap-1.5">
+
+                                {/* 3x2 Grid of Tactile Case Skin Swatches */}
+                                <div className="row g-1.5">
                                     {THEME_OPTIONS.map((opt) => {
                                         const isSelected = currentTheme === opt.id;
+                                        const caseStyle = THEME_CASE_STYLES[opt.id] || THEME_CASE_STYLES.nook;
                                         return (
-                                            <button
-                                                key={opt.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    playChimeClick();
-                                                    setStoredTheme(opt.id);
-                                                    setCurrentTheme(opt.id);
-                                                }}
-                                                className={`btn btn-xs rounded-circle p-0 d-flex align-items-center justify-content-center transition-all ${isSelected ? 'shadow-sm scale-110' : 'opacity-60'
+                                            <div className="col-4" key={opt.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        playChimeClick();
+                                                        setStoredTheme(opt.id);
+                                                        setCurrentTheme(opt.id);
+                                                    }}
+                                                    className={`btn p-1.5 w-100 rounded-3 text-start position-relative d-flex flex-column gap-1 transition-all border ${
+                                                        isSelected ? 'shadow-sm' : 'opacity-85 hover-opacity-100'
                                                     }`}
-                                                style={{
-                                                    width: '26px',
-                                                    height: '26px',
-                                                    backgroundColor: opt.accentColor,
-                                                    color: '#ffffff',
-                                                    border: isSelected ? '2.5px solid #ffffff' : 'none',
-                                                    boxShadow: isSelected ? `0 0 0 2px ${opt.accentColor}` : 'none',
-                                                }}
-                                                title={opt.name}
-                                            >
-                                                <i className={`fa-solid ${opt.icon}`} style={{ fontSize: '0.6rem' }} />
-                                            </button>
+                                                    style={{
+                                                        backgroundColor: currentStyle.isDark ? 'rgba(255,255,255,0.04)' : '#ffffff',
+                                                        borderColor: isSelected ? opt.accentColor : currentStyle.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                                                        boxShadow: isSelected ? `0 0 0 2px ${opt.accentColor}40, 0 4px 12px rgba(0,0,0,0.08)` : 'none',
+                                                        transform: isSelected ? 'scale(1.02)' : 'none',
+                                                    }}
+                                                    title={opt.description}
+                                                >
+                                                    {/* Mini Case Silhouette Preview */}
+                                                    <div
+                                                        className="rounded-2 d-flex align-items-center justify-content-between px-2 py-1.5 text-white shadow-2xs position-relative overflow-hidden w-100"
+                                                        style={{
+                                                            background: caseStyle.caseBg,
+                                                            border: `1px solid ${caseStyle.bezelBorder}`,
+                                                            height: '28px',
+                                                        }}
+                                                    >
+                                                        <i className={`fa-solid ${opt.icon}`} style={{ fontSize: '0.72rem' }} />
+                                                        {isSelected && (
+                                                            <span
+                                                                className="rounded-circle d-flex align-items-center justify-content-center bg-white text-dark shadow-xs"
+                                                                style={{ width: '12px', height: '12px', fontSize: '0.5rem', fontWeight: 900 }}
+                                                            >
+                                                                ✓
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Skin Name */}
+                                                    <div className="d-flex align-items-center justify-content-between px-0.5">
+                                                        <span
+                                                            className="fw-black text-truncate"
+                                                            style={{
+                                                                fontSize: '0.62rem',
+                                                                color: isSelected ? opt.accentColor : currentStyle.isDark ? '#cbd5e1' : '#475569',
+                                                            }}
+                                                        >
+                                                            {opt.name.split(' ')[0]}
+                                                        </span>
+                                                        <span
+                                                            className="rounded-circle"
+                                                            style={{
+                                                                width: '6px',
+                                                                height: '6px',
+                                                                backgroundColor: opt.accentColor,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </button>
+                                            </div>
                                         );
                                     })}
                                 </div>

@@ -51,6 +51,7 @@ class HourlyBgmEngine {
 
         this.initAudioElement();
         this.startClockWatcher();
+        this.scheduleAutostart();
     }
 
     public static getInstance(): HourlyBgmEngine {
@@ -109,6 +110,35 @@ class HourlyBgmEngine {
                 }
             }
         }, 30000);
+    }
+
+    /**
+     * Attempt autoplay on page load.
+     * 1. Try immediately — works if the browser permits autoplay (e.g. user has
+     *    interacted with the origin before, or the browser has a lenient policy).
+     * 2. Fall back to the first user gesture (click / keydown / touchstart) which
+     *    browsers always allow.
+     */
+    private scheduleAutostart(): void {
+        if (typeof window === 'undefined') return;
+
+        const tryPlay = () => {
+            if (this.state.isPlaying) return; // already playing
+            this.play();
+        };
+
+        // Attempt 1: immediate (may be silently rejected by the browser)
+        this.play().catch(() => {});
+
+        // Attempt 2: on first user interaction
+        const events = ['click', 'keydown', 'touchstart'] as const;
+        const onInteraction = () => {
+            tryPlay();
+            events.forEach((ev) => window.removeEventListener(ev, onInteraction, { capture: true }));
+        };
+        events.forEach((ev) =>
+            window.addEventListener(ev, onInteraction, { once: true, capture: true })
+        );
     }
 
     public getState(): HourlyBgmState {
