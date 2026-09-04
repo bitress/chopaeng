@@ -31,16 +31,6 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: (id) => {
-                    // React core — tiny, needed on every page
-                    if (
-                        id.includes('node_modules/react/') || 
-                        id.includes('node_modules/react-dom/') ||
-                        id.includes('node_modules/scheduler/') ||
-                        id.includes('node_modules/object-assign/') ||
-                        id.includes('node_modules/react-is/')
-                    ) {
-                        return 'vendor-react';
-                    }
                     // Animal Crossing Database - granular chunks for on-demand loading
                     if (id.includes('@bitress/animal-crossing')) {
                         if (id.includes('Villagers.json') || id.includes('NPCs.json')) {
@@ -66,15 +56,11 @@ export default defineConfig({
                         }
                         return 'ac-core';
                     }
-                    // Router
-                    if (id.includes('node_modules/react-router')) {
-                        return 'vendor-router';
-                    }
                     // Simple-datatables (only used on Profile page)
                     if (id.includes('node_modules/simple-datatables')) {
                         return 'vendor-datatables';
                     }
-                    // All other node_modules go into a shared vendor chunk
+                    // All other node_modules go into a unified vendor chunk to avoid circular chunk dependencies with React
                     if (id.includes('node_modules/')) {
                         return 'vendor';
                     }
