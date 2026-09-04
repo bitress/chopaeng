@@ -1,5 +1,6 @@
 import { API_BASE } from '../config/api';
 import { getAuthToken } from '../context/authToken';
+import { getUserScopedItem, setUserScopedItem, getActiveUserId } from './accountStorage';
 
 // ─── Response Types ────────────────────────────────────────────────────────
 
@@ -473,9 +474,10 @@ export const notifyOrderReady = (islandName?: string, dodoCode?: string): void =
 
 const LOCAL_ORDER_HISTORY_KEY = 'chopaeng_order_history_v1';
 
-export const getLocalOrderHistory = (): OrderHistoryItem[] => {
+export const getLocalOrderHistory = (userId?: string | null): OrderHistoryItem[] => {
     try {
-        const raw = localStorage.getItem(LOCAL_ORDER_HISTORY_KEY);
+        const uid = userId || getActiveUserId();
+        const raw = getUserScopedItem(LOCAL_ORDER_HISTORY_KEY, uid);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) ? parsed : [];
@@ -484,12 +486,13 @@ export const getLocalOrderHistory = (): OrderHistoryItem[] => {
     }
 };
 
-export const saveLocalOrderBackup = (order: Partial<OrderHistoryItem> & { id: string; command: string }): void => {
+export const saveLocalOrderBackup = (order: Partial<OrderHistoryItem> & { id: string; command: string }, userId?: string | null): void => {
     try {
-        const existing = getLocalOrderHistory();
+        const uid = userId || order.user_id || getActiveUserId();
+        const existing = getLocalOrderHistory(uid);
         const updatedOrder: OrderHistoryItem = {
             id: order.id,
-            user_id: order.user_id || 'local_user',
+            user_id: order.user_id || uid || 'local_user',
             username: order.username || 'WebUser',
             command: order.command,
             order_type: order.order_type || 'order',
@@ -505,7 +508,7 @@ export const saveLocalOrderBackup = (order: Partial<OrderHistoryItem> & { id: st
 
         const filtered = existing.filter((o) => o.id !== order.id);
         const combined = [updatedOrder, ...filtered].slice(0, 50);
-        localStorage.setItem(LOCAL_ORDER_HISTORY_KEY, JSON.stringify(combined));
+        setUserScopedItem(LOCAL_ORDER_HISTORY_KEY, JSON.stringify(combined), uid);
     } catch {
         /* Ignore storage errors */
     }

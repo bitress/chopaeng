@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getUserScopedItem, setUserScopedItem } from '../utils/accountStorage';
 
 const FAVORITES_STORAGE_KEY = 'chopaeng_item_favorites';
 
 export const getStoredFavorites = (): string[] => {
     try {
-        const saved = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        const saved = getUserScopedItem(FAVORITES_STORAGE_KEY);
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         return Array.isArray(parsed) ? parsed : [];
@@ -15,7 +16,7 @@ export const getStoredFavorites = (): string[] => {
 
 export const saveStoredFavorites = (favorites: string[]): void => {
     try {
-        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+        setUserScopedItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
     } catch {
         // Storage write failed
     }
@@ -31,9 +32,11 @@ export const useFavorites = () => {
 
     useEffect(() => {
         window.addEventListener('chopaeng_favorites_updated', refresh);
+        window.addEventListener('chopaeng_account_switched', refresh);
         window.addEventListener('storage', refresh);
         return () => {
             window.removeEventListener('chopaeng_favorites_updated', refresh);
+            window.removeEventListener('chopaeng_account_switched', refresh);
             window.removeEventListener('storage', refresh);
         };
     }, [refresh]);

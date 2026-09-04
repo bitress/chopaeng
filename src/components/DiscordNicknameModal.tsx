@@ -5,11 +5,13 @@ import {
     generateNicknamePresets,
     isValidAcnhNickname,
     getNicknameValidationError,
+    formatCharactersToNickname,
     type NicknamePreset,
 } from '../utils/characterParser';
 import { updateDiscordNickname } from '../utils/userProfileApi';
 import { playChimeClick } from '../utils/kkAudioSynthesizer';
 import { type SavedCharacter, MAX_CHARACTER_SLOTS } from '../hooks/useSavedCharacters';
+import { setUserScopedItem } from '../utils/accountStorage';
 import './DiscordNicknameModal.css';
 
 export interface DiscordNicknameModalProps {
@@ -57,8 +59,9 @@ export const DiscordNicknameModal: React.FC<DiscordNicknameModalProps> = ({
         if (currentNickname && currentNickname.trim()) {
             setNickname(currentNickname.trim().slice(0, 32));
         } else if (characters.length > 0) {
+            const formatted = formatCharactersToNickname(characters);
             const defaultChar = characters.find((c) => c.isDefault) || characters[0];
-            setNickname(`${defaultChar.ign} | ${defaultChar.islandName}`.slice(0, 32));
+            setNickname((formatted || `${defaultChar.ign} | ${defaultChar.islandName}`).slice(0, 32));
         } else if (user?.nickname && user.nickname.trim()) {
             setNickname(user.nickname.trim().slice(0, 32));
         } else {
@@ -110,8 +113,10 @@ export const DiscordNicknameModal: React.FC<DiscordNicknameModalProps> = ({
             }
         }
 
-        // Auto apply to nickname
-        setNickname(`${ign} | ${isl}`.slice(0, 32));
+        // Auto apply to nickname: sync all slots (Slot 1, 2, and 3) using | and /
+        const updatedSlots = [...characters, { ign, islandName: isl, isDefault: characters.length === 0 }];
+        const multiNick = formatCharactersToNickname(updatedSlots);
+        setNickname((multiNick || `${ign} | ${isl}`).slice(0, 32));
         setShowAddChar(false);
         setNewCharIgn('');
         setNewCharIsland('');
@@ -142,7 +147,7 @@ export const DiscordNicknameModal: React.FC<DiscordNicknameModalProps> = ({
         if (res.success) {
             const finalNick = res.nickname || trimmed;
             setSuccessMsg(res.message || `Server nickname updated to "${finalNick}"!`);
-            localStorage.setItem('chopaeng_discord_nickname', finalNick);
+            setUserScopedItem('chopaeng_discord_nickname', finalNick, user?.user_id);
 
             // Dispatch event to sync navbar, auth, profile, and orderbot
             window.dispatchEvent(

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { parseDiscordNicknameToCharacters } from '../utils/characterParser';
 import { API_BASE } from '../config/api';
 import { getAuthToken } from '../context/authToken';
+import { getActiveUserId, getUserScopedItem, setUserScopedItem } from '../utils/accountStorage';
 
 export interface SavedCharacter {
     id: string;
@@ -28,9 +29,9 @@ const getAuthHeaders = (token?: string | null): Record<string, string> => {
     return headers;
 };
 
-export const getStoredCharacters = (): SavedCharacter[] => {
+export const getStoredCharacters = (userId?: string | null): SavedCharacter[] => {
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = getUserScopedItem(STORAGE_KEY, userId);
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -45,15 +46,15 @@ export const getStoredCharacters = (): SavedCharacter[] => {
 /**
  * Persists characters to local storage and updates reactive listeners.
  */
-export const saveStoredCharacters = (characters: SavedCharacter[]): void => {
+export const saveStoredCharacters = (characters: SavedCharacter[], userId?: string | null): void => {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(characters));
+        setUserScopedItem(STORAGE_KEY, JSON.stringify(characters), userId);
     } catch {
         // Storage write error ignored
     }
     window.dispatchEvent(
         new CustomEvent('chopaeng_characters_updated', {
-            detail: { characters },
+            detail: { characters, userId: userId || getActiveUserId() },
         })
     );
 };
@@ -120,50 +121,74 @@ export const fetchCharactersFromDb = async (token?: string | null): Promise<Save
 };
 
 export const useSavedCharacters = (rawDiscordName?: string | null) => {
-    const [characters, setCharacters] = useState<SavedCharacter[]>(getStoredCharacters);
+    const [characters, setCharacters] = useState<SavedCharacter[]>(() => getStoredCharacters(getActiveUserId()));
     const [isSyncingDb, setIsSyncingDb] = useState(false);
     const maxSlots = MAX_CHARACTER_SLOTS;
 
     const refresh = useCallback(() => {
-        setCharacters(getStoredCharacters());
+        setCharacters(getStoredCharacters(getActiveUserId()));
     }, []);
 
     useEffect(() => {
+        refresh();
+    }, [rawDiscordName, refresh]);
+
+    useEffect(() => {
         window.addEventListener('chopaeng_characters_updated', refresh);
+        window.addEventListener('chopaeng_account_switched', refresh);
         window.addEventListener('storage', refresh);
         return () => {
             window.removeEventListener('chopaeng_characters_updated', refresh);
+            window.removeEventListener('chopaeng_account_switched', refresh);
             window.removeEventListener('storage', refresh);
         };
     }, [refresh]);
 
-    // Initial load: Attempt to sync from backend database
+    // Initial load: Attempt to sync from backend database for active user
     useEffect(() => {
         const token = getAuthToken();
         if (!token) return;
 
         let isMounted = true;
         fetchCharactersFromDb(token).then((dbChars) => {
-            if (!isMounted || !dbChars || dbChars.length === 0) return;
-            const current = getStoredCharacters();
-            // If local storage is empty or server has records, merge server data
-            if (current.length === 0 || JSON.stringify(current) !== JSON.stringify(dbChars)) {
-                saveStoredCharacters(dbChars);
+            if (!isMounted) return;
+            const currentUid = getActiveUserId();
+            if (dbChars && dbChars.length > 0) {
+                saveStoredCharacters(dbChars, currentUid);
                 setCharacters(dbChars);
+            } else {
+                const current = getStoredCharacters(currentUid);
+                if (current.length === 0 && rawDiscordName) {
+                    const parsed = parseDiscordNicknameToCharacters(rawDiscordName);
+                    if (parsed.length > 0) {
+                        const initialChars: SavedCharacter[] = parsed.slice(0, maxSlots).map((p, idx) => ({
+                            id: `char_dc_${Date.now()}_${idx}`,
+                            ign: p.ign,
+                            islandName: p.islandName,
+                            icon: idx === 0 ? 'fa-crown' : 'fa-leaf',
+                            isDefault: idx === 0,
+                            createdAt: new Date().toISOString(),
+                            source: 'discord',
+                        }));
+                        saveStoredCharacters(initialChars, currentUid);
+                        setCharacters(initialChars);
+                        saveCharactersToDb(initialChars, token).catch(() => {});
+                    }
+                }
             }
         });
 
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [rawDiscordName, maxSlots]);
 
-    // Automatically sync from Discord Nickname on first load if no custom characters exist
+    // Automatically sync from Discord Nickname on first load if no custom characters exist for this user
     useEffect(() => {
         if (!rawDiscordName) return;
-
-        const current = getStoredCharacters();
-        // If empty or never set, parse from Discord Nickname
+        const currentUid = getActiveUserId();
+        const current = getStoredCharacters(currentUid);
+        // If empty or never set for this user, parse from Discord Nickname
         if (current.length === 0) {
             const parsed = parseDiscordNicknameToCharacters(rawDiscordName);
             if (parsed.length > 0) {
@@ -176,7 +201,7 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
                     createdAt: new Date().toISOString(),
                     source: 'discord',
                 }));
-                saveStoredCharacters(initialChars);
+                saveStoredCharacters(initialChars, currentUid);
                 setCharacters(initialChars);
                 saveCharactersToDb(initialChars).catch(() => {});
             }
@@ -195,7 +220,8 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
 
     const addCharacter = useCallback(
         (ign: string, islandName: string, icon = 'fa-leaf'): boolean => {
-            const current = getStoredCharacters();
+            const uid = getActiveUserId();
+            const current = getStoredCharacters(uid);
             if (current.length >= maxSlots) {
                 return false;
             }
@@ -211,7 +237,7 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
             };
 
             const updated = [...current, newChar];
-            saveStoredCharacters(updated);
+            saveStoredCharacters(updated, uid);
             setCharacters(updated);
             setIsSyncingDb(true);
             saveCharactersToDb(updated)
@@ -224,13 +250,14 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
 
     const updateCharacter = useCallback(
         (id: string, updates: Partial<Omit<SavedCharacter, 'id'>>): boolean => {
-            const current = getStoredCharacters();
+            const uid = getActiveUserId();
+            const current = getStoredCharacters(uid);
             const index = current.findIndex((c) => c.id === id);
             if (index === -1) return false;
 
             const updated = [...current];
             updated[index] = { ...updated[index], ...updates };
-            saveStoredCharacters(updated);
+            saveStoredCharacters(updated, uid);
             setCharacters(updated);
             setIsSyncingDb(true);
             saveCharactersToDb(updated)
@@ -242,7 +269,8 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
     );
 
     const deleteCharacter = useCallback((id: string): boolean => {
-        const current = getStoredCharacters();
+        const uid = getActiveUserId();
+        const current = getStoredCharacters(uid);
         if (current.length <= 1) {
             return false; // Keep at least one character
         }
@@ -252,7 +280,7 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
             filtered[0].isDefault = true;
         }
 
-        saveStoredCharacters(filtered);
+        saveStoredCharacters(filtered, uid);
         setCharacters(filtered);
         setIsSyncingDb(true);
         saveCharactersToDb(filtered)
@@ -262,12 +290,13 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
     }, []);
 
     const setDefaultCharacter = useCallback((id: string): boolean => {
-        const current = getStoredCharacters();
+        const uid = getActiveUserId();
+        const current = getStoredCharacters(uid);
         const updated = current.map((c) => ({
             ...c,
             isDefault: c.id === id,
         }));
-        saveStoredCharacters(updated);
+        saveStoredCharacters(updated, uid);
         setCharacters(updated);
         setIsSyncingDb(true);
         saveCharactersToDb(updated)
@@ -285,6 +314,7 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
             const parsed = parseDiscordNicknameToCharacters(nameToParse);
             if (parsed.length === 0) return 0;
 
+            const uid = getActiveUserId();
             const synced: SavedCharacter[] = parsed.slice(0, maxSlots).map((p, idx) => ({
                 id: `char_sync_${Date.now()}_${idx}`,
                 ign: p.ign,
@@ -295,7 +325,7 @@ export const useSavedCharacters = (rawDiscordName?: string | null) => {
                 source: 'discord',
             }));
 
-            saveStoredCharacters(synced);
+            saveStoredCharacters(synced, uid);
             setCharacters(synced);
             return synced.length;
         },

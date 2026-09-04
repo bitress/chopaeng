@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getUserScopedItem, setUserScopedItem } from '../utils/accountStorage';
 
 const COLLECTION_STORAGE_KEY = 'chopaeng_collection';
 
 export const getStoredCollection = (): string[] => {
     try {
-        const saved = localStorage.getItem(COLLECTION_STORAGE_KEY);
+        const saved = getUserScopedItem(COLLECTION_STORAGE_KEY);
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         return Array.isArray(parsed) ? parsed : [];
@@ -15,7 +16,7 @@ export const getStoredCollection = (): string[] => {
 
 export const saveStoredCollection = (collection: string[]): void => {
     try {
-        localStorage.setItem(COLLECTION_STORAGE_KEY, JSON.stringify(collection));
+        setUserScopedItem(COLLECTION_STORAGE_KEY, JSON.stringify(collection));
     } catch {
         // Storage write failed
     }
@@ -31,9 +32,11 @@ export const useCollection = () => {
 
     useEffect(() => {
         window.addEventListener('chopaeng_collection_updated', refresh);
+        window.addEventListener('chopaeng_account_switched', refresh);
         window.addEventListener('storage', refresh);
         return () => {
             window.removeEventListener('chopaeng_collection_updated', refresh);
+            window.removeEventListener('chopaeng_account_switched', refresh);
             window.removeEventListener('storage', refresh);
         };
     }, [refresh]);

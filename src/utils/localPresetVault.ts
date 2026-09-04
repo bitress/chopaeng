@@ -1,6 +1,7 @@
 import type { PocketBundleItem } from '../data/pocketBundles';
 import type { PocketEntry } from '../hooks/useCommandBuilderPockets';
 import { API_BASE } from '../config/api';
+import { getUserScopedItem, setUserScopedItem } from './accountStorage';
 
 export interface LocalPreset {
     id: string;
@@ -24,7 +25,7 @@ const getHeaders = (token?: string | null): Record<string, string> => {
 
 export const getLocalPresets = (): LocalPreset[] => {
     try {
-        const stored = localStorage.getItem(LOCAL_PRESETS_KEY);
+        const stored = getUserScopedItem(LOCAL_PRESETS_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed)) return parsed;
@@ -56,7 +57,7 @@ export const syncUserPresetsFromBackend = async (token?: string | null): Promise
                 }
                 const merged = Array.from(presetMap.values());
                 try {
-                    localStorage.setItem(LOCAL_PRESETS_KEY, JSON.stringify(merged));
+                    setUserScopedItem(LOCAL_PRESETS_KEY, JSON.stringify(merged));
                 } catch {
                     // Ignore
                 }
@@ -117,7 +118,7 @@ export const saveLocalPreset = async (
     const current = getLocalPresets();
     const updated = [newPreset, ...current.filter((p) => p.id !== id)];
     try {
-        localStorage.setItem(LOCAL_PRESETS_KEY, JSON.stringify(updated));
+        setUserScopedItem(LOCAL_PRESETS_KEY, JSON.stringify(updated));
     } catch {
         // Ignore
     }
@@ -141,7 +142,7 @@ export const deleteLocalPreset = async (id: string, token?: string | null): Prom
     const current = getLocalPresets();
     const updated = current.filter((p) => p.id !== id);
     try {
-        localStorage.setItem(LOCAL_PRESETS_KEY, JSON.stringify(updated));
+        setUserScopedItem(LOCAL_PRESETS_KEY, JSON.stringify(updated));
     } catch {
         // Ignore
     }
@@ -162,7 +163,7 @@ export const updateLocalPresetTitle = (id: string, newTitle: string): void => {
     const current = getLocalPresets();
     const updated = current.map((p) => (p.id === id ? { ...p, title: newTitle, updatedAt: new Date().toISOString() } : p));
     try {
-        localStorage.setItem(LOCAL_PRESETS_KEY, JSON.stringify(updated));
+        setUserScopedItem(LOCAL_PRESETS_KEY, JSON.stringify(updated));
     } catch {
         // Ignore
     }

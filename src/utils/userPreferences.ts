@@ -1,3 +1,5 @@
+import { getUserScopedItem, setUserScopedItem } from './accountStorage';
+
 export interface UserPreferences {
     enableSilentOrder: boolean;
     autoClearPocketsOnSend?: boolean;
@@ -12,9 +14,9 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     confirmBeforeSend: true,
 };
 
-export const getUserPreferences = (): UserPreferences => {
+export const getUserPreferences = (userId?: string | null): UserPreferences => {
     try {
-        const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+        const raw = getUserScopedItem(PREFERENCES_STORAGE_KEY, userId);
         if (!raw) return DEFAULT_USER_PREFERENCES;
         return {
             ...DEFAULT_USER_PREFERENCES,
@@ -25,11 +27,11 @@ export const getUserPreferences = (): UserPreferences => {
     }
 };
 
-export const saveUserPreferences = (prefs: Partial<UserPreferences>): UserPreferences => {
+export const saveUserPreferences = (prefs: Partial<UserPreferences>, userId?: string | null): UserPreferences => {
     try {
-        const current = getUserPreferences();
+        const current = getUserPreferences(userId);
         const updated = { ...current, ...prefs };
-        localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(updated));
+        setUserScopedItem(PREFERENCES_STORAGE_KEY, JSON.stringify(updated), userId);
         // Dispatch window storage event so active Command Builder tab updates instantly
         window.dispatchEvent(new Event('chopaeng_preferences_updated'));
         return updated;

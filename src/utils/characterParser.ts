@@ -159,15 +159,92 @@ export const parseDiscordNicknameToCharacters = (rawName?: string | null): Parse
 };
 
 /**
+ * Automatically formats saved character slots (Slots 1, 2, and 3) into the standard Discord server nickname
+ * using the separators "|" (separating IGNs from Islands) and "/" (separating multiple character slots).
+ * E.g.:
+ * - 1 slot: "IGN1 | Island1"
+ * - 2 slots (same island): "IGN1/IGN2 | Island"
+ * - 2 slots (diff islands): "IGN1/IGN2 | Island1/Island2"
+ * - 3 slots (same island): "IGN1/IGN2/IGN3 | Island"
+ * - 3 slots (diff islands): "IGN1/IGN2/IGN3 | Island1/Island2/Island3"
+ */
+export const formatCharactersToNickname = (
+    characters: { ign?: string; islandName?: string; isDefault?: boolean }[]
+): string => {
+    const valid = characters
+        .map((c) => ({
+            ign: cleanName(c.ign || ''),
+            islandName: cleanName(c.islandName || ''),
+            isDefault: Boolean(c.isDefault),
+        }))
+        .filter((c) => c.ign && c.islandName);
+
+    if (valid.length === 0) return '';
+
+    // Prioritize active/default character in Slot 1
+    const sorted = [...valid].sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
+
+    if (sorted.length === 1) {
+        return `${sorted[0].ign} | ${sorted[0].islandName}`.slice(0, 32);
+    }
+
+    const igns = sorted.map((c) => c.ign);
+    const islands = sorted.map((c) => c.islandName);
+    const uniqueIslands = Array.from(new Set(islands));
+
+    // Case 1: All slots share the same island
+    if (uniqueIslands.length === 1) {
+        const fullSame = `${igns.join('/')} | ${uniqueIslands[0]}`;
+        if (fullSame.length <= 32) return fullSame;
+
+        if (igns.length > 2) {
+            const twoSlots = `${igns.slice(0, 2).join('/')} | ${uniqueIslands[0]}`;
+            if (twoSlots.length <= 32) return twoSlots;
+        }
+        return `${sorted[0].ign} | ${sorted[0].islandName}`.slice(0, 32);
+    }
+
+    // Case 2: Slots have different islands -> format using / and |
+    const directSlash = `${igns.join('/')} | ${islands.join('/')}`;
+    if (directSlash.length <= 32) {
+        return directSlash;
+    }
+
+    // If duplicate islands exist, deduplicate islands for shorter length
+    if (uniqueIslands.length < islands.length) {
+        const uniqueSlash = `${igns.join('/')} | ${uniqueIslands.join('/')}`;
+        if (uniqueSlash.length <= 32) {
+            return uniqueSlash;
+        }
+    }
+
+    // If 3 slots exceed 32 characters, try top 2 slots
+    if (sorted.length >= 3) {
+        const twoIgns = igns.slice(0, 2).join('/');
+        const twoIslands = islands.slice(0, 2).join('/');
+        const twoCandidate = `${twoIgns} | ${twoIslands}`;
+        if (twoCandidate.length <= 32) return twoCandidate;
+
+        const twoUniqueIslands = Array.from(new Set(islands.slice(0, 2))).join('/');
+        const twoUniqueCandidate = `${twoIgns} | ${twoUniqueIslands}`;
+        if (twoUniqueCandidate.length <= 32) return twoUniqueCandidate;
+    }
+
+    // Fallback: Primary slot
+    return `${sorted[0].ign} | ${sorted[0].islandName}`.slice(0, 32);
+};
+
+/**
  * Generates all multi-nickname preset combinations from saved character slots.
  */
 export const generateNicknamePresets = (
-    characters: { ign?: string; islandName?: string; icon?: string }[]
+    characters: { ign?: string; islandName?: string; icon?: string; isDefault?: boolean }[]
 ): NicknamePreset[] => {
     const valid = characters.filter((c) => (c.ign || '').trim() && (c.islandName || '').trim()).map((c) => ({
         ign: cleanName(c.ign || ''),
         islandName: cleanName(c.islandName || ''),
         icon: c.icon || 'fa-leaf',
+        isDefault: Boolean(c.isDefault),
     }));
 
     if (valid.length === 0) return [];
@@ -183,7 +260,22 @@ export const generateNicknamePresets = (
         }
     };
 
-    // 1. Single individual slots: "ign1 | island1"
+    // Recommended #1: All Slots synced using separators | and /
+    if (valid.length >= 2) {
+        const multiSlash = formatCharactersToNickname(valid);
+        if (multiSlash) {
+            addPreset({
+                id: 'all-slots-sync-slash',
+                label: `All Slots (${valid.length} Slots)`,
+                value: multiSlash,
+                description: `Syncs Slot 1, 2, and 3 using | and /`,
+                icon: 'fa-layer-group',
+                badge: 'Recommended',
+            });
+        }
+    }
+
+    // Single individual slots: "ign1 | island1"
     valid.forEach((char, idx) => {
         addPreset({
             id: `slot-${idx}`,
@@ -191,7 +283,7 @@ export const generateNicknamePresets = (
             value: `${char.ign} | ${char.islandName}`,
             description: `${char.ign} from ${char.islandName}`,
             icon: char.icon,
-            badge: 'Single Slot',
+            badge: char.isDefault ? 'Active Slot' : 'Single Slot',
         });
     });
 
@@ -209,7 +301,7 @@ export const generateNicknamePresets = (
                 value: `${uniqueIgns.join('/')} | ${uniqueIslands[0]}`,
                 description: `${uniqueIgns.join('/')} on ${uniqueIslands[0]}`,
                 icon: 'fa-users',
-                badge: 'Recommended',
+                badge: 'Same Island',
             });
             addPreset({
                 id: 'multi-ign-space-same',

@@ -8,12 +8,13 @@ import { useCatalogData } from "../hooks/useCatalogData";
 import { useFavoriteIslands, getStoredFavoriteIslands, saveStoredFavoriteIslands } from "../hooks/useFavoriteIslands";
 import { useSavedCharacters, type SavedCharacter } from "../hooks/useSavedCharacters";
 import { parseItemCodes } from "../utils/itemCodeParser";
-import { parseDiscordNicknameToCharacters, generateNicknamePresets } from "../utils/characterParser";
+import { parseDiscordNicknameToCharacters, generateNicknamePresets, formatCharactersToNickname } from "../utils/characterParser";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
 import { fetchUserOrderHistory, type OrderHistoryItem } from "../utils/orderBotApi";
 import { getStoredPassport, savePassportToDb, fetchPublicPassportFromDb, updateDiscordNickname, type PublicPassportData } from "../utils/userProfileApi";
 import { HowItWorksExplainer, PROFILE_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
 import { ResidentPassportCard, FRUIT_ICONS, ZODIAC_SIGNS, PERSONALITY_THEMES } from "../components/passport/ResidentPassportCard";
+import { setUserScopedItem } from "../utils/accountStorage";
 import "./Profile.css";
 
 const CHARACTER_ICONS = [
@@ -194,7 +195,7 @@ const Profile = () => {
                 },
                 quantity: item.quantity,
             }));
-            localStorage.setItem("command_builder_order_items", JSON.stringify(mappedEntries));
+            setUserScopedItem("command_builder_order_items", JSON.stringify(mappedEntries), authUser?.user_id);
             playChimeClick();
             setPrefNotice(`Loaded ${bundle.items.length} item types (${bundle.totalSlots} slots) from order #${order.id}! Opening...`);
             setTimeout(() => setPrefNotice(null), 4000);
@@ -291,6 +292,47 @@ const Profile = () => {
     const [charIsland, setCharIsland] = useState("");
     const [charIcon, setCharIcon] = useState("fa-leaf");
     const [charError, setCharError] = useState("");
+    const [syncToDiscordNick, setSyncToDiscordNick] = useState(true);
+    const [targetDiscordNick, setTargetDiscordNick] = useState("");
+    const [customizedNick, setCustomizedNick] = useState(false);
+    const [isSavingChar, setIsSavingChar] = useState(false);
+
+    // Suggested presets for Discord nickname when adding or editing characters
+    const suggestedNickPresets = useMemo(() => {
+        const cleanI = charIgn.trim();
+        const cleanIs = charIsland.trim();
+        if (!cleanI || !cleanIs) return [];
+        const candidateChar = { ign: cleanI, islandName: cleanIs, icon: charIcon };
+
+        let candidateList: { ign: string; islandName: string; icon?: string; isDefault?: boolean }[] = [];
+        if (editingCharId) {
+            candidateList = characters.map((c) => (c.id === editingCharId ? { ...candidateChar, isDefault: c.isDefault } : c));
+        } else {
+            candidateList = [...characters, { ...candidateChar, isDefault: characters.length === 0 }];
+        }
+
+        return generateNicknamePresets(candidateList);
+    }, [charIgn, charIsland, charIcon, editingCharId, characters]);
+
+    // Automatically update target Discord nickname preview as user types IGN and Island
+    useEffect(() => {
+        if (!customizedNick) {
+            const ign = charIgn.trim();
+            const isl = charIsland.trim();
+            if (ign && isl) {
+                const candidateChar = { ign, islandName: isl };
+                const candidateList = editingCharId
+                    ? characters.map((c) => (c.id === editingCharId ? { ...candidateChar, isDefault: c.isDefault } : c))
+                    : [...characters, { ...candidateChar, isDefault: characters.length === 0 }];
+                const formatted = formatCharactersToNickname(candidateList);
+                setTargetDiscordNick(formatted || `${ign} | ${isl}`.slice(0, 32));
+            } else if (ign) {
+                setTargetDiscordNick(ign.slice(0, 32));
+            } else {
+                setTargetDiscordNick("");
+            }
+        }
+    }, [charIgn, charIsland, customizedNick, editingCharId, characters]);
 
     const handleOpenAddCharacter = () => {
         setEditingCharId(null);
@@ -298,6 +340,9 @@ const Profile = () => {
         setCharIsland("");
         setCharIcon("fa-leaf");
         setCharError("");
+        setSyncToDiscordNick(true);
+        setTargetDiscordNick(formatCharactersToNickname(characters));
+        setCustomizedNick(false);
         setCharacterModalOpen(true);
         playChimeClick();
     };
@@ -308,48 +353,184 @@ const Profile = () => {
         setCharIsland(char.islandName);
         setCharIcon(char.icon || "fa-leaf");
         setCharError("");
+        setSyncToDiscordNick(true);
+        setTargetDiscordNick(formatCharactersToNickname(characters));
+        setCustomizedNick(false);
         setCharacterModalOpen(true);
         playChimeClick();
     };
 
-    const handleSaveCharacterModal = (e: React.FormEvent) => {
+    const handleSaveCharacterModal = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!charIgn.trim()) {
+        const cleanIgn = charIgn.trim();
+        const cleanIsland = charIsland.trim();
+        if (!cleanIgn) {
             setCharError("In-Game Name (IGN) is required.");
             return;
         }
-        if (!charIsland.trim()) {
+        if (!cleanIsland) {
             setCharError("Island Name is required.");
             return;
         }
 
-        if (editingCharId) {
-            updateCharacter(editingCharId, {
-                ign: charIgn.trim(),
-                islandName: charIsland.trim(),
-                icon: charIcon,
-            });
-            playChimeClick();
-            setPrefNotice(`Character "${charIgn.trim()}" updated and synced to database!`);
-        } else {
-            const ok = addCharacter(charIgn.trim(), charIsland.trim(), charIcon);
-            if (!ok) {
-                setCharError(`Maximum ${maxSlots} character slots reached.`);
-                return;
-            }
-            playChimeClick();
-            setPrefNotice(`New character "${charIgn.trim()}" created and saved to database!`);
-        }
+        setIsSavingChar(true);
+        setCharError("");
 
-        setTimeout(() => setPrefNotice(null), 3500);
-        setCharacterModalOpen(false);
+        try {
+            if (editingCharId) {
+                updateCharacter(editingCharId, {
+                    ign: cleanIgn,
+                    islandName: cleanIsland,
+                    icon: charIcon,
+                });
+                playChimeClick();
+            } else {
+                const ok = addCharacter(cleanIgn, cleanIsland, charIcon);
+                if (!ok) {
+                    setCharError(`Maximum ${maxSlots} character slots reached.`);
+                    setIsSavingChar(false);
+                    return;
+                }
+                playChimeClick();
+            }
+
+            // Sync to Discord Server Nickname if requested
+            let discordMsg = "";
+            if (syncToDiscordNick) {
+                const candidateChar = { ign: cleanIgn, islandName: cleanIsland, icon: charIcon };
+                const candidateList = editingCharId
+                    ? characters.map((c) => (c.id === editingCharId ? { ...candidateChar, isDefault: c.isDefault } : c))
+                    : [...characters, { ...candidateChar, isDefault: characters.length === 0 }];
+                const multiNick = formatCharactersToNickname(candidateList);
+                const finalNick = (targetDiscordNick.trim() || multiNick || `${cleanIgn} | ${cleanIsland}`).slice(0, 32);
+                const token = getAuthToken();
+                if (token) {
+                    try {
+                        const res = await updateDiscordNickname(finalNick, token);
+                        if (res.success) {
+                            const updated = res.nickname || finalNick;
+                            setUserScopedItem('chopaeng_discord_nickname', updated, authUser?.user_id);
+                            window.dispatchEvent(
+                                new CustomEvent('chopaeng_nickname_updated', {
+                                    detail: { nickname: updated },
+                                })
+                            );
+                            if (profile) {
+                                setProfile((prev) =>
+                                    prev
+                                        ? {
+                                              ...prev,
+                                              user: { ...prev.user, nickname: updated },
+                                          }
+                                        : null
+                                );
+                            }
+                            discordMsg = ` & Discord nickname updated to "${updated}"`;
+                        } else {
+                            discordMsg = ` (Discord nickname notice: ${res.message || 'update skipped'})`;
+                        }
+                    } catch {
+                        // Background discord sync failed gracefully
+                    }
+                }
+            }
+
+            setPrefNotice(
+                editingCharId
+                    ? `Character "${cleanIgn}" updated${discordMsg}!`
+                    : `New character "${cleanIgn}" created${discordMsg}!`
+            );
+
+            setTimeout(() => setPrefNotice(null), 4000);
+            setCharacterModalOpen(false);
+        } finally {
+            setIsSavingChar(false);
+        }
     };
 
-    const handleDeleteCharacter = (char: SavedCharacter) => {
+    const handleSetActiveCharacter = async (char: SavedCharacter) => {
+        setDefaultCharacter(char.id);
+        playChimeClick();
+
+        // Slot 1 is the active character, followed by other saved slots (Slots 2 & 3)
+        const reordered = [
+            { ...char, isDefault: true },
+            ...characters.filter((c) => c.id !== char.id).map((c) => ({ ...c, isDefault: false })),
+        ];
+        const newNick = formatCharactersToNickname(reordered) || `${char.ign} | ${char.islandName}`.slice(0, 32);
+        const token = getAuthToken();
+        let nickUpdated = false;
+        if (token) {
+            try {
+                const res = await updateDiscordNickname(newNick, token);
+                if (res.success) {
+                    const updated = res.nickname || newNick;
+                    setUserScopedItem('chopaeng_discord_nickname', updated, authUser?.user_id);
+                    window.dispatchEvent(
+                        new CustomEvent('chopaeng_nickname_updated', {
+                            detail: { nickname: updated },
+                        })
+                    );
+                    if (profile) {
+                        setProfile((prev) =>
+                            prev
+                                ? {
+                                      ...prev,
+                                      user: { ...prev.user, nickname: updated },
+                                  }
+                                : null
+                        );
+                    }
+                    nickUpdated = true;
+                }
+            } catch {
+                // Ignore
+            }
+        }
+
+        setPrefNotice(
+            nickUpdated
+                ? `Active character set to "${char.ign}" & Discord nickname synced to "${newNick}"!`
+                : `Active character set to "${char.ign}".`
+        );
+        setTimeout(() => setPrefNotice(null), 3500);
+    };
+
+    const handleDeleteCharacter = async (char: SavedCharacter) => {
         if (window.confirm(`Are you sure you want to delete character "${char.ign}"?`)) {
             deleteCharacter(char.id);
             playChimeClick();
-            setPrefNotice(`Character "${char.ign}" deleted.`);
+
+            const remaining = characters.filter((c) => c.id !== char.id);
+            let nickNotice = '';
+            if (remaining.length > 0) {
+                const remainingNick = formatCharactersToNickname(remaining);
+                const token = getAuthToken();
+                if (token && remainingNick) {
+                    try {
+                        const res = await updateDiscordNickname(remainingNick, token);
+                        if (res.success) {
+                            const updated = res.nickname || remainingNick;
+                            setUserScopedItem('chopaeng_discord_nickname', updated, authUser?.user_id);
+                            window.dispatchEvent(
+                                new CustomEvent('chopaeng_nickname_updated', {
+                                    detail: { nickname: updated },
+                                })
+                            );
+                            if (profile) {
+                                setProfile((prev) =>
+                                    prev ? { ...prev, user: { ...prev.user, nickname: updated } } : null
+                                );
+                            }
+                            nickNotice = ` & Discord nickname synced to "${updated}"`;
+                        }
+                    } catch {
+                        // ignore
+                    }
+                }
+            }
+
+            setPrefNotice(`Character "${char.ign}" deleted${nickNotice}.`);
             setTimeout(() => setPrefNotice(null), 3500);
         }
     };
@@ -364,8 +545,9 @@ const Profile = () => {
         setNickModalMessage(null);
         if (initialVal !== undefined) {
             setNewDiscordNick(initialVal.slice(0, 32));
-        } else if (activeCharacter?.ign && activeCharacter?.islandName) {
-            setNewDiscordNick(`${activeCharacter.ign} | ${activeCharacter.islandName}`.slice(0, 32));
+        } else if (characters.length > 0) {
+            const multiNick = formatCharactersToNickname(characters);
+            setNewDiscordNick(multiNick || (profile?.user?.nickname || rawDiscordName || "").slice(0, 32));
         } else {
             setNewDiscordNick((profile?.user?.nickname || rawDiscordName || "").slice(0, 32));
         }
@@ -754,9 +936,13 @@ const Profile = () => {
                                                 <i className={isSyncingDb ? "fa-solid fa-spinner fa-spin text-primary" : "fa-solid fa-cloud-arrow-up text-success"}></i>
                                                 <span>{isSyncingDb ? "Syncing to Database..." : "Auto-Saved to Database"}</span>
                                             </span>
+                                            <span className="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill x-small fw-bold d-inline-flex align-items-center gap-1">
+                                                <i className="fa-brands fa-discord"></i>
+                                                <span>Syncs Slots 1, 2 &amp; 3 (| and /)</span>
+                                            </span>
                                         </div>
                                         <p className="tiny-text text-muted mb-0">
-                                            Active character auto-fills your IGN &amp; Island Name in Order Bot, Command Builder, and Drop orders.
+                                            Active character auto-fills your IGN &amp; Island Name in orders. Adding, editing, or setting active automatically syncs Slots 1, 2, and 3 to your ChoPaeng Discord server nickname using | and /.
                                         </p>
                                     </div>
 
@@ -837,7 +1023,7 @@ const Profile = () => {
                                                                 <button
                                                                     type="button"
                                                                     className="btn btn-xs btn-light rounded-pill border fw-bold tiny-text text-nowrap"
-                                                                    onClick={() => setDefaultCharacter(char.id)}
+                                                                    onClick={() => handleSetActiveCharacter(char)}
                                                                     aria-label={`Set ${char.ign} as active character`}
                                                                 >
                                                                     Set Active
@@ -887,7 +1073,7 @@ const Profile = () => {
                                                                     <button
                                                                         type="button"
                                                                         className="btn btn-xs btn-outline-success rounded-pill fw-bold px-2 py-1 tiny-text"
-                                                                        onClick={() => setDefaultCharacter(char.id)}
+                                                                        onClick={() => handleSetActiveCharacter(char)}
                                                                         aria-label={`Set ${char.ign} as primary`}
                                                                     >
                                                                         Set Primary
@@ -2390,6 +2576,89 @@ const Profile = () => {
                                         })}
                                     </div>
                                 </div>
+
+                                {/* Discord Server Nickname Auto-Sync Section */}
+                                <div className="mt-3 pt-3 border-top">
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <label className="d-flex align-items-center gap-2 mb-0 fw-bold small text-dark" style={{ cursor: "pointer" }}>
+                                            <input
+                                                type="checkbox"
+                                                className="form-check-input mt-0"
+                                                checked={syncToDiscordNick}
+                                                onChange={(e) => setSyncToDiscordNick(e.target.checked)}
+                                            />
+                                            <i className="fa-brands fa-discord text-primary"></i>
+                                            <span>Update Discord Server Nickname</span>
+                                        </label>
+                                        <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill x-small fw-bold px-2 py-0.5">
+                                            Auto-Sync
+                                        </span>
+                                    </div>
+
+                                    {syncToDiscordNick && (
+                                        <div className="p-2.5 rounded-3 bg-light border">
+                                            <div className="d-flex align-items-center justify-content-between mb-1.5">
+                                                <span className="tiny-text text-muted fw-bold text-uppercase">
+                                                    Discord Nickname Preview
+                                                </span>
+                                                <span className={`tiny-text font-monospace ${targetDiscordNick.length > 32 ? "text-danger fw-bold" : "text-muted"}`}>
+                                                    {targetDiscordNick.length}/32 chars
+                                                </span>
+                                            </div>
+
+                                            <div className="input-group input-group-sm">
+                                                <span className="input-group-text bg-white text-primary border-end-0">
+                                                    <i className="fa-brands fa-discord"></i>
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm border-start-0 font-monospace fw-bold"
+                                                    placeholder="IGN1/IGN2/IGN3 | Island1/Island2/Island3"
+                                                    value={targetDiscordNick}
+                                                    onChange={(e) => {
+                                                        setTargetDiscordNick(e.target.value.slice(0, 32));
+                                                        setCustomizedNick(true);
+                                                    }}
+                                                    maxLength={32}
+                                                />
+                                            </div>
+
+                                            {/* Quick Preset Selector */}
+                                            {suggestedNickPresets.length > 1 && (
+                                                <div className="d-flex align-items-center gap-1 mt-2 flex-wrap">
+                                                    <span className="tiny-text text-muted fw-bold">Presets:</span>
+                                                    {suggestedNickPresets.map((p) => {
+                                                        const isMatch = targetDiscordNick.trim().toLowerCase() === p.value.toLowerCase();
+                                                        return (
+                                                            <button
+                                                                key={p.id}
+                                                                type="button"
+                                                                className={`btn btn-xs rounded-pill py-0.5 px-2 tiny-text fw-bold ${
+                                                                    isMatch
+                                                                        ? "btn-primary text-white"
+                                                                        : "btn-outline-secondary bg-white"
+                                                                }`}
+                                                                onClick={() => {
+                                                                    setTargetDiscordNick(p.value);
+                                                                    setCustomizedNick(true);
+                                                                    playChimeClick();
+                                                                }}
+                                                                title={p.description}
+                                                            >
+                                                                {p.label}: {p.value}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            <div className="tiny-text text-muted mt-1.5 d-flex align-items-center gap-1">
+                                                <i className="fa-solid fa-circle-check text-success"></i>
+                                                <span>Your ChoPaeng Discord server nickname will sync Slots 1, 2, and 3 using "|" and "/" separators automatically on save.</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="char-modal-footer">
@@ -2397,16 +2666,18 @@ const Profile = () => {
                                     type="button"
                                     className="btn btn-outline-secondary rounded-pill fw-bold px-4 py-2"
                                     onClick={() => setCharacterModalOpen(false)}
+                                    disabled={isSavingChar}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
+                                    disabled={isSavingChar}
                                     className="btn btn-success text-white rounded-pill fw-bold px-4 py-2 shadow-sm d-flex align-items-center gap-2"
                                     style={{ backgroundColor: "#37b06d", borderColor: "#37b06d" }}
                                 >
-                                    <i className={editingCharId ? "fa-solid fa-check" : "fa-solid fa-cloud-arrow-up"}></i>
-                                    <span>{editingCharId ? "Save Changes & Sync" : "Create & Save Character"}</span>
+                                    <i className={isSavingChar ? "fa-solid fa-spinner fa-spin" : editingCharId ? "fa-solid fa-check" : "fa-solid fa-cloud-arrow-up"}></i>
+                                    <span>{isSavingChar ? "Saving & Syncing..." : editingCharId ? "Save Changes & Sync" : "Create & Save Character"}</span>
                                 </button>
                             </div>
                         </form>

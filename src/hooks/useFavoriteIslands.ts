@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { API_BASE } from '../config/api';
 import { getAuthToken } from '../context/authToken';
+import { getUserScopedItem, setUserScopedItem } from '../utils/accountStorage';
 
 const FAVORITE_ISLANDS_STORAGE_KEY = 'chopaeng_favorite_islands';
 
 export const getStoredFavoriteIslands = (): string[] => {
     try {
-        const saved = localStorage.getItem(FAVORITE_ISLANDS_STORAGE_KEY);
+        const saved = getUserScopedItem(FAVORITE_ISLANDS_STORAGE_KEY);
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         return Array.isArray(parsed) ? parsed : [];
@@ -17,7 +18,7 @@ export const getStoredFavoriteIslands = (): string[] => {
 
 export const saveStoredFavoriteIslands = (favorites: string[]): void => {
     try {
-        localStorage.setItem(FAVORITE_ISLANDS_STORAGE_KEY, JSON.stringify(favorites));
+        setUserScopedItem(FAVORITE_ISLANDS_STORAGE_KEY, JSON.stringify(favorites));
     } catch {
         // Storage write error ignored
     }
@@ -129,9 +130,11 @@ export const useFavoriteIslands = () => {
 
     useEffect(() => {
         window.addEventListener('chopaeng_favorite_islands_updated', refresh);
+        window.addEventListener('chopaeng_account_switched', refresh);
         window.addEventListener('storage', refresh);
         return () => {
             window.removeEventListener('chopaeng_favorite_islands_updated', refresh);
+            window.removeEventListener('chopaeng_account_switched', refresh);
             window.removeEventListener('storage', refresh);
         };
     }, [refresh]);

@@ -9,6 +9,7 @@ import {
     findRecipeIngredients,
 } from '../utils/pocketOptimizer';
 import banner from '../assets/banner.png';
+import { getUserScopedItem, setUserScopedItem } from '../utils/accountStorage';
 
 export type PocketItem = CatalogEntity & {
     baseId?: string | number | null;
@@ -28,9 +29,9 @@ const BUFFER_OPTIONS = {
 };
 
 
-const parsePocketEntries = (key: string): PocketEntry[] => {
+const parsePocketEntries = (key: string, userId?: string | null): PocketEntry[] => {
     try {
-        const saved = localStorage.getItem(key);
+        const saved = getUserScopedItem(key, userId);
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         if (!Array.isArray(parsed)) return [];
@@ -81,16 +82,25 @@ export const useCommandBuilderPockets = () => {
     const [copyOrderStatus, setCopyOrderStatus] = useState('Copy order');
     const [copyDropStatus, setCopyDropStatus] = useState('Copy drop');
 
-
-
-    // Persist to localStorage
+    // Persist to user-scoped localStorage
     useEffect(() => {
-        localStorage.setItem('command_builder_order_items', JSON.stringify(orderItems));
+        setUserScopedItem('command_builder_order_items', JSON.stringify(orderItems));
     }, [orderItems]);
 
     useEffect(() => {
-        localStorage.setItem('command_builder_drop_items', JSON.stringify(dropItems));
+        setUserScopedItem('command_builder_drop_items', JSON.stringify(dropItems));
     }, [dropItems]);
+
+    // Handle account switches cleanly so pocket items reset/reload for the switched account
+    useEffect(() => {
+        const handleAccountSwitch = (e: any) => {
+            const newUid = e.detail?.newUserId;
+            setOrderItems(parsePocketEntries('command_builder_order_items', newUid));
+            setDropItems(parsePocketEntries('command_builder_drop_items', newUid));
+        };
+        window.addEventListener('chopaeng_account_switched', handleAccountSwitch);
+        return () => window.removeEventListener('chopaeng_account_switched', handleAccountSwitch);
+    }, []);
 
 
 

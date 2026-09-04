@@ -1,5 +1,6 @@
 import { getAuthToken } from '../context/authToken';
 import { DODO_API_BASE } from '../config/api';
+import { getUserScopedItem, setUserScopedItem } from './accountStorage';
 
 export interface PublicPassportData {
     username: string;
@@ -48,10 +49,15 @@ export const DEFAULT_PASSPORT_DATA: PublicPassportData = {
 
 export const getStoredPassport = (username?: string): PublicPassportData => {
     try {
-        const key = username ? `${STORAGE_KEY}_${username.toLowerCase()}` : STORAGE_KEY;
-        const saved = localStorage.getItem(key);
-        if (saved) {
-            return { ...DEFAULT_PASSPORT_DATA, ...JSON.parse(saved) };
+        if (username && username.trim()) {
+            const saved = localStorage.getItem(`${STORAGE_KEY}_${username.toLowerCase().trim()}`);
+            if (saved) {
+                return { ...DEFAULT_PASSPORT_DATA, ...JSON.parse(saved) };
+            }
+        }
+        const scopedSaved = getUserScopedItem(STORAGE_KEY);
+        if (scopedSaved) {
+            return { ...DEFAULT_PASSPORT_DATA, ...JSON.parse(scopedSaved) };
         }
     } catch {
         // Storage inaccessible
@@ -62,9 +68,9 @@ export const getStoredPassport = (username?: string): PublicPassportData => {
 export const saveStoredPassport = (data: PublicPassportData): void => {
     try {
         const payload = { ...data, updatedAt: Date.now() };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        if (data.username) {
-            localStorage.setItem(`${STORAGE_KEY}_${data.username.toLowerCase()}`, JSON.stringify(payload));
+        setUserScopedItem(STORAGE_KEY, JSON.stringify(payload));
+        if (data.username && data.username.trim()) {
+            localStorage.setItem(`${STORAGE_KEY}_${data.username.toLowerCase().trim()}`, JSON.stringify(payload));
         }
         window.dispatchEvent(new CustomEvent('chopaeng_passport_updated', { detail: payload }));
     } catch {

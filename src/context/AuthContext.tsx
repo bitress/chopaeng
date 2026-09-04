@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { DODO_API_BASE } from "../config/api";
 import { AuthContext, type AuthUser } from "./authContextShared";
 import { clearAuthToken, getAuthToken } from "./authToken";
+import { handleAccountSwitchCheck, handleLogoutStorageCleanup } from "../utils/accountStorage";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -26,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     is_mod:   data.is_mod ?? false,
                     is_admin: data.is_admin ?? false,
                 };
+                handleAccountSwitchCheck(authedUser.user_id);
                 setUser(authedUser);
                 return authedUser;
             }
@@ -39,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(true);
         const token = tokenOverride || getAuthToken();
         if (!token) {
+            handleLogoutStorageCleanup();
             setUser(null);
             setLoading(false);
             window.dispatchEvent(new CustomEvent("chopaeng_auth_change", { detail: { user: null } }));
@@ -48,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const authedUser = await fetchMe(token);
         if (!authedUser) {
             clearAuthToken();
+            handleLogoutStorageCleanup();
             setUser(null);
             setLoading(false);
             window.dispatchEvent(new CustomEvent("chopaeng_auth_change", { detail: { user: null } }));
@@ -64,7 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const token = getAuthToken();
         if (token) {
             fetchMe(token).then(authedUser => {
-                if (!authedUser) clearAuthToken();
+                if (!authedUser) {
+                    clearAuthToken();
+                    handleLogoutStorageCleanup();
+                }
                 setLoading(false);
             });
         } else {
@@ -105,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } catch { /* ignore */ }
         }
         clearAuthToken();
+        handleLogoutStorageCleanup();
         setUser(null);
         window.dispatchEvent(new CustomEvent("chopaeng_auth_change", { detail: { user: null } }));
     };

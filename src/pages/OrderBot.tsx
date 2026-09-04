@@ -18,8 +18,15 @@ import { CommandBuilderPocketBundlesModal } from '../components/command-builder/
 import { CommandBuilderShareModal } from '../components/command-builder/CommandBuilderShareModal';
 import { HowItWorksExplainer, ORDER_BOT_EXPLAINER_CONFIG } from '../components/HowItWorksExplainer';
 import { DiscordNicknameModal } from '../components/DiscordNicknameModal';
-import { isValidAcnhNickname, parseDiscordNicknameToCharacters } from '../utils/characterParser';
+import { isValidAcnhNickname, parseDiscordNicknameToCharacters, formatCharactersToNickname } from '../utils/characterParser';
+import { updateDiscordNickname } from '../utils/userProfileApi';
 import { type PocketBundleItem } from '../data/pocketBundles';
+import {
+    getActiveUserId,
+    getUserScopedItem,
+    setUserScopedItem,
+    removeUserScopedItem,
+} from '../utils/accountStorage';
 import {
     fetchBotStatus,
     submitOrderToBot,
@@ -134,9 +141,11 @@ interface SavedCustomLoadout {
 // ─── Helpers ─────────────────────────────────────────────────────────────
 const saveOrder = (id: string, userId?: string | null) => {
     try {
-        localStorage.setItem(
+        const uid = userId || getActiveUserId();
+        setUserScopedItem(
             LS_ORDER_KEY,
-            JSON.stringify({ orderId: id, userId: userId || null, submittedAt: Date.now() })
+            JSON.stringify({ orderId: id, userId: uid || null, submittedAt: Date.now() }),
+            uid
         );
     } catch {
         /**/
@@ -145,10 +154,11 @@ const saveOrder = (id: string, userId?: string | null) => {
 
 const loadOrder = (currentUserId?: string | null): SavedOrder | null => {
     try {
-        const v = localStorage.getItem(LS_ORDER_KEY);
+        const uid = currentUserId || getActiveUserId();
+        const v = getUserScopedItem(LS_ORDER_KEY, uid);
         if (!v) return null;
         const parsed = JSON.parse(v) as SavedOrder;
-        if (currentUserId && parsed.userId && parsed.userId !== currentUserId) {
+        if (uid && parsed.userId && parsed.userId !== uid) {
             return null;
         }
         return parsed;
@@ -157,9 +167,10 @@ const loadOrder = (currentUserId?: string | null): SavedOrder | null => {
     }
 };
 
-const clearOrder = () => {
+const clearOrder = (userId?: string | null) => {
     try {
-        localStorage.removeItem(LS_ORDER_KEY);
+        const uid = userId || getActiveUserId();
+        removeUserScopedItem(LS_ORDER_KEY, uid);
     } catch {
         /**/
     }
@@ -393,7 +404,7 @@ const OrderBot: React.FC = () => {
     // ── Order Profile & Discord Nickname State ──
     const [serverNickname, setServerNickname] = useState<string>(() => {
         try {
-            return user?.nickname || localStorage.getItem('chopaeng_discord_nickname') || '';
+            return user?.nickname || getUserScopedItem('chopaeng_discord_nickname', user?.user_id) || '';
         } catch {
             return '';
         }
@@ -405,18 +416,20 @@ const OrderBot: React.FC = () => {
         serverNickname || user?.username || null
     );
 
-    const loadProfile = (): OrderProfile | null => {
+    const loadProfile = (userId?: string | null): OrderProfile | null => {
         try {
-            const raw = localStorage.getItem(LS_PROFILE_KEY);
+            const uid = userId || user?.user_id || getActiveUserId();
+            const raw = getUserScopedItem(LS_PROFILE_KEY, uid);
             if (!raw) return null;
             return JSON.parse(raw) as OrderProfile;
         } catch {
             return null;
         }
     };
-    const saveProfile = (p: OrderProfile) => {
+    const saveProfile = (p: OrderProfile, userId?: string | null) => {
         try {
-            localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(p));
+            const uid = userId || user?.user_id || getActiveUserId();
+            setUserScopedItem(LS_PROFILE_KEY, JSON.stringify(p), uid);
         } catch {
             /**/
         }
@@ -426,7 +439,7 @@ const OrderBot: React.FC = () => {
     const [setupStep, setSetupStep] = useState<SetupStep>('username');
     const [setupDisplayName, setSetupDisplayName] = useState('');
     const [setupSelectedCharId, setSetupSelectedCharId] = useState<string | null>(null);
-    const [orderProfile, setOrderProfile] = useState<OrderProfile | null>(null);
+    const [orderProfile, setOrderProfile] = useState<OrderProfile | null>(() => loadProfile(user?.user_id));
     // Inline add-character form state
     const [showAddChar, setShowAddChar] = useState(false);
     const [addCharIgn, setAddCharIgn] = useState('');
@@ -442,17 +455,18 @@ const OrderBot: React.FC = () => {
     const [newLoadoutName, setNewLoadoutName] = useState('');
     const [savedLoadouts, setSavedLoadouts] = useState<SavedCustomLoadout[]>(() => {
         try {
-            const raw = localStorage.getItem(LS_LOADOUTS_KEY);
+            const raw = getUserScopedItem(LS_LOADOUTS_KEY, user?.user_id);
             return raw ? JSON.parse(raw) : [];
         } catch {
             return [];
         }
     });
 
-    const persistSavedLoadouts = (list: SavedCustomLoadout[]) => {
+    const persistSavedLoadouts = (list: SavedCustomLoadout[], userId?: string | null) => {
         setSavedLoadouts(list);
         try {
-            localStorage.setItem(LS_LOADOUTS_KEY, JSON.stringify(list));
+            const uid = userId || user?.user_id || getActiveUserId();
+            setUserScopedItem(LS_LOADOUTS_KEY, JSON.stringify(list), uid);
         } catch {
             /**/
         }
@@ -553,7 +567,7 @@ const OrderBot: React.FC = () => {
 
     // Sync and fetch latest Discord server nickname from backend profile
     useEffect(() => {
-        if (!token) return;
+        if (!token || !user) return;
         const controller = new AbortController();
         fetch(`${DODO_API_BASE}/api/profile`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -564,12 +578,12 @@ const OrderBot: React.FC = () => {
                 const data = await resp.json().catch(() => null);
                 if (data?.user?.nickname) {
                     setServerNickname(data.user.nickname);
-                    localStorage.setItem('chopaeng_discord_nickname', data.user.nickname);
+                    setUserScopedItem('chopaeng_discord_nickname', data.user.nickname, user.user_id);
                 }
             })
             .catch(() => {});
         return () => controller.abort();
-    }, [token]);
+    }, [token, user?.user_id]);
 
     // Listen to global nickname update events (e.g. from DiscordNicknameModal or Profile page)
     useEffect(() => {
@@ -577,34 +591,64 @@ const OrderBot: React.FC = () => {
             const newNick = e.detail?.nickname;
             if (typeof newNick === 'string' && newNick.trim()) {
                 setServerNickname(newNick.trim());
-                localStorage.setItem('chopaeng_discord_nickname', newNick.trim());
+                setUserScopedItem('chopaeng_discord_nickname', newNick.trim(), user?.user_id);
             }
         };
         window.addEventListener('chopaeng_nickname_updated', handleNickUpdated);
         return () => window.removeEventListener('chopaeng_nickname_updated', handleNickUpdated);
-    }, []);
+    }, [user?.user_id]);
 
     // Open setup when user logs in and hasn't set a profile or nickname yet
     useEffect(() => {
         if (!user) {
             setOrderProfile(null);
+            setServerNickname('');
+            setSavedLoadouts([]);
             return;
         }
-        const saved = loadProfile();
+
+        const currentNick = user.nickname || getUserScopedItem('chopaeng_discord_nickname', user.user_id) || '';
+        setServerNickname(currentNick);
+
+        const saved = loadProfile(user.user_id);
         if (saved) {
             setOrderProfile(saved);
         } else {
+            setOrderProfile(null);
             setSetupDisplayName(user.username || '');
             setSetupSelectedCharId(null);
             setSetupStep('username');
         }
 
+        const rawLoadouts = getUserScopedItem(LS_LOADOUTS_KEY, user.user_id);
+        setSavedLoadouts(rawLoadouts ? JSON.parse(rawLoadouts) : []);
+
         // Enforce requirement: Must setup Discord server nickname before ordering
-        if (!hasValidNickname) {
+        if (!isValidAcnhNickname(currentNick)) {
             setShowNicknameModal(true);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?.user_id, hasValidNickname]);
+    }, [user?.user_id]);
+
+    // Listen for cross-tab or in-app account switches to instantly refresh state
+    useEffect(() => {
+        const handleAccountSwitch = (e: any) => {
+            const newUid = e.detail?.newUserId;
+            if (!newUid) {
+                setOrderProfile(null);
+                setServerNickname('');
+                setSavedLoadouts([]);
+            } else {
+                const nick = getUserScopedItem('chopaeng_discord_nickname', newUid) || '';
+                setServerNickname(nick);
+                setOrderProfile(loadProfile(newUid));
+                const rawLoadouts = getUserScopedItem(LS_LOADOUTS_KEY, newUid);
+                setSavedLoadouts(rawLoadouts ? JSON.parse(rawLoadouts) : []);
+            }
+        };
+        window.addEventListener('chopaeng_account_switched', handleAccountSwitch);
+        return () => window.removeEventListener('chopaeng_account_switched', handleAccountSwitch);
+    }, []);
 
     useEffect(() => {
         if (!setupSelectedCharId && characters.length > 0) {
@@ -641,6 +685,32 @@ const OrderBot: React.FC = () => {
             setAddCharError(`Max ${remainingSlots === 0 ? 'character slots reached' : 'error adding'}.`);
             return;
         }
+
+        // Auto-sync Discord nickname across Slots 1, 2, and 3 using | and /
+        const updatedSlots = [
+            ...characters,
+            { ign: addCharIgn.trim(), islandName: addCharIsland.trim(), isDefault: characters.length === 0 },
+        ];
+        const newNick =
+            formatCharactersToNickname(updatedSlots) ||
+            `${addCharIgn.trim()} | ${addCharIsland.trim()}`.slice(0, 32);
+        if (token) {
+            updateDiscordNickname(newNick, token)
+                .then((res) => {
+                    if (res.success) {
+                        const updated = res.nickname || newNick;
+                        setServerNickname(updated);
+                        setUserScopedItem('chopaeng_discord_nickname', updated, user?.user_id);
+                        window.dispatchEvent(
+                            new CustomEvent('chopaeng_nickname_updated', {
+                                detail: { nickname: updated },
+                            })
+                        );
+                    }
+                })
+                .catch(() => {});
+        }
+
         setAddCharIgn('');
         setAddCharIsland('');
         setAddCharError('');
@@ -4488,7 +4558,7 @@ const OrderBot: React.FC = () => {
                 canDismiss={true}
                 onSuccess={(newNick) => {
                     setServerNickname(newNick);
-                    localStorage.setItem('chopaeng_discord_nickname', newNick);
+                    setUserScopedItem('chopaeng_discord_nickname', newNick, user?.user_id);
                     const parsed = parseDiscordNicknameToCharacters(newNick);
                     if (parsed.length > 0) {
                         const updatedProfile: OrderProfile = {
@@ -4498,7 +4568,7 @@ const OrderBot: React.FC = () => {
                             characterId: characters[0]?.id ?? null,
                             orderForSelf: true,
                         };
-                        saveProfile(updatedProfile);
+                        saveProfile(updatedProfile, user?.user_id);
                         setOrderProfile(updatedProfile);
                     }
                     setShowNicknameModal(false);

@@ -1,6 +1,7 @@
 import { API_BASE } from '../config/api';
 import { getAuthToken } from '../context/authToken';
 import type { CommunityLoadout } from '../types/pocketLoadout';
+import { getUserScopedItem, setUserScopedItem } from './accountStorage';
 
 const UPVOTES_STORAGE_KEY = 'chopaeng_user_upvoted_loadouts';
 
@@ -122,7 +123,7 @@ export const upvoteCommunityLoadout = async (
     // Check local status first
     let isCurrentlyUpvoted = false;
     try {
-        const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
+        const stored = getUserScopedItem(UPVOTES_STORAGE_KEY);
         const ids: string[] = stored ? JSON.parse(stored) : [];
         isCurrentlyUpvoted = ids.includes(id);
     } catch {
@@ -134,14 +135,14 @@ export const upvoteCommunityLoadout = async (
 
     // Save optimistic state to localStorage immediately
     try {
-        const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
+        const stored = getUserScopedItem(UPVOTES_STORAGE_KEY);
         let ids: string[] = stored ? JSON.parse(stored) : [];
         if (optimisticUpvoted) {
             if (!ids.includes(id)) ids.push(id);
         } else {
             ids = ids.filter((x) => x !== id);
         }
-        localStorage.setItem(UPVOTES_STORAGE_KEY, JSON.stringify(ids));
+        setUserScopedItem(UPVOTES_STORAGE_KEY, JSON.stringify(ids));
     } catch {
         // Ignore
     }
@@ -159,14 +160,14 @@ export const upvoteCommunityLoadout = async (
 
             // Sync confirmed server state
             try {
-                const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
+                const stored = getUserScopedItem(UPVOTES_STORAGE_KEY);
                 let ids: string[] = stored ? JSON.parse(stored) : [];
                 if (upvoted) {
                     if (!ids.includes(id)) ids.push(id);
                 } else {
                     ids = ids.filter((x) => x !== id);
                 }
-                localStorage.setItem(UPVOTES_STORAGE_KEY, JSON.stringify(ids));
+                setUserScopedItem(UPVOTES_STORAGE_KEY, JSON.stringify(ids));
             } catch {
                 // Ignore
             }
@@ -185,7 +186,7 @@ export const upvoteCommunityLoadout = async (
  */
 export const isLoadoutUpvoted = (id: string, serverHasUpvoted?: boolean): boolean => {
     try {
-        const stored = localStorage.getItem(UPVOTES_STORAGE_KEY);
+        const stored = getUserScopedItem(UPVOTES_STORAGE_KEY);
         if (stored) {
             const ids: string[] = JSON.parse(stored);
             if (ids.includes(id)) return true;
