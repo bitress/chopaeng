@@ -51,7 +51,8 @@ const Critters: React.FC = () => {
         const load = async () => {
             setLoading(true);
             try {
-                const { creatures: rawCreatures } = await import('@bitress/animal-crossing');
+                const creaturesMod = await import('@bitress/animal-crossing/lib/data/Creatures.json');
+                const rawCreatures = (creaturesMod.default || creaturesMod) as any[];
                 if (!mounted || !Array.isArray(rawCreatures)) return;
 
                 const mapped: CreatureEntry[] = (rawCreatures as any[]).map((c: any) => {

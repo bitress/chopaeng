@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/useAuth';
 import { getAuthToken } from '../context/authToken';
 import {
-    generateNicknamePresets,
     isValidAcnhNickname,
     getNicknameValidationError,
     formatCharactersToNickname,
-    type NicknamePreset,
 } from '../utils/characterParser';
 import { updateDiscordNickname } from '../utils/userProfileApi';
 import { playChimeClick } from '../utils/kkAudioSynthesizer';
@@ -74,9 +72,8 @@ export const DiscordNicknameModal: React.FC<DiscordNicknameModalProps> = ({
     const trimmed = nickname.trim();
     const isValid = isValidAcnhNickname(trimmed);
     const validationError = getNicknameValidationError(nickname);
-    const presets: NicknamePreset[] = generateNicknamePresets(characters);
 
-    const handleSelectPreset = (val: string) => {
+    const handleSelectNickname = (val: string) => {
         setNickname(val.slice(0, 32));
         setErrorMsg(null);
         playChimeClick();
@@ -268,11 +265,23 @@ export const DiscordNicknameModal: React.FC<DiscordNicknameModalProps> = ({
                         </div>
                     </div>
 
-                    {/* ── SECTION 1: CHOOSE FROM PRESETS & CHARACTERS ── */}
+                    {/* ── SECTION 1: SAVED CHARACTERS & AUTO-SYNC ── */}
                     <div>
                         <div className="dnm-section-title">
-                            <span>1. Choose from Characters or Presets</span>
-                            <span className="tiny-text text-muted fw-bold">Click to populate</span>
+                            <span>1. Saved In-Game Characters</span>
+                            {characters.length > 1 && (
+                                <button
+                                    type="button"
+                                    className="btn btn-xs btn-outline-primary rounded-pill fw-bold py-0.5 px-2 tiny-text d-inline-flex align-items-center gap-1"
+                                    onClick={() => {
+                                        const autoNick = formatCharactersToNickname(characters);
+                                        if (autoNick) handleSelectNickname(autoNick);
+                                    }}
+                                >
+                                    <i className="fa-solid fa-arrows-rotate me-1" />
+                                    <span>Sync All ({formatCharactersToNickname(characters)})</span>
+                                </button>
+                            )}
                         </div>
 
                         {/* Character Slots */}
@@ -285,7 +294,7 @@ export const DiscordNicknameModal: React.FC<DiscordNicknameModalProps> = ({
                                         <div
                                             key={char.id}
                                             className={`dnm-char-card ${isChosen ? 'selected' : ''}`}
-                                            onClick={() => handleSelectPreset(`${char.ign} | ${char.islandName}`)}
+                                            onClick={() => handleSelectNickname(`${char.ign} | ${char.islandName}`)}
                                             role="button"
                                             tabIndex={0}
                                         >
@@ -318,44 +327,6 @@ export const DiscordNicknameModal: React.FC<DiscordNicknameModalProps> = ({
                                                 </span>
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {/* Multi-slot Presets if available */}
-                        {presets.length > 1 && (
-                            <div className="dnm-preset-grid mb-2">
-                                {presets.map((preset) => {
-                                    const isPresetActive =
-                                        trimmed.toLowerCase() === preset.value.toLowerCase();
-                                    return (
-                                        <button
-                                            key={preset.id}
-                                            type="button"
-                                            className={`dnm-preset-btn ${isPresetActive ? 'active' : ''}`}
-                                            onClick={() => handleSelectPreset(preset.value)}
-                                        >
-                                            <div className="min-w-0 flex-grow-1">
-                                                <div className="dnm-preset-val text-truncate">
-                                                    {preset.value}
-                                                </div>
-                                                <div className="dnm-preset-desc text-truncate">
-                                                    {preset.description}
-                                                </div>
-                                            </div>
-                                            {preset.badge && (
-                                                <span
-                                                    className={`badge rounded-pill x-small flex-shrink-0 ${
-                                                        isPresetActive
-                                                            ? 'bg-primary text-white'
-                                                            : 'bg-light text-secondary border'
-                                                    }`}
-                                                >
-                                                    {preset.badge}
-                                                </span>
-                                            )}
-                                        </button>
                                     );
                                 })}
                             </div>

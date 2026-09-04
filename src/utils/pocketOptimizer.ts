@@ -271,7 +271,7 @@ export const POPULAR_DIY_RECIPES: Record<string, RecipeIngredient[]> = {
     ],
 };
 
-import { recipes, items } from '@bitress/animal-crossing';
+import recipesData from '@bitress/animal-crossing/lib/data/Recipes.json';
 import { toTitleCase } from '../data/explorerDataLoader';
 
 let _recipeIngredientsCache: Map<string, RecipeIngredient[]> | null = null;
@@ -279,37 +279,24 @@ let _recipeIngredientsCache: Map<string, RecipeIngredient[]> | null = null;
 function buildRecipeIngredientsMap(): Map<string, RecipeIngredient[]> {
     if (_recipeIngredientsCache) return _recipeIngredientsCache;
 
-    const itemMap = new Map<string, { id: string; name: string; image: string }>();
-    if (Array.isArray(items)) {
-        for (const item of items) {
-            const hex = (item.internalId ?? item.variations?.[0]?.internalId)?.toString(16).toUpperCase().padStart(4, '0') || '0000';
-            const img = item.image
-                || item.inventoryImage
-                || item.storageImage
-                || item.variations?.[0]?.image
-                || item.variations?.[0]?.storageImage
-                || 'https://acnhcdn.com/latest/FtrIcon/FtrLeaf.png';
-            itemMap.set(item.name.toLowerCase(), { id: hex, name: toTitleCase(item.name), image: img });
-        }
-    }
-
     const map = new Map<string, RecipeIngredient[]>();
+    const recipes = (recipesData as any[]) || [];
 
-    if (Array.isArray(recipes)) {
-        for (const r of recipes) {
-            if (r.materials) {
-                const ingredients: RecipeIngredient[] = Object.entries(r.materials).map(([matName, qty]) => {
-                    const info = itemMap.get(matName.toLowerCase());
-                    return {
-                        id: info?.id || '0000',
-                        name: info?.name || toTitleCase(matName),
-                        quantity: qty,
-                        image: info?.image || 'https://acnhcdn.com/latest/FtrIcon/FtrLeaf.png',
-                    };
-                });
-                const cleanKey = r.name.toLowerCase().trim();
-                map.set(cleanKey, ingredients);
-            }
+    for (const r of recipes) {
+        if (r.materials) {
+            const ingredients: RecipeIngredient[] = Object.entries(r.materials).map(([matName, qty]) => {
+                const matTrans = r.materialsTranslations?.[matName];
+                const intId = matTrans?.id;
+                const hex = intId != null ? intId.toString(16).toUpperCase().padStart(4, '0') : '0000';
+                return {
+                    id: hex,
+                    name: toTitleCase(matName),
+                    quantity: Number(qty) || 1,
+                    image: 'https://acnhcdn.com/latest/FtrIcon/FtrLeaf.png',
+                };
+            });
+            const cleanKey = r.name.toLowerCase().trim();
+            map.set(cleanKey, ingredients);
         }
     }
 
@@ -327,10 +314,11 @@ export const findRecipeIngredients = (recipeName: string): RecipeIngredient[] | 
         .replace(/^diy\s+recipe\s*:\s*/i, '')
         .trim();
 
-    const map = buildRecipeIngredientsMap();
-    if (map.has(clean)) {
-        return map.get(clean)!;
+    const titleKey = toTitleCase(clean);
+    if (POPULAR_DIY_RECIPES[titleKey]) {
+        return POPULAR_DIY_RECIPES[titleKey];
     }
 
-    return POPULAR_DIY_RECIPES[toTitleCase(clean)] || null;
+    const map = buildRecipeIngredientsMap();
+    return map.get(clean) || null;
 };

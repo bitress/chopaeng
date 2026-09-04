@@ -8,12 +8,12 @@ import { useCatalogData } from "../hooks/useCatalogData";
 import { useFavoriteIslands, getStoredFavoriteIslands, saveStoredFavoriteIslands } from "../hooks/useFavoriteIslands";
 import { useSavedCharacters, type SavedCharacter } from "../hooks/useSavedCharacters";
 import { parseItemCodes } from "../utils/itemCodeParser";
-import { parseDiscordNicknameToCharacters, generateNicknamePresets, formatCharactersToNickname } from "../utils/characterParser";
+import { parseDiscordNicknameToCharacters, formatCharactersToNickname } from "../utils/characterParser";
 import { playChimeClick } from "../utils/kkAudioSynthesizer";
 import { fetchUserOrderHistory, type OrderHistoryItem } from "../utils/orderBotApi";
 import { getStoredPassport, savePassportToDb, fetchPublicPassportFromDb, updateDiscordNickname, type PublicPassportData } from "../utils/userProfileApi";
 import { HowItWorksExplainer, PROFILE_EXPLAINER_CONFIG } from "../components/HowItWorksExplainer";
-import { ResidentPassportCard, FRUIT_ICONS, ZODIAC_SIGNS, PERSONALITY_THEMES } from "../components/passport/ResidentPassportCard";
+import { FRUIT_ICONS, ZODIAC_SIGNS, PERSONALITY_THEMES } from "../components/passport/ResidentPassportCard";
 import { setUserScopedItem } from "../utils/accountStorage";
 import "./Profile.css";
 
@@ -145,7 +145,6 @@ const Profile = () => {
     const navigate = useNavigate();
     const { user: authUser, loading: authLoading, login, canAccessIsland } = useAuth();
     const { islands: allIslands } = useIslandData();
-    const { data: catalogData } = useCatalogData();
     const { favoriteIslands, toggleFavoriteIsland, isFavoriteIsland } = useFavoriteIslands();
 
     const [profile, setProfile] = useState<ProfileResponse | null>(null);
@@ -154,6 +153,10 @@ const Profile = () => {
     const [prefNotice, setPrefNotice] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"profile" | "access" | "favorites" | "orders" | "history">("profile");
     const [accessFilter, setAccessFilter] = useState<"all" | "public" | "member" | "order">("all");
+
+    // Only load 40k catalog items if user is actively viewing orders or history
+    const isOrdersTab = activeTab === "orders" || activeTab === "history";
+    const { data: catalogData } = useCatalogData({ enabled: isOrdersTab });
 
     // Public Passport Customizer State
     const [passportData, setPassportData] = useState<PublicPassportData>(() => getStoredPassport(authUser?.username || ''));
@@ -179,6 +182,15 @@ const Profile = () => {
     useEffect(() => {
         loadOrders();
     }, [loadOrders, authUser?.user_id]);
+
+    const parsedOrdersMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof parseItemCodes>>();
+        const catalog = catalogData?.all || [];
+        for (const order of orders) {
+            map.set(order.id, parseItemCodes(order.command, catalog));
+        }
+        return map;
+    }, [orders, catalogData?.all]);
 
     const handleReorder = (order: OrderHistoryItem, targetRoute: "/order" | "/command-builder" = "/order") => {
         const bundle = parseItemCodes(order.command, catalogData?.all || []);
@@ -296,23 +308,6 @@ const Profile = () => {
     const [targetDiscordNick, setTargetDiscordNick] = useState("");
     const [customizedNick, setCustomizedNick] = useState(false);
     const [isSavingChar, setIsSavingChar] = useState(false);
-
-    // Suggested presets for Discord nickname when adding or editing characters
-    const suggestedNickPresets = useMemo(() => {
-        const cleanI = charIgn.trim();
-        const cleanIs = charIsland.trim();
-        if (!cleanI || !cleanIs) return [];
-        const candidateChar = { ign: cleanI, islandName: cleanIs, icon: charIcon };
-
-        let candidateList: { ign: string; islandName: string; icon?: string; isDefault?: boolean }[] = [];
-        if (editingCharId) {
-            candidateList = characters.map((c) => (c.id === editingCharId ? { ...candidateChar, isDefault: c.isDefault } : c));
-        } else {
-            candidateList = [...characters, { ...candidateChar, isDefault: characters.length === 0 }];
-        }
-
-        return generateNicknamePresets(candidateList);
-    }, [charIgn, charIsland, charIcon, editingCharId, characters]);
 
     // Automatically update target Discord nickname preview as user types IGN and Island
     useEffect(() => {
@@ -1731,31 +1726,7 @@ const Profile = () => {
                                 </div>
                             </div>
 
-                            {/* 2. Live Resident Passport Booklet Preview */}
-                            <div className="pf-card p-0 overflow-hidden border-0 bg-transparent">
-                                <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-                                    <div className="d-flex align-items-center gap-2">
-                                        <div className="icon-bubble bg-success bg-opacity-10 text-success" style={{ width: 32, height: 32, fontSize: "0.9rem" }}>
-                                            <i className="fa-solid fa-passport"></i>
-                                        </div>
-                                        <h3 className="h6 ac-font text-dark mb-0">Live Passport Preview</h3>
-                                    </div>
-                                    <span className="tiny-text text-muted">Real-time update</span>
-                                </div>
-
-                                <ResidentPassportCard
-                                    passport={{
-                                        ...passportData,
-                                        primaryIgn: activeCharacter.ign || passportData.primaryIgn || "Resident",
-                                        primaryIsland: activeCharacter.islandName || passportData.primaryIsland || "Paradise",
-                                    }}
-                                    avatarUrl={profileUser?.avatar || authUser?.avatar || passportData.avatarUrl}
-                                    allVillagers={catalogData?.villagers || []}
-                                    interactive={true}
-                                />
-                            </div>
-
-                            {/* 3. Discord & Account Information Card */}
+                            {/* 2. Discord & Account Information Card */}
                             <div className="pf-card">
                                 <div className="d-flex align-items-center gap-3 mb-3">
                                     <div className="icon-bubble bg-success bg-opacity-10 text-success">
@@ -2272,7 +2243,7 @@ const Profile = () => {
                                 ) : orders.length > 0 ? (
                                     <div className="row g-3">
                                         {orders.map((order) => {
-                                            const parsed = parseItemCodes(order.command, catalogData?.all || []);
+                                            const parsed = parsedOrdersMap.get(order.id) || { items: [], totalSlots: 0, unrecognizedCodes: [] };
                                             const isCopied = copiedOrderId === order.id;
                                             const statusColor =
                                                 order.status === "ready" || order.status === "completed"
@@ -2623,38 +2594,9 @@ const Profile = () => {
                                                 />
                                             </div>
 
-                                            {/* Quick Preset Selector */}
-                                            {suggestedNickPresets.length > 1 && (
-                                                <div className="d-flex align-items-center gap-1 mt-2 flex-wrap">
-                                                    <span className="tiny-text text-muted fw-bold">Presets:</span>
-                                                    {suggestedNickPresets.map((p) => {
-                                                        const isMatch = targetDiscordNick.trim().toLowerCase() === p.value.toLowerCase();
-                                                        return (
-                                                            <button
-                                                                key={p.id}
-                                                                type="button"
-                                                                className={`btn btn-xs rounded-pill py-0.5 px-2 tiny-text fw-bold ${
-                                                                    isMatch
-                                                                        ? "btn-primary text-white"
-                                                                        : "btn-outline-secondary bg-white"
-                                                                }`}
-                                                                onClick={() => {
-                                                                    setTargetDiscordNick(p.value);
-                                                                    setCustomizedNick(true);
-                                                                    playChimeClick();
-                                                                }}
-                                                                title={p.description}
-                                                            >
-                                                                {p.label}: {p.value}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-
-                                            <div className="tiny-text text-muted mt-1.5 d-flex align-items-center gap-1">
+                                            <div className="tiny-text text-muted mt-2 d-flex align-items-center gap-1">
                                                 <i className="fa-solid fa-circle-check text-success"></i>
-                                                <span>Your ChoPaeng Discord server nickname will sync Slots 1, 2, and 3 using "|" and "/" separators automatically on save.</span>
+                                                <span>Automatically syncs Slots 1, 2, and 3 using "/" between IGNs and "|" before Island names.</span>
                                             </div>
                                         </div>
                                     )}
@@ -2742,57 +2684,6 @@ const Profile = () => {
                                         </div>
                                     </div>
 
-                                    {/* Quick Preset Generator from Saved Characters */}
-                                    {(() => {
-                                        const presets = generateNicknamePresets(characters);
-                                        if (presets.length === 0) return null;
-
-                                        return (
-                                            <div className="mb-3">
-                                                <div className="d-flex align-items-center justify-content-between mb-1">
-                                                    <label className="text-uppercase tiny-text fw-bold text-muted mb-0">
-                                                        Auto-Format Presets ({presets.length} Formats)
-                                                    </label>
-                                                    <span className="tiny-text text-muted">Click to populate</span>
-                                                </div>
-                                                <div className="row g-2">
-                                                    {presets.map((preset) => {
-                                                        const isSelected = newDiscordNick.trim().toLowerCase() === preset.value.toLowerCase();
-                                                        return (
-                                                            <div key={preset.id} className="col-12 col-sm-6">
-                                                                <div
-                                                                    className={`discord-preset-card ${isSelected ? "active" : ""}`}
-                                                                    onClick={() => {
-                                                                        setNewDiscordNick(preset.value);
-                                                                        playChimeClick();
-                                                                    }}
-                                                                    role="button"
-                                                                    tabIndex={0}
-                                                                >
-                                                                    <div className="d-flex align-items-center gap-2 overflow-hidden">
-                                                                        <i className={`fa-solid ${preset.icon || "fa-id-badge"} ${isSelected ? "text-primary" : "text-muted"}`}></i>
-                                                                        <div className="overflow-hidden">
-                                                                            <strong className="d-block text-truncate font-monospace small text-dark">
-                                                                                {preset.value}
-                                                                            </strong>
-                                                                            <span className="tiny-text text-muted text-truncate d-block">
-                                                                                {preset.description}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    {preset.badge && (
-                                                                        <span className={`badge rounded-pill x-small flex-shrink-0 ${isSelected ? "bg-primary text-white" : "bg-light text-secondary border"}`}>
-                                                                            {preset.badge}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
 
                                     {/* Nickname Input Field */}
                                     <div className="mb-3">

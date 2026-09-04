@@ -561,7 +561,12 @@ const TodaySnapshot: React.FC = () => {
         const load = async () => {
             setLoading(true);
             try {
-                const { creatures, villagers } = await import('@bitress/animal-crossing');
+                const [creaturesMod, villagersMod] = await Promise.all([
+                    import('@bitress/animal-crossing/lib/data/Creatures.json'),
+                    import('@bitress/animal-crossing/lib/data/Villagers.json'),
+                ]);
+                const creatures = (creaturesMod.default || creaturesMod) as any[];
+                const villagers = (villagersMod.default || villagersMod) as any[];
                 if (!mounted) return;
 
                 // Available creatures right now

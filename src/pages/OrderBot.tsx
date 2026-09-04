@@ -984,6 +984,15 @@ const OrderBot: React.FC = () => {
         setHistoryLoading(false);
     }, [token]);
 
+    const parsedHistoryOrdersMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof parseItemCodes>>();
+        const catalog = catalogData?.all || [];
+        for (const order of historyOrders) {
+            map.set(order.id, parseItemCodes(order.command, catalog));
+        }
+        return map;
+    }, [historyOrders, catalogData?.all]);
+
     const handleOpenHistoryModal = () => {
         setShowHistoryModal(true);
         loadHistory();
@@ -3977,7 +3986,7 @@ const OrderBot: React.FC = () => {
                             ) : historyOrders.length > 0 ? (
                                 <div className="d-flex flex-column gap-3">
                                     {historyOrders.map((order) => {
-                                        const parsed = parseItemCodes(order.command, catalogData?.all || []);
+                                        const parsed = parsedHistoryOrdersMap.get(order.id) || { items: [], totalSlots: 0, unrecognizedCodes: [] };
                                         return (
                                             <div key={order.id} className="card rounded-4 p-3 bg-light border shadow-2xs">
                                                 <div className="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-1">

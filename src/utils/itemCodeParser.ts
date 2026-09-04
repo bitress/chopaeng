@@ -10,6 +10,51 @@ export interface ParsedItemCodeResult {
     parsedSummary: string;
 }
 
+interface CatalogIndex {
+    byId: Map<string, CatalogEntity>;
+    byName: Map<string, CatalogEntity>;
+}
+
+const _catalogIndexCache = new WeakMap<CatalogEntity[], CatalogIndex>();
+let _lastCatalogRef: CatalogEntity[] | null = null;
+let _lastCatalogIndex: CatalogIndex | null = null;
+
+function getCatalogIndex(catalogItems: CatalogEntity[]): CatalogIndex {
+    if (catalogItems.length === 0) {
+        return { byId: new Map(), byName: new Map() };
+    }
+    if (_lastCatalogRef === catalogItems && _lastCatalogIndex) {
+        return _lastCatalogIndex;
+    }
+    const cached = _catalogIndexCache.get(catalogItems);
+    if (cached) {
+        _lastCatalogRef = catalogItems;
+        _lastCatalogIndex = cached;
+        return cached;
+    }
+
+    const byId = new Map<string, CatalogEntity>();
+    const byName = new Map<string, CatalogEntity>();
+
+    for (let i = 0; i < catalogItems.length; i++) {
+        const item = catalogItems[i];
+        if (item.id) {
+            const trimmed = item.id.trim();
+            byId.set(trimmed.toUpperCase(), item);
+            byId.set(trimmed.toLowerCase(), item);
+        }
+        if (item.name) {
+            byName.set(item.name.trim().toLowerCase(), item);
+        }
+    }
+
+    const index: CatalogIndex = { byId, byName };
+    _catalogIndexCache.set(catalogItems, index);
+    _lastCatalogRef = catalogItems;
+    _lastCatalogIndex = index;
+    return index;
+}
+
 /**
  * Intelligent parser for ACNH item codes, Bot commands, and hex lists.
  * Supported formats:
@@ -38,19 +83,7 @@ export const parseItemCodes = (
         .replace(/^(?:!order|!drop|\/order|\/drop|\$order|\$drop|order:|drop:)\s*/i, '')
         .trim();
 
-    // Map for fast catalog lookup (by hex ID uppercase, lowercase, and exact name)
-    const catalogById = new Map<string, CatalogEntity>();
-    const catalogByName = new Map<string, CatalogEntity>();
-
-    for (const item of catalogItems) {
-        if (item.id) {
-            catalogById.set(item.id.trim().toUpperCase(), item);
-            catalogById.set(item.id.trim().toLowerCase(), item);
-        }
-        if (item.name) {
-            catalogByName.set(item.name.trim().toLowerCase(), item);
-        }
-    }
+    const { byId: catalogById, byName: catalogByName } = getCatalogIndex(catalogItems);
 
     // Split input into lines or token chunks
     const lines = cleanText.split(/[\r\n]+/);

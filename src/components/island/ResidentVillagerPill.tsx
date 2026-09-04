@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FINDER_API_BASE } from "../../config/api";
-import { useCatalogData } from "../../hooks/useCatalogData";
+import { useVillagersData } from "../../hooks/useVillagersData";
 import { PERSONALITY_COLORS, FALLBACK_PALETTE } from "../../config/constants";
 
 function hashString(str: string): number {
@@ -21,8 +21,8 @@ function getPersonalityStyle(personality: string | undefined, seed: string) {
 
 export const ResidentVillagerPill = ({ villagerName }: { villagerName: string }) => {
     const navigate = useNavigate();
-    const { data } = useCatalogData();
-    const matched = data?.villagers.find((v) => v.name.toLowerCase() === villagerName.toLowerCase()) || null;
+    const { getVillagerByName } = useVillagersData();
+    const matched = getVillagerByName(villagerName) || null;
 
     const fallbackImg =
         matched?.image ||
@@ -32,8 +32,12 @@ export const ResidentVillagerPill = ({ villagerName }: { villagerName: string })
     const [imgError, setImgError] = useState(false);
 
     useEffect(() => {
-        setIconUrl(matched?.image || null);
+        const localImg = matched?.image || null;
+        setIconUrl(localImg);
         setImgError(false);
+
+        // If local high-res icon is already available, skip expensive network call
+        if (localImg) return;
 
         let isMounted = true;
         const fetchIcon = async () => {

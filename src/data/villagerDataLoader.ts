@@ -8,7 +8,12 @@ export const loadVillagers = async (): Promise<CatalogEntity[]> => {
     }
 
     try {
-        const { villagers, npcs } = await import('@bitress/animal-crossing');
+        const [villagersMod, npcsMod] = await Promise.all([
+            import('@bitress/animal-crossing/lib/data/Villagers.json'),
+            import('@bitress/animal-crossing/lib/data/NPCs.json'),
+        ]);
+        const villagers = (villagersMod.default || villagersMod) as any[];
+        const npcs = (npcsMod.default || npcsMod) as any[];
 
         const allCharacters: CatalogEntity[] = [];
 

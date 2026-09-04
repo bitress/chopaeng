@@ -113,7 +113,8 @@ const Events: React.FC = () => {
         const load = async () => {
             setLoading(true);
             try {
-                const { seasonsAndEvents } = await import('@bitress/animal-crossing');
+                const eventsMod = await import('@bitress/animal-crossing/lib/data/SeasonsAndEvents.json');
+                const seasonsAndEvents = (eventsMod.default || eventsMod) as any[];
                 if (!mounted || !Array.isArray(seasonsAndEvents)) return;
 
                 const mapped: GameEvent[] = (seasonsAndEvents as any[]).map((ev: EventRaw) => {

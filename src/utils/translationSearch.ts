@@ -34,7 +34,8 @@ let _cachedIndex: Map<string, TranslationIndex> | null = null;
 export const buildTranslationIndex = async (): Promise<Map<string, TranslationIndex>> => {
     if (_cachedIndex) return _cachedIndex;
 
-    const { items } = await import('@bitress/animal-crossing');
+    const itemsMod = await import('@bitress/animal-crossing/lib/data/Items.json');
+    const items = (itemsMod.default || itemsMod) as any[];
     const index = new Map<string, TranslationIndex>();
 
     for (const lang of SUPPORTED_LANGUAGES) {

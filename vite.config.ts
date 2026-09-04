@@ -20,10 +20,11 @@ export default defineConfig({
         },
     },
     resolve: {
-        alias: {
-            'react-helmet-async': path.resolve(__dirname, 'node_modules/react-helmet-async/lib/index.js'),
-            '@bitress/animal-crossing': path.resolve(__dirname, 'node_modules/@bitress/animal-crossing/lib/index.js')
-        }
+        alias: [
+            { find: 'react-helmet-async', replacement: path.resolve(__dirname, 'node_modules/react-helmet-async/lib/index.js') },
+            { find: '@bitress/animal-crossing/lib', replacement: path.resolve(__dirname, 'node_modules/@bitress/animal-crossing/lib') },
+            { find: /^@bitress\/animal-crossing$/, replacement: path.resolve(__dirname, 'node_modules/@bitress/animal-crossing/lib/index.js') },
+        ]
     },
     plugins: [react()],
     build: {
@@ -40,9 +41,30 @@ export default defineConfig({
                     ) {
                         return 'vendor-react';
                     }
-                    // Animal Crossing Database
+                    // Animal Crossing Database - granular chunks for on-demand loading
                     if (id.includes('@bitress/animal-crossing')) {
-                        return 'animal-crossing-data';
+                        if (id.includes('Villagers.json') || id.includes('NPCs.json')) {
+                            return 'ac-villagers';
+                        }
+                        if (id.includes('Creatures.json')) {
+                            return 'ac-creatures';
+                        }
+                        if (id.includes('Recipes.json')) {
+                            return 'ac-recipes';
+                        }
+                        if (id.includes('SeasonsAndEvents.json')) {
+                            return 'ac-events';
+                        }
+                        if (id.includes('Construction.json') || id.includes('Reactions.json') || id.includes('Achievements.json')) {
+                            return 'ac-misc';
+                        }
+                        if (id.includes('Items.json')) {
+                            return 'ac-items';
+                        }
+                        if (id.includes('Translations.json')) {
+                            return 'ac-translations';
+                        }
+                        return 'ac-core';
                     }
                     // Router
                     if (id.includes('node_modules/react-router')) {

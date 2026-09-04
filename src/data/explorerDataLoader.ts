@@ -65,14 +65,20 @@ export const loadExplorerItems = async (): Promise<CatalogEntity[]> => {
     }
 
     try {
-        const {
-            items,
-            recipes,
-            creatures,
-            reactions,
-            construction,
-            achievements,
-        } = await import('@bitress/animal-crossing');
+        const [itemsMod, recipesMod, creaturesMod, reactionsMod, constructionMod, achievementsMod] = await Promise.all([
+            import('@bitress/animal-crossing/lib/data/Items.json'),
+            import('@bitress/animal-crossing/lib/data/Recipes.json'),
+            import('@bitress/animal-crossing/lib/data/Creatures.json'),
+            import('@bitress/animal-crossing/lib/data/Reactions.json'),
+            import('@bitress/animal-crossing/lib/data/Construction.json'),
+            import('@bitress/animal-crossing/lib/data/Achievements.json'),
+        ]);
+        const items = (itemsMod.default || itemsMod) as any[];
+        const recipes = (recipesMod.default || recipesMod) as any[];
+        const creatures = (creaturesMod.default || creaturesMod) as any[];
+        const reactions = (reactionsMod.default || reactionsMod) as any[];
+        const construction = (constructionMod.default || constructionMod) as any[];
+        const achievements = (achievementsMod.default || achievementsMod) as any[];
 
         const allCatalog: CatalogEntity[] = [];
 
@@ -93,7 +99,7 @@ export const loadExplorerItems = async (): Promise<CatalogEntity[]> => {
                     || firstVar?.closetImage
                     || FALLBACK_IMAGE;
 
-                const mappedVariations = item.variations?.map((v) => {
+                const mappedVariations = item.variations?.map((v: any) => {
                     const vHex = v.internalId != null
                         ? v.internalId.toString(16).toUpperCase().padStart(4, '0')
                         : rawHexId;
@@ -103,7 +109,7 @@ export const loadExplorerItems = async (): Promise<CatalogEntity[]> => {
                         imageUrl: v.image || v.storageImage || v.closetImage || primaryImage,
                         Variation: v.variation != null ? toTitleCase(String(v.variation)) : undefined,
                         Pattern: v.pattern != null ? toTitleCase(String(v.pattern)) : undefined,
-                        Colours: Array.isArray(v.colors) ? v.colors.map((c) => toTitleCase(String(c))) : [],
+                        Colours: Array.isArray(v.colors) ? v.colors.map((c: any) => toTitleCase(String(c))) : [],
                         uniqueEntryId: v.uniqueEntryId,
                     };
                 }) || [];

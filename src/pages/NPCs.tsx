@@ -63,7 +63,12 @@ const NPCs: React.FC = () => {
         const load = async () => {
             setLoading(true);
             try {
-                const { npcs: rawNpcs, villagers: rawVillagers } = await import('@bitress/animal-crossing');
+                const [npcsMod, villagersMod] = await Promise.all([
+                    import('@bitress/animal-crossing/lib/data/NPCs.json'),
+                    import('@bitress/animal-crossing/lib/data/Villagers.json'),
+                ]);
+                const rawNpcs = (npcsMod.default || npcsMod) as any[];
+                const rawVillagers = (villagersMod.default || villagersMod) as any[];
                 if (!mounted) return;
 
                 if (Array.isArray(rawNpcs)) {
