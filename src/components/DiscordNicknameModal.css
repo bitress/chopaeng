@@ -1,0 +1,495 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   DISCORD NICKNAME MODAL & EDITOR (AESTHETIC STYLING)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.dnm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    background-color: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+    animation: dnmFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dnmFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.dnm-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 560px;
+    overflow: hidden;
+    position: relative;
+    animation: dnmScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;
+}
+
+@keyframes dnmScaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Header */
+.dnm-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dnm-header-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #5865f2;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.35);
+    flex-shrink: 0;
+}
+
+.dnm-title {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.25;
+}
+
+.dnm-subtitle {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.2rem;
+}
+
+.dnm-close-btn {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.dnm-close-btn:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #ef4444;
+    transform: rotate(90deg);
+}
+
+/* Body */
+.dnm-body {
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.dnm-body::-webkit-scrollbar {
+    width: 6px;
+}
+.dnm-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.dnm-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+.dnm-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Discord Chat Preview Box */
+.dnm-discord-preview {
+    background: #2b2d31;
+    border-radius: 1rem;
+    padding: 1rem 1.1rem;
+    color: #dbdee1;
+    font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+    border: 1px solid #383a40;
+}
+
+.dnm-discord-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #949ba4;
+}
+
+.dnm-discord-user-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.dnm-discord-avatar-wrap {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.dnm-discord-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #5865f2;
+}
+
+.dnm-discord-status-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #23a55a;
+    border: 2.5px solid #2b2d31;
+}
+
+.dnm-discord-nick-text {
+    font-weight: 700;
+    font-size: 1.02rem;
+    color: #5865f2;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.dnm-discord-handle {
+    font-size: 0.76rem;
+    color: #949ba4;
+}
+
+.dnm-discord-badge {
+    background: #5865f2;
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.25rem;
+    letter-spacing: 0.03em;
+}
+
+.dnm-format-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    margin-top: 0.65rem;
+    border: 1px solid transparent;
+}
+
+.dnm-format-badge.valid {
+    background: rgba(35, 165, 90, 0.18);
+    color: #57f287;
+    border-color: rgba(35, 165, 90, 0.35);
+}
+
+.dnm-format-badge.invalid {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+/* Sections */
+.dnm-section-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Character Quick Selector Cards */
+.dnm-char-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dnm-char-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.85rem;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.dnm-char-card:hover {
+    border-color: #5865f2;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.08);
+    transform: translateY(-1px);
+}
+
+.dnm-char-card.selected {
+    border-color: #5865f2;
+    background: #eef2ff;
+    outline: 2px solid #5865f2;
+}
+
+.dnm-char-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.dnm-char-card.selected .dnm-char-icon {
+    background: #5865f2;
+    color: #ffffff;
+}
+
+.dnm-char-ign {
+    font-weight: 800;
+    font-size: 0.92rem;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.dnm-char-island {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* Presets Grid */
+.dnm-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 0.5rem;
+}
+
+.dnm-preset-btn {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 0.55rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.dnm-preset-btn:hover {
+    border-color: #5865f2;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.1);
+    transform: translateY(-1px);
+}
+
+.dnm-preset-btn.active {
+    border-color: #5865f2;
+    background: #eef2ff;
+    outline: 2px solid #5865f2;
+}
+
+.dnm-preset-val {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.dnm-preset-desc {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+/* Input Row */
+.dnm-input-wrap {
+    position: relative;
+}
+
+.dnm-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    padding-right: 4.5rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: 2px solid #cbd5e1;
+    border-radius: 0.85rem;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.dnm-input:focus {
+    border-color: #5865f2;
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
+}
+
+.dnm-char-counter {
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.72rem;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-weight: 700;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.dnm-char-counter.danger {
+    color: #ef4444;
+}
+
+/* Quick pipe button */
+.dnm-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.dnm-chip-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.dnm-chip-btn:hover {
+    border-color: #5865f2;
+    background: #eef2ff;
+    color: #5865f2;
+}
+
+/* Footer */
+.dnm-footer {
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dnm-submit-btn {
+    background: #5865f2;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 0.75rem 1.75rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 14px rgba(88, 101, 242, 0.4);
+    transition: all 0.15s ease;
+    flex-grow: 1;
+}
+
+.dnm-submit-btn:hover:not(:disabled) {
+    background: #4752c4;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(88, 101, 242, 0.45);
+}
+
+.dnm-submit-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.dnm-cancel-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    border-radius: 9999px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dnm-cancel-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+}

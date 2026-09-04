@@ -19,6 +19,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const authedUser: AuthUser = {
                     user_id:  data.user_id,
                     username: data.username,
+                    discord_name: data.discord_name || data.username,
+                    nickname: data.nickname || '',
                     avatar:   data.avatar,
                     roles:    data.roles ?? [],
                     is_mod:   data.is_mod ?? false,
@@ -68,6 +70,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
             setLoading(false);
         }
+
+        const handleNickUpdated = (e: any) => {
+            const newNick = e.detail?.nickname;
+            if (typeof newNick === 'string') {
+                setUser((prev) => (prev ? { ...prev, nickname: newNick } : prev));
+            }
+        };
+
+        window.addEventListener('chopaeng_nickname_updated', handleNickUpdated);
+        return () => window.removeEventListener('chopaeng_nickname_updated', handleNickUpdated);
     }, [fetchMe]);
 
     const login = (returnPath?: string | React.MouseEvent) => {

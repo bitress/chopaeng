@@ -3,6 +3,8 @@ import { createContext } from "react";
 export interface AuthUser {
     user_id: string;
     username: string;
+    discord_name?: string;
+    nickname?: string;
     avatar: string;
     roles: string[];
     is_mod: boolean;

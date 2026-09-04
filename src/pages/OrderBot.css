@@ -1217,6 +1217,26 @@
     padding: 1.5rem;
     overflow-y: auto;
     flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.ob-modal-body::-webkit-scrollbar,
+.ob-modal-card::-webkit-scrollbar {
+    width: 6px;
+}
+.ob-modal-body::-webkit-scrollbar-track,
+.ob-modal-card::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ob-modal-body::-webkit-scrollbar-thumb,
+.ob-modal-card::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+.ob-modal-body::-webkit-scrollbar-thumb:hover,
+.ob-modal-card::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 /* ── Toast Notifications ─────────────────────────────────────── */

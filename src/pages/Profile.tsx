@@ -2278,49 +2278,29 @@ const Profile = () => {
             {/* ── SAVED CHARACTER ADD / EDIT MODAL ── */}
             {characterModalOpen && (
                 <div
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        backgroundColor: "rgba(0, 0, 0, 0.65)",
-                        backdropFilter: "blur(6px)",
-                        WebkitBackdropFilter: "blur(6px)",
-                        zIndex: 9999,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "1rem",
-                        overflowY: "auto",
-                    }}
+                    className="char-modal-backdrop"
                     onClick={() => setCharacterModalOpen(false)}
                     role="dialog"
                     aria-modal="true"
                     aria-label={editingCharId ? "Edit In-Game Character" : "Add In-Game Character"}
                 >
                     <div
-                        style={{
-                            background: "#fff",
-                            borderRadius: "1.5rem",
-                            padding: "2rem",
-                            maxWidth: 500,
-                            width: "100%",
-                            boxShadow: "0 32px 80px rgba(0,0,0,0.35)",
-                            position: "relative",
-                            maxHeight: "90vh",
-                            overflowY: "auto",
-                        }}
+                        className="char-modal-card"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                            <div className="d-flex align-items-center gap-2">
-                                <div
-                                    className="rounded-circle d-flex align-items-center justify-content-center bg-success text-white"
-                                    style={{ width: 36, height: 36, fontSize: "1rem" }}
-                                >
+                        <div className="char-modal-header">
+                            <div className="d-flex align-items-center gap-2.5">
+                                <div className="char-modal-header-icon">
                                     <i className={`fa-solid ${charIcon}`}></i>
                                 </div>
-                                <h3 className="h6 ac-font text-dark mb-0 fw-bold">
-                                    {editingCharId ? "Edit In-Game Character" : "Add In-Game Character"}
-                                </h3>
+                                <div>
+                                    <h3 className="char-modal-title ac-font">
+                                        {editingCharId ? "Edit In-Game Character" : "Add In-Game Character"}
+                                    </h3>
+                                    <div className="char-modal-subtitle">
+                                        {editingCharId ? "Update resident passport details" : "Register a resident for bot orders & passport"}
+                                    </div>
+                                </div>
                             </div>
                             <button
                                 type="button"
@@ -2330,91 +2310,103 @@ const Profile = () => {
                             />
                         </div>
 
-                        <form onSubmit={handleSaveCharacterModal}>
-                            {charError && (
-                                <div className="alert alert-danger py-2 px-3 small rounded-3 mb-3 fw-bold">
-                                    <i className="fa-solid fa-circle-exclamation me-1"></i> {charError}
+                        <form onSubmit={handleSaveCharacterModal} className="d-flex flex-column" style={{ minHeight: 0 }}>
+                            <div className="char-modal-body">
+                                {charError && (
+                                    <div className="alert alert-danger py-2 px-3 small rounded-3 mb-3 fw-bold">
+                                        <i className="fa-solid fa-circle-exclamation me-1"></i> {charError}
+                                    </div>
+                                )}
+
+                                <div className="row g-2.5 mb-3">
+                                    <div className="col-12 col-sm-6">
+                                        <label className="char-modal-input-label" htmlFor="profileCharIgn">
+                                            <i className="fa-solid fa-user text-success"></i>
+                                            <span>In-Game Name (IGN)</span>
+                                            <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            id="profileCharIgn"
+                                            type="text"
+                                            className="char-modal-input"
+                                            placeholder="e.g. Bitress"
+                                            value={charIgn}
+                                            onChange={(e) => setCharIgn(e.target.value)}
+                                            maxLength={24}
+                                            autoFocus
+                                        />
+                                        <div className="tiny-text text-muted mt-1">Exact ACNH player name</div>
+                                    </div>
+
+                                    <div className="col-12 col-sm-6">
+                                        <label className="char-modal-input-label" htmlFor="profileCharIsland">
+                                            <i className="fa-solid fa-mountain-sun text-success"></i>
+                                            <span>Island Name</span>
+                                            <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            id="profileCharIsland"
+                                            type="text"
+                                            className="char-modal-input"
+                                            placeholder="e.g. Cheurnice"
+                                            value={charIsland}
+                                            onChange={(e) => setCharIsland(e.target.value)}
+                                            maxLength={24}
+                                        />
+                                        <div className="tiny-text text-muted mt-1">Your ACNH island name</div>
+                                    </div>
                                 </div>
-                            )}
 
-                            <div className="mb-3">
-                                <label className="form-label fw-bold small text-dark" htmlFor="profileCharIgn">
-                                    In-Game Name (IGN) <span className="text-danger">*</span>
-                                </label>
-                                <input
-                                    id="profileCharIgn"
-                                    type="text"
-                                    className="form-control rounded-3 border-2"
-                                    placeholder="e.g. Bitress"
-                                    value={charIgn}
-                                    onChange={(e) => setCharIgn(e.target.value)}
-                                    maxLength={24}
-                                    autoFocus
-                                />
-                                <div className="form-text">Your exact Animal Crossing player name.</div>
-                            </div>
-
-                            <div className="mb-3">
-                                <label className="form-label fw-bold small text-dark" htmlFor="profileCharIsland">
-                                    Island Name <span className="text-danger">*</span>
-                                </label>
-                                <input
-                                    id="profileCharIsland"
-                                    type="text"
-                                    className="form-control rounded-3 border-2"
-                                    placeholder="e.g. Cheurnice"
-                                    value={charIsland}
-                                    onChange={(e) => setCharIsland(e.target.value)}
-                                    maxLength={24}
-                                />
-                                <div className="form-text">Your Animal Crossing island name.</div>
-                            </div>
-
-                            {/* Icon Picker */}
-                            <div className="mb-4">
-                                <label className="form-label fw-bold small text-dark d-block mb-2">
-                                    Character Badge Icon
-                                </label>
-                                <div className="d-flex flex-wrap gap-2">
-                                    {CHARACTER_ICONS.map((iconItem) => {
-                                        const isIconActive = charIcon === iconItem.id;
-                                        return (
-                                            <button
-                                                key={iconItem.id}
-                                                type="button"
-                                                className={`btn btn-sm rounded-pill px-2 py-1 d-flex align-items-center gap-1 transition-all ${
-                                                    isIconActive
-                                                        ? "btn-success text-white fw-bold shadow-xs"
-                                                        : "btn-light bg-light text-muted border"
-                                                }`}
-                                                style={{ fontSize: "0.78rem" }}
-                                                onClick={() => {
-                                                    setCharIcon(iconItem.id);
-                                                    playChimeClick();
-                                                }}
-                                            >
-                                                <i className={`fa-solid ${iconItem.id}`}></i>
-                                                <span>{iconItem.label}</span>
-                                            </button>
-                                        );
-                                    })}
+                                {/* Icon Picker */}
+                                <div>
+                                    <div className="d-flex align-items-center justify-content-between mb-2">
+                                        <label className="char-modal-input-label mb-0">
+                                            <i className="fa-solid fa-icons text-success"></i>
+                                            <span>Character Badge Icon</span>
+                                        </label>
+                                        <span className="badge bg-success bg-opacity-10 text-success rounded-pill x-small fw-bold px-2 py-0.5">
+                                            {CHARACTER_ICONS.find((i) => i.id === charIcon)?.label || "Selected"}
+                                        </span>
+                                    </div>
+                                    <div className="char-icon-grid">
+                                        {CHARACTER_ICONS.map((iconItem) => {
+                                            const isIconActive = charIcon === iconItem.id;
+                                            return (
+                                                <button
+                                                    key={iconItem.id}
+                                                    type="button"
+                                                    className={`char-icon-btn ${isIconActive ? "active" : ""}`}
+                                                    onClick={() => {
+                                                        setCharIcon(iconItem.id);
+                                                        playChimeClick();
+                                                    }}
+                                                    title={iconItem.label}
+                                                    aria-label={iconItem.label}
+                                                >
+                                                    <i className={`fa-solid ${iconItem.id}`}></i>
+                                                    <span>{iconItem.label}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="d-flex align-items-center justify-content-end gap-2 pt-2 border-top">
+                            <div className="char-modal-footer">
                                 <button
                                     type="button"
-                                    className="btn btn-outline-secondary rounded-pill fw-bold px-4"
+                                    className="btn btn-outline-secondary rounded-pill fw-bold px-4 py-2"
                                     onClick={() => setCharacterModalOpen(false)}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn btn-success rounded-pill fw-bold px-4 shadow-sm d-flex align-items-center gap-2"
+                                    className="btn btn-success text-white rounded-pill fw-bold px-4 py-2 shadow-sm d-flex align-items-center gap-2"
+                                    style={{ backgroundColor: "#37b06d", borderColor: "#37b06d" }}
                                 >
-                                    <i className="fa-solid fa-cloud-arrow-up"></i>
-                                    <span>{editingCharId ? "Save Changes & Sync" : "Create & Save to Database"}</span>
+                                    <i className={editingCharId ? "fa-solid fa-check" : "fa-solid fa-cloud-arrow-up"}></i>
+                                    <span>{editingCharId ? "Save Changes & Sync" : "Create & Save Character"}</span>
                                 </button>
                             </div>
                         </form>

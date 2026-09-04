@@ -212,7 +212,7 @@ export const submitOrderToBot = async (
                 type: 'order',
                 timestamp: Date.now(),
                 ...(orderFor ? { order_for: orderFor } : {}),
-                ...(displayName ? { display_name: displayName } : {}),
+                ...(displayName ? { display_name: displayName, username: displayName } : {}),
                 ...(islandName ? { island_name: islandName } : {}),
             }),
         });

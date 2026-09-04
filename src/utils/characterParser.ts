@@ -284,3 +284,63 @@ export const generateNicknamePresets = (
 
     return presets;
 };
+
+/**
+ * Check whether a string matches the standard ACNH Discord server nickname rule:
+ * Must have character name and island name separated by a pipe `|` (e.g. "IGN | Island Name").
+ * Supports multiple characters/islands (e.g. "IGN1/IGN2 | Island" or "IGN1 | Isl1 | IGN2 | Isl2").
+ */
+export const isValidAcnhNickname = (value?: string | null): boolean => {
+    if (!value || !value.trim()) return false;
+    const trimmed = value.trim();
+
+    let chunks = trimmed.split(/[|¦‖]/).map((s) => cleanName(s)).filter(Boolean);
+    if (chunks.length > 0 && chunks[0].toLowerCase() === 'acnh') {
+        chunks = chunks.slice(1);
+    }
+
+    if (chunks.length < 2) {
+        return false;
+    }
+
+    const hasNameText = (text: string) => /[\w\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]/i.test(text);
+
+    let pairs: [string, string][] = [];
+    if (chunks.length % 2 === 0) {
+        for (let i = 0; i < chunks.length; i += 2) {
+            pairs.push([chunks[i], chunks[i + 1]]);
+        }
+    } else {
+        pairs = chunks.slice(1).map((island) => [chunks[0], island]);
+    }
+
+    for (const [ignRaw, islandRaw] of pairs) {
+        const igns = ignRaw.split(/[\/&+\\]/).map((s) => cleanName(s)).filter(Boolean);
+        const islands = islandRaw.split(/[\/&+\\]/).map((s) => cleanName(s)).filter(Boolean);
+        if (igns.length === 0 || islands.length === 0) return false;
+        if (![...igns, ...islands].every(hasNameText)) return false;
+    }
+
+    return true;
+};
+
+/**
+ * Returns a user-friendly validation error message for a nickname input, or null if valid.
+ */
+export const getNicknameValidationError = (value?: string | null): string | null => {
+    if (!value || !value.trim()) {
+        return 'Server nickname is required.';
+    }
+    const trimmed = value.trim();
+    if (trimmed.length > 32) {
+        return 'Discord nicknames cannot exceed 32 characters.';
+    }
+    if (!/[|¦‖]/.test(trimmed)) {
+        return "Must include '|' between your Character Name and Island Name (e.g. 'Resident | Island').";
+    }
+    if (!isValidAcnhNickname(trimmed)) {
+        return "Format must be 'Character Name | Island Name' with valid letters or numbers.";
+    }
+    return null;
+};
+
