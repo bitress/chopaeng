@@ -29,47 +29,89 @@ export const getVariantCommandParts = (
     parentId: string | number,
     variant?: ItemVariant | null
 ) => {
-    const variantId = hasMeaningfulVariantId(variant?.id) ? String(variant?.id) : 'NA';
-    const baseId = variantId === 'NA' ? (variant?.pokerId || parentId) : parentId;
-    return { baseId, variantId };
+    if (!variant) {
+        return { baseId: parentId, variantId: 'NA' };
+    }
+
+    const rawId = variant.id !== undefined && variant.id !== null ? String(variant.id).trim() : '';
+    // Pattern variations (customizable items like furniture) use "primary_secondary" (e.g. "0_0", "1_0")
+    const isPatternVariant = /^\d+_\d+$/.test(rawId) || rawId === 'DIY';
+
+    if (isPatternVariant) {
+        const baseId = variant.pokerId || parentId;
+        return { baseId, variantId: rawId };
+    }
+
+    // Distinct-item variations (e.g. clothing, accessories, etc. where each variation has its own internal ID / hex):
+    // The variant itself has its own distinct hex ID (pokerId or id).
+    // The base ID is the variant's own hex ID, and there is no pattern variant ('NA').
+    const hexId = (hasMeaningfulVariantId(variant.pokerId) ? String(variant.pokerId) : null)
+        || (hasMeaningfulVariantId(variant.id) ? String(variant.id) : null)
+        || String(parentId);
+
+    return { baseId: hexId, variantId: 'NA' };
 };
 
 /**
- * Builds the final 16-character order hex.
+ * Builds the final order hex for SysBot / Discord order commands.
  * - If baseId or variantString is already a full 16-char hex, return it as-is.
- * - Otherwise pad the base id and encode variant info (primary/secondary) into the string.
- * - "Fencing" category uses a different byte layout than everything else.
+ * - For customizable furniture, encodes variant info (primary/secondary) into a 16-char hex: 0000<variantHex>0000<baseId>.
+ * - For "Fencing", uses the fencing layout: <countHex>00310000<baseId>.
+ * - For standalone items or items with distinct color internal IDs (e.g. clothing), returns the 4-char hex ID.
  */
 export const generateFullItemHex = (
     baseId: string | number | null | undefined,
     variantString: string | number | null | undefined,
     category = ''
 ): string => {
-    if (String(baseId).length === 16) return String(baseId).toUpperCase();
-    if (variantString && String(variantString).length === 16) return String(variantString).toUpperCase();
-    
-    const paddedBaseId = String(baseId).toUpperCase().padStart(4, '0');
-    
-    if (!variantString || variantString === 'NA' || variantString === '' || variantString === 'DIY') {
-        return paddedBaseId;
+    let cleanBase = String(baseId ?? '').trim().toUpperCase();
+    let cleanVar = variantString !== null && variantString !== undefined ? String(variantString).trim() : '';
+
+    // Handle compound id like '116F:2B0C' or '38EF:1_0' if passed as baseId
+    if (cleanBase.includes(':')) {
+        const [parent, vKey] = cleanBase.split(':');
+        if (/^\d+_\d+$/.test(vKey)) {
+            cleanBase = parent;
+            if (!cleanVar || cleanVar === 'NA') cleanVar = vKey;
+        } else if (/^[0-9A-F]{2,6}$/i.test(vKey)) {
+            cleanBase = vKey;
+            if (cleanVar === vKey) cleanVar = 'NA';
+        } else {
+            cleanBase = parent;
+        }
     }
-    
-    let primary = 0;
-    let secondary = 0;
-    const parts = String(variantString).split('_');
+
+    if (cleanBase.length === 16) return cleanBase;
+    if (cleanVar && cleanVar.length === 16) return cleanVar.toUpperCase();
+
+    // If no variant or variant is NA / empty / DIY:
+    if (!cleanVar || cleanVar === 'NA' || cleanVar === '' || cleanVar === 'DIY') {
+        return cleanBase.padStart(4, '0');
+    }
+
+    // Pattern variations (customizable items like furniture) use "primary_secondary" (e.g. "0_0", "1_0")
+    const parts = cleanVar.split('_');
     if (parts.length === 2) {
-        primary = parseInt(parts[0], 10) || 0;
-        secondary = parseInt(parts[1], 10) || 0;
+        const primary = parseInt(parts[0], 10) || 0;
+        const secondary = parseInt(parts[1], 10) || 0;
+        const paddedBaseId = cleanBase.padStart(4, '0');
+
+        if (category === 'Fencing') {
+            const primaryHex = primary.toString(16).toUpperCase();
+            return `${primaryHex}00310000${paddedBaseId}`;
+        }
+
+        const variantInt = primary + (secondary * 32);
+        const variantHex = variantInt.toString(16).toUpperCase().padStart(4, '0');
+        return `0000${variantHex}0000${paddedBaseId}`;
     }
-    
-    if (category === 'Fencing') {
-        const primaryHex = primary.toString(16).toUpperCase();
-        return `${primaryHex}00310000${paddedBaseId}`;
+
+    // If cleanVar was passed a hex ID (like '2B0C') mistakenly stored as variantId:
+    if (/^[0-9A-F]{2,6}$/i.test(cleanVar)) {
+        return cleanVar.toUpperCase().padStart(4, '0');
     }
-    
-    const variantInt = primary + (secondary * 32);
-    const variantHex = variantInt.toString(16).toUpperCase().padStart(4, '0');
-    return `0000${variantHex}0000${paddedBaseId}`;
+
+    return cleanBase.padStart(4, '0');
 };
 
 /** Human-readable label combining Variation and Pattern, for presenting variant choices. */

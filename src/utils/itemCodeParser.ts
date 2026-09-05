@@ -46,6 +46,25 @@ function getCatalogIndex(catalogItems: CatalogEntity[]): CatalogIndex {
         if (item.name) {
             byName.set(item.name.trim().toLowerCase(), item);
         }
+        if (item.variations) {
+            for (let vIdx = 0; vIdx < item.variations.length; vIdx++) {
+                const v = item.variations[vIdx];
+                if (v.pokerId) {
+                    const p = v.pokerId.trim();
+                    if (!byId.has(p.toUpperCase())) {
+                        byId.set(p.toUpperCase(), item);
+                        byId.set(p.toLowerCase(), item);
+                    }
+                }
+                if (v.id) {
+                    const vId = String(v.id).trim();
+                    if (/^[0-9a-fA-F]{2,6}$/i.test(vId) && !byId.has(vId.toUpperCase())) {
+                        byId.set(vId.toUpperCase(), item);
+                        byId.set(vId.toLowerCase(), item);
+                    }
+                }
+            }
+        }
     }
 
     const index: CatalogIndex = { byId, byName };
@@ -95,7 +114,7 @@ export const parseItemCodes = (
         if (!trimmedLine) continue;
 
         // Check if the entire line matches a known item name with optional quantity (e.g. "Royal Crown x5")
-        const nameMultiplierMatch = trimmedLine.match(/^(.+?)(?:\s*(?:x|\*|\:)\s*(\d+))?$/i);
+        const nameMultiplierMatch = trimmedLine.match(/^(.+?)(?:\s*(?:x|\*|:)\s*(\d+))?$/i);
         if (nameMultiplierMatch) {
             const potentialName = nameMultiplierMatch[1].trim().toLowerCase();
             const qty = nameMultiplierMatch[2] ? parseInt(nameMultiplierMatch[2], 10) : 1;
@@ -141,7 +160,7 @@ export const parseItemCodes = (
             // Pattern 1: `1024x10` or `1024*10` or `1024:10`
             const qtySuffixMatch = token.match(/^([0-9a-fA-F_\-:]+?)(?:x|\*|:)(\d+)$/i);
             // Pattern 2: `10x1024` or `10*1024`
-            const qtyPrefixMatch = token.match(/^(\d+)(?:x|\*)([0-9a-fA-F_\-]+)$/i);
+            const qtyPrefixMatch = token.match(/^(\d+)(?:x|\*)([0-9a-fA-F_-]+)$/i);
 
             let coreToken = token;
             if (qtySuffixMatch) {
@@ -218,13 +237,25 @@ export const parseItemCodes = (
                 let image = catalogItem?.image || FALLBACK_IMAGE;
                 let variantLabel: string | undefined = undefined;
 
-                if (variantId !== undefined && catalogItem?.variations) {
-                    const varIndex = Number(variantId);
-                    if (!isNaN(varIndex) && catalogItem.variations[varIndex]) {
-                        const vObj = catalogItem.variations[varIndex];
-                        variantLabel = vObj.Variation || vObj.Pattern || undefined;
-                        if (vObj.imageUrl) {
-                            image = vObj.imageUrl;
+                if (catalogItem?.variations) {
+                    // Check if hexId directly matched one of the variations' pokerId / hex id
+                    const matchedVar = catalogItem.variations.find(
+                        (v) => (v.pokerId && v.pokerId.toUpperCase() === hexId.toUpperCase()) ||
+                               (v.id && String(v.id).toUpperCase() === hexId.toUpperCase())
+                    );
+                    if (matchedVar) {
+                        variantLabel = matchedVar.Variation || matchedVar.Pattern || undefined;
+                        if (matchedVar.imageUrl) {
+                            image = matchedVar.imageUrl;
+                        }
+                    } else if (variantId !== undefined) {
+                        const varIndex = Number(variantId);
+                        if (!isNaN(varIndex) && catalogItem.variations[varIndex]) {
+                            const vObj = catalogItem.variations[varIndex];
+                            variantLabel = vObj.Variation || vObj.Pattern || undefined;
+                            if (vObj.imageUrl) {
+                                image = vObj.imageUrl;
+                            }
                         }
                     }
                 }
